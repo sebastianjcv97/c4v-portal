@@ -251,7 +251,7 @@ const views = {
   bolsa() {
     return `
       <div class="page-head"><h1>Bolsa de Trabajos</h1>
-        <p><strong>Beneficio gratis solo para clientes C4V.</strong> Cuando alguien busca un servicio de corte, te lo pasamos a ti — con sus datos de contacto.</p></div>
+        <p><strong>Beneficio gratis, solo para clientes C4V.</strong> Cada día nos escriben personas pidiendo servicio de corte láser. Nosotros no damos ese servicio — fabricamos las máquinas — así que sus pedidos se publican aquí <strong>para ti</strong>: tómalos, contáctalos y produce. El contacto se revela al tomar el trabajo.</p></div>
       <div class="toolbar"><div class="filters">
           <button class="chip active" data-filter="todos">Todos</button>
           <button class="chip" data-filter="PE">🇵🇪 Perú</button>
@@ -259,7 +259,12 @@ const views = {
           <button class="chip" data-filter="BO">🇧🇴 Bolivia</button></div>
         <button class="btn primary sm" id="newLeadBtn">+ Publicar solicitud</button></div>
       <div id="leadForm"></div>
-      <div class="list" id="leadList">${leadRows(state.db.leads)}</div>`;
+      <div class="list" id="leadList">${leadRows(state.db.leads)}</div>
+      <h2 class="section-title">Trae más trabajos a la red</h2>
+      <div class="help-card">${icon('bolsa')}
+        <div class="grow"><h3>¿Conoces a alguien que necesita corte láser?</h3>
+          <p>Compártele el enlace de solicitudes: deja su pedido en 1 minuto y se publica en esta bolsa.</p></div>
+        <a class="btn ghost sm" href="solicita.html" target="_blank" rel="noopener">Abrir página de solicitudes</a></div>`;
   },
 
   plantillas() {

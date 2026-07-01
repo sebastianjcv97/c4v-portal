@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>¿Necesitas corte o grabado láser? — Red de talleres C4V</title>
+<meta name="description" content="En C4V no damos el servicio de corte: fabricamos las máquinas. Cuéntanos qué necesitas y te conectamos gratis con un taller equipado con máquinas C4V en Perú, Ecuador o Bolivia." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23F9020B'/%3E%3Ctext x='32' y='43' text-anchor='middle' font-family='Arial,sans-serif' font-size='23' font-weight='800' fill='white'%3EC4V%3C/text%3E%3C/svg%3E" />
+<meta property="og:type" content="website" />
+<meta property="og:title" content="¿Necesitas corte o grabado láser? — Red de talleres C4V" />
+<meta property="og:description" content="Cuéntanos qué necesitas y te conectamos gratis con un taller equipado con máquinas C4V cerca de ti. Perú · Ecuador · Bolivia." />
+<meta property="og:url" content="https://sebastianjcv97.github.io/c4v-portal/solicita.html" />
+<meta property="og:locale" content="es_PE" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@500;600;700;800&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<!-- TODO: reemplazar composición WhatsApp por webhook n8n cuando exista backend (auto-publicación en portal) -->
+<style>
+  :root{
+    --red:#F9020B; --red-700:#c40309; --red-50:#fdecec;
+    --ink:#141414; --muted:#5c5c5c; --faint:#7A7A7A; --line:#eaeaea; --bg:#ffffff; --alt:#f7f7f7;
+    --sans:'Roboto',system-ui,-apple-system,'Segoe UI',Arial,sans-serif;
+    --slab:'Roboto Slab',Georgia,serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:680px;margin:0 auto;padding:0 22px}
+  h1,h2,h3{margin:0;font-family:var(--slab);letter-spacing:-.01em}
+
+  /* Hero */
+  .top{background:var(--ink);color:#fff;padding:44px 0 40px;text-align:center}
+  .top .mark{display:inline-flex;align-items:center;gap:10px;margin-bottom:18px}
+  .top .mark .box{width:40px;height:40px;border-radius:9px;background:var(--red);display:flex;align-items:center;justify-content:center;font-family:var(--slab);font-weight:800;font-size:14px}
+  .top .mark span{font-weight:700;letter-spacing:.02em}
+  .kicker{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--red);margin-bottom:10px}
+  .top h1{font-size:32px;font-weight:800;line-height:1.12;color:#fff}
+  .top p{color:#cfcfcf;max-width:56ch;margin:14px auto 0;font-size:16.5px}
+  .top p strong{color:#fff;font-weight:500}
+
+  /* Pasos */
+  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border-bottom:1px solid var(--line)}
+  .steps div{background:#fff;padding:22px 14px;text-align:center}
+  .steps .n{width:34px;height:34px;margin:0 auto 10px;border-radius:50%;background:var(--red);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--slab);font-weight:800;font-size:16px}
+  .steps h3{font-size:14.5px;font-weight:700;margin-bottom:4px}
+  .steps p{margin:0;font-size:12.5px;color:var(--muted)}
+
+  /* Formulario */
+  .form-sec{padding:38px 0 10px}
+  .form-sec h2{font-size:23px;margin-bottom:6px}
+  .form-sec > .wrap > p{color:var(--muted);margin:0 0 24px;font-size:15px}
+  form{display:grid;gap:16px}
+  .row{display:grid;gap:16px;grid-template-columns:1fr 1fr}
+  label{display:block;font-size:13px;font-weight:700;margin-bottom:6px;color:var(--ink)}
+  label .req{color:var(--red)}
+  input,select,textarea{width:100%;font-family:var(--sans);font-size:15px;color:var(--ink);background:#fff;border:1px solid #d9d9d9;border-radius:10px;padding:12px 14px;outline:none;transition:border-color .15s, box-shadow .15s}
+  input:focus,select:focus,textarea:focus{border-color:var(--red);box-shadow:0 0 0 3px var(--red-50)}
+  textarea{min-height:110px;resize:vertical}
+  input::placeholder,textarea::placeholder{color:#b3b3b3}
+  .field.error input,.field.error textarea{border-color:var(--red);background:#fffafa}
+  .err-msg{display:none;font-size:12.5px;color:var(--red-700);margin-top:5px}
+  .field.error .err-msg{display:block}
+  .cta{display:inline-flex;align-items:center;justify-content:center;gap:9px;width:100%;background:var(--red);color:#fff;font-family:var(--sans);font-weight:700;font-size:16px;padding:15px 24px;border:none;border-radius:10px;cursor:pointer;transition:background .15s}
+  .cta:hover{background:var(--red-700)}
+  .cta svg{width:20px;height:20px}
+  .fineprint{font-size:12.5px;color:var(--faint);text-align:center;margin:2px 0 0}
+
+  /* Confirmación */
+  .confirm{display:none;background:#f0faf2;border:1px solid #bfe5c8;border-radius:12px;padding:18px 20px;margin-top:18px;align-items:flex-start;gap:12px}
+  .confirm.show{display:flex}
+  .confirm svg{width:24px;height:24px;flex-shrink:0;color:#1e8e3e;margin-top:2px}
+  .confirm p{margin:0;font-size:14.5px;color:#1c5c2c}
+  .confirm strong{font-family:var(--slab)}
+
+  /* Nota talleres */
+  .owner-note{background:var(--alt);border-top:1px solid var(--line);margin-top:40px;padding:26px 0;text-align:center}
+  .owner-note p{margin:0;font-size:14px;color:var(--muted);max-width:52ch;margin:0 auto}
+  .owner-note a{color:var(--red);font-weight:700;text-decoration:none}
+  .owner-note a:hover{text-decoration:underline}
+
+  footer{padding:22px;text-align:center;color:var(--faint);font-size:12.5px}
+  footer span{color:var(--red);font-weight:700}
+
+  @media(max-width:560px){
+    .top h1{font-size:25px}
+    .steps{grid-template-columns:1fr}
+    .steps div{display:flex;align-items:center;text-align:left;gap:14px;padding:16px 20px}
+    .steps .n{margin:0;flex-shrink:0}
+    .row{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+
+<div class="top">
+  <div class="wrap">
+    <div class="mark"><span class="box">C4V</span><span>C4V Láser</span></div>
+    <div class="kicker">Red de talleres C4V</div>
+    <h1>¿Necesitas corte o grabado láser?</h1>
+    <p>En C4V no damos el servicio de corte: <strong>fabricamos y vendemos las máquinas</strong>. Pero trabajamos con cientos de talleres equipados con máquinas C4V en Perú, Ecuador y Bolivia — cuéntanos qué necesitas y <strong>te conectamos gratis</strong> con uno cerca de ti.</p>
+  </div>
+</div>
+
+<div class="steps">
+  <div>
+    <div class="n">1</div>
+    <div><h3>Cuéntanos tu pedido</h3><p>Llena el formulario en 1 minuto.</p></div>
+  </div>
+  <div>
+    <div class="n">2</div>
+    <div><h3>Lo publicamos en nuestra red</h3><p>Llega a los talleres de tu zona.</p></div>
+  </div>
+  <div>
+    <div class="n">3</div>
+    <div><h3>Un taller te contacta</h3><p>Cotizas y acuerdas directo con él.</p></div>
+  </div>
+</div>
+
+<div class="form-sec">
+  <div class="wrap">
+    <h2>Cuéntanos qué necesitas</h2>
+    <p>Sin costo y sin compromiso. Con estos datos armamos tu solicitud y la enviamos por WhatsApp.</p>
+
+    <form id="solicitud" novalidate>
+      <div class="row">
+        <div class="field" id="f-nombre">
+          <label for="nombre">Nombre <span class="req">*</span></label>
+          <input type="text" id="nombre" name="nombre" autocomplete="name" placeholder="Tu nombre" />
+          <div class="err-msg">Ingresa tu nombre.</div>
+        </div>
+        <div class="field" id="f-telefono">
+          <label for="telefono">WhatsApp / teléfono <span class="req">*</span></label>
+          <input type="tel" id="telefono" name="telefono" autocomplete="tel" inputmode="tel" placeholder="+51 999 999 999" />
+          <div class="err-msg">Ingresa tu WhatsApp o teléfono.</div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="field">
+          <label for="pais">País</label>
+          <select id="pais" name="pais">
+            <option value="Perú" selected>Perú</option>
+            <option value="Ecuador">Ecuador</option>
+            <option value="Bolivia">Bolivia</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="ciudad">Ciudad</label>
+          <input type="text" id="ciudad" name="ciudad" placeholder="Lima, Quito, La Paz…" />
+        </div>
+      </div>
+
+      <div class="field" id="f-necesita">
+        <label for="necesita">¿Qué necesitas? <span class="req">*</span></label>
+        <textarea id="necesita" name="necesita" placeholder="Ej.: corte de 50 letreros en MDF con logo grabado, tamaño 30×20 cm…"></textarea>
+        <div class="err-msg">Cuéntanos qué necesitas cortar o grabar.</div>
+      </div>
+
+      <div class="row">
+        <div class="field">
+          <label for="material">Material</label>
+          <input type="text" id="material" name="material" placeholder="MDF 3mm, acrílico…" />
+        </div>
+        <div class="field">
+          <label for="cantidad">Cantidad</label>
+          <input type="text" id="cantidad" name="cantidad" placeholder="Ej.: 50 unidades" />
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="plazo">¿Para cuándo?</label>
+        <input type="text" id="plazo" name="plazo" placeholder="Ej.: esta semana, 15 de julio…" />
+      </div>
+
+      <button type="submit" class="cta">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2c-5.46 0-9.9 4.43-9.9 9.88 0 1.74.46 3.44 1.32 4.94L2 22l5.32-1.4c1.45.8 3.08 1.21 4.72 1.21 5.46 0 9.9-4.43 9.9-9.88 0-2.64-1.03-5.13-2.9-7C17.16 3.03 14.68 2 12.04 2zm0 18.03c-1.48 0-2.93-.4-4.19-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.26 8.26 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.24-8.24 2.2 0 4.27.86 5.82 2.42a8.18 8.18 0 0 1 2.41 5.83c0 4.54-3.7 8.23-8.23 8.23zm4.52-6.16c-.25-.12-1.47-.72-1.69-.81-.23-.08-.39-.12-.56.13-.16.24-.64.8-.78.97-.14.16-.29.18-.54.06-.25-.13-1.05-.39-2-1.23-.73-.66-1.23-1.47-1.38-1.72-.14-.25-.01-.38.11-.51.11-.11.25-.29.37-.43.13-.15.17-.25.25-.42.08-.16.04-.31-.02-.43-.06-.13-.56-1.34-.76-1.84-.2-.48-.41-.42-.56-.43h-.48c-.17 0-.43.06-.66.31-.22.25-.86.85-.86 2.07 0 1.22.89 2.4 1.01 2.56.13.17 1.75 2.67 4.23 3.74.59.26 1.05.41 1.41.52.59.19 1.13.16 1.56.1.48-.07 1.47-.6 1.67-1.18.21-.58.21-1.07.15-1.18-.06-.11-.23-.17-.48-.29z"/></svg>
+        Enviar solicitud por WhatsApp
+      </button>
+      <p class="fineprint">Al enviar se abrirá WhatsApp con tu solicitud ya redactada. Servicio de conexión gratuito.</p>
+    </form>
+
+    <div class="confirm" id="confirmacion" role="status">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M8 12.5l2.5 2.5L16 9.5"/></svg>
+      <p><strong>¡Listo!</strong> Termina de enviar el mensaje en WhatsApp y te conectamos con un taller.</p>
+    </div>
+  </div>
+</div>
+
+<div class="owner-note">
+  <div class="wrap">
+    <p>¿Tienes una máquina C4V? Los pedidos de esta red se publican en tu <a href="https://sebastianjcv97.github.io/c4v-portal/">Central de Postventa</a>.</p>
+  </div>
+</div>
+
+<footer>
+  <span>C4V Láser</span> · Bolsa de Trabajos — conectamos pedidos con talleres equipados con máquinas C4V · Perú · Ecuador · Bolivia
+</footer>
+
+<script>
+(function(){
+  var form = document.getElementById('solicitud');
+  var confirmBox = document.getElementById('confirmacion');
+  var required = [
+    { id: 'nombre',   field: 'f-nombre' },
+    { id: 'telefono', field: 'f-telefono' },
+    { id: 'necesita', field: 'f-necesita' }
+  ];
+
+  function val(id){ return document.getElementById(id).value.trim(); }
+
+  required.forEach(function(r){
+    document.getElementById(r.id).addEventListener('input', function(){
+      document.getElementById(r.field).classList.remove('error');
+    });
+  });
+
+  form.addEventListener('submit', function(e){
+    e.preventDefault();
+
+    var ok = true;
+    required.forEach(function(r){
+      var empty = !val(r.id);
+      document.getElementById(r.field).classList.toggle('error', empty);
+      if (empty && ok) { document.getElementById(r.id).focus(); }
+      if (empty) ok = false;
+    });
+    if (!ok) return;
+
+    var paisCiudad = val('pais') + (val('ciudad') ? ' / ' + val('ciudad') : '');
+    var mensaje =
+      '🔴 SOLICITUD DE CORTE — Bolsa de Trabajos\n' +
+      'Nombre: '      + val('nombre')                 + '\n' +
+      'WhatsApp: '    + val('telefono')               + '\n' +
+      'País/Ciudad: ' + paisCiudad                    + '\n' +
+      'Necesito: '    + val('necesita')               + '\n' +
+      'Material: '    + (val('material') || '—')      + '\n' +
+      'Cantidad: '    + (val('cantidad') || '—')      + '\n' +
+      'Plazo: '       + (val('plazo')    || '—');
+
+    // TODO: reemplazar composición WhatsApp por webhook n8n cuando exista backend (auto-publicación en portal)
+    window.open('https://wa.me/51924662205?text=' + encodeURIComponent(mensaje), '_blank');
+
+    confirmBox.classList.add('show');
+    confirmBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  });
+})();
+</script>
+
+</body>
+</html>
