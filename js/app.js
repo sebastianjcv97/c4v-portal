@@ -244,7 +244,7 @@ const views = {
             <div class="field"><label>Cuéntanos qué pasa</label><textarea name="descripcion" placeholder="Describe el problema…"></textarea></div>
             <div class="field"><label>Prioridad</label><select name="prioridad"><option value="media">Normal</option><option value="alta">Urgente</option><option value="baja">Baja</option></select></div>
             <button class="btn primary" type="submit">Enviar ticket</button></form></div>
-        <div><h3 class="section-title" style="margin-top:0">Tus tickets</h3><div class="list" id="ticketList">${ticketRows(d.tickets)}</div></div>
+        <div><h3 class="section-title" style="margin-top:0">Tus tickets</h3><div class="list" id="ticketList">${ticketRows(cli ? d.tickets.filter(t => t.cliente_id === cli.id) : d.tickets, !cli)}</div></div>
       </div>`;
   },
 
@@ -308,24 +308,32 @@ const views = {
   }
 };
 
-function ticketRows(tickets) {
+function ticketRows(tickets, isStaff) {
   if (!tickets.length) return '<div class="empty">Aún no tienes tickets.</div>';
   const badge = (e) => { const m = { nuevo: 'info', asignado: 'info', en_proceso: 'warn', resuelto: 'ok', cerrado: 'grey' }; return `<span class="badge ${m[e] || 'grey'}">${e.replace('_', ' ')}</span>`; };
   return tickets.map(t => `<div class="row-card">
     <div class="grow"><h4>${esc(t.asunto)} ${badge(t.estado)}</h4>
       <div class="meta"><span class="badge ${t.tipo === 'soporte' ? 'red' : 'info'}">${t.tipo}</span><span>${esc(t.id)}</span><span class="pill-pais">${t.pais}</span><span>Atiende: ${esc(t.asignado_a)}</span></div></div>
-    <select class="mini-select" data-ticket="${esc(t.id)}">${['nuevo', 'asignado', 'en_proceso', 'resuelto', 'cerrado'].map(e => `<option ${e === t.estado ? 'selected' : ''} value="${e}">${e.replace('_', ' ')}</option>`).join('')}</select></div>`).join('');
+    ${isStaff ? `<select class="mini-select" data-ticket="${esc(t.id)}">${['nuevo', 'asignado', 'en_proceso', 'resuelto', 'cerrado'].map(e => `<option ${e === t.estado ? 'selected' : ''} value="${e}">${e.replace('_', ' ')}</option>`).join('')}</select>` : ''}</div>`).join('');
 }
 function leadRows(leads) {
   if (!leads.length) return '<div class="empty">No hay solicitudes con ese filtro.</div>';
-  return leads.map(l => `<div class="row-card">
+  const cli = currentClient();
+  return leads.map(l => {
+    // Privacidad: el contacto solo lo ve el staff o el cliente que tomó el trabajo
+    const puedeVer = state.ctx === 'staff' || (l.estado === 'tomado' && cli && l.tomado_por === cli.id);
+    const contacto = puedeVer
+      ? `<div class="contact-box"><span class="lbl">Contacto</span><strong>${esc(l.contacto)}</strong>${l.telefono ? `<div class="muted">${esc(l.telefono)}</div>` : ''}</div>`
+      : (l.estado === 'nuevo' ? `<div class="contact-box"><span class="lbl">Contacto</span><span class="muted" style="font-size:12.5px">Se muestra al tomar el trabajo</span></div>` : '');
+    return `<div class="row-card">
     <div class="grow"><h4>${esc(l.titulo)} ${l.estado === 'nuevo' ? '<span class="badge ok">Disponible</span>' : '<span class="badge grey">Tomado</span>'}</h4>
       <p style="margin:4px 0;color:var(--muted);font-size:14px">${esc(l.descripcion)}</p>
       <div class="meta"><span class="pill-pais">${l.pais}</span><span>${esc(l.ciudad)}</span><span>${esc(l.material)}</span><span>${esc(l.cantidad)}</span></div></div>
     <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end">
-      <div class="contact-box"><span class="lbl">Contacto</span><strong>${esc(l.contacto)}</strong>${l.telefono ? `<div class="muted">${esc(l.telefono)}</div>` : ''}</div>
+      ${contacto}
       ${l.estado === 'nuevo' ? `<button class="btn primary sm" data-take="${esc(l.id)}">Tomar trabajo</button>` : ''}
-    </div></div>`).join('');
+    </div></div>`;
+  }).join('');
 }
 
 // ---------- interacciones ----------

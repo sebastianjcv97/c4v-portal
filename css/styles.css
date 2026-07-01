@@ -33,7 +33,7 @@ h1{font-family:var(--display);font-weight:600;line-height:1.16;letter-spacing:-.
 
 /* Nav */
 .nav{display:flex;flex-direction:column;gap:2px}
-.nav a{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:9px;font-size:14.5px;font-weight:500;color:#4c4843;transition:background .14s,color .14s}
+.nav a{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:9px;font-size:14.5px;font-weight:500;color:#4a4a48;transition:background .14s,color .14s}
 .nav a .ic{color:var(--faint);transition:color .14s}
 .nav a:hover{background:var(--bg)}
 .nav a.active{background:var(--red-50);color:var(--red-700);font-weight:600}
@@ -47,7 +47,7 @@ h1{font-family:var(--display);font-weight:600;line-height:1.16;letter-spacing:-.
 .menu-btn{display:none;background:none;border:none;font-size:20px;cursor:pointer;color:var(--ink)}
 .topbar-title{font-size:16px;font-weight:700}
 .badge-cert{margin-left:auto;font-size:12.5px;font-weight:600;color:var(--red-700);background:var(--red-50);padding:7px 13px;border-radius:8px;white-space:nowrap;transition:background .14s}
-a.badge-cert:hover{background:#f1dedb}
+a.badge-cert:hover{background:#fbdcdd}
 
 .view{padding:34px;max-width:1020px;width:100%}
 .foot{padding:20px 32px;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center;color:var(--faint);font-size:12px}
@@ -115,8 +115,8 @@ a.badge-cert:hover{background:#f1dedb}
 .badge.warn{background:var(--warn-50);color:var(--warn)}
 .badge.info{background:var(--info-50);color:var(--info)}
 .badge.red{background:var(--red-50);color:var(--red-700)}
-.badge.grey{background:#efece7;color:var(--muted)}
-.pill-pais{font-size:10.5px;font-weight:700;background:#efece7;color:#5a564f;padding:2px 8px;border-radius:5px;letter-spacing:.03em}
+.badge.grey{background:#f0f0ef;color:var(--muted)}
+.pill-pais{font-size:10.5px;font-weight:700;background:#f0f0ef;color:#5f5f5f;padding:2px 8px;border-radius:5px;letter-spacing:.03em}
 
 /* ---------- Botones ---------- */
 .btn{display:inline-flex;align-items:center;gap:8px;border:none;cursor:pointer;font-family:var(--sans);font-weight:600;font-size:14px;padding:10px 17px;border-radius:9px;transition:background .14s,transform .1s}
@@ -181,7 +181,7 @@ a.badge-cert:hover{background:#f1dedb}
 .toolbar{display:flex;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap}
 .filters{display:flex;gap:8px;flex-wrap:wrap}
 .toolbar .btn{margin-left:auto}
-.chip{border:1px solid var(--line-2);background:var(--surface);cursor:pointer;font-family:var(--sans);font-size:13px;font-weight:600;padding:7px 14px;border-radius:8px;color:#5a564f;transition:.14s}
+.chip{border:1px solid var(--line-2);background:var(--surface);cursor:pointer;font-family:var(--sans);font-size:13px;font-weight:600;padding:7px 14px;border-radius:8px;color:#5f5f5f;transition:.14s}
 .chip:hover{background:var(--bg)}
 .chip.active{background:var(--ink);color:#fff;border-color:var(--ink)}
 .chips-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;align-items:center}
