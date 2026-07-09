@@ -9,10 +9,11 @@ const view = $('#view');
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const today = () => new Date().toISOString().slice(0, 10);
 const PAISES = { PE: '🇵🇪 Perú', EC: '🇪🇨 Ecuador', BO: '🇧🇴 Bolivia' };
+const ESTADO_TICKET = { nuevo: 'Recibido', asignado: 'Asignado', en_proceso: 'En atención', resuelto: 'Resuelto', cerrado: 'Cerrado' };
 
 function toast(msg) {
   let t = $('#toast');
-  if (!t) { t = document.createElement('div'); t.id = 'toast'; t.className = 'toast'; document.body.appendChild(t); }
+  if (!t) { t = document.createElement('div'); t.id = 'toast'; t.className = 'toast'; t.setAttribute('role', 'status'); t.setAttribute('aria-live', 'polite'); document.body.appendChild(t); }
   t.textContent = msg; t.classList.add('show');
   clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('show'), 2600);
 }
@@ -21,6 +22,8 @@ function currentClient() { return state.ctx === 'staff' ? null : state.db.client
 
 // ---------- data layer ----------
 async function loadDB() {
+  // Hosting estático (GitHub Pages / archivo local): demo directa, sin esperar un 404.
+  if (location.hostname.endsWith('github.io') || location.protocol === 'file:') { state.offline = true; return JSON.parse(JSON.stringify(window.__SEED__)); }
   try { const db = await apiGet('/api/bootstrap'); state.offline = false; return db; }
   catch { state.offline = true; return JSON.parse(JSON.stringify(window.__SEED__)); }
 }
@@ -87,13 +90,13 @@ const views = {
     const cert = maq?.certificado?.estado;
     const certLine = cert === 'certificada'
       ? '<span class="badge ok">Certificada ✓</span> <span class="muted">Tu máquina está lista, con su Certificado de Calidad C4V.</span>'
-      : '<span class="badge warn">Certificado en preparación</span> <span class="muted">La estamos probando y calibrando con piezas originales — te avisaremos cuando esté lista.</span>';
+      : '<span class="badge warn">En revisión y calibración</span> <span class="muted">La estamos probando y calibrando con piezas originales — te avisaremos cuando esté lista.</span>';
     const done = (id) => { try { return localStorage.getItem('c4v_onb_' + state.ctx + '_' + id) === '1'; } catch { return false; } };
     const hechos = d.onboarding.filter(o => done(o.id)).length, total = d.onboarding.length;
     const card = (href, ic, t, desc) => `<a class="action-card" href="${href}"><div class="ac-ico">${icon(ic)}</div><div><h3>${t}</h3><p>${desc}</p></div><div class="ac-arrow">→</div></a>`;
     return `
       <div class="hero">
-        <h1>${cli ? `Hola, ${esc(cli.nombre.split(' ')[0])}. ` : ''}Gracias por ser parte de C4V.</h1>
+        <h1>${cli ? `Hola, ${esc(cli.nombre.split(' ')[0])}. ` : ''}Gracias por ser parte de <em>C4V</em>.</h1>
         <p>${esc(bv.mensaje)}</p>
         <div class="hero-cta">
           <a class="btn primary" href="#/academia">Empezar mi capacitación</a>
@@ -135,15 +138,15 @@ const views = {
   },
 
   academia() {
-    const a = state.db.academia, pre = state.db.preinstalacion, faqs = state.db.faqs, m = state.db.modelos;
+    const a = state.db.academia, faqs = state.db.faqs, m = state.db.modelos;
     const cursoCard = (c, i) => {
-      const estado = c.estado === 'disponible' ? '<span class="badge ok">Disponible</span>' : c.estado === 'en_proceso' ? '<span class="badge warn">En progreso</span>' : '<span class="badge grey">Próximamente</span>';
+      const estado = c.estado === 'disponible' ? '<span class="badge ok">Disponible</span>' : c.estado === 'en_proceso' ? '<span class="badge warn">En construcción</span>' : '<span class="badge grey">Próximamente</span>';
       const nLes = c.modulos.reduce((s, m) => s + m.lecciones.length, 0);
-      return `<div class="course"><div class="course-head">
+      return `<div class="course"><button type="button" class="course-head" aria-expanded="false">
           <div class="course-ico">${i + 1}</div>
           <div style="flex:1"><h3>${esc(c.titulo)} ${estado}</h3>
             <div class="sub">${esc(c.nivel)} · ${c.modulos.length} módulos · ${nLes} lecciones — ${esc(c.descripcion)}</div></div>
-          <span class="chev">＋</span></div>
+          <span class="chev">＋</span></button>
         <div class="course-body">
           ${c.modulos.map((m, i) => `<div class="module">
             <h4><span class="num-mod">${i + 1}</span> ${esc(m.titulo)} ${m.quizzes ? `<span class="badge red" style="margin-left:auto">${m.quizzes} preguntas</span>` : ''}</h4>
@@ -155,6 +158,7 @@ const views = {
     return `
       <div class="page-head"><h1>Academia</h1>
         <p>${esc(a.acceso)}</p></div>
+      <p style="margin:0 0 16px"><a class="btn ghost sm" href="https://c4vschool.com" target="_blank" rel="noopener">Ir a C4V School ↗</a></p>
       <div class="chips-row">${a.ruta.map((r, i) => `<span class="chip">${i + 1}. ${esc(r)}</span>`).join('')}</div>
 
       <h2 class="section-title">Cursos por módulos</h2>
@@ -174,14 +178,14 @@ const views = {
         <div class="card"><h3>Mejoras nuevas</h3><p>${esc(m.mejoras)}</p></div>
       </div>
 
-      <h2 class="section-title">Prepara tu espacio (antes de instalar)</h2>
-      <p class="muted" style="margin:0 0 14px">${esc(pre.intro)}</p>
-      <div class="grid cols-2">${pre.secciones.map(s => `<div class="card"><h3>${esc(s.titulo)}</h3><ul class="ulist">${s.items.map(i => `<li>${esc(i)}</li>`).join('')}</ul></div>`).join('')}</div>
-      <div style="margin-top:16px"><a class="btn primary" href="#/preparacion">Ver guía completa e imprimir checklist →</a></div>
+      <h2 class="section-title">Prepara tu espacio</h2>
+      <div class="help-card"><div class="grow"><h3>Antes de instalar, deja tu espacio listo</h3>
+        <p>Checklist imprimible y guías paso a paso: eléctrico, pozo a tierra, extracción y agua destilada.</p></div>
+        <a class="btn primary sm" href="#/preparacion">Abrir la guía</a></div>
 
       <h2 class="section-title">Preguntas frecuentes</h2>
       ${faqCats.map(cat => `<h4 style="font-size:14px;margin:16px 0 8px">${esc(cat)}</h4>
-        ${faqs.filter(f => f.categoria === cat).map(f => `<div class="faq-item"><div class="faq-q"><span>${esc(f.pregunta)}</span><span class="chev">＋</span></div><div class="faq-a">${esc(f.respuesta)}</div></div>`).join('')}`).join('')}`;
+        ${faqs.filter(f => f.categoria === cat).map(f => `<div class="faq-item"><button type="button" class="faq-q" aria-expanded="false"><span>${esc(f.pregunta)}</span><span class="chev">＋</span></button><div class="faq-a">${esc(f.respuesta)}</div></div>`).join('')}`).join('')}`;
   },
 
   preparacion() {
@@ -228,7 +232,7 @@ const views = {
 
       <h2 class="section-title">Guía rápida: problemas comunes</h2>
       <div id="guiaList">
-        ${d.soporte_guia.map(g => `<div class="faq-item guia"><div class="faq-q"><span>${esc(g.titulo)}</span><span class="chev">＋</span></div>
+        ${d.soporte_guia.map(g => `<div class="faq-item guia"><button type="button" class="faq-q" aria-expanded="false"><span>${esc(g.titulo)}</span><span class="chev">＋</span></button>
           <div class="faq-a"><p style="margin:0 0 6px"><strong>Síntoma:</strong> ${esc(g.sintoma)}</p>
           <p style="margin:0 0 6px"><strong>Posibles causas:</strong> ${esc(g.causas)}</p>
           <p style="margin:0"><strong>Qué hacer:</strong> ${esc(g.accion)}</p></div></div>`).join('')}
@@ -278,13 +282,15 @@ const views = {
           <h3>${esc(c.categoria)}</h3>
           <p>${esc(c.descripcion)}</p>
           <div class="chips-row" style="margin:10px 0 12px">${c.ejemplos.map(e => `<span class="badge grey">${esc(e)}</span>`).join('')}<span class="badge info">${esc(c.formato)}</span></div>
-          <button class="btn ghost sm" onclick="window.toast&&toast('Banco de Diseños: próximamente en el portal')">⬇ Ver diseños</button>
+          <span class="badge warn">Disponible próximamente</span>
         </div>`).join('')}
       </div>`;
   },
 
   certificado() {
     const ci = state.db.certificado_info;
+    const cli = currentClient();
+    const maq = cli ? state.db.maquinas.find(x => x.cliente_id === cli.id) : state.db.maquinas[0];
     return `
       <div class="cert-hero">
         <div class="cert-seal">${SEAL}</div>
@@ -292,6 +298,13 @@ const views = {
           <p class="cert-lema">«${esc(ci.lema)}»</p>
           <p class="muted" style="max-width:52ch">${esc(ci.frase_ancla)}</p></div>
       </div>
+
+      ${maq ? `<h2 class="section-title">Tu máquina</h2>
+      <div class="card mini"><div style="flex:1;min-width:220px">
+        <h3>Láser ${esc(maq.modelo)}</h3>
+        <p class="muted">Código de máquina: <strong>${esc(maq.serie)}</strong></p>
+        <p style="margin:8px 0 0">${maq.certificado?.estado === 'certificada' ? '<span class="badge ok">Certificada ✓</span>' : '<span class="badge warn">En revisión y calibración</span>'}</p>
+      </div></div>` : ''}
 
       <h2 class="section-title">Qué garantiza</h2>
       <div class="grid cols-2">
@@ -309,17 +322,17 @@ const views = {
       <div class="card" style="padding:12px"><img src="assets/certificado-calidad-c4v.png" alt="Certificado de Calidad C4V" class="cert-img" onerror="this.parentElement.remove()"/></div>
 
       <h2 class="section-title">Preguntas frecuentes</h2>
-      ${ci.faq.map(f => `<div class="faq-item"><div class="faq-q"><span>${esc(f.q)}</span><span class="chev">＋</span></div><div class="faq-a">${esc(f.a)}</div></div>`).join('')}`;
+      ${ci.faq.map(f => `<div class="faq-item"><button type="button" class="faq-q" aria-expanded="false"><span>${esc(f.q)}</span><span class="chev">＋</span></button><div class="faq-a">${esc(f.a)}</div></div>`).join('')}`;
   }
 };
 
 function ticketRows(tickets, isStaff) {
   if (!tickets.length) return '<div class="empty">Aún no tienes tickets.</div>';
-  const badge = (e) => { const m = { nuevo: 'info', asignado: 'info', en_proceso: 'warn', resuelto: 'ok', cerrado: 'grey' }; return `<span class="badge ${m[e] || 'grey'}">${e.replace('_', ' ')}</span>`; };
+  const badge = (e) => { const m = { nuevo: 'info', asignado: 'info', en_proceso: 'warn', resuelto: 'ok', cerrado: 'grey' }; return `<span class="badge ${m[e] || 'grey'}">${ESTADO_TICKET[e] || e}</span>`; };
   return tickets.map(t => `<div class="row-card">
     <div class="grow"><h4>${esc(t.asunto)} ${badge(t.estado)}</h4>
       <div class="meta"><span class="badge ${t.tipo === 'soporte' ? 'red' : 'info'}">${t.tipo}</span><span>${esc(t.id)}</span><span class="pill-pais">${t.pais}</span><span>Atiende: ${esc(t.asignado_a)}</span></div></div>
-    ${isStaff ? `<select class="mini-select" data-ticket="${esc(t.id)}">${['nuevo', 'asignado', 'en_proceso', 'resuelto', 'cerrado'].map(e => `<option ${e === t.estado ? 'selected' : ''} value="${e}">${e.replace('_', ' ')}</option>`).join('')}</select>` : ''}</div>`).join('');
+    ${isStaff ? `<select class="mini-select" data-ticket="${esc(t.id)}">${['nuevo', 'asignado', 'en_proceso', 'resuelto', 'cerrado'].map(e => `<option ${e === t.estado ? 'selected' : ''} value="${e}">${ESTADO_TICKET[e] || e}</option>`).join('')}</select>` : ''}</div>`).join('');
 }
 function leadRows(leads) {
   if (!leads.length) return '<div class="empty">No hay solicitudes con ese filtro.</div>';
@@ -342,7 +355,7 @@ function leadRows(leads) {
 }
 
 // ---------- interacciones ----------
-function bindAccordions(sel) { view.querySelectorAll(sel).forEach(it => { const q = it.querySelector('.faq-q, .course-head'); if (q) q.onclick = () => it.classList.toggle('open'); }); }
+function bindAccordions(sel) { view.querySelectorAll(sel).forEach(it => { const q = it.querySelector('.faq-q, .course-head'); if (q) q.onclick = () => { const open = it.classList.toggle('open'); q.setAttribute('aria-expanded', open); }; }); }
 function bind(route) {
   if (route === 'inicio') {
     view.querySelectorAll('.onb-item input').forEach(chk => chk.onchange = () => {
@@ -372,7 +385,7 @@ function bind(route) {
       e.preventDefault(); const f = e.target;
       const pais = serieSel?.selectedOptions[0]?.dataset.pais || currentClient()?.pais || 'PE';
       try { await actions.crearTicket({ tipo: f.tipo.value, prioridad: f.prioridad.value, serie: f.serie.value, asunto: f.asunto.value, descripcion: f.descripcion.value, pais, cliente_id: currentClient()?.id || null });
-        toast('✅ Ticket enviado al equipo de ' + pais); render('soporte'); } catch { toast('⚠️ No se pudo enviar'); }
+        toast(state.offline ? 'Guardado en esta demostración (aún no llega a un equipo real)' : '✅ Ticket enviado al equipo de ' + pais); render('soporte'); } catch { toast('⚠️ No se pudo enviar'); }
     };
     view.querySelectorAll('select[data-ticket]').forEach(sel => sel.onchange = async () => {
       try { await actions.estadoTicket(sel.dataset.ticket, sel.value); toast('Estado actualizado'); } catch { toast('⚠️ Error'); } });
@@ -392,7 +405,7 @@ function bind(route) {
           <div class="form-row"><div class="field"><label>Nombre del cliente</label><input name="contacto" placeholder="Nombre" required></div><div class="field"><label>Teléfono o email</label><input name="telefono" placeholder="+51 …"></div></div>
           <button class="btn primary" type="submit">Publicar</button></form></div>`;
       $('#lf').onsubmit = async (e) => { e.preventDefault();
-        try { await actions.crearLead(Object.fromEntries(new FormData(e.target))); toast('✅ Solicitud publicada'); render('bolsa'); } catch { toast('⚠️ Error'); } };
+        try { await actions.crearLead(Object.fromEntries(new FormData(e.target))); toast(state.offline ? 'Solicitud guardada en esta demostración' : '✅ Solicitud publicada'); render('bolsa'); } catch { toast('⚠️ Error'); } };
     };
     bindTake();
   }
@@ -401,7 +414,7 @@ function bindTake() {
   view.querySelectorAll('[data-take]').forEach(b => b.onclick = async () => {
     const cli = currentClient();
     if (!cli) { toast('Cambia "Viendo como" a un cliente para tomar el trabajo'); return; }
-    try { await actions.tomarLead(b.dataset.take, cli.id); toast('🎉 ¡Trabajo tomado! Contacta al cliente'); render('bolsa'); } catch { toast('⚠️ Ese trabajo ya fue tomado'); }
+    try { await actions.tomarLead(b.dataset.take, cli.id); toast(state.offline ? 'Trabajo tomado (demostración: el contacto es de ejemplo)' : '🎉 ¡Trabajo tomado! Contacta al cliente'); render('bolsa'); } catch { toast('⚠️ Ese trabajo ya fue tomado'); }
   });
 }
 
@@ -423,9 +436,9 @@ window.toast = toast;
 async function init() {
   state.db = await loadDB();
   const sel = $('#ctxUser');
-  sel.innerHTML = '<option value="staff">C4V (staff)</option>' + state.db.clientes.map(c => `<option value="${c.id}">${esc(c.nombre)} · ${c.pais}</option>`).join('');
+  sel.innerHTML = '<option value="staff">Equipo C4V</option>' + state.db.clientes.map(c => `<option value="${c.id}">${esc(c.nombre)} · ${c.pais}</option>`).join('');
   sel.onchange = () => { state.ctx = sel.value; render(currentRoute()); };
-  $('#menuBtn').onclick = () => $('#sidebar').classList.toggle('open');
+  $('#menuBtn').onclick = () => { const open = $('#sidebar').classList.toggle('open'); $('#menuBtn').setAttribute('aria-expanded', open); };
   render(currentRoute());
 }
 init();

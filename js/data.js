@@ -63,7 +63,7 @@ window.__SEED__ = {
     faq: [
       { q: "¿Es lo mismo que la garantía?", a: "No. El certificado es la revisión previa a la entrega; la garantía (12 meses + RECI) cubre fallas después." },
       { q: "¿Dónde se hace la revisión?", a: "Al llegar al país, en nuestro almacén, antes de despachártela." },
-      { q: "¿Cómo sé que mi máquina está certificada?", a: "Por el sello con tu Nº de serie y tu certificado digital verificable." },
+      { q: "¿Cómo sé que mi máquina está certificada?", a: "Por el sello con tu código de máquina (Nº de serie) que acompaña a tu equipo." },
       { q: "¿Incluye instalación?", a: "Acompañamiento hasta el primer corte: remoto (6040/9060) o presencial (13100–18120)." }
     ]
   },
@@ -136,7 +136,7 @@ window.__SEED__ = {
         modulos: [
           { titulo: "Tu kit de mantenimiento (5 materiales)", lecciones: ["Agua destilada (Vistony)", "Aceite 3-EN-UNO para rieles", "Alcohol isopropílico", "Hisopos de alta calidad", "Paño de microfibra sin pelusa"], quizzes: 3 },
           { titulo: "Limpieza de lente y espejos", lecciones: ["Retirar la lente con cuidado", "Alcohol isopropílico + hisopo, circular y sin presión", "Misma técnica en los 3 espejos", "Mínimo cada 2 semanas con uso diario"], quizzes: 4 },
-          { titulo: "Agua del chiller y enfriamiento", lecciones: ["Solo agua destilada, nunca del grifo", "Cambio cada 2-4 semanas", "Temperatura ideal 15-25 °C"], quizzes: 4 },
+          { titulo: "Agua del enfriador (chiller)", lecciones: ["Solo agua destilada, nunca del grifo", "Cambio cada 2-4 semanas", "Temperatura ideal 15-25 °C"], quizzes: 4 },
           { titulo: "Lubricación y cuidado de rieles", lecciones: ["Limpiar con microfibra", "Aceite 3-EN-UNO en gotas", "Mover el cabezal para distribuir", "Semanal con uso diario"], quizzes: 3 },
           { titulo: "6 errores que destruyen tu máquina", lecciones: ["Encender sin chiller → tubo quemado", "Agua del grifo → residuos minerales", "No limpiar la lente → pierde potencia", "Cortar PVC → gas tóxico", "Máquina sin supervisión", "Calendario de mantenimiento"], quizzes: 4 }
         ]
@@ -161,16 +161,6 @@ window.__SEED__ = {
     ]
   },
 
-  preinstalacion: {
-    intro: "Prepara tu espacio ANTES de que llegue la máquina para instalar el mismo día.",
-    secciones: [
-      { titulo: "Lista de compras", items: ["Estabilizador de voltaje (obligatorio)", "Extractor de humos + ducto al exterior", "Agua destilada Vistony para el chiller", "Mesa/base nivelada y firme", "Extintor + kit de limpieza de óptica"] },
-      { titulo: "Instalación eléctrica", items: ["220 V en circuito independiente", "Cable de tierra conectado", "No compartir toma con otros equipos", "Tablero con llave térmica"] },
-      { titulo: "Pozo a tierra", items: ["Pozo a tierra OBLIGATORIO (protege electrónica y operador)", "Medir continuidad a tierra antes de conectar", "Instálalo con un técnico eléctrico certificado"] },
-      { titulo: "Ambiente", items: ["Espacio ventilado con extracción al exterior", "Temperatura estable, sin calor extremo", "Espacio libre alrededor para mantenimiento"] }
-    ]
-  },
-
   preparacion: {
     intro: "Prepara tu espacio ANTES de que llegue tu máquina y podrás cortar el mismo día. Estas 5 cosas marcan la diferencia: electricidad 220V dedicada, pozo a tierra, extracción de humos, agua destilada y un espacio adecuado.",
     checklist: [
@@ -178,7 +168,7 @@ window.__SEED__ = {
       { id: "e2", t: "Pozo a tierra verificado por un electricista" },
       { id: "e3", t: "Estabilizador de voltaje instalado" },
       { id: "e4", t: "Extractor conectado y con salida al exterior" },
-      { id: "e5", t: "Chiller con agua destilada (15–25 °C)" },
+      { id: "e5", t: "Enfriador (chiller) con agua destilada (15–25 °C)" },
       { id: "e6", t: "Compresor / aire listo (si tu modelo lo usa)" },
       { id: "e7", t: "Extintor a la mano" },
       { id: "e8", t: "Espacio nivelado, limpio y ventilado" },
@@ -189,7 +179,7 @@ window.__SEED__ = {
       { key: "electrico", titulo: "Instalación eléctrica (220V dedicado)", pasos: ["Voltaje: 220V.", "Circuito independiente: su propia llave termomagnética, sin compartir con otros equipos.", "Estabilizador entre el tomacorriente y la máquina.", "Amperaje y calibre de cable según tu modelo — tu asesor te confirma."] },
       { key: "tierra", titulo: "Pozo a tierra (obligatorio)", pasos: ["No es opcional: te protege a ti, a la electrónica y a la calidad del corte.", "Cable de tierra real conectado a un pozo (no basta el tercer agujero del enchufe).", "Que un electricista lo verifique y mida antes de la llegada. Es la causa #1 de retrasos."] },
       { key: "extraccion", titulo: "Extracción de humos", pasos: ["El corte genera humo y gases: el extractor es obligatorio.", "Conectado y dirigido al EXTERIOR.", "Nunca operes sin extractor. Mantén el ambiente ventilado."] },
-      { key: "chiller", titulo: "Agua del chiller (refrigeración)", pasos: ["SOLO agua destilada, nunca del grifo (los minerales dañan el tubo).", "Temperatura ideal: 15–25 °C.", "Nunca enciendas el láser sin el chiller: el tubo se quema.", "Cambia el agua cada 2–4 semanas."] },
+      { key: "chiller", titulo: "Agua del enfriador (chiller)", pasos: ["SOLO agua destilada, nunca del grifo (los minerales dañan el tubo).", "Temperatura ideal: 15–25 °C.", "Nunca enciendas el láser sin el chiller: el tubo se quema.", "Cambia el agua cada 2–4 semanas."] },
       { key: "secuencia", titulo: "Secuencia de encendido", pasos: ["Siempre en orden: 1) Estabilizador → 2) Chiller → 3) Máquina.", "El chiller arranca antes que el láser, siempre.", "Si el panel muestra alarma, apaga todo y revisa conexiones."] },
       { key: "seguridad", titulo: "Seguridad", pasos: ["Extintor cercano y accesible.", "Nunca cortes PVC ni clorados: liberan gas tóxico.", "Opera con la puerta cerrada (tiene protección UV).", "No dejes la máquina operando sin supervisión."] }
     ],
@@ -213,8 +203,8 @@ window.__SEED__ = {
     { categoria: "Operación", pregunta: "¿Y para acrílico de 5 mm?", respuesta: "Potencia ~60 %, velocidad ~8 mm/s. Empieza en 50 y ajusta según el resultado." },
     { categoria: "Operación", pregunta: "¿Qué hago si el panel muestra una alarma?", respuesta: "Apaga la máquina de inmediato. Revisa conexiones eléctricas, el chiller y las conexiones de agua. Si la alarma persiste tras reiniciar, contacta soporte con el código exacto." },
     { categoria: "Mantenimiento", pregunta: "¿Cómo limpio la lente y los espejos?", respuesta: "Retira la lente con cuidado y aplica alcohol isopropílico con un hisopo de alta calidad, en movimiento circular suave y sin presión. Misma técnica para los 3 espejos. Cada 2 semanas si usas la máquina a diario." },
-    { categoria: "Mantenimiento", pregunta: "¿Qué agua va en el chiller y cada cuánto se cambia?", respuesta: "Solo agua destilada (nunca del grifo: los minerales obstruyen y dañan el tubo). Cambio cada 2-4 semanas según uso." },
-    { categoria: "Mantenimiento", pregunta: "¿Cuál es la temperatura ideal del chiller?", respuesta: "Entre 15 y 25 °C. Si sube de 25, apaga y deja enfriar antes de seguir cortando." },
+    { categoria: "Mantenimiento", pregunta: "¿Qué agua va en el enfriador (chiller) y cada cuánto se cambia?", respuesta: "Solo agua destilada (nunca del grifo: los minerales obstruyen y dañan el tubo). Cambio cada 2-4 semanas según uso." },
+    { categoria: "Mantenimiento", pregunta: "¿Cuál es la temperatura ideal del enfriador (chiller)?", respuesta: "Entre 15 y 25 °C. Si sube de 25, apaga y deja enfriar antes de seguir cortando." },
     { categoria: "Mantenimiento", pregunta: "¿Cómo lubrico los rieles y cada cuánto?", respuesta: "Limpia con paño de microfibra, aplica unas gotas de aceite 3-EN-UNO y mueve el cabezal a mano para distribuir. Semanal si usas la máquina a diario." },
     { categoria: "Mantenimiento", pregunta: "¿Cada cuánto hago mantenimiento?", respuesta: "Diario: limpieza de superficie. Semanal: lubricar rieles. Cada 2 semanas: limpiar lente y espejos. Mensual: cambiar agua del chiller." },
     { categoria: "Materiales", pregunta: "¿Qué materiales puedo cortar y grabar?", respuesta: "Madera, MDF, acrílico, cartón, cuero, tela, papel y caucho. No cortes PVC ni metales. Ante un material nuevo con dudas, consulta a soporte." },
@@ -252,9 +242,8 @@ window.__SEED__ = {
   },
 
   onboarding: [
-    { id: "explora", titulo: "Explora tu plataforma", detalle: "Date una vuelta por Academia, Soporte y el Banco de Diseños.", href: "#/academia" },
+    { id: "curso", titulo: "Haz el curso «Bienvenida: Tus Primeros Pasos»", detalle: "10 minutos para conocer tu plataforma y arrancar con el pie derecho.", href: "#/academia" },
     { id: "cert", titulo: "Conoce tu Certificado de Calidad", detalle: "Mira el estado de tu máquina y qué garantiza.", href: "#/certificado" },
-    { id: "curso", titulo: "Haz el curso «Bienvenida: Tus Primeros Pasos»", detalle: "10 minutos para arrancar con el pie derecho.", href: "#/academia" },
     { id: "espacio", titulo: "Prepara tu espacio", detalle: "Guía de preinstalación: eléctrico, pozo a tierra y ambiente.", href: "#/preparacion" },
     { id: "soporte", titulo: "Ten a mano tu soporte", detalle: "WhatsApp 924 662 205, los 365 días. Y descubre la Bolsa de Trabajos.", href: "#/soporte" }
   ]
