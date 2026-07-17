@@ -37,22 +37,28 @@ button{font-family:var(--sans)}
 [hidden]{display:none !important}
 
 /* ---------- Acceso por teléfono (gate) ---------- */
-.gate{position:fixed;inset:0;z-index:50;background:var(--black);color:var(--on-black);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;overflow-y:auto}
+.gate{position:fixed;inset:0;z-index:50;background:var(--black);color:var(--on-black);display:flex;flex-direction:column;align-items:center;padding:24px;overflow-y:auto}
 .gate-band{position:absolute;top:0;left:0;right:0;background:var(--amber);color:var(--black);font-size:13px;font-weight:700;text-align:center;padding:6px 16px}
-.gate-box{width:100%;max-width:420px;text-align:center}
+.gate-box{width:100%;max-width:420px;text-align:center;margin:auto;padding-top:36px}
 .gate-logo{height:34px;width:auto;margin-bottom:32px}
-.gate h1{font-family:var(--slab);font-size:28px;font-weight:800;line-height:1.2;margin-bottom:12px}
-.gate-sub{color:var(--on-black-dim);font-size:16px;line-height:1.5;margin-bottom:28px}
-.gate-sub strong{color:var(--on-black)}
+.gate-wa-ic{width:56px;height:56px;margin:0 auto 16px;color:#25D366}
+.gate-wa-ic svg{width:100%;height:100%}
+.gate h1{font-family:var(--slab);font-size:30px;font-weight:800;line-height:1.2;margin-bottom:10px}
+.gate-sub{color:var(--on-black-dim);font-size:17px;line-height:1.5;margin-bottom:28px}
 .gate-form{text-align:left}
-.gate-label{display:block;font-size:14px;font-weight:700;margin-bottom:8px}
-.gate-row{display:flex;gap:8px}
-#gateCountry{flex-shrink:0;width:112px;background:var(--black-2);color:var(--on-black);border:1px solid var(--black-3);border-radius:var(--r);padding:14px 8px;font-size:16px;font-family:var(--sans)}
-#gatePhone{flex:1;min-width:0;background:var(--black-2);color:var(--on-black);border:1px solid var(--black-3);border-radius:var(--r);padding:14px 16px;font-size:20px;font-weight:700;letter-spacing:.5px;font-family:var(--sans)}
-#gatePhone:focus,#gateCountry:focus{outline:2px solid var(--red);outline-offset:1px;border-color:var(--red)}
+.gate-paso{font-size:16px;margin-bottom:10px;color:var(--on-black)}
+.gate-paso strong{color:var(--red)}
+.gate-paises{display:flex;gap:8px;margin-bottom:22px}
+.gate-paises button{flex:1;background:var(--black-2);border:2px solid var(--black-3);color:var(--on-black);border-radius:var(--r);padding:12px 4px;font-size:15px;font-weight:700;font-family:var(--sans);cursor:pointer;text-align:center;min-height:64px}
+.gate-paises button .bandera{display:block;font-size:24px;line-height:1.2}
+.gate-paises button[aria-checked="true"]{border-color:var(--red);background:#2a1112}
+.gate-paises button:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+.gate-row{display:flex;gap:0;margin-bottom:22px}
+.gate-prefijo{flex-shrink:0;display:flex;align-items:center;background:var(--black-3);color:var(--on-black);border:1px solid var(--black-3);border-right:0;border-radius:var(--r) 0 0 var(--r);padding:0 14px;font-size:22px;font-weight:700;font-family:var(--sans)}
+#gatePhone{flex:1;min-width:0;background:var(--black-2);color:var(--on-black);border:1px solid var(--black-3);border-radius:0 var(--r) var(--r) 0;padding:16px;font-size:24px;font-weight:700;letter-spacing:1px;font-family:var(--sans)}
+#gatePhone:focus{outline:2px solid var(--red);outline-offset:1px;border-color:var(--red)}
 #gatePhone::placeholder{color:#6a6a6a;font-weight:400;letter-spacing:0}
-.gate-help{color:var(--on-black-dim);font-size:13px;margin:8px 0 20px}
-.gate-btn{width:100%;justify-content:center;padding:16px;font-size:17px}
+.gate-btn{width:100%;justify-content:center;padding:18px;font-size:18px;min-height:56px}
 .gate-error{margin-top:16px;background:#3a1414;border:1px solid var(--red);color:#ffd7d7;border-radius:var(--r);padding:12px 14px;font-size:14px;line-height:1.5}
 .gate-error a{color:#fff;font-weight:700}
 .gate-demo{margin-top:28px;border-top:1px solid var(--black-3);padding-top:20px;text-align:left}

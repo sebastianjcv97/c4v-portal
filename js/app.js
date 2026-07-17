@@ -457,12 +457,25 @@ function entrar(cliente, tel) {
 }
 
 function initGate() {
-  const gate = $('#gate'), form = $('#gateForm'), sel = $('#gateCountry'), inp = $('#gatePhone'), err = $('#gateError');
+  const gate = $('#gate'), form = $('#gateForm'), inp = $('#gatePhone'), err = $('#gateError');
+  const paisesBox = $('#gatePaises'), prefEl = $('#gatePrefijo');
   const paises = CFG.paises || [];
+  let prefijo = paises[0]?.prefijo || '51';   // Perú por defecto
 
-  sel.innerHTML = paises.map(p => `<option value="${p.prefijo}">${p.bandera} +${p.prefijo}</option>`).join('');
-  const setEjemplo = () => { inp.placeholder = paises.find(p => p.prefijo === sel.value)?.ejemplo || ''; };
-  sel.onchange = setEjemplo; setEjemplo();
+  // País = 3 botones grandes con bandera (un toque, sin desplegables)
+  paisesBox.innerHTML = paises.map(p =>
+    `<button type="button" role="radio" aria-checked="${p.prefijo === prefijo}" data-prefijo="${p.prefijo}">
+       <span class="bandera" aria-hidden="true">${p.bandera}</span>${esc(p.nombre)}
+     </button>`).join('');
+  const elegirPais = (pf) => {
+    prefijo = pf;
+    prefEl.textContent = '+' + pf;
+    inp.placeholder = paises.find(p => p.prefijo === pf)?.ejemplo || '';
+    paisesBox.querySelectorAll('button').forEach(b => b.setAttribute('aria-checked', b.dataset.prefijo === pf));
+    inp.focus();
+  };
+  paisesBox.querySelectorAll('button').forEach(b => b.onclick = () => elegirPais(b.dataset.prefijo));
+  elegirPais(prefijo);
   $('#gateWa').href = waLink('Hola, quiero acceder a mi Central de Postventa C4V pero mi número no está registrado.');
 
   // Números de ejemplo (solo demo — para poder entrar y probar)
@@ -479,9 +492,9 @@ function initGate() {
 
   form.onsubmit = (e) => {
     e.preventDefault(); err.hidden = true;
-    const tel = normalizarTelefono(inp.value, sel.value);
+    const tel = normalizarTelefono(inp.value, prefijo);
     if (normalizarTelefono(inp.value, '').length < 7) {
-      err.hidden = false; err.innerHTML = 'Escribe tu número completo, solo los dígitos.'; return;
+      err.hidden = false; err.innerHTML = 'Parece que falta parte del número. Escríbelo completo, como en el ejemplo.'; return;
     }
     const cli = buscarClientePorTelefono(tel);
     if (!cli) {

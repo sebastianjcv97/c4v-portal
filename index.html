@@ -25,25 +25,32 @@
     <div class="gate-band">Versión de demostración</div>
     <div class="gate-box">
       <img class="gate-logo" src="assets/c4v-wordmark.png" alt="C4V Láser" />
-      <h1>Tu Central de Postventa</h1>
-      <p class="gate-sub">Ingresa con el <strong>número de WhatsApp</strong> con el que compraste tu máquina. Es tu llave: no necesitas contraseña.</p>
+
+      <div class="gate-wa-ic" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5.1-1.3A10 10 0 1 0 12 2zm0 18.2c-1.5 0-3-.4-4.3-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.6-6.1c-.3-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1-.2.3-.6.8-.8 1-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.4-3c-.3-.4 0-.5.2-.7l.4-.5c.1-.2.1-.4 0-.5l-.8-1.9c-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.5.1-.7.3-.2.3-.9.9-.9 2.2s.9 2.5 1.1 2.7c.1.2 1.8 2.8 4.4 3.9 2.6 1.1 2.6.7 3.1.7.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.6-.3z"/></svg>
+      </div>
+
+      <h1>Entra con tu número<br />de WhatsApp</h1>
+      <p class="gate-sub">El mismo con el que compraste tu máquina.<br />Sin contraseñas.</p>
 
       <form class="gate-form" id="gateForm" novalidate>
-        <label class="gate-label" for="gatePhone">Tu número de WhatsApp</label>
+        <p class="gate-paso"><strong>1.</strong> ¿De qué país eres?</p>
+        <div class="gate-paises" id="gatePaises" role="radiogroup" aria-label="Tu país"></div>
+
+        <p class="gate-paso"><strong>2.</strong> Escribe tu número</p>
         <div class="gate-row">
-          <select id="gateCountry" aria-label="País"></select>
+          <span class="gate-prefijo" id="gatePrefijo">+51</span>
           <input id="gatePhone" type="tel" inputmode="numeric" autocomplete="tel-national"
-                 placeholder="987 654 321" aria-describedby="gateHelp" required />
+                 placeholder="987 654 321" aria-label="Tu número de WhatsApp" required />
         </div>
-        <p class="gate-help" id="gateHelp">Solo los números, sin espacios ni guiones.</p>
-        <button class="btn primary gate-btn" type="submit">Entrar</button>
+        <button class="btn primary gate-btn" type="submit">Entrar a mi portal →</button>
         <div class="gate-error" id="gateError" role="alert" hidden></div>
       </form>
 
       <div class="gate-demo" id="gateDemo" hidden></div>
 
       <p class="gate-foot">
-        ¿Aún no tienes tu acceso? Escríbenos por
+        ¿No puedes entrar? Escríbenos por
         <a id="gateWa" href="#" target="_blank" rel="noopener">WhatsApp</a> y te ayudamos.
       </p>
     </div>
