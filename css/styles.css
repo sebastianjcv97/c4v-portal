@@ -77,7 +77,48 @@ button{font-family:var(--sans)}
 .ai-soon{display:inline-block;background:var(--warn-50);color:var(--warn);border-radius:100px;padding:3px 10px;font-size:12px;font-weight:700;margin-bottom:8px}
 .ai-close{margin-left:auto;background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:4px 8px;line-height:1}
 
-/* ---------- Identidad del usuario en el sidebar ---------- */
+/* ---------- Pantalla única: saludo + máquina + 4 botones grandes ---------- */
+.saludo{font-family:var(--slab);font-size:28px;font-weight:800;margin:0 0 20px}
+.volver{display:inline-flex;align-items:center;gap:8px;min-height:44px;color:var(--red-cta);font-weight:700;font-size:15px;margin-bottom:8px}
+.volver:hover{text-decoration:underline}
+.pag-title{font-family:var(--slab);font-size:24px;font-weight:800;margin:0 0 20px}
+
+/* Tarjeta de la máquina (lleva al certificado) */
+.maq{display:flex;align-items:center;gap:14px;background:var(--black);color:var(--on-black);border-radius:var(--r-lg);padding:16px;margin-bottom:24px}
+.maq:hover{background:var(--black-2)}
+.maq-seal{flex-shrink:0;width:56px;height:56px}
+.maq-seal svg{width:100%;height:100%}
+.maq-txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.maq-txt strong{font-size:17px;font-weight:700}
+.maq-txt span{font-size:14px;color:var(--on-black-dim)}
+.maq-txt .muted{color:#8a8a8a;font-size:13px}
+
+/* Los 4 botones grandes */
+.bigs{display:flex;flex-direction:column;gap:12px}
+.big{display:flex;align-items:center;gap:16px;min-height:76px;background:var(--bg);border:2px solid var(--line);border-radius:var(--r-lg);padding:16px;color:var(--ink)}
+.big:hover{border-color:var(--red-cta);background:var(--alt)}
+.big-ico{flex-shrink:0;width:48px;height:48px;border-radius:50%;background:var(--red-50);color:var(--red-cta);display:flex;align-items:center;justify-content:center}
+.big-ico .ic{width:24px;height:24px}
+.big-txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.big-txt strong{font-family:var(--slab);font-size:18px;font-weight:700;line-height:1.25}
+.big-txt span{font-size:14px;color:var(--muted);line-height:1.4}
+.big-arrow{flex-shrink:0;color:var(--red-cta);font-size:22px;font-weight:700}
+
+/* Botón grande de WhatsApp (la vía principal para pedir ayuda) */
+.wa-big{display:flex;align-items:center;gap:14px;min-height:72px;background:#25D366;color:#fff;border-radius:var(--r-lg);padding:16px 18px;margin-bottom:28px}
+.wa-big:hover{background:#1eb457}
+.wa-ic{flex-shrink:0;width:32px;height:32px}
+.wa-txt{display:flex;flex-direction:column;gap:2px}
+.wa-txt strong{font-family:var(--slab);font-size:18px;font-weight:700}
+.wa-txt span{font-size:14px;opacity:.95}
+
+/* Vía secundaria: dejar un mensaje escrito */
+.msg-box{margin-top:28px;border:1px solid var(--line);border-radius:var(--r-lg);padding:0 16px}
+.msg-box summary{min-height:48px;display:flex;align-items:center;cursor:pointer;font-weight:700;color:var(--red-cta);font-size:15px}
+.msg-box[open]{padding-bottom:16px}
+.msg-box .form{margin-top:8px}
+
+/* ---------- Identidad del usuario (pie) ---------- */
 .me{font-size:13px;color:var(--on-black-dim);line-height:1.5;margin-bottom:10px}
 .me strong{display:block;color:var(--on-black);font-size:14px}
 .ctx-out{width:100%;min-height:40px;background:transparent;border:1px solid var(--black-3);color:var(--on-black-dim);border-radius:var(--r);padding:8px 12px;font-size:13px;font-family:var(--sans);cursor:pointer}
@@ -106,7 +147,8 @@ button{font-family:var(--sans)}
 /* Topbar — negro, logo visible en móvil */
 .topbar{display:flex;align-items:center;gap:16px;padding:12px 32px;background:var(--black);color:var(--on-black);position:sticky;top:0;z-index:5}
 .menu-btn{display:none;background:none;border:none;font-size:24px;cursor:pointer;color:var(--on-black);padding:8px;line-height:1}
-.topbar-logo{display:none;height:24px;width:auto}
+.topbar-home{display:flex;align-items:center;min-height:44px}
+.topbar-logo{height:26px;width:auto}
 .topbar-title{font-family:var(--slab);font-size:18px;font-weight:700}
 .badge-cert{margin-left:auto;font-size:14px;font-weight:700;color:var(--on-black);background:var(--black-2);border:1px solid var(--red);padding:8px 12px;border-radius:var(--r);white-space:nowrap}
 a.badge-cert:hover{background:var(--black-3)}

@@ -69,6 +69,7 @@ const ICONS = {
   soporte: '<path d="M4 5.5A1.5 1.5 0 0 1 5.5 4h13A1.5 1.5 0 0 1 20 5.5v9a1.5 1.5 0 0 1-1.5 1.5H9l-4.5 4z"/>',
   bolsa: '<rect x="3" y="7.5" width="18" height="12" rx="2"/><path d="M8.5 7.5v-2A1.5 1.5 0 0 1 10 4h4a1.5 1.5 0 0 1 1.5 1.5v2"/>',
   disenos: '<rect x="4" y="4" width="6.5" height="6.5" rx="1.2"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.2"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.2"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.2"/>',
+  prep: '<path d="M9 3v4M15 3v4M7 7h10v5a5 5 0 0 1-10 0z"/><path d="M12 17v4"/>',
   help: '<circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.4 2.4 0 1 1 3.1 2.3c-.7.3-1.1.8-1.1 1.6"/><path d="M12 16.4h.01"/>'
 };
 const icon = (n) => `<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${ICONS[n] || ''}</svg>`;
@@ -86,57 +87,39 @@ const diag = (k) => `<svg class="diag" viewBox="0 0 220 120" fill="none">${DIAG[
 
 // ---------- vistas ----------
 const views = {
+  /* Pantalla única: saludo + tu máquina + 4 botones grandes. Nada más.
+     Todo lo demás vive DENTRO de esos 4 botones. */
   inicio() {
-    const d = state.db, cli = currentClient(), sop = d.soporte, bv = d.bienvenida;
-    const maq = cli ? d.maquinas.find(m => m.cliente_id === cli.id) : d.maquinas[0];
-    const cert = maq?.certificado?.estado;
-    const certLine = cert === 'certificada'
-      ? '<span class="badge ok">Certificada ✓</span> <span class="muted">Tu máquina está lista, con su Certificado de Calidad C4V.</span>'
-      : '<span class="badge warn">En revisión y calibración</span> <span class="muted">La estamos probando y calibrando con piezas originales — te avisaremos cuando esté lista.</span>';
-    const done = (id) => { try { return localStorage.getItem('c4v_onb_' + state.ctx + '_' + id) === '1'; } catch { return false; } };
-    const hechos = d.onboarding.filter(o => done(o.id)).length, total = d.onboarding.length;
-    const card = (href, ic, t, desc) => `<a class="action-card" href="${href}"><div class="ac-ico">${icon(ic)}</div><div><h3>${t}</h3><p>${desc}</p></div><div class="ac-arrow">→</div></a>`;
+    const d = state.db, cli = currentClient();
+    const maq = cli ? d.maquinas.find(m => m.cliente_id === cli.id) : null;
+    const lista = maq ? d.maquinas.filter(m => m.cliente_id === cli.id) : [];
+    const certificada = maq?.certificado?.estado === 'certificada';
+
+    const bigBtn = (href, ic, t, desc, ext) => `<a class="big" href="${href}"${ext ? ' target="_blank" rel="noopener"' : ''}>
+        <div class="big-ico">${icon(ic)}</div>
+        <div class="big-txt"><strong>${t}</strong><span>${desc}</span></div>
+        <div class="big-arrow" aria-hidden="true">→</div></a>`;
+
     return `
-      <div class="hero">
-        <h1>${cli ? `Hola, ${esc(cli.nombre.split(' ')[0])}. ` : ''}Gracias por ser parte de <em>C4V</em>.</h1>
-        <p>${esc(bv.mensaje)}</p>
-        <div class="hero-cta">
-          <a class="btn primary" href="#/academia">Empezar mi capacitación</a>
-          <a class="btn ghost" href="${esc(sop.wa_link)}" target="_blank" rel="noopener">Escríbenos por WhatsApp</a>
+      <h1 class="saludo">${cli ? `Hola, ${esc(cli.nombre.split(' ')[0])}` : 'Hola'}</h1>
+
+      ${maq ? `<a class="maq" href="#/certificado">
+        <div class="maq-seal">${SEAL}</div>
+        <div class="maq-txt">
+          <strong>Tu láser ${esc(maq.modelo)}</strong>
+          <span>${certificada
+            ? 'Certificada ✓ · Ver tu Certificado de Calidad'
+            : 'La estamos probando y calibrando · Ver qué significa'}</span>
+          ${lista.length > 1 ? `<span class="muted">y ${lista.length - 1} máquina${lista.length > 2 ? 's' : ''} más</span>` : ''}
         </div>
-      </div>
+        <div class="big-arrow" aria-hidden="true">→</div></a>` : ''}
 
-      ${maq ? `<h2 class="section-title">Tu máquina y tu certificado</h2>
-      <div class="card mini">
-        <div class="seal-sm">${SEAL}</div>
-        <div style="flex:1;min-width:220px">
-          <h3>Láser ${esc(maq.modelo)}</h3>
-          <p class="muted" style="margin:2px 0">Código de máquina: <strong>${esc(maq.serie)}</strong> · ${esc(maq.area)} · ${PAISES[maq.pais] || maq.pais}</p>
-          <p style="margin:10px 0 0">${certLine}</p>
-          <a class="btn ghost sm" href="#/certificado" style="margin-top:12px">Ver mi certificado</a>
-        </div></div>` : ''}
-
-      <h2 class="section-title">Tus primeros pasos <span id="onbCount" style="text-transform:none;letter-spacing:0;color:var(--muted);font-weight:600">${hechos}/${total}</span></h2>
-      <div class="card">
-        <div class="bar" style="margin:0 0 16px"><i id="onbBar" style="width:${total ? Math.round(hechos / total * 100) : 0}%"></i></div>
-        <div id="onbList">${d.onboarding.map(o => `<div class="onb-item" data-onb="${o.id}">
-          <input type="checkbox" ${done(o.id) ? 'checked' : ''} aria-label="${esc(o.titulo)}">
-          <div class="onb-body"><strong>${esc(o.titulo)}</strong><span>${esc(o.detalle)}</span></div>
-          <a href="${o.href}" class="onb-go">Ir →</a></div>`).join('')}</div>
-      </div>
-
-      <h2 class="section-title">¿En qué te ayudamos hoy?</h2>
-      <div class="actions">
-        ${card('#/academia', 'academia', 'Academia', 'Cursos paso a paso, cómo preparar tu espacio y preguntas frecuentes.')}
-        ${card('#/soporte', 'soporte', 'Soporte', '¿Algo no funciona? Te guiamos y, si hace falta, un técnico te atiende.')}
-        ${card('#/bolsa', 'bolsa', 'Bolsa de Trabajos', 'Te pasamos clientes de corte. Gratis, por ser parte de C4V.')}
-        ${card('#/plantillas', 'disenos', 'Banco de Diseños', 'Diseños listos para cortar y empezar a producir.')}
-      </div>
-      <h2 class="section-title">¿Necesitas ayuda ahora?</h2>
-      <div class="help-card">${icon('help')}
-        <div class="grow"><h3>Estamos para ayudarte</h3>
-          <p>Escríbenos por WhatsApp ${esc(sop.whatsapp)} — soporte en español los 365 días. O abre un ticket en Soporte y te atiende el equipo de tu país.</p></div>
-        <a class="btn primary sm" href="${esc(sop.wa_link)}" target="_blank" rel="noopener">WhatsApp</a></div>`;
+      <div class="bigs">
+        ${bigBtn('#/soporte', 'soporte', 'Necesito ayuda', 'Algo no funciona o tengo una duda')}
+        ${bigBtn('#/academia', 'academia', 'Aprender a usar mi máquina', 'Cursos y preguntas frecuentes')}
+        ${bigBtn('#/preparacion', 'prep', 'Preparar mi espacio', 'Qué necesitas antes de instalarla')}
+        ${bigBtn('#/bolsa', 'bolsa', 'Quiero más clientes', 'Trabajos de corte que te pasamos gratis')}
+      </div>`;
   },
 
   academia() {
@@ -158,8 +141,7 @@ const views = {
     };
     const faqCats = [...new Set(faqs.map(f => f.categoria))];
     return `
-      <div class="page-head"><h1>Academia</h1>
-        <p>${esc(a.acceso)}</p></div>
+      <div class="page-head"><p>${esc(a.acceso)}</p></div>
       <p style="margin:0 0 16px"><a class="btn ghost sm" href="https://c4vschool.com" target="_blank" rel="noopener">Ir a C4V School ↗</a></p>
       <div class="chips-row">${a.ruta.map((r, i) => `<span class="chip">${i + 1}. ${esc(r)}</span>`).join('')}</div>
 
@@ -196,7 +178,7 @@ const views = {
     const hechos = p.checklist.filter(c => done(c.id)).length, total = p.checklist.length;
     return `
       <div class="page-head" style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap">
-        <div><h1>Prepara tu espacio</h1><p style="margin:6px 0 0;max-width:64ch">${esc(p.intro)}</p></div>
+        <div><p style="margin:0;max-width:64ch">${esc(p.intro)}</p></div>
         <button class="btn ghost sm" id="printPrep">🖨 Imprimir</button>
       </div>
 
@@ -223,16 +205,13 @@ const views = {
     const maqs = cli ? d.maquinas.filter(m => m.cliente_id === cli.id) : d.maquinas;
     const maqOpts = maqs.map(m => `<option value="${esc(m.serie)}" data-pais="${m.pais}">${esc(m.modelo)} · ${esc(m.serie)}</option>`).join('');
     return `
-      <div class="page-head"><h1>Soporte</h1>
-        <p>Estamos para ayudarte. Prueba primero la guía rápida; si no se resuelve, abre un ticket y llega directo al equipo de tu país.</p></div>
+      <!-- Lo primero y más grande: hablar con una persona por WhatsApp -->
+      <a class="wa-big" href="${esc(sop.wa_link)}" target="_blank" rel="noopener">
+        <svg class="wa-ic" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.5 14.4c-.3-.2-1.7-.9-2-1-.3-.1-.5-.1-.6.2-.2.3-.7.9-.9 1.1-.2.2-.3.2-.6.1-.3-.2-1.2-.5-2.3-1.4-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.5.1-.6l.5-.5c.1-.2.2-.3.3-.5v-.5c-.1-.2-.6-1.6-.9-2.2-.2-.5-.4-.4-.6-.5h-.5c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.4s1.1 2.8 1.2 3c.2.2 2.1 3.2 5.1 4.4 1.9.8 2.6.9 3.5.7.6-.1 1.7-.7 1.9-1.4.2-.7.2-1.2.2-1.4-.1-.1-.3-.2-.6-.3z"/><path d="M12 2C6.5 2 2 6.5 2 12c0 1.8.5 3.4 1.3 4.9L2 22l5.3-1.4c1.4.8 3 1.2 4.7 1.2 5.5 0 10-4.5 10-10S17.5 2 12 2zm0 18.2c-1.6 0-3.1-.4-4.4-1.2l-.3-.2-3.1.8.8-3-.2-.3c-.9-1.4-1.3-3-1.3-4.6C3.5 7.3 7.3 3.5 12 3.5S20.5 7.3 20.5 12 16.7 20.2 12 20.2z"/></svg>
+        <div class="wa-txt"><strong>Escríbenos por WhatsApp</strong><span>${esc(sop.whatsapp)} · ${esc(sop.horario)}</span></div>
+      </a>
 
-      <div class="help-card" style="margin-bottom:24px">${icon('help')}
-        <div class="grow"><h3>¿Es urgente? Escríbenos ahora</h3>
-          <p>WhatsApp <strong>${esc(sop.whatsapp)}</strong> · ${esc(sop.horario)}. Te respondemos en español y te acompañamos hasta resolverlo.</p></div>
-        <a class="btn primary sm" href="${esc(sop.wa_link)}" target="_blank" rel="noopener">WhatsApp</a>
-      </div>
-
-      <h2 class="section-title">Guía rápida: problemas comunes</h2>
+      <h2 class="section-title">O mira si es algo común</h2>
       <div id="guiaList">
         ${d.soporte_guia.map(g => `<div class="faq-item guia"><button type="button" class="faq-q" aria-expanded="false"><span>${esc(g.titulo)}</span><span class="chev">＋</span></button>
           <div class="faq-a"><p style="margin:0 0 6px"><strong>Síntoma:</strong> ${esc(g.sintoma)}</p>
@@ -240,23 +219,29 @@ const views = {
           <p style="margin:0"><strong>Qué hacer:</strong> ${esc(g.accion)}</p></div></div>`).join('')}
       </div>
 
-      <div class="grid cols-2" style="margin-top:24px">
-        <div class="card"><h3>Abrir un ticket</h3>
-          <form class="form" id="ticketForm" style="margin-top:12px">
-            <div class="field"><label>¿Qué necesitas?</label>
-              <select name="tipo"><option value="soporte">🛠️ Ayuda técnica</option><option value="comercial">💬 Comercial (cotizar, repuestos)</option></select></div>
-            <div class="field"><label>Tu máquina</label><select name="serie" id="serieSel">${maqOpts || '<option value="">— sin máquina —</option>'}</select></div>
-            <div class="field"><label>Asunto</label><input name="asunto" placeholder="Ej: el corte no atraviesa el material" required></div>
-            <div class="field"><label>Cuéntanos qué pasa</label><textarea name="descripcion" placeholder="Describe el problema…"></textarea></div>
-            <div class="field"><label>Prioridad</label><select name="prioridad"><option value="media">Normal</option><option value="alta">Urgente</option><option value="baja">Baja</option></select></div>
-            <button class="btn primary" type="submit">Enviar ticket</button></form></div>
-        <div><h3 class="section-title" style="margin-top:0">Tus tickets</h3><div class="list" id="ticketList">${ticketRows(cli ? d.tickets.filter(t => t.cliente_id === cli.id) : d.tickets, !cli)}</div></div>
-      </div>`;
+      ${(cli ? d.tickets.filter(t => t.cliente_id === cli.id) : []).length ? `
+        <h2 class="section-title">Tus casos</h2>
+        <div class="list" id="ticketList">${ticketRows(d.tickets.filter(t => t.cliente_id === cli.id), false)}</div>` : ''}
+
+      <!-- Vía secundaria: WhatsApp es lo principal; esto queda para quien prefiera escribir aquí -->
+      <details class="msg-box">
+        <summary>Prefiero dejar un mensaje aquí</summary>
+        <form class="form" id="ticketForm">
+          <input type="hidden" name="tipo" value="soporte">
+          <input type="hidden" name="prioridad" value="media">
+          ${maqs.length > 1
+            ? `<div class="field"><label>¿Qué máquina?</label><select name="serie" id="serieSel">${maqOpts}</select></div>`
+            : `<input type="hidden" name="serie" id="serieSel" value="${esc(maqs[0]?.serie || '')}" data-pais="${esc(maqs[0]?.pais || 'PE')}">`}
+          <div class="field"><label>¿Qué pasa?</label><input name="asunto" placeholder="Ej: el corte no atraviesa el material" required></div>
+          <div class="field"><label>Cuéntanos más (opcional)</label><textarea name="descripcion" rows="3"></textarea></div>
+          <button class="btn primary" type="submit">Enviar</button>
+        </form>
+      </details>`;
   },
 
   bolsa() {
     return `
-      <div class="page-head"><h1>Bolsa de Trabajos</h1>
+      <div class="page-head">
         <p><strong>Beneficio gratis, solo para clientes C4V.</strong> Cada día nos escriben personas pidiendo servicio de corte láser. Nosotros no damos ese servicio — fabricamos las máquinas — así que sus pedidos se publican aquí <strong>para ti</strong>: tómalos, contáctalos y produce. El contacto se revela al tomar el trabajo.</p></div>
       <div class="toolbar"><div class="filters">
           <button class="chip active" data-filter="todos">Todos</button>
@@ -276,7 +261,7 @@ const views = {
   plantillas() {
     const pl = state.db.plantillas;
     return `
-      <div class="page-head"><h1>Banco de Diseños C4V</h1><p>${esc(pl.intro)}</p></div>
+      <div class="page-head"><p>${esc(pl.intro)}</p></div>
       <div class="chips-row"><span class="badge warn">${esc(pl.estado)}</span></div>
       <div class="grid cols-3">
         ${pl.categorias.map(c => `<div class="card tpl">
@@ -385,7 +370,8 @@ function bind(route) {
     const serieSel = $('#serieSel');
     $('#ticketForm').onsubmit = async (e) => {
       e.preventDefault(); const f = e.target;
-      const pais = serieSel?.selectedOptions[0]?.dataset.pais || currentClient()?.pais || 'PE';
+      // serieSel puede ser <select> (varias máquinas) o <input hidden> (una sola)
+      const pais = serieSel?.selectedOptions?.[0]?.dataset.pais || serieSel?.dataset.pais || currentClient()?.pais || 'PE';
       try { await actions.crearTicket({ tipo: f.tipo.value, prioridad: f.prioridad.value, serie: f.serie.value, asunto: f.asunto.value, descripcion: f.descripcion.value, pais, cliente_id: currentClient()?.id || null });
         toast(state.offline ? 'Guardado en esta demostración (aún no llega a un equipo real)' : '✅ Ticket enviado al equipo de ' + pais); render('soporte'); } catch { toast('⚠️ No se pudo enviar'); }
     };
@@ -421,13 +407,14 @@ function bindTake() {
 }
 
 // ---------- router ----------
-const TITLES = { inicio: 'Inicio', academia: 'Academia', preparacion: 'Prepara tu espacio', soporte: 'Soporte', bolsa: 'Bolsa de Trabajos', plantillas: 'Banco de Diseños', certificado: 'Certificado de Calidad C4V' };
+const TITLES = { inicio: 'Inicio', academia: 'Aprender a usar mi máquina', preparacion: 'Preparar mi espacio', soporte: 'Necesito ayuda', bolsa: 'Quiero más clientes', plantillas: 'Banco de Diseños', certificado: 'Tu Certificado de Calidad' };
 function render(route) {
   if (!views[route]) route = 'inicio';
-  view.innerHTML = views[route]();
-  $('#topbarTitle').textContent = TITLES[route];
-  document.querySelectorAll('.nav a').forEach(a => a.classList.toggle('active', a.dataset.route === route));
-  $('#sidebar')?.classList.remove('open');
+  // Sin menú: en cualquier pantalla que no sea el inicio, un solo camino de vuelta.
+  const volver = route === 'inicio' ? ''
+    : `<a class="volver" href="#/inicio"><span aria-hidden="true">←</span> Volver al inicio</a>
+       <h1 class="pag-title">${esc(TITLES[route])}</h1>`;
+  view.innerHTML = volver + views[route]();
   bind(route); window.scrollTo(0, 0);
 }
 const currentRoute = () => (location.hash.replace('#/', '') || 'inicio');
@@ -540,7 +527,6 @@ function initAgente() {
 // ---------- init ----------
 async function init() {
   state.db = await loadDB();
-  $('#menuBtn').onclick = () => { const open = $('#sidebar').classList.toggle('open'); $('#menuBtn').setAttribute('aria-expanded', open); };
   $('#logoutBtn').onclick = () => { try { localStorage.removeItem('c4v_sesion'); } catch {} location.reload(); };
   initAgente();
   initGate();
