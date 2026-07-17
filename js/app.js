@@ -10,7 +10,7 @@ const $ = (s, r = document) => r.querySelector(s);
 const view = $('#view');
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const today = () => new Date().toISOString().slice(0, 10);
-const PAISES = { PE: '🇵🇪 Perú', EC: '🇪🇨 Ecuador', BO: '🇧🇴 Bolivia' };
+const PAISES = { PE: '🇵🇪 Perú', EC: '🇪🇨 Ecuador', BO: '🇧🇴 Bolivia', CL: '🇨🇱 Chile', CO: '🇨🇴 Colombia' };
 const ESTADO_TICKET = { nuevo: 'Recibido', asignado: 'Asignado', en_proceso: 'En atención', resuelto: 'Resuelto', cerrado: 'Cerrado' };
 
 function toast(msg) {
@@ -138,6 +138,16 @@ const views = {
            </button>
            <div class="lv-player" hidden></div>
          </li>`;
+    const mejorPuntaje = (k) => { try { return JSON.parse(localStorage.getItem('c4v_quiz_' + state.ctx + '_' + k) || 'null'); } catch { return null; } };
+    const quizBox = (c, m, mi) => {
+      if (!m.preguntas || !m.preguntas.length) return '';
+      const k = c.id + '-' + mi, mejor = mejorPuntaje(k);
+      const logro = mejor ? `<span class="qz-logro${mejor.p >= 70 ? ' ok' : ''}">${mejor.p >= 70 ? '🏅' : '📝'} Tu mejor puntaje: ${mejor.b}/${mejor.n}</span>` : '';
+      return `<div class="quiz-box" data-key="${k}" data-curso="${c.id}" data-mod="${mi}">
+          <button type="button" class="qz-start">📝 Ponte a prueba <span>(${m.preguntas.length} preguntas)</span></button>${logro}
+          <div class="qz-area" hidden></div>
+        </div>`;
+    };
     const cursoCard = (c, i) => {
       const estado = c.estado === 'disponible' ? '<span class="badge ok">Disponible</span>' : c.estado === 'en_proceso' ? '<span class="badge warn">En construcción</span>' : '<span class="badge grey">Próximamente</span>';
       const nLes = c.modulos.reduce((s, m) => s + m.lecciones.length, 0);
@@ -148,9 +158,10 @@ const views = {
             <div class="sub">${esc(c.nivel)} · ${c.modulos.length} módulos · ${nLes} lecciones — ${esc(c.descripcion)}</div></div>
           <span class="chev">＋</span></button>
         <div class="course-body">
-          ${c.modulos.map((m, i) => `<div class="module">
-            <h4><span class="num-mod">${i + 1}</span> ${esc(m.titulo)} ${m.quizzes ? `<span class="badge red" style="margin-left:auto">${m.quizzes} preguntas</span>` : ''}</h4>
+          ${c.modulos.map((m, mi) => `<div class="module">
+            <h4><span class="num-mod">${mi + 1}</span> ${esc(m.titulo)} ${m.quizzes ? `<span class="badge red" style="margin-left:auto">${m.quizzes} preguntas</span>` : ''}</h4>
             ${m.lecciones.length ? `<ul class="lessons">${m.lecciones.map(leccion).join('')}</ul>` : ''}
+            ${quizBox(c, m, mi)}
           </div>`).join('')}
         </div></div>`;
     };
@@ -367,7 +378,7 @@ function bind(route) {
       $('#onbBar').style.width = Math.round(n / ins.length * 100) + '%';
     });
   }
-  if (route === 'academia') { bindAccordions('.faq-item'); bindAccordions('.course'); bindVideos(); }
+  if (route === 'academia') { bindAccordions('.faq-item'); bindAccordions('.course'); bindVideos(); bindQuizzes(); }
   if (route === 'preparacion') {
     view.querySelectorAll('.onb-item input').forEach(chk => chk.onchange = () => {
       const id = chk.closest('.onb-item').dataset.prep;
@@ -448,6 +459,65 @@ function bindVideos() {
   });
 }
 
+// ---------- quizzes interactivos (Academia) ----------
+function bindQuizzes() {
+  view.querySelectorAll('.quiz-box').forEach(box => {
+    const curso = state.db.academia.cursos.find(c => c.id === box.dataset.curso);
+    const mod = curso?.modulos[Number(box.dataset.mod)];
+    if (!mod || !mod.preguntas) return;
+    const area = box.querySelector('.qz-area'), start = box.querySelector('.qz-start');
+    const total = mod.preguntas.length;
+    let idx = 0, puntos = 0;
+
+    const preguntar = () => {
+      const p = mod.preguntas[idx];
+      area.innerHTML = `
+        <div class="qz-prog">Pregunta ${idx + 1} de ${total}</div>
+        <div class="qz-q">${esc(p.q)}</div>
+        <div class="qz-opts">${p.opciones.map((o, i) => `<button type="button" class="qz-opt" data-i="${i}">${esc(o)}</button>`).join('')}</div>
+        <div class="qz-ex" hidden></div>`;
+      area.querySelectorAll('.qz-opt').forEach(b => b.onclick = () => {
+        const elegido = Number(b.dataset.i), acierto = elegido === p.ok;
+        if (acierto) puntos++;
+        area.querySelectorAll('.qz-opt').forEach(x => {
+          x.disabled = true;
+          if (Number(x.dataset.i) === p.ok) x.classList.add('ok');
+          else if (Number(x.dataset.i) === elegido) x.classList.add('bad');
+        });
+        const ex = area.querySelector('.qz-ex');
+        ex.hidden = false;
+        ex.innerHTML = `${acierto ? '✅ <b>¡Correcto!</b>' : '❌ <b>Casi.</b>'} 🦉 ${esc(p.ex)}
+          <button type="button" class="btn primary sm qz-next">${idx + 1 < total ? 'Siguiente pregunta →' : 'Ver mi resultado 🏁'}</button>`;
+        ex.querySelector('.qz-next').onclick = () => { idx++; idx < total ? preguntar() : terminar(); };
+        ex.querySelector('.qz-next').focus();
+      });
+    };
+
+    const terminar = () => {
+      const pct = Math.round(puntos / total * 100), paso = pct >= 70;
+      try {
+        const k = 'c4v_quiz_' + state.ctx + '_' + box.dataset.key;
+        const prev = JSON.parse(localStorage.getItem(k) || 'null');
+        if (!prev || puntos > prev.b) localStorage.setItem(k, JSON.stringify({ b: puntos, n: total, p: pct }));
+      } catch {}
+      area.innerHTML = `
+        <div class="qz-fin ${paso ? 'ok' : ''}">
+          <div class="qz-emoji">${paso ? '🏅' : '💪'}</div>
+          <div class="qz-nota">${puntos} de ${total} correctas</div>
+          <p>${paso ? '¡Excelente! Dominas este módulo.' : 'Buen intento — repasa las lecciones y vuelve a probar. Tú puedes.'}</p>
+          <button type="button" class="btn primary sm qz-retry">↺ Intentar de nuevo</button>
+        </div>`;
+      area.querySelector('.qz-retry').onclick = () => { idx = 0; puntos = 0; preguntar(); };
+    };
+
+    start.onclick = () => {
+      const abierto = !area.hidden;
+      area.hidden = abierto;
+      if (!abierto) { idx = 0; puntos = 0; preguntar(); }
+    };
+  });
+}
+
 // ---------- router ----------
 const TITLES = { inicio: 'Inicio', academia: 'Aprender a usar mi máquina', preparacion: 'Preparar mi espacio', soporte: 'Necesito ayuda', bolsa: 'Quiero más clientes', plantillas: 'Banco de Diseños', certificado: 'Tu Certificado de Calidad' };
 function render(route) {
@@ -463,88 +533,99 @@ const currentRoute = () => (location.hash.replace('#/', '') || 'inicio');
 window.addEventListener('hashchange', () => render(currentRoute()));
 window.toast = toast;
 
-// ---------- identidad: tu teléfono es tu llave (A5) ----------
-/* Normalización E.164 según A5_IDENTIDAD_Y_PLANTILLAS.md §3:
-   quitar espacios/-/()/. · quitar 0 inicial de larga distancia · anteponer código de país · guardar con "+" */
-function normalizarTelefono(raw, prefijoPais) {
-  let d = String(raw || '').replace(/[\s\-().]/g, '').replace(/\D/g, '');
-  d = d.replace(/^0+/, '');                                  // Ecuador: 0987… → 987…
-  if (prefijoPais && !d.startsWith(prefijoPais)) d = prefijoPais + d;
-  return d ? '+' + d : '';
+// ---------- identidad: tu documento es tu llave ----------
+/* persona → DNI / Cédula / CI / RUT / CC · empresa → RUC / NIT / RUT (según país).
+   Normalización: mayúsculas, solo dígitos y K (dígito verificador del RUT chileno). */
+function normalizarDoc(raw) {
+  return String(raw || '').toUpperCase().replace(/[^0-9K]/g, '');
 }
-const paisDePrefijo = (p) => (CFG.paises || []).find(x => x.prefijo === p)?.code || 'PE';
-
-function buscarClientePorTelefono(tel) {
+function buscarClientePorDocumento(doc) {
   // v1 (demo): busca en los datos locales. v2: consulta a Odoo vía A6.
-  return state.db.clientes.find(c => normalizarTelefono(c.telefono, '') === tel) || null;
+  return state.db.clientes.find(c => normalizarDoc(c.documento) === doc) || null;
 }
-function guardarSesion(tel) {
-  try { localStorage.setItem('c4v_sesion', JSON.stringify({ tel, exp: Date.now() + SESION_DIAS * 864e5 })); } catch {}
+function guardarSesion(doc) {
+  try { localStorage.setItem('c4v_sesion', JSON.stringify({ doc, exp: Date.now() + SESION_DIAS * 864e5 })); } catch {}
 }
 function leerSesion() {
   try {
     const s = JSON.parse(localStorage.getItem('c4v_sesion') || 'null');
-    if (s && s.exp > Date.now()) return s.tel;
+    if (s && s.exp > Date.now()) return s.doc;
     localStorage.removeItem('c4v_sesion');
   } catch {}
   return null;
 }
 const waLink = (texto) => `https://wa.me/${CFG.whatsapp?.numero || ''}?text=${encodeURIComponent(texto || '')}`;
+const docInfo = (paisCode, tipo) => {
+  const p = (CFG.paises || []).find(x => x.code === paisCode) || (CFG.paises || [])[0];
+  return (p && p[tipo]) || { doc: 'Documento', ej: '' };
+};
 
-function entrar(cliente, tel) {
-  state.ctx = cliente.id; state.telefono = tel;
+function entrar(cliente) {
+  state.ctx = cliente.id;
   $('#gate').hidden = true; $('#app').hidden = false;
-  $('#me').innerHTML = `<strong>${esc(cliente.nombre)}</strong>${esc(tel)}`;
+  const info = docInfo(cliente.pais, cliente.tipo || 'persona');
+  $('#me').innerHTML = `<strong>${esc(cliente.nombre)}</strong>${esc(info.doc)} ${esc(cliente.documento)}`;
   render(currentRoute());
 }
 
 function initGate() {
-  const gate = $('#gate'), form = $('#gateForm'), inp = $('#gatePhone'), err = $('#gateError');
-  const paisesBox = $('#gatePaises'), prefEl = $('#gatePrefijo');
+  const gate = $('#gate'), form = $('#gateForm'), inp = $('#gateDoc'), err = $('#gateError');
+  const tiposBox = $('#gateTipos'), paisesBox = $('#gatePaises'), docLabel = $('#gateDocLabel');
   const paises = CFG.paises || [];
-  let prefijo = paises[0]?.prefijo || '51';   // Perú por defecto
+  let tipo = 'persona', pais = paises[0]?.code || 'PE';
 
-  // País = 3 botones grandes con bandera (un toque, sin desplegables)
+  // Paso 1 · Persona o Empresa (2 botones grandes)
+  tiposBox.innerHTML = `
+    <button type="button" role="radio" aria-checked="true" data-tipo="persona"><span class="bandera" aria-hidden="true">👤</span>Persona</button>
+    <button type="button" role="radio" aria-checked="false" data-tipo="empresa"><span class="bandera" aria-hidden="true">🏢</span>Empresa</button>`;
+
+  // Paso 2 · País (5 banderas)
   paisesBox.innerHTML = paises.map(p =>
-    `<button type="button" role="radio" aria-checked="${p.prefijo === prefijo}" data-prefijo="${p.prefijo}">
+    `<button type="button" role="radio" aria-checked="${p.code === pais}" data-pais="${p.code}">
        <span class="bandera" aria-hidden="true">${p.bandera}</span>${esc(p.nombre)}
      </button>`).join('');
-  const elegirPais = (pf) => {
-    prefijo = pf;
-    prefEl.textContent = '+' + pf;
-    inp.placeholder = paises.find(p => p.prefijo === pf)?.ejemplo || '';
-    paisesBox.querySelectorAll('button').forEach(b => b.setAttribute('aria-checked', b.dataset.prefijo === pf));
-    inp.focus();
-  };
-  paisesBox.querySelectorAll('button').forEach(b => b.onclick = () => elegirPais(b.dataset.prefijo));
-  elegirPais(prefijo);
-  $('#gateWa').href = waLink('Hola, quiero acceder a mi Central de Postventa C4V pero mi número no está registrado.');
 
-  // Números de ejemplo (solo demo — para poder entrar y probar)
+  // Paso 3 · La etiqueta del documento cambia según tipo + país
+  const actualizar = (enfocar) => {
+    const info = docInfo(pais, tipo);
+    docLabel.textContent = info.doc;
+    inp.placeholder = info.ej;
+    tiposBox.querySelectorAll('button').forEach(b => b.setAttribute('aria-checked', b.dataset.tipo === tipo));
+    paisesBox.querySelectorAll('button').forEach(b => b.setAttribute('aria-checked', b.dataset.pais === pais));
+    if (enfocar) inp.focus();
+  };
+  tiposBox.querySelectorAll('button').forEach(b => b.onclick = () => { tipo = b.dataset.tipo; actualizar(false); });
+  paisesBox.querySelectorAll('button').forEach(b => b.onclick = () => { pais = b.dataset.pais; actualizar(true); });
+  actualizar(false);
+  $('#gateWa').href = waLink('Hola, quiero acceder a mi Central de Postventa C4V pero mi documento no está registrado.');
+
+  // Documentos de ejemplo (solo demo — para poder entrar y probar)
   if (CFG.mostrarNumerosDemo) {
     const box = $('#gateDemo'); box.hidden = false;
-    box.innerHTML = '<h2>Números de ejemplo (demostración)</h2>' + state.db.clientes.map(c =>
-      `<button type="button" data-tel="${esc(c.telefono)}">${esc(c.telefono)}<span>${esc(c.nombre)} · ${PAISES[c.pais] || c.pais}</span></button>`).join('');
+    box.innerHTML = '<h2>Documentos de ejemplo (demostración)</h2>' + state.db.clientes.map(c => {
+      const info = docInfo(c.pais, c.tipo || 'persona');
+      return `<button type="button" data-doc="${esc(c.documento)}">${esc(info.doc)} ${esc(c.documento)}<span>${esc(c.nombre)} · ${c.tipo === 'empresa' ? '🏢 Empresa' : '👤 Persona'} · ${PAISES[c.pais] || c.pais}</span></button>`;
+    }).join('');
     box.querySelectorAll('button').forEach(b => b.onclick = () => {
-      const tel = normalizarTelefono(b.dataset.tel, '');
-      const cli = buscarClientePorTelefono(tel);
-      if (cli) { guardarSesion(tel); entrar(cli, tel); }
+      const cli = buscarClientePorDocumento(normalizarDoc(b.dataset.doc));
+      if (cli) { guardarSesion(normalizarDoc(cli.documento)); entrar(cli); }
     });
   }
 
   form.onsubmit = (e) => {
     e.preventDefault(); err.hidden = true;
-    const tel = normalizarTelefono(inp.value, prefijo);
-    if (normalizarTelefono(inp.value, '').length < 7) {
-      err.hidden = false; err.innerHTML = 'Parece que falta parte del número. Escríbelo completo, como en el ejemplo.'; return;
+    const doc = normalizarDoc(inp.value);
+    const info = docInfo(pais, tipo);
+    if (doc.length < 5) {
+      err.hidden = false; err.innerHTML = `Parece que falta parte de tu ${esc(info.doc)}. Escríbelo completo, como en el ejemplo.`; return;
     }
-    const cli = buscarClientePorTelefono(tel);
+    const cli = buscarClientePorDocumento(doc);
     if (!cli) {
       err.hidden = false;
-      err.innerHTML = `No encontramos <strong>${esc(tel)}</strong> entre nuestros clientes. Revisa el número o <a href="${waLink('Hola, mi número no aparece en la Central de Postventa C4V. ¿Me ayudan?')}" target="_blank" rel="noopener">escríbenos por WhatsApp</a> y te ayudamos.`;
+      err.innerHTML = `No encontramos el ${esc(info.doc)} <strong>${esc(inp.value.trim())}</strong> entre nuestros clientes. Revísalo o <a href="${waLink('Hola, mi documento no aparece en la Central de Postventa C4V. ¿Me ayudan?')}" target="_blank" rel="noopener">escríbenos por WhatsApp</a> y te ayudamos.`;
       return;
     }
-    guardarSesion(tel); entrar(cli, tel);
+    guardarSesion(doc); entrar(cli);
   };
 
   gate.hidden = false; $('#app').hidden = true;
@@ -586,9 +667,9 @@ async function init() {
   initAgente();
   initGate();
 
-  // Sesión recordada: entra directo, sin volver a pedir el número.
-  const tel = leerSesion();
-  const cli = tel && buscarClientePorTelefono(tel);
-  if (cli) entrar(cli, tel);
+  // Sesión recordada: entra directo, sin volver a pedir el documento.
+  const doc = leerSesion();
+  const cli = doc && buscarClientePorDocumento(doc);
+  if (cli) entrar(cli);
 }
 init();

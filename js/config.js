@@ -23,14 +23,18 @@ window.C4V_CONFIG = {
     visible: '+51 924 662 205'
   },
 
-  /* ---------- Prefijos por país (login por teléfono) ---------- */
+  /* ---------- Países y documentos (login por documento) ----------
+     persona → documento de identidad · empresa → registro tributario.
+     El prefijo telefónico se mantiene para notificaciones WhatsApp.     */
   paises: [
-    { code: 'PE', nombre: 'Perú',    prefijo: '51',  bandera: '🇵🇪', ejemplo: '987 654 321' },
-    { code: 'EC', nombre: 'Ecuador', prefijo: '593', bandera: '🇪🇨', ejemplo: '99 123 4567' },
-    { code: 'BO', nombre: 'Bolivia', prefijo: '591', bandera: '🇧🇴', ejemplo: '7 123 4567' }
+    { code: 'PE', nombre: 'Perú',     prefijo: '51',  bandera: '🇵🇪', persona: { doc: 'DNI',          ej: '45678123' },     empresa: { doc: 'RUC', ej: '20123456789' } },
+    { code: 'EC', nombre: 'Ecuador',  prefijo: '593', bandera: '🇪🇨', persona: { doc: 'Cédula (CI)',  ej: '0912345678' },   empresa: { doc: 'RUC', ej: '0912345678001' } },
+    { code: 'BO', nombre: 'Bolivia',  prefijo: '591', bandera: '🇧🇴', persona: { doc: 'CI',           ej: '7894561' },      empresa: { doc: 'NIT', ej: '1023456028' } },
+    { code: 'CL', nombre: 'Chile',    prefijo: '56',  bandera: '🇨🇱', persona: { doc: 'RUT',          ej: '12.345.678-9' }, empresa: { doc: 'RUT', ej: '76.543.210-5' } },
+    { code: 'CO', nombre: 'Colombia', prefijo: '57',  bandera: '🇨🇴', persona: { doc: 'Cédula (CC)',  ej: '1023456789' },   empresa: { doc: 'NIT', ej: '901234567' } }
   ],
 
-  /* En demo mostramos los números de ejemplo para poder entrar.
+  /* En demo mostramos los documentos de ejemplo para poder entrar.
      En producción: false (y la validación va contra Odoo). */
   mostrarNumerosDemo: true
 };

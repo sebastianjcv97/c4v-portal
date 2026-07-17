@@ -372,3 +372,42 @@ tr:last-child td{border-bottom:none}
 .lesson-video.visto .lv-dur{color:var(--ok);font-weight:700}
 .lv-player{margin:4px 0 10px}
 .lv-player video{width:100%;max-height:70vh;border-radius:var(--r);background:#000;display:block}
+
+/* ---------- Gate: persona/empresa + 5 países ---------- */
+.gate-tipos{display:flex;gap:8px;margin-bottom:22px}
+.gate-tipos button{flex:1;background:var(--black-2);border:2px solid var(--black-3);color:var(--on-black);border-radius:var(--r);padding:12px 4px;font-size:16px;font-weight:700;font-family:var(--sans);cursor:pointer;text-align:center;min-height:64px}
+.gate-tipos button .bandera{display:block;font-size:24px;line-height:1.2}
+.gate-tipos button[aria-checked="true"]{border-color:var(--red);background:#2a1112}
+.gate-tipos button:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+.gate-paises{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.gate-paises button{font-size:11.5px;padding:8px 2px;min-height:58px}
+.gate-paises button .bandera{font-size:20px}
+#gateDoc{flex:1;min-width:0;background:var(--black-2);color:var(--on-black);border:1px solid var(--black-3);border-radius:var(--r);padding:16px;font-size:22px;font-weight:700;letter-spacing:1px;font-family:var(--sans)}
+#gateDoc:focus{outline:2px solid var(--red);outline-offset:1px;border-color:var(--red)}
+#gateDoc::placeholder{color:#6a6a6a;font-weight:400;letter-spacing:0}
+.gate-paso strong#gateDocLabel{color:var(--red)}
+
+/* ---------- Quizzes interactivos (Academia) ---------- */
+.quiz-box{margin:10px 0 4px;display:flex;flex-direction:column;gap:8px}
+.qz-start{display:inline-flex;align-items:center;gap:6px;align-self:flex-start;background:var(--black);color:#fff;border:0;border-radius:var(--r);padding:11px 16px;font-size:14px;font-weight:700;font-family:var(--sans);cursor:pointer;min-height:44px}
+.qz-start:hover{background:#000}
+.qz-start span{font-weight:400;opacity:.75}
+.qz-logro{font-size:13px;color:var(--muted)}
+.qz-logro.ok{color:var(--ok);font-weight:700}
+.qz-area{background:var(--alt);border:1px solid var(--line);border-radius:var(--r-lg);padding:16px}
+.qz-prog{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:8px}
+.qz-q{font-family:var(--slab);font-size:17px;font-weight:700;margin-bottom:12px}
+.qz-opts{display:flex;flex-direction:column;gap:8px}
+.qz-opt{text-align:left;background:var(--bg);border:2px solid var(--line);border-radius:var(--r);padding:12px 14px;font-size:15px;font-family:var(--sans);cursor:pointer;min-height:48px;color:var(--ink)}
+.qz-opt:hover:not(:disabled){border-color:var(--red-cta)}
+.qz-opt:disabled{cursor:default;opacity:.9}
+.qz-opt.ok{border-color:var(--ok);background:var(--ok-50);font-weight:700}
+.qz-opt.bad{border-color:var(--err, #b3261e);background:#fdecea}
+.qz-ex{margin-top:12px;background:var(--bg);border-left:3px solid var(--red);border-radius:0 var(--r) var(--r) 0;padding:12px 14px;font-size:14px;line-height:1.55}
+.qz-ex .qz-next{display:block;margin-top:10px}
+.qz-fin{text-align:center;padding:8px 0}
+.qz-fin .qz-emoji{font-size:40px}
+.qz-fin .qz-nota{font-family:var(--slab);font-size:22px;font-weight:800;margin:6px 0 2px}
+.qz-fin.ok .qz-nota{color:var(--ok)}
+.qz-fin p{color:var(--muted);font-size:14px;margin-bottom:12px}
+.gate-id-ic{color:var(--red)}

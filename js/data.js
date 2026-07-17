@@ -3,7 +3,7 @@
    - Con `npm start`, el servidor lee ESTE archivo para sembrar data/db.json.
    Contenido real extraído del ecosistema C4V (C4V School, KB CeVi, PRODUCT.md). */
 window.__SEED__ = {
-  meta: { marca: "C4V Láser", portal: "Central de Postventa C4V", paises: ["PE", "EC", "BO"] },
+  meta: { marca: "C4V Láser", portal: "Central de Postventa C4V", paises: ["PE", "EC", "BO", "CL", "CO"] },
 
   soporte: {
     whatsapp: "+51 924 662 205",
@@ -24,17 +24,24 @@ window.__SEED__ = {
   comercial: [
     { id: "c-pe", nombre: "Equipo Comercial C4V Perú", pais: "PE" },
     { id: "c-ec", nombre: "Equipo Comercial C4V Ecuador", pais: "EC" },
-    { id: "c-bo", nombre: "Equipo Comercial C4V Bolivia", pais: "BO" }
+    { id: "c-bo", nombre: "Equipo Comercial C4V Bolivia", pais: "BO" },
+    { id: "c-cl", nombre: "Equipo Comercial C4V Chile", pais: "CL" },
+    { id: "c-co", nombre: "Equipo Comercial C4V Colombia", pais: "CO" }
   ],
   clientes: [
-    { id: "cli-001", nombre: "Carla Méndez", empresa: "Creativa Láser EIRL", pais: "PE", ciudad: "Lima", email: "carla@creativalaser.pe", telefono: "+51 987 654 321" },
-    { id: "cli-002", nombre: "Diego Salazar", empresa: "TallerMaker", pais: "EC", ciudad: "Quito", email: "diego@tallermaker.ec", telefono: "+593 99 123 4567" },
-    { id: "cli-003", nombre: "Rosa Quispe", empresa: "Detalles Andinos", pais: "BO", ciudad: "La Paz", email: "rosa@detallesandinos.bo", telefono: "+591 7 123 4567" }
+    /* tipo: persona | empresa · documento: DNI/CI/CC (persona) o RUC/RUT/NIT (empresa) según país */
+    { id: "cli-001", nombre: "Carla Méndez", tipo: "persona", documento: "45678123", empresa: "Creativa Láser EIRL", pais: "PE", ciudad: "Lima", email: "carla@creativalaser.pe", telefono: "+51 987 654 321" },
+    { id: "cli-002", nombre: "Diego Salazar", tipo: "persona", documento: "0912345678", empresa: "TallerMaker", pais: "EC", ciudad: "Quito", email: "diego@tallermaker.ec", telefono: "+593 99 123 4567" },
+    { id: "cli-003", nombre: "Rosa Quispe", tipo: "persona", documento: "7894561", empresa: "Detalles Andinos", pais: "BO", ciudad: "La Paz", email: "rosa@detallesandinos.bo", telefono: "+591 7 123 4567" },
+    { id: "cli-004", nombre: "Acrílicos Andinos SpA", tipo: "empresa", documento: "76.543.210-5", empresa: "Acrílicos Andinos SpA", pais: "CL", ciudad: "Santiago", email: "contacto@acrilicosandinos.cl", telefono: "+56 9 8765 4321" },
+    { id: "cli-005", nombre: "Creativa Publicidad S.A.S.", tipo: "empresa", documento: "901234567", empresa: "Creativa Publicidad S.A.S.", pais: "CO", ciudad: "Bogotá", email: "hola@creativapublicidad.co", telefono: "+57 310 123 4567" }
   ],
   maquinas: [
     { serie: "C4V-6040-PE-00123", modelo: "6040", tipo: "CO2", area: "600 x 400 mm", pais: "PE", cliente_id: "cli-001", fecha_entrega: "2026-03-12", certificado: { estado: "certificada", fecha: "2026-03-10", tecnico: "Josafat" } },
     { serie: "C4V-9060-EC-00210", modelo: "9060", tipo: "CO2", area: "900 x 600 mm", pais: "EC", cliente_id: "cli-002", fecha_entrega: "2026-05-02", certificado: { estado: "certificada", fecha: "2026-04-30", tecnico: "Equipo EC" } },
-    { serie: "C4V-1390-BO-00078", modelo: "1390", tipo: "CO2", area: "1300 x 900 mm", pais: "BO", cliente_id: "cli-003", fecha_entrega: "2026-06-20", certificado: { estado: "en_proceso", fecha: null, tecnico: "Aldo" } }
+    { serie: "C4V-1390-BO-00078", modelo: "1390", tipo: "CO2", area: "1300 x 900 mm", pais: "BO", cliente_id: "cli-003", fecha_entrega: "2026-06-20", certificado: { estado: "en_proceso", fecha: null, tecnico: "Aldo" } },
+    { serie: "C4V-9060-CL-00042", modelo: "9060", tipo: "CO2", area: "900 x 600 mm", pais: "CL", cliente_id: "cli-004", fecha_entrega: "2026-05-18", certificado: { estado: "certificada", fecha: "2026-05-15", tecnico: "Equipo CL" } },
+    { serie: "C4V-6040-CO-00101", modelo: "6040", tipo: "CO2", area: "600 x 400 mm", pais: "CO", cliente_id: "cli-005", fecha_entrega: "2026-06-01", certificado: { estado: "certificada", fecha: "2026-05-29", tecnico: "Equipo CO" } }
   ],
   certificado_info: {
     nombre: "Certificado de Calidad C4V", duracion: "",
@@ -122,23 +129,73 @@ window.__SEED__ = {
       {
         id: "c1", titulo: "Domina tu Láser: Primeros Pasos", icono: "🚀", nivel: "Básico", estado: "disponible",
         descripcion: "Desde antes de recibir la máquina hasta tu primer corte real, sin errores graves. (~25-35 min)",
+        /* preguntas: { q, opciones, ok (índice correcto), ex (explicación de Lumo 🦉) } */
         modulos: [
-          { titulo: "Prepárate antes de que llegue tu máquina", lecciones: ["220V + circuito independiente + cable a tierra", "Área limpia y ventilada", "Seguridad: extintor, gafas, ventilación", "Kit completo antes de la llegada", "Mentalidad de negocio"], quizzes: 7 },
-          { titulo: "Antes de encender: revisión general", lecciones: ["Extractor y compresor conectados", "Chiller con agua destilada", "Conexiones de agua (inlet / outlet)", "Máquina lista"], quizzes: 3 },
-          { titulo: "Primer encendido seguro", lecciones: ["Orden: 1) Estabilizador → 2) Chiller → 3) Máquina", "Observar el panel Ruida", "Checklist sin alarmas", "Verificar conexiones eléctricas"], quizzes: 3 },
-          { titulo: "Tu primer corte real", lecciones: ["Cargar archivo en RDWorks", "Potencia y velocidad", "MDF 3mm: potencia 20-35, velocidad 15-25", "Presionar START y evaluar"], quizzes: 3 },
-          { titulo: "Evaluación final del curso", lecciones: [], quizzes: 5 }
+          { titulo: "Prepárate antes de que llegue tu máquina", lecciones: ["220V + circuito independiente + cable a tierra", "Área limpia y ventilada", "Seguridad: extintor, gafas, ventilación", "Kit completo antes de la llegada", "Mentalidad de negocio"], quizzes: 7, preguntas: [
+            { q: "¿Qué voltaje necesita tu máquina C4V?", opciones: ["110V", "220V", "380V"], ok: 1, ex: "220V, en un circuito independiente y con cable a tierra." },
+            { q: "¿La máquina puede compartir enchufe con otros equipos?", opciones: ["Sí, mientras haya espacio", "No: necesita circuito independiente", "Solo si el cable es grueso"], ok: 1, ex: "Una línea eléctrica independiente evita sobrecargas y fallas." },
+            { q: "¿Es opcional tener extintor antes de instalar la máquina?", opciones: ["Verdadero", "Falso"], ok: 1, ex: "La prevención es parte del estándar profesional C4V." },
+            { q: "¿Se puede mirar el punto del láser directamente?", opciones: ["Sí, si es rápido", "Nunca: usa tus gafas de seguridad", "Solo con la tapa cerrada"], ok: 1, ex: "Nunca mires el láser. Las gafas de seguridad son obligatorias." },
+            { q: "¿Con qué se limpian los lentes?", opciones: ["Agua con jabón", "Thinner", "Alcohol isopropílico"], ok: 2, ex: "Alcohol isopropílico con hisopos de alta calidad." },
+            { q: "El agua destilada de tu kit sirve para…", opciones: ["El chiller (enfriamiento)", "Limpiar la mesa", "El compresor"], ok: 0, ex: "El agua destilada protege el tubo láser en el chiller." },
+            { q: "El aceite 3-EN-UNO de tu kit sirve para…", opciones: ["El tubo láser", "Lubricar los rieles", "La lente"], ok: 1, ex: "Rieles limpios y lubricados = movimiento suave y preciso." }
+          ]},
+          { titulo: "Antes de encender: revisión general", lecciones: ["Extractor y compresor conectados", "Chiller con agua destilada", "Conexiones de agua (inlet / outlet)", "Máquina lista"], quizzes: 3, preguntas: [
+            { q: "¿Qué tipo de agua debe usar el chiller?", opciones: ["Agua del caño", "Agua hervida", "Agua destilada", "Agua mineral"], ok: 2, ex: "El agua destilada protege el tubo láser." },
+            { q: "Antes de encender, el extractor debe estar…", opciones: ["Guardado", "Conectado y listo", "Da igual"], ok: 1, ex: "Sin extracción, el humo regresa al cabezal y lo daña." },
+            { q: "¿El agua común daña el tubo láser?", opciones: ["Verdadero", "Falso"], ok: 0, ex: "Sus minerales obstruyen y dañan el tubo. Solo destilada." }
+          ]},
+          { titulo: "Primer encendido seguro", lecciones: ["Orden: 1) Estabilizador → 2) Chiller → 3) Máquina", "Observar el panel Ruida", "Checklist sin alarmas", "Verificar conexiones eléctricas"], quizzes: 3, preguntas: [
+            { q: "¿Cuál es el orden correcto de encendido?", opciones: ["Máquina → Chiller → Estabilizador", "Estabilizador → Chiller → Máquina", "Chiller → Máquina → Estabilizador"], ok: 1, ex: "1) Estabilizador · 2) Chiller · 3) Máquina. Siempre." },
+            { q: "Si el panel muestra una alarma, ¿qué haces?", opciones: ["Sigo trabajando", "Apago todo y reviso las conexiones", "Subo la potencia"], ok: 1, ex: "Revisar primero es actuar como profesional." },
+            { q: "¿El chiller se enciende antes que el láser?", opciones: ["Verdadero", "Falso"], ok: 0, ex: "El tubo necesita enfriamiento desde el primer segundo." }
+          ]},
+          { titulo: "Tu primer corte real", lecciones: ["Cargar archivo en RDWorks", "Potencia y velocidad", "MDF 3mm: potencia 20-35, velocidad 15-25", "Presionar START y evaluar"], quizzes: 3, preguntas: [
+            { q: "¿Cuál es la mejor práctica para tu primer corte?", opciones: ["Usar potencia máxima", "Probar con un diseño pequeño", "Cortar una pieza grande"], ok: 1, ex: "Empezar pequeño reduce riesgos y no desperdicia material." },
+            { q: "Para MDF de 3mm, ¿qué potencia usas?", opciones: ["20-35", "60-80", "90-100"], ok: 0, ex: "MDF 3mm: potencia 20-35, velocidad 15-25." },
+            { q: "¿Conviene empezar con material grueso?", opciones: ["Verdadero", "Falso"], ok: 1, ex: "Empieza con 3mm para practicar y ajustar parámetros." }
+          ]},
+          { titulo: "Evaluación final del curso", lecciones: [], quizzes: 5, preguntas: [
+            { q: "¿Qué voltaje usa tu máquina C4V?", opciones: ["110V", "220V", "440V"], ok: 1, ex: "220V con circuito independiente y pozo a tierra." },
+            { q: "Secuencia de encendido correcta:", opciones: ["Estabilizador → Chiller → Máquina", "Máquina → Estabilizador → Chiller", "Chiller → Estabilizador → Máquina"], ok: 0, ex: "El orden correcto protege el tubo y la electrónica." },
+            { q: "¿Se puede usar agua del grifo en el chiller?", opciones: ["Verdadero", "Falso"], ok: 1, ex: "Nunca: los minerales dañan el tubo. Solo agua destilada." },
+            { q: "Los espejos se limpian con alcohol…", opciones: ["Etílico 70°", "Isopropílico", "De farmacia con glicerina"], ok: 1, ex: "Alcohol isopropílico + hisopo, en círculos y sin presión." },
+            { q: "Antes de cortar, verifica que estén correctos…", opciones: ["Extractor, chiller y conexiones", "Solo el material", "Solo el diseño"], ok: 0, ex: "Extractor + chiller + conexiones = corte seguro." }
+          ]}
         ]
       },
       {
-        id: "c2", titulo: "Seguridad, Limpieza y Mantenimiento", icono: "🧰", nivel: "Intermedio", estado: "en_proceso",
+        id: "c2", titulo: "Seguridad, Limpieza y Mantenimiento", icono: "🧰", nivel: "Intermedio", estado: "disponible",
         descripcion: "Prevén fallas, extiende la vida útil y mantén el rendimiento. Requiere el Curso 1. (~30-40 min)",
         modulos: [
-          { titulo: "Tu kit de mantenimiento (5 materiales)", lecciones: ["Agua destilada (Vistony)", "Aceite 3-EN-UNO para rieles", "Alcohol isopropílico", "Hisopos de alta calidad", "Paño de microfibra sin pelusa"], quizzes: 3 },
-          { titulo: "Limpieza de lente y espejos", lecciones: ["Retirar la lente con cuidado", "Alcohol isopropílico + hisopo, circular y sin presión", "Misma técnica en los 3 espejos", "Mínimo cada 2 semanas con uso diario"], quizzes: 4 },
-          { titulo: "Agua del enfriador (chiller)", lecciones: ["Solo agua destilada, nunca del grifo", "Cambio cada 2-4 semanas", "Temperatura ideal 15-25 °C"], quizzes: 4 },
-          { titulo: "Lubricación y cuidado de rieles", lecciones: ["Limpiar con microfibra", "Aceite 3-EN-UNO en gotas", "Mover el cabezal para distribuir", "Semanal con uso diario"], quizzes: 3 },
-          { titulo: "6 errores que destruyen tu máquina", lecciones: ["Encender sin chiller → tubo quemado", "Agua del grifo → residuos minerales", "No limpiar la lente → pierde potencia", "Cortar PVC → gas tóxico", "Máquina sin supervisión", "Calendario de mantenimiento"], quizzes: 4 }
+          { titulo: "Tu kit de mantenimiento (5 materiales)", lecciones: ["Agua destilada (Vistony)", "Aceite 3-EN-UNO para rieles", "Alcohol isopropílico", "Hisopos de alta calidad", "Paño de microfibra sin pelusa"], quizzes: 3, preguntas: [
+            { q: "¿Qué agua va en el chiller?", opciones: ["Del grifo, hervida", "Destilada (de batería)", "Mineral"], ok: 1, ex: "Solo agua destilada. La marca de referencia es Vistony." },
+            { q: "¿Con qué se lubrican los rieles?", opciones: ["Aceite de motor", "WD-40", "Aceite 3-EN-UNO"], ok: 2, ex: "Ni motor, ni WD-40, ni cocina: aceite 3-EN-UNO." },
+            { q: "¿Sirven los hisopos genéricos para la lente?", opciones: ["Verdadero", "Falso"], ok: 1, ex: "Los baratos rayan la lente. Solo de alta calidad." }
+          ]},
+          { titulo: "Limpieza de lente y espejos", lecciones: ["Retirar la lente con cuidado", "Alcohol isopropílico + hisopo, circular y sin presión", "Misma técnica en los 3 espejos", "Mínimo cada 2 semanas con uso diario"], quizzes: 4, preguntas: [
+            { q: "¿Con qué líquido se limpia la lente?", opciones: ["Agua con jabón", "Alcohol isopropílico", "Thinner"], ok: 1, ex: "Alcohol isopropílico (o alcohol 98% como alternativa)." },
+            { q: "¿Cómo debe ser el movimiento al limpiar?", opciones: ["Circular, suave y sin presión", "De arriba a abajo, con fuerza", "En zigzag rápido"], ok: 0, ex: "Circular y suave: la presión daña el recubrimiento." },
+            { q: "¿Cuántos espejos tiene tu máquina?", opciones: ["1", "2", "3"], ok: 2, ex: "Son 3 espejos, y se limpian con la misma técnica." },
+            { q: "¿Una lente sucia hace perder potencia?", opciones: ["Verdadero", "Falso"], ok: 0, ex: "Los residuos absorben la energía del láser." }
+          ]},
+          { titulo: "Agua del enfriador (chiller)", lecciones: ["Solo agua destilada, nunca del grifo", "Cambio cada 2-4 semanas", "Temperatura ideal 15-25 °C"], quizzes: 4, preguntas: [
+            { q: "¿Cada cuánto se cambia el agua del chiller?", opciones: ["Cada 6 meses", "Cada 2-4 semanas según el uso", "Nunca"], ok: 1, ex: "Cada 2 a 4 semanas, dependiendo de cuánto uses la máquina." },
+            { q: "¿Por qué NO usar agua del grifo?", opciones: ["Es muy cara", "Sus minerales obstruyen y dañan el tubo", "Se evapora rápido"], ok: 1, ex: "Los residuos minerales dañan el tubo láser." },
+            { q: "¿Cuál es la temperatura ideal del agua?", opciones: ["5-10 °C", "15-25 °C", "30-40 °C"], ok: 1, ex: "Entre 15 y 25 grados protege el tubo." },
+            { q: "El agua del chiller debe ser…", opciones: ["Destilada", "Potable", "Con anticongelante casero"], ok: 0, ex: "Siempre destilada. Es la regla de oro del chiller." }
+          ]},
+          { titulo: "Lubricación y cuidado de rieles", lecciones: ["Limpiar con microfibra", "Aceite 3-EN-UNO en gotas", "Mover el cabezal para distribuir", "Semanal con uso diario"], quizzes: 3, preguntas: [
+            { q: "¿Qué aceite se usa en los rieles?", opciones: ["De oliva", "3-EN-UNO", "De motor"], ok: 1, ex: "Aceite 3-EN-UNO en gotas, sobre el riel limpio." },
+            { q: "Después de aplicar el aceite, ¿qué haces?", opciones: ["Enciendes a cortar de inmediato", "Mueves el cabezal para distribuirlo", "Lo dejas secar 24 h"], ok: 1, ex: "Mover el cabezal distribuye el aceite por todo el riel." },
+            { q: "¿Lubricar cada 6 meses es suficiente?", opciones: ["Verdadero", "Falso"], ok: 1, ex: "Con uso diario, la lubricación es semanal." }
+          ]},
+          { titulo: "6 errores que destruyen tu máquina", lecciones: ["Encender sin chiller → tubo quemado", "Agua del grifo → residuos minerales", "No limpiar la lente → pierde potencia", "Cortar PVC → gas tóxico", "Máquina sin supervisión", "Calendario de mantenimiento"], quizzes: 4, preguntas: [
+            { q: "¿Qué pasa si enciendes el láser sin chiller?", opciones: ["Nada, si es poco tiempo", "El tubo se quema por sobrecalentamiento", "Corta más rápido"], ok: 1, ex: "El tubo láser es la pieza más valiosa: nunca sin chiller." },
+            { q: "¿Se puede cortar PVC con tu láser?", opciones: ["Sí, a baja potencia", "Nunca: genera gas cloro tóxico", "Solo con extractor"], ok: 1, ex: "El PVC libera cloro tóxico y daña la máquina. Prohibido." },
+            { q: "¿Qué pasa si no limpias la lente?", opciones: ["Nada", "Pierde potencia gradualmente", "Corta mejor"], ok: 1, ex: "La suciedad absorbe energía: cortes débiles y disparejos." },
+            { q: "La lente y los espejos se limpian cada…", opciones: ["2 semanas (con uso diario)", "6 meses", "Solo cuando falle"], ok: 0, ex: "Calendario: superficie a diario · rieles semanal · lente y espejos cada 2 semanas · agua mensual." }
+          ]}
         ]
       },
       {
