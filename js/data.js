@@ -235,11 +235,54 @@ window.__SEED__ = {
       }
     ],
     proximamente: [
-      "Instalación completa 9060 / 6040",
-      "Parámetros correctos de corte y grabado (por material)",
-      "Módulo de rotación y mesa extendida",
+      "Instalación completa 9060 / 6040 (en video)",
+      "Módulo de rotación y mesa extendida (en video)",
       "Tu primer producto en 30 minutos",
       "Tu primer mes vendiendo"
+    ],
+    /* Tabla oficial de parámetros por material (PARAMETROS_C4V Laser.pdf) */
+    parametros: {
+      intro: "La tabla oficial C4V de potencia y velocidad por material. Regla de oro: SIEMPRE prueba primero en un retazo — cada máquina y material varía un poco.",
+      nota: "El «Seal» (intervalo de escaneo) se usa SOLO para grabado. (*) Tela y cuero varían mucho en grosor y densidad: si no corta o se quema, escríbenos a soporte.",
+      filas: [
+        { m: "MDF", g: "3 mm",  corte: "20-35 / 15-25", marcado: "10-20 / 40-90", grabado: "15-35 / 100-400", seal: "0.05-0.01" },
+        { m: "MDF", g: "5 mm",  corte: "30-45 / 10-20", marcado: "10-20 / 40-90", grabado: "15-35 / 100-400", seal: "0.05-0.01" },
+        { m: "MDF", g: "9 mm",  corte: "45-60 / 5-15",  marcado: "10-20 / 40-90", grabado: "15-35 / 100-400", seal: "0.05-0.01" },
+        { m: "Acrílico", g: "2 mm", corte: "35 / 25", marcado: "10-20 / 40-90", grabado: "15-35 / 100-400", seal: "0.05-0.01" },
+        { m: "Acrílico", g: "3 mm", corte: "35 / 20", marcado: "10-20 / 40-90", grabado: "15-35 / 100-400", seal: "0.05-0.01" },
+        { m: "Acrílico", g: "4 mm", corte: "40 / 20", marcado: "10-20 / 40-90", grabado: "15-35 / 100-400", seal: "0.05-0.01" },
+        { m: "Acrílico", g: "5 mm", corte: "55 / 10", marcado: "10-20 / 40-90", grabado: "15-35 / 100-400", seal: "0.05-0.01" },
+        { m: "Papel bond", g: "80 g", corte: "10-15 / 70-100", marcado: "10-20 / 40-90", grabado: "—", seal: "—" },
+        { m: "Cartulina", g: "—", corte: "15-25 / 20-40", marcado: "10-20 / 40-90", grabado: "10-15 / 200-400", seal: "0.05-0.01" },
+        { m: "Cartulina metalizada", g: "—", corte: "20 / 50", marcado: "10-20 / 40-90", grabado: "10-15 / 200-400", seal: "0.05-0.01" },
+        { m: "Cartulina tarjetería", g: "—", corte: "15 / 40", marcado: "10-20 / 40-90", grabado: "10-15 / 200-400", seal: "0.05-0.01" },
+        { m: "Tela*", g: "—", corte: "15-30 / 20-60", marcado: "10-20 / 40-90", grabado: "10-15 / 200-400", seal: "0.05-0.01" },
+        { m: "Cartón micro corrugado", g: "2 mm", corte: "30 / 55-60", marcado: "10-20 / 40-90", grabado: "10-15 / 200-400", seal: "0.05-0.01" },
+        { m: "Cartón corrugado", g: "4 mm", corte: "30 / 25", marcado: "10-20 / 40-90", grabado: "10-15 / 200-400", seal: "0.05-0.01" },
+        { m: "Cartón doble corrugado", g: "8 mm", corte: "25 / 20", marcado: "10-20 / 40-90", grabado: "10-15 / 200-400", seal: "0.05-0.01" },
+        { m: "Cartón prensado", g: "—", corte: "30 / 30", marcado: "10-20 / 40-90", grabado: "10-15 / 200-400", seal: "0.05-0.01" },
+        { m: "Corospum / fomix", g: "—", corte: "15-20 / 30-50", marcado: "10-20 / 40-90", grabado: "10-15 / 200-400", seal: "0.05-0.01" },
+        { m: "Cuero*", g: "—", corte: "15-40 / 20-40", marcado: "10-20 / 40-90", grabado: "10-20 / 100-400", seal: "0.05-0.01" },
+        { m: "Vidrio", g: "—", corte: "No se corta", marcado: "10-20 / 40-90", grabado: "15-35 / 100-400", seal: "0.05-0.01" }
+      ],
+      rdworks: [
+        "Abre el programa RDWorks",
+        "Haz clic en «Importar» y coloca tu diseño",
+        "Busca tu archivo, selecciónalo y haz clic en «Open»",
+        "En el panel de capas (colores), ajusta potencia, velocidad y seal (el seal solo para grabado)",
+        "Presiona «Start» y ¡listo! Tu proyecto está cortando"
+      ]
+    },
+    /* Guías técnicas oficiales en PDF (portal/public/guias/) */
+    guiasPdf: [
+      { archivo: "instalacion-9060-6040.pdf", titulo: "Instalación de tu máquina (9060 / 6040)", desc: "Armado de la base, ruedas y montaje, paso a paso con fotos", tam: "0.5 MB" },
+      { archivo: "parametros.pdf", titulo: "Parámetros por material", desc: "La tabla oficial de potencia y velocidad + tutorial RDWorks", tam: "4.4 MB" },
+      { archivo: "mantenimiento.pdf", titulo: "Mantenimiento completo", desc: "Normas de uso, limpieza de lente y espejos, chiller y rieles", tam: "1.4 MB" },
+      { archivo: "limpieza.pdf", titulo: "Limpieza rápida", desc: "La rutina corta de limpieza de óptica", tam: "0.2 MB" },
+      { archivo: "instalar-rdworks.pdf", titulo: "Instalar RDWorks", desc: "Cómo instalar el software de corte en tu computadora", tam: "0.4 MB" },
+      { archivo: "cable-red.pdf", titulo: "Conexión por cable de red", desc: "Conecta la máquina a tu computadora por red", tam: "0.6 MB" },
+      { archivo: "modulo-rotacion.pdf", titulo: "Módulo de rotación", desc: "Instala y usa el rotativo para vasos y cilindros", tam: "0.4 MB" },
+      { archivo: "mesa-extendida.pdf", titulo: "Mesa extendida", desc: "Uso de la mesa extendida para piezas grandes", tam: "0.8 MB" }
     ]
   },
 

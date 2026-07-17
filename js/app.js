@@ -203,6 +203,32 @@ const views = {
       <h2 class="section-title">Cursos por módulos</h2>
       ${a.cursos.map(cursoCard).join('')}
 
+      ${a.parametros ? `
+      <h2 class="section-title">Parámetros por material (potencia / velocidad)</h2>
+      <div class="card">
+        <p style="margin:0 0 12px">${esc(a.parametros.intro)}</p>
+        <div class="tabla-scroll">
+          <table class="tabla-params"><thead><tr>
+            <th>Material</th><th>Grosor</th><th>✂️ Corte<br><span>Pot / Vel</span></th><th>✏️ Marcado<br><span>Pot / Vel</span></th><th>🖼️ Grabado<br><span>Pot / Vel</span></th><th>Seal</th>
+          </tr></thead>
+          <tbody>${a.parametros.filas.map(f => `<tr><td><strong>${esc(f.m)}</strong></td><td>${esc(f.g)}</td><td>${esc(f.corte)}</td><td>${esc(f.marcado)}</td><td>${esc(f.grabado)}</td><td>${esc(f.seal)}</td></tr>`).join('')}</tbody></table>
+        </div>
+        <p class="muted" style="margin:12px 0 0;font-size:13px">${esc(a.parametros.nota)}</p>
+        <h3 style="margin:16px 0 8px;font-size:15px">Cómo aplicarlos en RDWorks</h3>
+        <ol class="acceso-pasos">${a.parametros.rdworks.map(x => `<li>${esc(x)}</li>`).join('')}</ol>
+      </div>` : ''}
+
+      ${a.guiasPdf ? `
+      <h2 class="section-title">Guías técnicas para descargar (PDF)</h2>
+      <div class="grid cols-3">
+        ${a.guiasPdf.map(g => `<a class="card pdf-card" href="guias/${esc(g.archivo)}" target="_blank" rel="noopener" download>
+          <div class="pdf-ico">PDF</div>
+          <h3>${esc(g.titulo)}</h3>
+          <p>${esc(g.desc)}</p>
+          <span class="pdf-dl">⬇ Descargar · ${esc(g.tam)}</span>
+        </a>`).join('')}
+      </div>` : ''}
+
       <h2 class="section-title">Próximamente</h2>
       <div class="grid cols-3">${a.proximamente.map(p => `<div class="card"><p>🔜 ${esc(p)}</p></div>`).join('')}</div>
 
@@ -238,7 +264,7 @@ const views = {
              <p>Completaste toda la guía. Ya puedes instalar con confianza y explorar todo tu portal.</p>
              <a class="btn primary sm" href="#/academia">Ir a la Academia →</a></div>`
         : `<div class="prep-aviso"><strong>Empieza por aquí 👇</strong>
-             <p>Completa este checklist antes de que llegue tu máquina. Cuando marques todo, se desbloquea el resto de tu portal — así garantizamos que tu instalación salga bien a la primera.</p></div>`}
+             <p>Antes de que llegue tu máquina necesitas <strong>tener TODO comprado y listo</strong>: revisa la lista de compras, mide el acceso y marca cada punto del checklist. Cuando completes todo, se desbloquea el resto de tu portal — así tu instalación sale bien a la primera y produces desde el día 1.</p></div>`}
       <div class="page-head" style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap">
         <div><p style="margin:0;max-width:64ch">${esc(p.intro)}</p></div>
         <button class="btn ghost sm" id="printPrep">🖨 Imprimir</button>
@@ -265,6 +291,13 @@ const views = {
         </div>
       </div>` : ''}
 
+      <h2 class="section-title">🛒 Lista de compras — cómprala COMPLETA antes de que llegue</h2>
+      <div class="card compras-destacada">
+        <p class="compras-nota">Esto es <strong>súper importante</strong>: tu máquina no se puede instalar si falta algo de esta lista. Cómpralo todo con anticipación y tenlo esperándola — así produces desde el primer día.</p>
+        <table><thead><tr><th>Ítem</th><th>Para qué</th><th>Especificación</th></tr></thead>
+        <tbody>${p.compras.map(c => `<tr><td><strong>${esc(c.item)}</strong></td><td>${esc(c.para)}</td><td>${esc(c.spec)}</td></tr>`).join('')}</tbody></table>
+      </div>
+
       <h2 class="section-title">Checklist <span id="prepCount" style="text-transform:none;letter-spacing:0;color:var(--muted);font-weight:600">${hechos}/${total}</span></h2>
       <div class="card">
         <div class="bar" style="margin:0 0 16px"><i id="prepBar" style="width:${total ? Math.round(hechos / total * 100) : 0}%"></i></div>
@@ -286,10 +319,6 @@ const views = {
       <div class="grid cols-2">
         ${p.guias.map(g => `<div class="card guia"><div class="guia-thumb">${diag(g.key)}</div><h3>${esc(g.titulo)}</h3><ul class="ulist">${g.pasos.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>`).join('')}
       </div>
-
-      <h2 class="section-title">Lista de compras</h2>
-      <table><thead><tr><th>Ítem</th><th>Para qué</th><th>Especificación</th></tr></thead>
-      <tbody>${p.compras.map(c => `<tr><td><strong>${esc(c.item)}</strong></td><td>${esc(c.para)}</td><td>${esc(c.spec)}</td></tr>`).join('')}</tbody></table>
 
       <div class="card" style="margin-top:20px"><h3>Según tu modelo</h3><p>${esc(p.modelos)}</p></div>`;
   },
@@ -616,14 +645,18 @@ function entrar(cliente) {
   $('#gate').hidden = true; $('#app').hidden = false;
   const info = docInfo(cliente.pais, cliente.tipo || 'persona');
   $('#me').innerHTML = `<strong>${esc(cliente.nombre)}</strong>${esc(info.doc)} ${esc(cliente.documento)}`;
-  // Primera vez: directo a preparar su espacio (la puerta de entrada del portal)
+  // Mientras la preparación NO esté completa, SIEMPRE se entra por ahí.
+  // La idea: que quede clarísimo qué debe tener comprado y listo antes de instalar.
   let primeraVez = false;
   try {
     if (!localStorage.getItem('c4v_hola_' + cliente.id)) { localStorage.setItem('c4v_hola_' + cliente.id, '1'); primeraVez = true; }
   } catch {}
-  if (primeraVez && !prepEstado().completo) {
+  const pe = prepEstado();
+  if (!pe.completo) {
     location.hash = '#/preparacion';
-    setTimeout(() => toast('👋 ¡Bienvenido! Empieza dejando tu espacio listo'), 500);
+    setTimeout(() => toast(primeraVez
+      ? '👋 ¡Bienvenido! Empieza dejando tu espacio listo'
+      : `📋 Sigues en ${pe.n} de ${pe.total} — completa tu preparación para desbloquear tu portal`), 500);
   }
   render(currentRoute());
 }
