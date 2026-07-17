@@ -30,7 +30,7 @@ function prepEstado() {
   try { n = lista.filter(c => localStorage.getItem('c4v_prep_' + state.ctx + '_' + c.id) === '1').length; } catch {}
   return { n, total: lista.length, completo: lista.length > 0 && n === lista.length };
 }
-const RUTAS_BLOQUEADAS = ['academia', 'plantillas'];
+const RUTAS_BLOQUEADAS = ['academia', 'plantillas', 'bolsa'];
 
 // ---------- data layer ----------
 async function loadDB() {
@@ -145,6 +145,9 @@ const views = {
         ${prep.completo
           ? bigBtn('#/academia', 'academia', 'Aprender a usar mi máquina', 'Cursos en video, quizzes y preguntas frecuentes')
           : lockBtn('academia', 'Aprender a usar mi máquina')}
+        ${prep.completo
+          ? bigBtn('#/bolsa', 'bolsa', 'Quiero más clientes', 'Trabajos de corte que te pasamos gratis')
+          : lockBtn('bolsa', 'Quiero más clientes')}
         ${bigBtn('#/soporte', 'soporte', 'Necesito ayuda', 'Habla con nosotros por WhatsApp')}
       </div>`;
   },
@@ -313,6 +316,27 @@ const views = {
         <div class="list" id="ticketList">${ticketRows(d.tickets.filter(t => t.cliente_id === cli.id), false)}</div>` : ''}`;
   },
 
+  bolsa() {
+    return `
+      <div class="page-head">
+        <p><strong>Beneficio gratis, solo para clientes C4V.</strong> Cada día nos escriben personas pidiendo servicio de corte láser. Nosotros no damos ese servicio — fabricamos las máquinas — así que sus pedidos se publican aquí <strong>para ti</strong>: tómalos, contáctalos y produce. El contacto se revela al tomar el trabajo.</p></div>
+      <div class="toolbar"><div class="filters">
+          <button class="chip active" data-filter="todos">Todos</button>
+          <button class="chip" data-filter="PE">🇵🇪 Perú</button>
+          <button class="chip" data-filter="EC">🇪🇨 Ecuador</button>
+          <button class="chip" data-filter="BO">🇧🇴 Bolivia</button>
+          <button class="chip" data-filter="CL">🇨🇱 Chile</button>
+          <button class="chip" data-filter="CO">🇨🇴 Colombia</button></div>
+        <button class="btn primary sm" id="newLeadBtn">+ Publicar solicitud</button></div>
+      <div id="leadForm"></div>
+      <div class="list" id="leadList">${leadRows(state.db.leads)}</div>
+      <h2 class="section-title">Trae más trabajos a la red</h2>
+      <div class="help-card">${icon('bolsa')}
+        <div class="grow"><h3>¿Conoces a alguien que necesita corte láser?</h3>
+          <p>Compártele el enlace de solicitudes: deja su pedido en 1 minuto y se publica en esta bolsa.</p></div>
+        <a class="btn ghost sm" href="solicita.html" target="_blank" rel="noopener">Abrir página de solicitudes</a></div>`;
+  },
+
   plantillas() {
     const pl = state.db.plantillas;
     return `
@@ -376,8 +400,32 @@ function ticketRows(tickets, isStaff) {
       <div class="meta"><span class="badge ${t.tipo === 'soporte' ? 'red' : 'info'}">${t.tipo}</span><span>${esc(t.id)}</span><span class="pill-pais">${t.pais}</span><span>Atiende: ${esc(t.asignado_a)}</span></div></div>
     ${isStaff ? `<select class="mini-select" data-ticket="${esc(t.id)}">${['nuevo', 'asignado', 'en_proceso', 'resuelto', 'cerrado'].map(e => `<option ${e === t.estado ? 'selected' : ''} value="${e}">${ESTADO_TICKET[e] || e}</option>`).join('')}</select>` : ''}</div>`).join('');
 }
-/* La Bolsa de Trabajos salió del portal (decisión 2026-07-17). La captura pública
-   sigue en solicita.html; los leads se gestionan fuera del portal del cliente. */
+function leadRows(leads) {
+  if (!leads.length) return '<div class="empty">No hay solicitudes con ese filtro.</div>';
+  const cli = currentClient();
+  return leads.map(l => {
+    // Privacidad: el contacto solo lo ve el cliente que tomó el trabajo
+    const puedeVer = l.estado === 'tomado' && cli && l.tomado_por === cli.id;
+    const contacto = puedeVer
+      ? `<div class="contact-box"><span class="lbl">Contacto</span><strong>${esc(l.contacto)}</strong>${l.telefono ? `<div class="muted">${esc(l.telefono)}</div>` : ''}</div>`
+      : (l.estado === 'nuevo' ? `<div class="contact-box"><span class="lbl">Contacto</span><span class="muted" style="font-size:12.5px">Se muestra al tomar el trabajo</span></div>` : '');
+    return `<div class="row-card">
+    <div class="grow"><h4>${esc(l.titulo)} ${l.estado === 'nuevo' ? '<span class="badge ok">Disponible</span>' : '<span class="badge grey">Tomado</span>'}</h4>
+      <p style="margin:4px 0;color:var(--muted);font-size:14px">${esc(l.descripcion)}</p>
+      <div class="meta"><span class="pill-pais">${l.pais}</span><span>${esc(l.ciudad)}</span><span>${esc(l.material)}</span><span>${esc(l.cantidad)}</span></div></div>
+    <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end">
+      ${contacto}
+      ${l.estado === 'nuevo' ? `<button class="btn primary sm" data-take="${esc(l.id)}">Tomar trabajo</button>` : ''}
+    </div></div>`;
+  }).join('');
+}
+function bindTake() {
+  view.querySelectorAll('[data-take]').forEach(b => b.onclick = async () => {
+    const cli = currentClient();
+    if (!cli) { toast('Inicia sesión para tomar el trabajo'); return; }
+    try { await actions.tomarLead(b.dataset.take, cli.id); toast(state.offline ? 'Trabajo tomado (demostración: el contacto es de ejemplo)' : '🎉 ¡Trabajo tomado! Contacta al cliente'); render('bolsa'); } catch { toast('⚠️ Ese trabajo ya fue tomado'); }
+  });
+}
 
 // ---------- interacciones ----------
 function bindAccordions(sel) { view.querySelectorAll(sel).forEach(it => { const q = it.querySelector('.faq-q, .course-head'); if (q) q.onclick = () => { const open = it.classList.toggle('open'); q.setAttribute('aria-expanded', open); }; }); }
@@ -407,6 +455,25 @@ function bind(route) {
   }
   if (route === 'certificado') bindAccordions('.faq-item');
   if (route === 'soporte') bindAccordions('.faq-item');
+  if (route === 'bolsa') {
+    let filtro = 'todos';
+    const apply = () => { $('#leadList').innerHTML = leadRows(filtro === 'todos' ? state.db.leads : state.db.leads.filter(l => l.pais === filtro)); bindTake(); };
+    view.querySelectorAll('[data-filter]').forEach(b => b.onclick = () => { filtro = b.dataset.filter; view.querySelectorAll('.chip').forEach(c => c.classList.toggle('active', c === b)); apply(); });
+    $('#newLeadBtn').onclick = () => {
+      const box = $('#leadForm'); if (box.innerHTML) { box.innerHTML = ''; return; }
+      box.innerHTML = `<div class="card" style="margin-bottom:16px"><h3>Publicar una solicitud</h3>
+        <form class="form" id="lf" style="margin-top:10px">
+          <div class="field"><label>¿Qué trabajo es?</label><input name="titulo" placeholder="Ej: corte de 100 llaveros" required></div>
+          <div class="field"><label>Detalle</label><textarea name="descripcion"></textarea></div>
+          <div class="form-row"><div class="field"><label>Material</label><input name="material" placeholder="MDF 3mm"></div><div class="field"><label>Cantidad</label><input name="cantidad" placeholder="100 unidades"></div></div>
+          <div class="form-row"><div class="field"><label>País</label><select name="pais"><option>PE</option><option>EC</option><option>BO</option><option>CL</option><option>CO</option></select></div><div class="field"><label>Ciudad</label><input name="ciudad"></div></div>
+          <div class="form-row"><div class="field"><label>Nombre del cliente</label><input name="contacto" placeholder="Nombre" required></div><div class="field"><label>Teléfono o email</label><input name="telefono" placeholder="+51 …"></div></div>
+          <button class="btn primary" type="submit">Publicar</button></form></div>`;
+      $('#lf').onsubmit = async (e) => { e.preventDefault();
+        try { await actions.crearLead(Object.fromEntries(new FormData(e.target))); toast(state.offline ? 'Solicitud guardada en esta demostración' : '✅ Solicitud publicada'); render('bolsa'); } catch { toast('⚠️ Error'); } };
+    };
+    bindTake();
+  }
 }
 
 // ---------- lecciones en video (Academia) ----------
@@ -497,7 +564,7 @@ function bindQuizzes() {
 }
 
 // ---------- router ----------
-const TITLES = { inicio: 'Inicio', academia: 'Aprender a usar mi máquina', preparacion: 'Preparar mi espacio', soporte: 'Necesito ayuda', plantillas: 'Banco de Diseños', certificado: 'Tu Certificado de Calidad' };
+const TITLES = { inicio: 'Inicio', academia: 'Aprender a usar mi máquina', preparacion: 'Preparar mi espacio', soporte: 'Necesito ayuda', bolsa: 'Quiero más clientes', plantillas: 'Banco de Diseños', certificado: 'Tu Certificado de Calidad' };
 function render(route) {
   if (!views[route]) route = 'inicio';
   // Candado: primero se completa la preparación del espacio, después el resto.
