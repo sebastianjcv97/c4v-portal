@@ -19,9 +19,39 @@
 </head>
 <body>
   <a class="skip" href="#view">Saltar al contenido</a>
+
+  <!-- ============ Acceso: tu número de WhatsApp es tu llave ============ -->
+  <div class="gate" id="gate" hidden>
+    <div class="gate-band">Versión de demostración</div>
+    <div class="gate-box">
+      <img class="gate-logo" src="assets/c4v-wordmark.png" alt="C4V Láser" />
+      <h1>Tu Central de Postventa</h1>
+      <p class="gate-sub">Ingresa con el <strong>número de WhatsApp</strong> con el que compraste tu máquina. Es tu llave: no necesitas contraseña.</p>
+
+      <form class="gate-form" id="gateForm" novalidate>
+        <label class="gate-label" for="gatePhone">Tu número de WhatsApp</label>
+        <div class="gate-row">
+          <select id="gateCountry" aria-label="País"></select>
+          <input id="gatePhone" type="tel" inputmode="numeric" autocomplete="tel-national"
+                 placeholder="987 654 321" aria-describedby="gateHelp" required />
+        </div>
+        <p class="gate-help" id="gateHelp">Solo los números, sin espacios ni guiones.</p>
+        <button class="btn primary gate-btn" type="submit">Entrar</button>
+        <div class="gate-error" id="gateError" role="alert" hidden></div>
+      </form>
+
+      <div class="gate-demo" id="gateDemo" hidden></div>
+
+      <p class="gate-foot">
+        ¿Aún no tienes tu acceso? Escríbenos por
+        <a id="gateWa" href="#" target="_blank" rel="noopener">WhatsApp</a> y te ayudamos.
+      </p>
+    </div>
+  </div>
+
   <div class="demo-band">Versión de demostración — los datos que ves son de ejemplo</div>
 
-  <div class="app">
+  <div class="app" id="app" hidden>
     <aside class="sidebar" id="sidebar">
       <div class="brand">
         <img src="assets/c4v-wordmark.png" alt="C4V Láser" />
@@ -39,8 +69,8 @@
       </nav>
 
       <div class="sidebar-foot">
-        <label class="ctx-label" for="ctxUser">Modo demostración: ver como</label>
-        <select id="ctxUser" class="ctx-select"></select>
+        <div class="me" id="me"></div>
+        <button class="ctx-out" id="logoutBtn" type="button">Salir</button>
       </div>
     </aside>
 
@@ -49,8 +79,20 @@
         <button class="menu-btn" id="menuBtn" aria-label="Abrir menú" aria-expanded="false">☰</button>
         <img class="topbar-logo" src="assets/c4v-wordmark.png" alt="C4V Láser" />
         <div class="topbar-title" id="topbarTitle">Inicio</div>
+
+        <!-- Agente de IA por voz — siempre a la mano -->
+        <button class="ai-btn" id="aiBtn" type="button" aria-expanded="false" aria-controls="aiPanel">
+          <svg class="ai-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+            <rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0"/><path d="M12 18v3"/>
+          </svg>
+          <span>Habla con <strong id="aiName">CeVi</strong></span>
+        </button>
+
         <a href="#/certificado" class="badge-cert">Certificado de Calidad C4V</a>
       </header>
+
+      <!-- Panel del agente (se abre bajo el topbar) -->
+      <div class="ai-panel" id="aiPanel" hidden></div>
 
       <main id="view" class="view"><div class="loading">Cargando…</div></main>
 
@@ -61,6 +103,7 @@
     </div>
   </div>
 
+  <script src="js/config.js"></script>
   <script src="js/data.js"></script>
   <script src="js/app.js"></script>
 </body>

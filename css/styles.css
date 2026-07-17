@@ -33,6 +33,56 @@ button{font-family:var(--sans)}
 /* Banda de demostración (honestidad) */
 .demo-band{background:var(--amber);color:var(--black);font-size:14px;font-weight:700;text-align:center;padding:8px 16px}
 
+/* [hidden] debe ganar SIEMPRE: .gate/.app usan display:flex y taparían el hidden del navegador */
+[hidden]{display:none !important}
+
+/* ---------- Acceso por teléfono (gate) ---------- */
+.gate{position:fixed;inset:0;z-index:50;background:var(--black);color:var(--on-black);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;overflow-y:auto}
+.gate-band{position:absolute;top:0;left:0;right:0;background:var(--amber);color:var(--black);font-size:13px;font-weight:700;text-align:center;padding:6px 16px}
+.gate-box{width:100%;max-width:420px;text-align:center}
+.gate-logo{height:34px;width:auto;margin-bottom:32px}
+.gate h1{font-family:var(--slab);font-size:28px;font-weight:800;line-height:1.2;margin-bottom:12px}
+.gate-sub{color:var(--on-black-dim);font-size:16px;line-height:1.5;margin-bottom:28px}
+.gate-sub strong{color:var(--on-black)}
+.gate-form{text-align:left}
+.gate-label{display:block;font-size:14px;font-weight:700;margin-bottom:8px}
+.gate-row{display:flex;gap:8px}
+#gateCountry{flex-shrink:0;width:112px;background:var(--black-2);color:var(--on-black);border:1px solid var(--black-3);border-radius:var(--r);padding:14px 8px;font-size:16px;font-family:var(--sans)}
+#gatePhone{flex:1;min-width:0;background:var(--black-2);color:var(--on-black);border:1px solid var(--black-3);border-radius:var(--r);padding:14px 16px;font-size:20px;font-weight:700;letter-spacing:.5px;font-family:var(--sans)}
+#gatePhone:focus,#gateCountry:focus{outline:2px solid var(--red);outline-offset:1px;border-color:var(--red)}
+#gatePhone::placeholder{color:#6a6a6a;font-weight:400;letter-spacing:0}
+.gate-help{color:var(--on-black-dim);font-size:13px;margin:8px 0 20px}
+.gate-btn{width:100%;justify-content:center;padding:16px;font-size:17px}
+.gate-error{margin-top:16px;background:#3a1414;border:1px solid var(--red);color:#ffd7d7;border-radius:var(--r);padding:12px 14px;font-size:14px;line-height:1.5}
+.gate-error a{color:#fff;font-weight:700}
+.gate-demo{margin-top:28px;border-top:1px solid var(--black-3);padding-top:20px;text-align:left}
+.gate-demo h2{font-size:13px;font-weight:700;color:var(--on-black-dim);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px}
+.gate-demo button{display:block;width:100%;text-align:left;background:var(--black-2);border:1px solid var(--black-3);color:var(--on-black);border-radius:var(--r);padding:12px 14px;margin-bottom:8px;font-size:14px;font-family:var(--sans);cursor:pointer}
+.gate-demo button:hover{border-color:var(--red)}
+.gate-demo button span{display:block;color:var(--on-black-dim);font-size:12px;margin-top:2px}
+.gate-foot{margin-top:24px;color:var(--on-black-dim);font-size:14px}
+.gate-foot a{color:var(--red);font-weight:700}
+
+/* ---------- Agente de IA (topbar) ---------- */
+.ai-btn{margin-left:auto;display:inline-flex;align-items:center;gap:8px;background:var(--red-cta);color:#fff;border:none;border-radius:var(--r);padding:9px 14px;font-size:14px;font-weight:500;font-family:var(--sans);cursor:pointer;white-space:nowrap}
+.ai-btn:hover{background:var(--red-dark)}
+.ai-btn strong{font-weight:700}
+.ai-ic{width:18px;height:18px;flex-shrink:0}
+.ai-panel{background:var(--alt);border-bottom:1px solid var(--line);padding:20px 32px}
+.ai-panel .ai-inner{max-width:1020px;display:flex;gap:16px;align-items:flex-start}
+.ai-panel h3{font-family:var(--slab);font-size:17px;font-weight:700;margin-bottom:4px}
+.ai-panel p{color:var(--muted);font-size:14px;line-height:1.55;margin-bottom:12px}
+.ai-avatar{flex-shrink:0;width:44px;height:44px;border-radius:50%;background:var(--black);color:var(--red);display:flex;align-items:center;justify-content:center}
+.ai-avatar svg{width:22px;height:22px}
+.ai-soon{display:inline-block;background:var(--warn-50);color:var(--warn);border-radius:100px;padding:3px 10px;font-size:12px;font-weight:700;margin-bottom:8px}
+.ai-close{margin-left:auto;background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:4px 8px;line-height:1}
+
+/* ---------- Identidad del usuario en el sidebar ---------- */
+.me{font-size:13px;color:var(--on-black-dim);line-height:1.5;margin-bottom:10px}
+.me strong{display:block;color:var(--on-black);font-size:14px}
+.ctx-out{width:100%;min-height:40px;background:transparent;border:1px solid var(--black-3);color:var(--on-black-dim);border-radius:var(--r);padding:8px 12px;font-size:13px;font-family:var(--sans);cursor:pointer}
+.ctx-out:hover{border-color:var(--red);color:var(--on-black)}
+
 /* ---------- Layout ---------- */
 .app{display:flex;min-height:100vh}
 .sidebar{width:248px;flex-shrink:0;background:var(--black);color:var(--on-black);display:flex;flex-direction:column;padding:24px 16px;position:sticky;top:0;height:100vh}

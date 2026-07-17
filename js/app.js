@@ -1,7 +1,9 @@
 /* Central de Postventa C4V — SPA (vanilla JS). Sin login (modo local).
    Funciona con servidor (npm start) o en modo DEMO con datos embebidos (data.js). */
 
-const state = { db: null, ctx: 'staff', offline: false };
+const state = { db: null, ctx: null, offline: false, telefono: null };
+const CFG = window.C4V_CONFIG || {};
+const SESION_DIAS = 90; // A5: sesión recordada 90 días en el dispositivo
 
 // ---------- helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -18,7 +20,7 @@ function toast(msg) {
   clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('show'), 2600);
 }
 async function apiGet(url) { const r = await fetch(url); if (!r.ok) throw new Error('http'); return r.json(); }
-function currentClient() { return state.ctx === 'staff' ? null : state.db.clientes.find(c => c.id === state.ctx) || null; }
+function currentClient() { return state.db.clientes.find(c => c.id === state.ctx) || null; }
 
 // ---------- data layer ----------
 async function loadDB() {
@@ -338,8 +340,8 @@ function leadRows(leads) {
   if (!leads.length) return '<div class="empty">No hay solicitudes con ese filtro.</div>';
   const cli = currentClient();
   return leads.map(l => {
-    // Privacidad: el contacto solo lo ve el staff o el cliente que tomó el trabajo
-    const puedeVer = state.ctx === 'staff' || (l.estado === 'tomado' && cli && l.tomado_por === cli.id);
+    // Privacidad: el contacto solo lo ve el cliente que tomó el trabajo
+    const puedeVer = l.estado === 'tomado' && cli && l.tomado_por === cli.id;
     const contacto = puedeVer
       ? `<div class="contact-box"><span class="lbl">Contacto</span><strong>${esc(l.contacto)}</strong>${l.telefono ? `<div class="muted">${esc(l.telefono)}</div>` : ''}</div>`
       : (l.estado === 'nuevo' ? `<div class="contact-box"><span class="lbl">Contacto</span><span class="muted" style="font-size:12.5px">Se muestra al tomar el trabajo</span></div>` : '');
@@ -432,13 +434,120 @@ const currentRoute = () => (location.hash.replace('#/', '') || 'inicio');
 window.addEventListener('hashchange', () => render(currentRoute()));
 window.toast = toast;
 
+// ---------- identidad: tu teléfono es tu llave (A5) ----------
+/* Normalización E.164 según A5_IDENTIDAD_Y_PLANTILLAS.md §3:
+   quitar espacios/-/()/. · quitar 0 inicial de larga distancia · anteponer código de país · guardar con "+" */
+function normalizarTelefono(raw, prefijoPais) {
+  let d = String(raw || '').replace(/[\s\-().]/g, '').replace(/\D/g, '');
+  d = d.replace(/^0+/, '');                                  // Ecuador: 0987… → 987…
+  if (prefijoPais && !d.startsWith(prefijoPais)) d = prefijoPais + d;
+  return d ? '+' + d : '';
+}
+const paisDePrefijo = (p) => (CFG.paises || []).find(x => x.prefijo === p)?.code || 'PE';
+
+function buscarClientePorTelefono(tel) {
+  // v1 (demo): busca en los datos locales. v2: consulta a Odoo vía A6.
+  return state.db.clientes.find(c => normalizarTelefono(c.telefono, '') === tel) || null;
+}
+function guardarSesion(tel) {
+  try { localStorage.setItem('c4v_sesion', JSON.stringify({ tel, exp: Date.now() + SESION_DIAS * 864e5 })); } catch {}
+}
+function leerSesion() {
+  try {
+    const s = JSON.parse(localStorage.getItem('c4v_sesion') || 'null');
+    if (s && s.exp > Date.now()) return s.tel;
+    localStorage.removeItem('c4v_sesion');
+  } catch {}
+  return null;
+}
+const waLink = (texto) => `https://wa.me/${CFG.whatsapp?.numero || ''}?text=${encodeURIComponent(texto || '')}`;
+
+function entrar(cliente, tel) {
+  state.ctx = cliente.id; state.telefono = tel;
+  $('#gate').hidden = true; $('#app').hidden = false;
+  $('#me').innerHTML = `<strong>${esc(cliente.nombre)}</strong>${esc(tel)}`;
+  render(currentRoute());
+}
+
+function initGate() {
+  const gate = $('#gate'), form = $('#gateForm'), sel = $('#gateCountry'), inp = $('#gatePhone'), err = $('#gateError');
+  const paises = CFG.paises || [];
+
+  sel.innerHTML = paises.map(p => `<option value="${p.prefijo}">${p.bandera} +${p.prefijo}</option>`).join('');
+  const setEjemplo = () => { inp.placeholder = paises.find(p => p.prefijo === sel.value)?.ejemplo || ''; };
+  sel.onchange = setEjemplo; setEjemplo();
+  $('#gateWa').href = waLink('Hola, quiero acceder a mi Central de Postventa C4V pero mi número no está registrado.');
+
+  // Números de ejemplo (solo demo — para poder entrar y probar)
+  if (CFG.mostrarNumerosDemo) {
+    const box = $('#gateDemo'); box.hidden = false;
+    box.innerHTML = '<h2>Números de ejemplo (demostración)</h2>' + state.db.clientes.map(c =>
+      `<button type="button" data-tel="${esc(c.telefono)}">${esc(c.telefono)}<span>${esc(c.nombre)} · ${PAISES[c.pais] || c.pais}</span></button>`).join('');
+    box.querySelectorAll('button').forEach(b => b.onclick = () => {
+      const tel = normalizarTelefono(b.dataset.tel, '');
+      const cli = buscarClientePorTelefono(tel);
+      if (cli) { guardarSesion(tel); entrar(cli, tel); }
+    });
+  }
+
+  form.onsubmit = (e) => {
+    e.preventDefault(); err.hidden = true;
+    const tel = normalizarTelefono(inp.value, sel.value);
+    if (normalizarTelefono(inp.value, '').length < 7) {
+      err.hidden = false; err.innerHTML = 'Escribe tu número completo, solo los dígitos.'; return;
+    }
+    const cli = buscarClientePorTelefono(tel);
+    if (!cli) {
+      err.hidden = false;
+      err.innerHTML = `No encontramos <strong>${esc(tel)}</strong> entre nuestros clientes. Revisa el número o <a href="${waLink('Hola, mi número no aparece en la Central de Postventa C4V. ¿Me ayudan?')}" target="_blank" rel="noopener">escríbenos por WhatsApp</a> y te ayudamos.`;
+      return;
+    }
+    guardarSesion(tel); entrar(cli, tel);
+  };
+
+  gate.hidden = false; $('#app').hidden = true;
+}
+
+// ---------- agente de IA (ElevenLabs · A4) ----------
+function initAgente() {
+  const btn = $('#aiBtn'), panel = $('#aiPanel'), ag = CFG.agente || {};
+  $('#aiName').textContent = ag.nombre || 'CeVi';
+  const mic = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0"/><path d="M12 18v3"/></svg>';
+
+  const contenido = () => CFG.elevenlabsAgentId
+    ? `<elevenlabs-convai agent-id="${esc(CFG.elevenlabsAgentId)}"></elevenlabs-convai>`
+    : `<span class="ai-soon">Aún no disponible</span>
+       <h3>${esc(ag.nombre || 'CeVi')} está en camino</h3>
+       <p>${esc(ag.descripcion || '')} Todavía no está activo. Mientras tanto, escríbenos por WhatsApp: te responde una persona del equipo C4V.</p>
+       <a class="btn primary sm" href="${waLink('Hola, necesito ayuda con mi máquina C4V.')}" target="_blank" rel="noopener">Escribir por WhatsApp</a>`;
+
+  btn.onclick = () => {
+    const abrir = panel.hidden;
+    panel.hidden = !abrir; btn.setAttribute('aria-expanded', abrir);
+    if (!abrir) return;
+    panel.innerHTML = `<div class="ai-inner"><div class="ai-avatar">${mic}</div><div>${contenido()}</div>
+      <button class="ai-close" id="aiClose" aria-label="Cerrar">×</button></div>`;
+    $('#aiClose').onclick = () => { panel.hidden = true; btn.setAttribute('aria-expanded', false); };
+    // El widget de voz solo se carga si hay un agente configurado (nunca fingir que funciona).
+    if (CFG.elevenlabsAgentId && !document.getElementById('el-convai')) {
+      const s = document.createElement('script');
+      s.id = 'el-convai'; s.src = 'https://unpkg.com/@elevenlabs/convai-widget-embed'; s.async = true;
+      document.body.appendChild(s);
+    }
+  };
+}
+
 // ---------- init ----------
 async function init() {
   state.db = await loadDB();
-  const sel = $('#ctxUser');
-  sel.innerHTML = '<option value="staff">Equipo C4V</option>' + state.db.clientes.map(c => `<option value="${c.id}">${esc(c.nombre)} · ${c.pais}</option>`).join('');
-  sel.onchange = () => { state.ctx = sel.value; render(currentRoute()); };
   $('#menuBtn').onclick = () => { const open = $('#sidebar').classList.toggle('open'); $('#menuBtn').setAttribute('aria-expanded', open); };
-  render(currentRoute());
+  $('#logoutBtn').onclick = () => { try { localStorage.removeItem('c4v_sesion'); } catch {} location.reload(); };
+  initAgente();
+  initGate();
+
+  // Sesión recordada: entra directo, sin volver a pedir el número.
+  const tel = leerSesion();
+  const cli = tel && buscarClientePorTelefono(tel);
+  if (cli) entrar(cli, tel);
 }
 init();
