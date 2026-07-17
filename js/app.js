@@ -22,6 +22,16 @@ function toast(msg) {
 async function apiGet(url) { const r = await fetch(url); if (!r.ok) throw new Error('http'); return r.json(); }
 function currentClient() { return state.db.clientes.find(c => c.id === state.ctx) || null; }
 
+/* Preparación del espacio: la puerta de entrada. El resto del portal se
+   desbloquea cuando el checklist de "Preparar mi espacio" está completo. */
+function prepEstado() {
+  const lista = state.db.preparacion?.checklist || [];
+  let n = 0;
+  try { n = lista.filter(c => localStorage.getItem('c4v_prep_' + state.ctx + '_' + c.id) === '1').length; } catch {}
+  return { n, total: lista.length, completo: lista.length > 0 && n === lista.length };
+}
+const RUTAS_BLOQUEADAS = ['academia', 'plantillas'];
+
 // ---------- data layer ----------
 async function loadDB() {
   // Hosting estático (GitHub Pages / archivo local): demo directa, sin esperar un 404.
@@ -100,6 +110,12 @@ const views = {
         <div class="big-txt"><strong>${t}</strong><span>${desc}</span></div>
         <div class="big-arrow" aria-hidden="true">→</div></a>`;
 
+    const prep = prepEstado();
+    const lockBtn = (ic, t) => `<button type="button" class="big lock" data-lock="1">
+        <div class="big-ico">${icon(ic)}</div>
+        <div class="big-txt"><strong>🔒 ${t}</strong><span>Se desbloquea al completar tu preparación</span></div>
+      </button>`;
+
     return `
       <h1 class="saludo">${cli ? `Hola, ${esc(cli.nombre.split(' ')[0])}` : 'Hola'}</h1>
 
@@ -114,11 +130,22 @@ const views = {
         </div>
         <div class="big-arrow" aria-hidden="true">→</div></a>` : ''}
 
+      ${prep.completo ? '' : `
+      <a class="prep-cta" href="#/preparacion">
+        <div class="prep-cta-top"><strong>Paso 1 · Deja tu espacio listo</strong><span>${prep.n} de ${prep.total}</span></div>
+        <div class="bar"><i style="width:${prep.total ? Math.round(prep.n / prep.total * 100) : 0}%"></i></div>
+        <p>Antes de usar tu máquina, completa la guía: eléctrico, pozo a tierra, extracción y agua destilada. Así tu instalación sale bien a la primera.</p>
+        <span class="prep-cta-btn">Continuar mi preparación →</span>
+      </a>`}
+
       <div class="bigs">
-        ${bigBtn('#/soporte', 'soporte', 'Necesito ayuda', 'Algo no funciona o tengo una duda')}
-        ${bigBtn('#/academia', 'academia', 'Aprender a usar mi máquina', 'Cursos y preguntas frecuentes')}
-        ${bigBtn('#/preparacion', 'prep', 'Preparar mi espacio', 'Qué necesitas antes de instalarla')}
-        ${bigBtn('#/bolsa', 'bolsa', 'Quiero más clientes', 'Trabajos de corte que te pasamos gratis')}
+        ${prep.completo
+          ? bigBtn('#/preparacion', 'prep', 'Preparar mi espacio', 'Tu checklist quedó completo ✓')
+          : ''}
+        ${prep.completo
+          ? bigBtn('#/academia', 'academia', 'Aprender a usar mi máquina', 'Cursos en video, quizzes y preguntas frecuentes')
+          : lockBtn('academia', 'Aprender a usar mi máquina')}
+        ${bigBtn('#/soporte', 'soporte', 'Necesito ayuda', 'Habla con nosotros por WhatsApp')}
       </div>`;
   },
 
@@ -201,7 +228,14 @@ const views = {
     const p = state.db.preparacion;
     const done = (id) => { try { return localStorage.getItem('c4v_prep_' + state.ctx + '_' + id) === '1'; } catch { return false; } };
     const hechos = p.checklist.filter(c => done(c.id)).length, total = p.checklist.length;
+    const completo = total > 0 && hechos === total;
     return `
+      ${completo
+        ? `<div class="prep-ok"><strong>🎉 ¡Tu espacio está listo!</strong>
+             <p>Completaste toda la guía. Ya puedes instalar con confianza y explorar todo tu portal.</p>
+             <a class="btn primary sm" href="#/academia">Ir a la Academia →</a></div>`
+        : `<div class="prep-aviso"><strong>Empieza por aquí 👇</strong>
+             <p>Completa este checklist antes de que llegue tu máquina. Cuando marques todo, se desbloquea el resto de tu portal — así garantizamos que tu instalación salga bien a la primera.</p></div>`}
       <div class="page-head" style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap">
         <div><p style="margin:0;max-width:64ch">${esc(p.intro)}</p></div>
         <button class="btn ghost sm" id="printPrep">🖨 Imprimir</button>
@@ -227,8 +261,6 @@ const views = {
 
   soporte() {
     const d = state.db, cli = currentClient(), sop = d.soporte;
-    const maqs = cli ? d.maquinas.filter(m => m.cliente_id === cli.id) : d.maquinas;
-    const maqOpts = maqs.map(m => `<option value="${esc(m.serie)}" data-pais="${m.pais}">${esc(m.modelo)} · ${esc(m.serie)}</option>`).join('');
     return `
       <!-- Lo primero y más grande: hablar con una persona por WhatsApp -->
       <a class="wa-big" href="${esc(sop.wa_link)}" target="_blank" rel="noopener">
@@ -246,41 +278,7 @@ const views = {
 
       ${(cli ? d.tickets.filter(t => t.cliente_id === cli.id) : []).length ? `
         <h2 class="section-title">Tus casos</h2>
-        <div class="list" id="ticketList">${ticketRows(d.tickets.filter(t => t.cliente_id === cli.id), false)}</div>` : ''}
-
-      <!-- Vía secundaria: WhatsApp es lo principal; esto queda para quien prefiera escribir aquí -->
-      <details class="msg-box">
-        <summary>Prefiero dejar un mensaje aquí</summary>
-        <form class="form" id="ticketForm">
-          <input type="hidden" name="tipo" value="soporte">
-          <input type="hidden" name="prioridad" value="media">
-          ${maqs.length > 1
-            ? `<div class="field"><label>¿Qué máquina?</label><select name="serie" id="serieSel">${maqOpts}</select></div>`
-            : `<input type="hidden" name="serie" id="serieSel" value="${esc(maqs[0]?.serie || '')}" data-pais="${esc(maqs[0]?.pais || 'PE')}">`}
-          <div class="field"><label>¿Qué pasa?</label><input name="asunto" placeholder="Ej: el corte no atraviesa el material" required></div>
-          <div class="field"><label>Cuéntanos más (opcional)</label><textarea name="descripcion" rows="3"></textarea></div>
-          <button class="btn primary" type="submit">Enviar</button>
-        </form>
-      </details>`;
-  },
-
-  bolsa() {
-    return `
-      <div class="page-head">
-        <p><strong>Beneficio gratis, solo para clientes C4V.</strong> Cada día nos escriben personas pidiendo servicio de corte láser. Nosotros no damos ese servicio — fabricamos las máquinas — así que sus pedidos se publican aquí <strong>para ti</strong>: tómalos, contáctalos y produce. El contacto se revela al tomar el trabajo.</p></div>
-      <div class="toolbar"><div class="filters">
-          <button class="chip active" data-filter="todos">Todos</button>
-          <button class="chip" data-filter="PE">🇵🇪 Perú</button>
-          <button class="chip" data-filter="EC">🇪🇨 Ecuador</button>
-          <button class="chip" data-filter="BO">🇧🇴 Bolivia</button></div>
-        <button class="btn primary sm" id="newLeadBtn">+ Publicar solicitud</button></div>
-      <div id="leadForm"></div>
-      <div class="list" id="leadList">${leadRows(state.db.leads)}</div>
-      <h2 class="section-title">Trae más trabajos a la red</h2>
-      <div class="help-card">${icon('bolsa')}
-        <div class="grow"><h3>¿Conoces a alguien que necesita corte láser?</h3>
-          <p>Compártele el enlace de solicitudes: deja su pedido en 1 minuto y se publica en esta bolsa.</p></div>
-        <a class="btn ghost sm" href="solicita.html" target="_blank" rel="noopener">Abrir página de solicitudes</a></div>`;
+        <div class="list" id="ticketList">${ticketRows(d.tickets.filter(t => t.cliente_id === cli.id), false)}</div>` : ''}`;
   },
 
   plantillas() {
@@ -346,36 +344,17 @@ function ticketRows(tickets, isStaff) {
       <div class="meta"><span class="badge ${t.tipo === 'soporte' ? 'red' : 'info'}">${t.tipo}</span><span>${esc(t.id)}</span><span class="pill-pais">${t.pais}</span><span>Atiende: ${esc(t.asignado_a)}</span></div></div>
     ${isStaff ? `<select class="mini-select" data-ticket="${esc(t.id)}">${['nuevo', 'asignado', 'en_proceso', 'resuelto', 'cerrado'].map(e => `<option ${e === t.estado ? 'selected' : ''} value="${e}">${ESTADO_TICKET[e] || e}</option>`).join('')}</select>` : ''}</div>`).join('');
 }
-function leadRows(leads) {
-  if (!leads.length) return '<div class="empty">No hay solicitudes con ese filtro.</div>';
-  const cli = currentClient();
-  return leads.map(l => {
-    // Privacidad: el contacto solo lo ve el cliente que tomó el trabajo
-    const puedeVer = l.estado === 'tomado' && cli && l.tomado_por === cli.id;
-    const contacto = puedeVer
-      ? `<div class="contact-box"><span class="lbl">Contacto</span><strong>${esc(l.contacto)}</strong>${l.telefono ? `<div class="muted">${esc(l.telefono)}</div>` : ''}</div>`
-      : (l.estado === 'nuevo' ? `<div class="contact-box"><span class="lbl">Contacto</span><span class="muted" style="font-size:12.5px">Se muestra al tomar el trabajo</span></div>` : '');
-    return `<div class="row-card">
-    <div class="grow"><h4>${esc(l.titulo)} ${l.estado === 'nuevo' ? '<span class="badge ok">Disponible</span>' : '<span class="badge grey">Tomado</span>'}</h4>
-      <p style="margin:4px 0;color:var(--muted);font-size:14px">${esc(l.descripcion)}</p>
-      <div class="meta"><span class="pill-pais">${l.pais}</span><span>${esc(l.ciudad)}</span><span>${esc(l.material)}</span><span>${esc(l.cantidad)}</span></div></div>
-    <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end">
-      ${contacto}
-      ${l.estado === 'nuevo' ? `<button class="btn primary sm" data-take="${esc(l.id)}">Tomar trabajo</button>` : ''}
-    </div></div>`;
-  }).join('');
-}
+/* La Bolsa de Trabajos salió del portal (decisión 2026-07-17). La captura pública
+   sigue en solicita.html; los leads se gestionan fuera del portal del cliente. */
 
 // ---------- interacciones ----------
 function bindAccordions(sel) { view.querySelectorAll(sel).forEach(it => { const q = it.querySelector('.faq-q, .course-head'); if (q) q.onclick = () => { const open = it.classList.toggle('open'); q.setAttribute('aria-expanded', open); }; }); }
 function bind(route) {
   if (route === 'inicio') {
-    view.querySelectorAll('.onb-item input').forEach(chk => chk.onchange = () => {
-      const id = chk.closest('.onb-item').dataset.onb;
-      try { chk.checked ? localStorage.setItem('c4v_onb_' + state.ctx + '_' + id, '1') : localStorage.removeItem('c4v_onb_' + state.ctx + '_' + id); } catch {}
-      const ins = view.querySelectorAll('.onb-item input'), n = [...ins].filter(i => i.checked).length;
-      $('#onbCount').textContent = n + '/' + ins.length;
-      $('#onbBar').style.width = Math.round(n / ins.length * 100) + '%';
+    // Secciones bloqueadas hasta completar la preparación
+    view.querySelectorAll('[data-lock]').forEach(b => b.onclick = () => {
+      toast('🔒 Se desbloquea al completar tu guía «Preparar mi espacio»');
+      location.hash = '#/preparacion';
     });
   }
   if (route === 'academia') { bindAccordions('.faq-item'); bindAccordions('.course'); bindVideos(); bindQuizzes(); }
@@ -386,49 +365,16 @@ function bind(route) {
       const ins = view.querySelectorAll('.onb-item input'), n = [...ins].filter(i => i.checked).length;
       $('#prepCount').textContent = n + '/' + ins.length;
       $('#prepBar').style.width = Math.round(n / ins.length * 100) + '%';
+      // 🎉 Al completar todo, se desbloquea el portal
+      if (n === ins.length && ins.length) {
+        toast('🎉 ¡Espacio listo! Se desbloqueó tu Academia');
+        render('preparacion'); window.scrollTo(0, 0);
+      }
     });
     const pb = $('#printPrep'); if (pb) pb.onclick = () => window.print();
   }
   if (route === 'certificado') bindAccordions('.faq-item');
-  if (route === 'soporte') {
-    bindAccordions('.faq-item');
-    const serieSel = $('#serieSel');
-    $('#ticketForm').onsubmit = async (e) => {
-      e.preventDefault(); const f = e.target;
-      // serieSel puede ser <select> (varias máquinas) o <input hidden> (una sola)
-      const pais = serieSel?.selectedOptions?.[0]?.dataset.pais || serieSel?.dataset.pais || currentClient()?.pais || 'PE';
-      try { await actions.crearTicket({ tipo: f.tipo.value, prioridad: f.prioridad.value, serie: f.serie.value, asunto: f.asunto.value, descripcion: f.descripcion.value, pais, cliente_id: currentClient()?.id || null });
-        toast(state.offline ? 'Guardado en esta demostración (aún no llega a un equipo real)' : '✅ Ticket enviado al equipo de ' + pais); render('soporte'); } catch { toast('⚠️ No se pudo enviar'); }
-    };
-    view.querySelectorAll('select[data-ticket]').forEach(sel => sel.onchange = async () => {
-      try { await actions.estadoTicket(sel.dataset.ticket, sel.value); toast('Estado actualizado'); } catch { toast('⚠️ Error'); } });
-  }
-  if (route === 'bolsa') {
-    let filtro = 'todos';
-    const apply = () => { $('#leadList').innerHTML = leadRows(filtro === 'todos' ? state.db.leads : state.db.leads.filter(l => l.pais === filtro)); bindTake(); };
-    view.querySelectorAll('[data-filter]').forEach(b => b.onclick = () => { filtro = b.dataset.filter; view.querySelectorAll('.chip').forEach(c => c.classList.toggle('active', c === b)); apply(); });
-    $('#newLeadBtn').onclick = () => {
-      const box = $('#leadForm'); if (box.innerHTML) { box.innerHTML = ''; return; }
-      box.innerHTML = `<div class="card" style="margin-bottom:16px"><h3>Publicar una solicitud</h3>
-        <form class="form" id="lf" style="margin-top:10px">
-          <div class="field"><label>¿Qué trabajo es?</label><input name="titulo" placeholder="Ej: corte de 100 llaveros" required></div>
-          <div class="field"><label>Detalle</label><textarea name="descripcion"></textarea></div>
-          <div class="form-row"><div class="field"><label>Material</label><input name="material" placeholder="MDF 3mm"></div><div class="field"><label>Cantidad</label><input name="cantidad" placeholder="100 unidades"></div></div>
-          <div class="form-row"><div class="field"><label>País</label><select name="pais"><option>PE</option><option>EC</option><option>BO</option></select></div><div class="field"><label>Ciudad</label><input name="ciudad"></div></div>
-          <div class="form-row"><div class="field"><label>Nombre del cliente</label><input name="contacto" placeholder="Nombre" required></div><div class="field"><label>Teléfono o email</label><input name="telefono" placeholder="+51 …"></div></div>
-          <button class="btn primary" type="submit">Publicar</button></form></div>`;
-      $('#lf').onsubmit = async (e) => { e.preventDefault();
-        try { await actions.crearLead(Object.fromEntries(new FormData(e.target))); toast(state.offline ? 'Solicitud guardada en esta demostración' : '✅ Solicitud publicada'); render('bolsa'); } catch { toast('⚠️ Error'); } };
-    };
-    bindTake();
-  }
-}
-function bindTake() {
-  view.querySelectorAll('[data-take]').forEach(b => b.onclick = async () => {
-    const cli = currentClient();
-    if (!cli) { toast('Cambia "Viendo como" a un cliente para tomar el trabajo'); return; }
-    try { await actions.tomarLead(b.dataset.take, cli.id); toast(state.offline ? 'Trabajo tomado (demostración: el contacto es de ejemplo)' : '🎉 ¡Trabajo tomado! Contacta al cliente'); render('bolsa'); } catch { toast('⚠️ Ese trabajo ya fue tomado'); }
-  });
+  if (route === 'soporte') bindAccordions('.faq-item');
 }
 
 // ---------- lecciones en video (Academia) ----------
@@ -519,9 +465,15 @@ function bindQuizzes() {
 }
 
 // ---------- router ----------
-const TITLES = { inicio: 'Inicio', academia: 'Aprender a usar mi máquina', preparacion: 'Preparar mi espacio', soporte: 'Necesito ayuda', bolsa: 'Quiero más clientes', plantillas: 'Banco de Diseños', certificado: 'Tu Certificado de Calidad' };
+const TITLES = { inicio: 'Inicio', academia: 'Aprender a usar mi máquina', preparacion: 'Preparar mi espacio', soporte: 'Necesito ayuda', plantillas: 'Banco de Diseños', certificado: 'Tu Certificado de Calidad' };
 function render(route) {
   if (!views[route]) route = 'inicio';
+  // Candado: primero se completa la preparación del espacio, después el resto.
+  if (RUTAS_BLOQUEADAS.includes(route) && !prepEstado().completo) {
+    toast('🔒 Primero completa tu guía «Preparar mi espacio»');
+    route = 'preparacion';
+    if (location.hash !== '#/preparacion') { location.hash = '#/preparacion'; return; }
+  }
   // Sin menú: en cualquier pantalla que no sea el inicio, un solo camino de vuelta.
   const volver = route === 'inicio' ? ''
     : `<a class="volver" href="#/inicio"><span aria-hidden="true">←</span> Volver al inicio</a>
@@ -565,6 +517,15 @@ function entrar(cliente) {
   $('#gate').hidden = true; $('#app').hidden = false;
   const info = docInfo(cliente.pais, cliente.tipo || 'persona');
   $('#me').innerHTML = `<strong>${esc(cliente.nombre)}</strong>${esc(info.doc)} ${esc(cliente.documento)}`;
+  // Primera vez: directo a preparar su espacio (la puerta de entrada del portal)
+  let primeraVez = false;
+  try {
+    if (!localStorage.getItem('c4v_hola_' + cliente.id)) { localStorage.setItem('c4v_hola_' + cliente.id, '1'); primeraVez = true; }
+  } catch {}
+  if (primeraVez && !prepEstado().completo) {
+    location.hash = '#/preparacion';
+    setTimeout(() => toast('👋 ¡Bienvenido! Empieza dejando tu espacio listo'), 500);
+  }
   render(currentRoute());
 }
 
