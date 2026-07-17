@@ -245,18 +245,43 @@ window.__SEED__ = {
 
   preparacion: {
     intro: "Prepara tu espacio ANTES de que llegue tu máquina y podrás cortar el mismo día. Estas 5 cosas marcan la diferencia: electricidad 220V dedicada, pozo a tierra, extracción de humos, agua destilada y un espacio adecuado.",
+    /* img: foto REAL (assets/prep/) extraída de las guías técnicas C4V */
     checklist: [
-      { id: "e1", t: "220V en circuito independiente, con su propia llave" },
-      { id: "e2", t: "Pozo a tierra verificado por un electricista" },
-      { id: "e3", t: "Estabilizador de voltaje instalado" },
-      { id: "e4", t: "Extractor conectado y con salida al exterior" },
-      { id: "e5", t: "Enfriador (chiller) con agua destilada (15–25 °C)" },
-      { id: "e6", t: "Compresor / aire listo (si tu modelo lo usa)" },
+      { id: "a1", t: "Mide la puerta y el recorrido de entrada (¿pasa la máquina embalada?)" },
+      { id: "a2", t: "Plan B listo: retirar el marco de la puerta o ruta alterna" },
+      { id: "e1", t: "220V en circuito independiente, con su propia llave", img: "e1-electrico.jpg" },
+      { id: "e2", t: "Pozo a tierra verificado por un electricista", img: "e2-tierra.jpg" },
+      { id: "e3", t: "Estabilizador de voltaje instalado", img: "e3-estabilizador.jpg" },
+      { id: "e4", t: "Extractor conectado y con salida al exterior", img: "e4-extractor.jpg" },
+      { id: "e5", t: "Enfriador (chiller) con agua destilada (15–25 °C)", img: "e5-chiller.jpg" },
+      { id: "e6", t: "Compresor / aire listo (si tu modelo lo usa)", img: "e6-aire.jpg" },
       { id: "e7", t: "Extintor a la mano" },
-      { id: "e8", t: "Espacio nivelado, limpio y ventilado" },
-      { id: "e9", t: "Consumibles: agua destilada, aceite 3-EN-1, alcohol isopropílico, microfibra" },
-      { id: "e10", t: "Materiales de prueba: MDF/acrílico (NUNCA PVC)" }
+      { id: "e8", t: "Espacio nivelado, limpio y ventilado", img: "e8-espacio.jpg" },
+      { id: "e9", t: "Consumibles: agua destilada, aceite 3-EN-1, alcohol isopropílico, microfibra", img: "e9-consumibles.jpg" },
+      { id: "e10", t: "Materiales de prueba: MDF/acrílico (NUNCA PVC)", img: "e10-material.jpg" }
     ],
+    acceso: {
+      titulo: "¿Por dónde va a entrar tu máquina?",
+      intro: "La máquina llega embalada en una caja grande. Antes de que llegue, asegúrate de que PUEDA entrar hasta su lugar — es el detalle que más entregas complica y el más fácil de prevenir.",
+      pasos: [
+        "Mide el ANCHO y ALTO de todas las puertas del recorrido: entrada, pasillos y la puerta del ambiente final.",
+        "¿Sube por escalera o ascensor? Mide el tramo más angosto y los giros (descansos de escalera).",
+        "Compara con las medidas de tu máquina embalada — tu asesor te las confirma según tu modelo.",
+        "¿Falta poco? El marco de la puerta se puede retirar y ganas varios centímetros.",
+        "¿Dudas? Mándanos fotos y medidas por WhatsApp y lo revisamos contigo antes del despacho."
+      ]
+    },
+    kit: {
+      titulo: "Kit de mantenimiento — lo esencial",
+      nota: "Tenlo listo desde el día 1. Es lo que tu máquina necesita para vivir muchos años:",
+      items: [
+        { t: "Galón de agua para baterías (2)", d: "Desionizada/destilada, p. ej. Vistony — para el chiller" },
+        { t: "Botella de alcohol isopropílico", d: "Limpieza de lente y espejos", img: "kit-espejo.jpg" },
+        { t: "Aceite 3-EN-1", d: "Lubricación de rieles" },
+        { t: "Trapo de microfibra o algodón", d: "Que no suelte pelusa", img: "kit-pano.jpg" },
+        { t: "Hisopos de alta calidad", d: "Marca reconocida — para la lente", img: "e9-consumibles.jpg" }
+      ]
+    },
     guias: [
       { key: "electrico", titulo: "Instalación eléctrica (220V dedicado)", pasos: ["Voltaje: 220V.", "Circuito independiente: su propia llave termomagnética, sin compartir con otros equipos.", "Estabilizador entre el tomacorriente y la máquina.", "Amperaje y calibre de cable según tu modelo — tu asesor te confirma."] },
       { key: "tierra", titulo: "Pozo a tierra (obligatorio)", pasos: ["No es opcional: te protege a ti, a la electrónica y a la calidad del corte.", "Cable de tierra real conectado a un pozo (no basta el tercer agujero del enchufe).", "Que un electricista lo verifique y mida antes de la llegada. Es la causa #1 de retrasos."] },

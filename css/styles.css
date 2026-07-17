@@ -430,3 +430,19 @@ tr:last-child td{border-bottom:none}
 .prep-ok{background:var(--ok-50);border:1px solid #bfe0c8;border-radius:var(--r-lg);padding:14px 16px;margin-bottom:16px;font-size:14px;line-height:1.5}
 .prep-ok strong{display:block;font-family:var(--slab);font-size:16px;margin-bottom:4px}
 .prep-ok p{margin:0 0 10px;color:var(--ink)}
+
+/* ---------- Preparación: fotos reales + acceso + kit ---------- */
+.onb-photo{flex-shrink:0;width:88px;height:64px;object-fit:cover;border-radius:var(--r);border:1px solid var(--line);background:var(--alt)}
+.acceso{display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap}
+.acceso-diag{flex:0 0 200px;text-align:center;color:var(--red-cta)}
+.acceso-diag svg{width:100%;max-width:200px}
+.acceso-diag span{display:block;font-size:12px;color:var(--muted);margin-top:4px}
+.acceso .grow{flex:1;min-width:240px}
+.acceso-pasos{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:8px;font-size:15px}
+.acceso-pasos li::marker{color:var(--red-cta);font-weight:700}
+.kit-img{display:block;width:100%;max-width:460px;border-radius:var(--r-lg);border:1px solid var(--line);margin:0 0 14px}
+.kit-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
+.kit-item{background:var(--alt);border:1px solid var(--line);border-radius:var(--r);padding:10px;display:flex;flex-direction:column;gap:4px}
+.kit-item img{width:100%;height:92px;object-fit:cover;border-radius:6px;margin-bottom:4px}
+.kit-item strong{font-size:14px;line-height:1.3}
+.kit-item span{font-size:12.5px;color:var(--muted)}

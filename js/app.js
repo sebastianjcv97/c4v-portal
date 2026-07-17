@@ -241,11 +241,43 @@ const views = {
         <button class="btn ghost sm" id="printPrep">🖨 Imprimir</button>
       </div>
 
+      ${p.acceso ? `
+      <h2 class="section-title">${esc(p.acceso.titulo)}</h2>
+      <div class="card acceso">
+        <div class="acceso-diag" aria-hidden="true">
+          <svg viewBox="0 0 220 150" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="18" y="14" width="76" height="122" rx="2"/>
+            <rect x="26" y="22" width="60" height="114"/>
+            <path d="M120 75h30" stroke-dasharray="4 5"/><path d="M144 68l8 7-8 7"/>
+            <rect x="158" y="38" width="48" height="74" rx="2"/>
+            <path d="M158 52h48M158 66h48M158 80h48M158 94h48" opacity=".35"/>
+            <path d="M10 14v122" opacity=".5"/><path d="M6 30l4-6 4 6M6 120l4 6 4-6" opacity=".5"/>
+            <path d="M26 146h60" opacity=".5"/><path d="M36 142l-6 4 6 4M76 142l6 4-6 4" opacity=".5"/>
+          </svg>
+          <span>Puerta vs. máquina embalada</span>
+        </div>
+        <div class="grow">
+          <p style="margin:0 0 10px">${esc(p.acceso.intro)}</p>
+          <ol class="acceso-pasos">${p.acceso.pasos.map(x => `<li>${esc(x)}</li>`).join('')}</ol>
+        </div>
+      </div>` : ''}
+
       <h2 class="section-title">Checklist <span id="prepCount" style="text-transform:none;letter-spacing:0;color:var(--muted);font-weight:600">${hechos}/${total}</span></h2>
       <div class="card">
         <div class="bar" style="margin:0 0 16px"><i id="prepBar" style="width:${total ? Math.round(hechos / total * 100) : 0}%"></i></div>
-        <div id="prepList">${p.checklist.map(c => `<div class="onb-item" data-prep="${c.id}"><input type="checkbox" ${done(c.id) ? 'checked' : ''} aria-label="${esc(c.t)}"><div class="onb-body"><strong>${esc(c.t)}</strong></div></div>`).join('')}</div>
+        <div id="prepList">${p.checklist.map(c => `<div class="onb-item" data-prep="${c.id}"><input type="checkbox" ${done(c.id) ? 'checked' : ''} aria-label="${esc(c.t)}">${c.img ? `<img class="onb-photo" src="assets/prep/${esc(c.img)}" alt="" loading="lazy" onerror="this.remove()">` : ''}<div class="onb-body"><strong>${esc(c.t)}</strong></div></div>`).join('')}</div>
       </div>
+
+      ${p.kit ? `
+      <h2 class="section-title">${esc(p.kit.titulo)}</h2>
+      <img class="kit-img" src="assets/prep/kit-mantenimiento.png" alt="Kit de mantenimiento C4V Laser" loading="lazy" onerror="this.remove()">
+      <div class="card">
+        <p style="margin:0 0 12px">${esc(p.kit.nota)}</p>
+        <div class="kit-grid">${p.kit.items.map(k => `<div class="kit-item">
+            ${k.img ? `<img src="assets/prep/${esc(k.img)}" alt="" loading="lazy" onerror="this.remove()">` : ''}
+            <strong>${esc(k.t)}</strong><span>${esc(k.d)}</span>
+          </div>`).join('')}</div>
+      </div>` : ''}
 
       <h2 class="section-title">Guías paso a paso</h2>
       <div class="grid cols-2">
