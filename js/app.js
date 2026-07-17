@@ -124,25 +124,39 @@ const views = {
 
   academia() {
     const a = state.db.academia, faqs = state.db.faqs, m = state.db.modelos;
+    const fmtDur = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+    const vistoKey = (v) => 'c4v_video_' + state.ctx + '_' + v;
+    const visto = (v) => { try { return localStorage.getItem(vistoKey(v)) === '1'; } catch { return false; } };
+    // Una lección puede ser texto (string) o video ({t, v, dur})
+    const leccion = (l) => typeof l === 'string'
+      ? `<li>${esc(l)}</li>`
+      : `<li class="lesson-video${visto(l.v) ? ' visto' : ''}" data-video="${esc(l.v)}">
+           <button type="button" class="lv-btn">
+             <span class="lv-play" aria-hidden="true">▶</span>
+             <span class="lv-tit">${esc(l.t)}</span>
+             <span class="lv-dur">${visto(l.v) ? '✓ visto · ' : ''}${fmtDur(l.dur)}</span>
+           </button>
+           <div class="lv-player" hidden></div>
+         </li>`;
     const cursoCard = (c, i) => {
       const estado = c.estado === 'disponible' ? '<span class="badge ok">Disponible</span>' : c.estado === 'en_proceso' ? '<span class="badge warn">En construcción</span>' : '<span class="badge grey">Próximamente</span>';
       const nLes = c.modulos.reduce((s, m) => s + m.lecciones.length, 0);
+      const esVideo = c.modulos.some(m => m.lecciones.some(l => typeof l !== 'string'));
       return `<div class="course"><button type="button" class="course-head" aria-expanded="false">
           <div class="course-ico">${i + 1}</div>
-          <div style="flex:1"><h3>${esc(c.titulo)} ${estado}</h3>
+          <div style="flex:1"><h3>${esc(c.titulo)} ${estado} ${esVideo ? '<span class="badge red">🎬 en video</span>' : ''}</h3>
             <div class="sub">${esc(c.nivel)} · ${c.modulos.length} módulos · ${nLes} lecciones — ${esc(c.descripcion)}</div></div>
           <span class="chev">＋</span></button>
         <div class="course-body">
           ${c.modulos.map((m, i) => `<div class="module">
             <h4><span class="num-mod">${i + 1}</span> ${esc(m.titulo)} ${m.quizzes ? `<span class="badge red" style="margin-left:auto">${m.quizzes} preguntas</span>` : ''}</h4>
-            ${m.lecciones.length ? `<ul class="lessons">${m.lecciones.map(l => `<li>${esc(l)}</li>`).join('')}</ul>` : ''}
+            ${m.lecciones.length ? `<ul class="lessons">${m.lecciones.map(leccion).join('')}</ul>` : ''}
           </div>`).join('')}
         </div></div>`;
     };
     const faqCats = [...new Set(faqs.map(f => f.categoria))];
     return `
       <div class="page-head"><p>${esc(a.acceso)}</p></div>
-      <p style="margin:0 0 16px"><a class="btn ghost sm" href="https://c4vschool.com" target="_blank" rel="noopener">Ir a C4V School ↗</a></p>
       <div class="chips-row">${a.ruta.map((r, i) => `<span class="chip">${i + 1}. ${esc(r)}</span>`).join('')}</div>
 
       <h2 class="section-title">Cursos por módulos</h2>
@@ -353,7 +367,7 @@ function bind(route) {
       $('#onbBar').style.width = Math.round(n / ins.length * 100) + '%';
     });
   }
-  if (route === 'academia') { bindAccordions('.faq-item'); bindAccordions('.course'); }
+  if (route === 'academia') { bindAccordions('.faq-item'); bindAccordions('.course'); bindVideos(); }
   if (route === 'preparacion') {
     view.querySelectorAll('.onb-item input').forEach(chk => chk.onchange = () => {
       const id = chk.closest('.onb-item').dataset.prep;
@@ -403,6 +417,34 @@ function bindTake() {
     const cli = currentClient();
     if (!cli) { toast('Cambia "Viendo como" a un cliente para tomar el trabajo'); return; }
     try { await actions.tomarLead(b.dataset.take, cli.id); toast(state.offline ? 'Trabajo tomado (demostración: el contacto es de ejemplo)' : '🎉 ¡Trabajo tomado! Contacta al cliente'); render('bolsa'); } catch { toast('⚠️ Ese trabajo ya fue tomado'); }
+  });
+}
+
+// ---------- lecciones en video (Academia) ----------
+function bindVideos() {
+  view.querySelectorAll('.lesson-video').forEach(li => {
+    const btn = li.querySelector('.lv-btn'), box = li.querySelector('.lv-player'), archivo = li.dataset.video;
+    btn.onclick = () => {
+      const abierto = !box.hidden;
+      // Solo un video abierto a la vez (ahorra datos y evita audios cruzados)
+      view.querySelectorAll('.lv-player').forEach(p => { p.hidden = true; p.innerHTML = ''; });
+      if (abierto) return;
+      box.innerHTML = `<video controls autoplay playsinline preload="none" controlsList="nodownload">
+          <source src="videos/c4vtech/${archivo}" type="video/mp4">
+          Tu navegador no puede reproducir este video. <a href="videos/c4vtech/${archivo}">Descárgalo aquí</a>.
+        </video>`;
+      box.hidden = false;
+      const vid = box.querySelector('video');
+      // Marcar como visto al llegar al 80%
+      vid.ontimeupdate = () => {
+        if (vid.duration && vid.currentTime / vid.duration > 0.8 && !li.classList.contains('visto')) {
+          li.classList.add('visto');
+          try { localStorage.setItem('c4v_video_' + state.ctx + '_' + archivo, '1'); } catch {}
+          const dur = li.querySelector('.lv-dur');
+          if (dur && !dur.textContent.includes('visto')) dur.textContent = '✓ visto · ' + dur.textContent;
+        }
+      };
+    };
   });
 }
 

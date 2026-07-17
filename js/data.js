@@ -100,8 +100,8 @@ window.__SEED__ = {
   ],
 
   academia: {
-    acceso: "Acceso gratuito de por vida, incluido con tu máquina C4V. Todos los cursos, para todos los clientes.",
-    plataforma: "C4V School (c4vschool.com) · guiados por CeVi el Toro 🐂 y Lumo el Búho 🦉",
+    acceso: "Tu academia está aquí, en tu portal: acceso gratuito de por vida, incluido con tu máquina C4V. Todos los cursos, para todos los clientes.",
+    plataforma: "Academia C4V · guiados por CeVi el Toro 🐂 y Lumo el Búho 🦉",
     pilares: [
       { titulo: "C4V Tec — Técnico", detalle: "Operar la máquina y el software." },
       { titulo: "Quiero Emprender — Negocio", detalle: "Qué producir y cómo venderlo (el diferenciador)." },
@@ -142,13 +142,38 @@ window.__SEED__ = {
         ]
       },
       {
-        id: "c3", titulo: "Domina C4VTech: Diseño y Corte (software)", icono: "💻", nivel: "Intermedio", estado: "proximamente",
-        descripcion: "Curso del software propio C4VTech: diseñar y cortar. (20 videos, ~37 min — en edición)",
+        id: "c3", titulo: "Domina C4VTech: Diseño y Corte (software)", icono: "💻", nivel: "Intermedio", estado: "disponible",
+        descripcion: "Curso completo en video del software propio C4VTech: de la instalación a tu primer proyecto real. (20 videos, ~37 min)",
+        /* Lecciones en video: { t: título, v: archivo en videos/c4vtech/, dur: segundos } */
         modulos: [
-          { titulo: "Instalación y conexión", lecciones: ["Instalar el software", "Conectar la PC a la máquina (red / USB)", "Encontrar la IP de la máquina", "Configurar el origen (Job Origin)"], quizzes: 0 },
-          { titulo: "Interfaz y herramientas de diseño", lecciones: ["Interfaz de C4VTech", "Barra de herramientas", "Array y Offset", "Capas: grabado / corte / marcado"], quizzes: 0 },
-          { titulo: "Texto y vectores", lecciones: ["Texto y fuentes", "Weld (soldar texto)", "Bridge (unir letras)", "Vectorización de imágenes"], quizzes: 0 },
-          { titulo: "Proyectos reales", lecciones: ["Topper con puente y base", "Enviar a la máquina y cortar", "Llavero familiar (proyecto integral)"], quizzes: 0 }
+          { titulo: "Instalación y conexión", quizzes: 0, lecciones: [
+            { t: "Intro: cortar y diseñar fácil con C4VTech", v: "t01.mp4", dur: 30 },
+            { t: "Instalación del software", v: "t02.mp4", dur: 73 },
+            { t: "Finalizar la instalación y crear tu primer proyecto", v: "t03.mp4", dur: 39 },
+            { t: "Conectar la computadora a la máquina", v: "t06.mp4", dur: 51 },
+            { t: "Conexión y configuración inicial (red / USB + dimensiones)", v: "t07.mp4", dur: 128 },
+            { t: "Métodos de conexión de la máquina", v: "t05.mp4", dur: 20 },
+            { t: "Encontrar la IP de la máquina", v: "t20.mp4", dur: 31 },
+            { t: "Configurar el origen (Job Origin / Machine Zero)", v: "t04.mp4", dur: 26 }
+          ]},
+          { titulo: "Interfaz y herramientas de diseño", quizzes: 0, lecciones: [
+            { t: "Interfaz del programa C4VTech", v: "t08.mp4", dur: 123 },
+            { t: "Barra de herramientas de diseño", v: "t09.mp4", dur: 94 },
+            { t: "Herramientas Array y Offset", v: "t10.mp4", dur: 127 },
+            { t: "Funciones clave: capas grabado / corte / marcado y texto a vector", v: "t11.mp4", dur: 209 }
+          ]},
+          { titulo: "Texto y vectores", quizzes: 0, lecciones: [
+            { t: "Texto y selección de fuentes", v: "t13.mp4", dur: 88 },
+            { t: "Herramienta Weld (soldar texto)", v: "t14.mp4", dur: 100 },
+            { t: "Herramienta Bridge (unir letras y objetos)", v: "t15.mp4", dur: 111 },
+            { t: "Herramienta Offset (bordes y fondos para toppers)", v: "t17.mp4", dur: 171 },
+            { t: "Vectorización de imágenes", v: "t18.mp4", dur: 188 }
+          ]},
+          { titulo: "Proyectos reales", quizzes: 0, lecciones: [
+            { t: "Topper personalizado con puente y base", v: "t16.mp4", dur: 126 },
+            { t: "Enviar el proyecto a la máquina y cortar", v: "t12.mp4", dur: 76 },
+            { t: "Proyecto integral: llavero familiar", v: "t19.mp4", dur: 405 }
+          ]}
         ]
       }
     ],
@@ -211,7 +236,7 @@ window.__SEED__ = {
     { categoria: "Seguridad", pregunta: "¿Puedo cortar PVC?", respuesta: "No, nunca. Genera gas cloro tóxico que daña la máquina y es peligroso para tu salud." },
     { categoria: "Seguridad", pregunta: "¿Necesito gafas para mirar el láser?", respuesta: "No mires directamente al haz. La puerta de la máquina tiene protección UV: opera siempre con la tapa cerrada." },
     { categoria: "Seguridad", pregunta: "¿Es obligatorio el extractor de humos?", respuesta: "Sí, obligatorio. Los gases del corte son tóxicos. Nunca operes sin el extractor conectado y funcionando." },
-    { categoria: "Garantía y soporte", pregunta: "¿Tengo capacitación incluida?", respuesta: "Sí, acceso gratuito de por vida a C4V School. Se activa con tu compra y recibes el link por WhatsApp. Todos los cursos, para todos los clientes." },
+    { categoria: "Garantía y soporte", pregunta: "¿Tengo capacitación incluida?", respuesta: "Sí, acceso gratuito de por vida a la Academia C4V, aquí mismo en tu portal (sección «Aprender a usar mi máquina»). Se activa con tu compra. Todos los cursos, para todos los clientes." },
     { categoria: "Garantía y soporte", pregunta: "¿Qué incluye mi compra además de la máquina?", respuesta: "Capacitación de por vida, soporte técnico en español por WhatsApp, garantía RECI del tubo láser, comunidad de +60.000 emprendedores y asesora dedicada por país." }
   ],
 
