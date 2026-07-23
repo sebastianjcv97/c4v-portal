@@ -55,9 +55,27 @@ window.C4V_CONFIG = {
           también el HTML), `verificacion.activo = true` y `mostrarNumerosDemo = false`.
        4) app.js: cuando NO sea demo, llama al endpoint en lugar de validar
           contra los `clientes` de data.js (ver INTEGRACION_ODOO.md §Cambio en app.js). */
+  /* CÓMO PASAR A PRODUCCIÓN (backend hosteado en Railway/Render):
+       1) Despliega portal/server.js (ver portal/.env.example, Procfile,
+          railway.json, nixpacks.toml). Anota la URL pública que te da el host,
+          p. ej. https://c4v-postventa-production.up.railway.app
+       2) Pon esa URL en `apiBase` (SIN barra final). El portal llamará:
+             {apiBase}{endpoint}?pais=PE&doc=45678123
+          → https://c4v-postventa-production.up.railway.app/api/cliente?...
+          Deja `apiBase: ''` SOLO si el mismo backend sirve también el HTML.
+       3) En el host define ALLOWED_ORIGIN con el origen de GitHub Pages
+          (https://sebastianjcv97.github.io) para que el navegador permita la
+          llamada cross-origin (CORS ya está implementado en server.js).
+       4) Corre el sync para poblar la tabla:  node sync-contactos.js
+       5) Pon `activo: true` y abajo `mostrarNumerosDemo: false`.
+     Verifica el host antes de activar:
+       - {apiBase}/health              → { ok:true }
+       - {apiBase}/api/cliente/health  → { ok:true, contactos:N }
+     ⚠️ Antes de `activo:true` en un backend público, resuelve la protección PII
+        (documento + OTP por WhatsApp). Ver INTEGRACION_ODOO.md §SEGURIDAD. */
   verificacion: {
     endpoint: '/api/cliente',   // ruta del backend de verificación
-    apiBase: '',                // '' = mismo origen; en GitHub Pages, la URL del backend hosteado
+    apiBase: '',                // '' = mismo origen; en GitHub Pages, la URL pública del backend hosteado (sin barra final)
     activo: false               // true cuando el endpoint esté hosteado y la tabla poblada
   },
 

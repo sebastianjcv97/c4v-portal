@@ -342,19 +342,36 @@ const views = {
 
   soporte() {
     const d = state.db, cli = currentClient(), sop = d.soporte;
+    // Nº de serie de la máquina del cliente → da contexto al agente de soporte.
+    const maq = cli ? d.maquinas.find(x => x.cliente_id === cli.id) : null;
+    const wa = (svg) => `<svg class="wa-ic" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.5 14.4c-.3-.2-1.7-.9-2-1-.3-.1-.5-.1-.6.2-.2.3-.7.9-.9 1.1-.2.2-.3.2-.6.1-.3-.2-1.2-.5-2.3-1.4-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.5.1-.6l.5-.5c.1-.2.2-.3.3-.5v-.5c-.1-.2-.6-1.6-.9-2.2-.2-.5-.4-.4-.6-.5h-.5c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.4s1.1 2.8 1.2 3c.2.2 2.1 3.2 5.1 4.4 1.9.8 2.6.9 3.5.7.6-.1 1.7-.7 1.9-1.4.2-.7.2-1.2.2-1.4-.1-.1-.3-.2-.6-.3z"/><path d="M12 2C6.5 2 2 6.5 2 12c0 1.8.5 3.4 1.3 4.9L2 22l5.3-1.4c1.4.8 3 1.2 4.7 1.2 5.5 0 10-4.5 10-10S17.5 2 12 2zm0 18.2c-1.6 0-3.1-.4-4.4-1.2l-.3-.2-3.1.8.8-3-.2-.3c-.9-1.4-1.3-3-1.3-4.6C3.5 7.3 7.3 3.5 12 3.5S20.5 7.3 20.5 12 16.7 20.2 12 20.2z"/></svg>`;
+    // Deep link de WhatsApp con mensaje pre-redactado (identifica al cliente y su máquina).
+    const contexto = [cli ? `Soy ${cli.nombre}` : null, maq ? `máquina ${maq.serie}` : null].filter(Boolean).join(', ');
+    const waSoporte = (motivo) => waLink(`Hola equipo C4V${contexto ? `. ${contexto}` : ''}. ${motivo}`);
+
+    /* INTEGRACIÓN ODOO HELPDESK (pendiente de backend):
+       Hoy el soporte se canaliza 100% por WhatsApp (deep links de abajo). Cuando el
+       backend esté hosteado (ver INTEGRACION_ODOO.md), aquí entraría la creación de
+       ticket en Odoo Helpdesk: POST {apiBase}/api/tickets → helpdesk.ticket con
+       { cliente_id, serie, asunto, descripcion, canal:'portal' }. Existe ya
+       actions.crearTicket() (usa /api/tickets en modo online); faltaría el endpoint
+       en server.js mapeando a helpdesk.ticket y decidir si se abre ticket además de
+       (o en vez de) WhatsApp. Mientras tanto NO se finge: solo WhatsApp real. */
     return `
-      <!-- Lo primero y más grande: hablar con una persona por WhatsApp -->
-      <a class="wa-big" href="${esc(sop.wa_link)}" target="_blank" rel="noopener">
-        <svg class="wa-ic" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.5 14.4c-.3-.2-1.7-.9-2-1-.3-.1-.5-.1-.6.2-.2.3-.7.9-.9 1.1-.2.2-.3.2-.6.1-.3-.2-1.2-.5-2.3-1.4-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.5.1-.6l.5-.5c.1-.2.2-.3.3-.5v-.5c-.1-.2-.6-1.6-.9-2.2-.2-.5-.4-.4-.6-.5h-.5c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.4s1.1 2.8 1.2 3c.2.2 2.1 3.2 5.1 4.4 1.9.8 2.6.9 3.5.7.6-.1 1.7-.7 1.9-1.4.2-.7.2-1.2.2-1.4-.1-.1-.3-.2-.6-.3z"/><path d="M12 2C6.5 2 2 6.5 2 12c0 1.8.5 3.4 1.3 4.9L2 22l5.3-1.4c1.4.8 3 1.2 4.7 1.2 5.5 0 10-4.5 10-10S17.5 2 12 2zm0 18.2c-1.6 0-3.1-.4-4.4-1.2l-.3-.2-3.1.8.8-3-.2-.3c-.9-1.4-1.3-3-1.3-4.6C3.5 7.3 7.3 3.5 12 3.5S20.5 7.3 20.5 12 16.7 20.2 12 20.2z"/></svg>
+      <!-- Lo primero y más grande: hablar con una persona por WhatsApp, con contexto -->
+      <a class="wa-big" href="${waSoporte('Necesito ayuda con mi máquina.')}" target="_blank" rel="noopener">
+        ${wa()}
         <div class="wa-txt"><strong>Escríbenos por WhatsApp</strong><span>${esc(sop.whatsapp)} · ${esc(sop.horario)}</span></div>
       </a>
+      ${maq ? `<p class="wa-ctx muted">Tu mensaje ya llevará tu Nº de serie (<strong>${esc(maq.serie)}</strong>) para atenderte más rápido.</p>` : ''}
 
       <h2 class="section-title">O mira si es algo común</h2>
       <div id="guiaList">
         ${d.soporte_guia.map(g => `<div class="faq-item guia"><button type="button" class="faq-q" aria-expanded="false"><span>${esc(g.titulo)}</span><span class="chev">＋</span></button>
           <div class="faq-a"><p style="margin:0 0 6px"><strong>Síntoma:</strong> ${esc(g.sintoma)}</p>
           <p style="margin:0 0 6px"><strong>Posibles causas:</strong> ${esc(g.causas)}</p>
-          <p style="margin:0"><strong>Qué hacer:</strong> ${esc(g.accion)}</p></div></div>`).join('')}
+          <p style="margin:0 0 12px"><strong>Qué hacer:</strong> ${esc(g.accion)}</p>
+          <a class="wa-inline" href="${waSoporte(`Sigo con este problema: «${g.titulo}».`)}" target="_blank" rel="noopener">${wa()}<span>Sigo con este problema — escribir por WhatsApp</span></a></div></div>`).join('')}
       </div>
 
       ${(cli ? d.tickets.filter(t => t.cliente_id === cli.id) : []).length ? `
@@ -402,7 +419,36 @@ const views = {
   certificado() {
     const ci = state.db.certificado_info;
     const cli = currentClient();
-    const maq = cli ? state.db.maquinas.find(x => x.cliente_id === cli.id) : state.db.maquinas[0];
+    const maqs = cli ? state.db.maquinas.filter(x => x.cliente_id === cli.id) : (state.db.maquinas[0] ? [state.db.maquinas[0]] : []);
+
+    // Verificación por Nº de serie: la serie es la llave del certificado.
+    // Si algún día el certificado tiene una URL pública (certificado.url), se enlaza.
+    const certMaq = (m) => {
+      const cert = m.certificado || {};
+      const ok = cert.estado === 'certificada';
+      const meta = ok && cert.fecha
+        ? `<p class="cert-maq-meta">Certificada el ${esc(cert.fecha)}${cert.tecnico ? ` · por ${esc(cert.tecnico)}` : ''}</p>`
+        : (ok ? '' : '<p class="cert-maq-meta">La estamos probando y calibrando antes de entregártela.</p>');
+      const publico = cert.url
+        ? `<a class="cert-verif-link" href="${esc(cert.url)}" target="_blank" rel="noopener">Ver certificado público ↗</a>`
+        : '';
+      return `<div class="card cert-maq">
+        <div class="cert-maq-top">
+          <h3>Láser ${esc(m.modelo)}</h3>
+          ${ok ? '<span class="badge ok">Certificada ✓</span>' : '<span class="badge warn">En revisión y calibración</span>'}
+        </div>
+        <div class="cert-serie">
+          <span class="cert-serie-lbl">Nº de serie (tu llave de verificación)</span>
+          <div class="cert-serie-row">
+            <code class="cert-serie-num">${esc(m.serie)}</code>
+            <button type="button" class="cert-copy btn ghost sm" data-copy="${esc(m.serie)}" aria-label="Copiar Nº de serie">Copiar</button>
+          </div>
+        </div>
+        ${meta}
+        ${publico || (ok ? '<p class="cert-verif-note muted">Verifica tu máquina con este Nº de serie ante nuestro equipo por WhatsApp cuando lo necesites.</p>' : '')}
+      </div>`;
+    };
+
     return `
       <div class="cert-hero">
         <div class="cert-seal">${SEAL}</div>
@@ -411,12 +457,8 @@ const views = {
           <p class="muted" style="max-width:52ch">${esc(ci.frase_ancla)}</p></div>
       </div>
 
-      ${maq ? `<h2 class="section-title">Tu máquina</h2>
-      <div class="card mini"><div style="flex:1;min-width:220px">
-        <h3>Láser ${esc(maq.modelo)}</h3>
-        <p class="muted">Código de máquina: <strong>${esc(maq.serie)}</strong></p>
-        <p style="margin:8px 0 0">${maq.certificado?.estado === 'certificada' ? '<span class="badge ok">Certificada ✓</span>' : '<span class="badge warn">En revisión y calibración</span>'}</p>
-      </div></div>` : ''}
+      ${maqs.length ? `<h2 class="section-title">${maqs.length > 1 ? 'Tus máquinas' : 'Tu máquina'}</h2>
+      <div class="cert-maq-grid">${maqs.map(certMaq).join('')}</div>` : ''}
 
       <h2 class="section-title">Qué garantiza</h2>
       <div class="grid cols-2">
@@ -500,7 +542,18 @@ function bind(route) {
     });
     const pb = $('#printPrep'); if (pb) pb.onclick = () => window.print();
   }
-  if (route === 'certificado') bindAccordions('.faq-item');
+  if (route === 'certificado') {
+    bindAccordions('.faq-item');
+    // Copiar el Nº de serie (llave de verificación del certificado)
+    view.querySelectorAll('[data-copy]').forEach(b => b.onclick = async () => {
+      const txt = b.dataset.copy;
+      try {
+        if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(txt);
+        else { const ta = document.createElement('textarea'); ta.value = txt; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); }
+        toast('Nº de serie copiado');
+      } catch { toast('No se pudo copiar — cópialo manualmente'); }
+    });
+  }
   if (route === 'soporte') bindAccordions('.faq-item');
   if (route === 'bolsa') {
     let filtro = 'todos';
@@ -642,16 +695,67 @@ function normalizarDoc(raw) {
   return String(raw || '').toUpperCase().replace(/[^0-9K]/g, '');
 }
 function buscarClientePorDocumento(doc) {
-  // v1 (demo): busca en los datos locales. v2: consulta a Odoo vía A6.
+  // Modo demo: busca en los datos locales (data.js). En producción se usa el
+  // endpoint de verificación (ver verificarCliente).
   return state.db.clientes.find(c => normalizarDoc(c.documento) === doc) || null;
 }
-function guardarSesion(doc) {
-  try { localStorage.setItem('c4v_sesion', JSON.stringify({ doc, exp: Date.now() + SESION_DIAS * 864e5 })); } catch {}
+
+/* ---------- Verificación de cliente (demo local ↔ endpoint real) ----------
+   Config en config.js → `verificacion` { activo, apiBase, endpoint } y
+   `mostrarNumerosDemo`. Contrato del backend descrito en INTEGRACION_ODOO.md:
+     GET {apiBase}{endpoint}?pais=PE&doc=45678123
+       → { existe:true, cliente:{…}, maquinas:[…] }  |  { existe:false }
+   El `cliente` y las `maquinas` vienen en la MISMA forma que data.js: no se
+   transforma nada, solo se inyectan en state.db para que el resto del portal
+   (currentClient, maquinas, tickets…) funcione igual que en demo. */
+const VERIF = CFG.verificacion || {};
+// Demo cuando la verificación NO está activa: se valida contra data.js.
+const modoDemo = () => !VERIF.activo;
+
+// Inserta/actualiza el cliente verificado y sus máquinas en la base en memoria.
+function inyectarCliente(cliente, maquinas) {
+  if (!cliente) return null;
+  state.db.clientes = state.db.clientes || [];
+  const i = state.db.clientes.findIndex(c => c.id === cliente.id);
+  if (i >= 0) state.db.clientes[i] = cliente; else state.db.clientes.push(cliente);
+  state.db.maquinas = state.db.maquinas || [];
+  (maquinas || []).forEach(m => {
+    const j = state.db.maquinas.findIndex(x => x.serie === m.serie);
+    if (j >= 0) state.db.maquinas[j] = m; else state.db.maquinas.push(m);
+  });
+  return cliente;
+}
+
+/* Devuelve { estado:'ok', cliente } · { estado:'no_encontrado' } · { estado:'error' }.
+   - modoDemo → valida contra data.js (comportamiento actual).
+   - producción → llama al endpoint; existe:false = no_encontrado; red/503 = error. */
+async function verificarCliente({ pais, doc }) {
+  if (modoDemo()) {
+    const cli = buscarClientePorDocumento(doc);
+    return cli ? { estado: 'ok', cliente: cli } : { estado: 'no_encontrado' };
+  }
+  // NOTA PII: el documento viaja en la query del GET. Es un backend propio y
+  // así lo define INTEGRACION_ODOO.md §6; la decisión sobre OTP/rate-limiting
+  // (§9 SEGURIDAD) es de producto y se toma antes de activar producción.
+  const base = VERIF.apiBase || '';
+  const ep = VERIF.endpoint || '/api/cliente';
+  const url = `${base}${ep}?pais=${encodeURIComponent(pais || '')}&doc=${encodeURIComponent(doc)}`;
+  let r;
+  try { r = await fetch(url); } catch { return { estado: 'error' }; }
+  if (!r.ok) return { estado: 'error' };          // 400/503/… → no distinguir para el usuario
+  let j;
+  try { j = await r.json(); } catch { return { estado: 'error' }; }
+  if (!j || !j.existe) return { estado: 'no_encontrado' };
+  return { estado: 'ok', cliente: inyectarCliente(j.cliente, j.maquinas) };
+}
+
+function guardarSesion(doc, pais) {
+  try { localStorage.setItem('c4v_sesion', JSON.stringify({ doc, pais: pais || null, exp: Date.now() + SESION_DIAS * 864e5 })); } catch {}
 }
 function leerSesion() {
   try {
     const s = JSON.parse(localStorage.getItem('c4v_sesion') || 'null');
-    if (s && s.exp > Date.now()) return s.doc;
+    if (s && s.exp > Date.now()) return s;   // { doc, pais }
     localStorage.removeItem('c4v_sesion');
   } catch {}
   return null;
@@ -727,24 +831,42 @@ function initGate() {
     }).join('');
     box.querySelectorAll('button').forEach(b => b.onclick = () => {
       const cli = buscarClientePorDocumento(normalizarDoc(b.dataset.doc));
-      if (cli) { guardarSesion(normalizarDoc(cli.documento)); entrar(cli); }
+      if (cli) { guardarSesion(normalizarDoc(cli.documento), cli.pais); entrar(cli); }
     });
   }
 
-  form.onsubmit = (e) => {
+  const btn = form.querySelector('.gate-btn');
+  const btnLabel = btn ? btn.textContent : '';
+  const setCargando = (on) => {
+    if (!btn) return;
+    btn.disabled = on;
+    btn.textContent = on ? 'Verificando…' : btnLabel;
+    btn.setAttribute('aria-busy', on ? 'true' : 'false');
+  };
+
+  form.onsubmit = async (e) => {
     e.preventDefault(); err.hidden = true;
     const doc = normalizarDoc(inp.value);
     const info = docInfo(pais, tipo);
     if (doc.length < 5) {
-      err.hidden = false; err.innerHTML = `Parece que falta parte de tu ${esc(info.doc)}. Escríbelo completo, como en el ejemplo.`; return;
+      err.hidden = false; err.innerHTML = `Parece que falta parte de tu ${esc(info.doc)}. Escríbelo completo, como en el ejemplo.`; inp.focus(); return;
     }
-    const cli = buscarClientePorDocumento(doc);
-    if (!cli) {
-      err.hidden = false;
-      err.innerHTML = `No encontramos el ${esc(info.doc)} <strong>${esc(inp.value.trim())}</strong> entre nuestros clientes. Revísalo o <a href="${waLink('Hola, mi documento no aparece en la Central de Postventa C4V. ¿Me ayudan?')}" target="_blank" rel="noopener">escríbenos por WhatsApp</a> y te ayudamos.`;
-      return;
+    setCargando(true);
+    let res;
+    try { res = await verificarCliente({ pais, doc }); }
+    catch { res = { estado: 'error' }; }
+    setCargando(false);
+
+    if (res.estado === 'ok') { guardarSesion(doc, pais); entrar(res.cliente); return; }
+
+    err.hidden = false;
+    if (res.estado === 'error') {
+      // Falla de red / backend (503): no es culpa del documento.
+      err.innerHTML = `No pudimos verificar tu documento en este momento. Revisa tu conexión e inténtalo de nuevo, o <a href="${waLink('Hola, no puedo entrar a mi Central de Postventa C4V (error al verificar). ¿Me ayudan?')}" target="_blank" rel="noopener">escríbenos por WhatsApp</a>.`;
+    } else {
+      err.innerHTML = `No encontramos tu ${esc(info.doc)} <strong>${esc(inp.value.trim())}</strong> entre nuestros clientes. Revísalo o <a href="${waLink('Hola, mi documento no aparece en la Central de Postventa C4V. ¿Me ayudan?')}" target="_blank" rel="noopener">escríbenos por WhatsApp</a> y te ayudamos.`;
     }
-    guardarSesion(doc); entrar(cli);
+    err.focus?.();
   };
 
   gate.hidden = false; $('#app').hidden = true;
@@ -756,12 +878,13 @@ function initAgente() {
   $('#aiName').textContent = ag.nombre || 'CeVi';
   const mic = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0"/><path d="M12 18v3"/></svg>';
 
+  const waIcon = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.5 14.4c-.3-.2-1.7-.9-2-1-.3-.1-.5-.1-.6.2-.2.3-.7.9-.9 1.1-.2.2-.3.2-.6.1-.3-.2-1.2-.5-2.3-1.4-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.5.1-.6l.5-.5c.1-.2.2-.3.3-.5v-.5c-.1-.2-.6-1.6-.9-2.2-.2-.5-.4-.4-.6-.5h-.5c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.4s1.1 2.8 1.2 3c.2.2 2.1 3.2 5.1 4.4 1.9.8 2.6.9 3.5.7.6-.1 1.7-.7 1.9-1.4.2-.7.2-1.2.2-1.4-.1-.1-.3-.2-.6-.3z"/><path d="M12 2C6.5 2 2 6.5 2 12c0 1.8.5 3.4 1.3 4.9L2 22l5.3-1.4c1.4.8 3 1.2 4.7 1.2 5.5 0 10-4.5 10-10S17.5 2 12 2zm0 18.2c-1.6 0-3.1-.4-4.4-1.2l-.3-.2-3.1.8.8-3-.2-.3c-.9-1.4-1.3-3-1.3-4.6C3.5 7.3 7.3 3.5 12 3.5S20.5 7.3 20.5 12 16.7 20.2 12 20.2z"/></svg>';
   const contenido = () => CFG.elevenlabsAgentId
     ? `<elevenlabs-convai agent-id="${esc(CFG.elevenlabsAgentId)}"></elevenlabs-convai>`
     : `<span class="ai-soon">Aún no disponible</span>
        <h3>${esc(ag.nombre || 'CeVi')} está en camino</h3>
-       <p>${esc(ag.descripcion || '')} Todavía no está activo. Mientras tanto, escríbenos por WhatsApp: te responde una persona del equipo C4V.</p>
-       <a class="btn primary sm" href="${waLink('Hola, necesito ayuda con mi máquina C4V.')}" target="_blank" rel="noopener">Escribir por WhatsApp</a>`;
+       <p>Nuestro asistente por voz todavía no está activo. Pero no te quedas sin ayuda: escríbenos por WhatsApp y <strong>te responde una persona del equipo C4V</strong> — en español, los 365 días.</p>
+       <a class="btn-wa" href="${waLink('Hola, necesito ayuda con mi máquina C4V.')}" target="_blank" rel="noopener">${waIcon}<span>Escribir por WhatsApp</span></a>`;
 
   btn.onclick = () => {
     const abrir = panel.hidden;
@@ -787,8 +910,14 @@ async function init() {
   initGate();
 
   // Sesión recordada: entra directo, sin volver a pedir el documento.
-  const doc = leerSesion();
-  const cli = doc && buscarClientePorDocumento(doc);
-  if (cli) entrar(cli);
+  // En producción se re-verifica contra el endpoint (con el país guardado);
+  // si falla, se queda en el gate sin ruido. En demo valida contra data.js.
+  const ses = leerSesion();
+  if (ses && ses.doc) {
+    try {
+      const res = await verificarCliente({ pais: ses.pais, doc: ses.doc });
+      if (res.estado === 'ok') entrar(res.cliente);
+    } catch {}
+  }
 }
 init();

@@ -18,8 +18,9 @@
 }
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
-body{font-family:var(--sans);color:var(--ink);background:var(--bg);-webkit-font-smoothing:antialiased;font-size:16px;line-height:1.55}
+body{font-family:var(--sans);color:var(--ink);background:var(--bg);-webkit-font-smoothing:antialiased;font-size:16px;line-height:1.55;-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%;text-size-adjust:100%}
 a{color:inherit;text-decoration:none}
+img{max-width:100%}
 h1,h2,h3,h4{margin:0}
 h1{font-family:var(--slab);font-weight:800;font-size:28px;line-height:1.15}
 button{font-family:var(--sans)}
@@ -90,8 +91,9 @@ button{font-family:var(--sans)}
 .pag-title{font-family:var(--slab);font-size:24px;font-weight:800;margin:0 0 20px}
 
 /* Tarjeta de la máquina (lleva al certificado) */
-.maq{display:flex;align-items:center;gap:14px;background:var(--black);color:var(--on-black);border-radius:var(--r-lg);padding:16px;margin-bottom:24px}
+.maq{display:flex;align-items:center;gap:14px;background:var(--black);color:var(--on-black);border-radius:var(--r-lg);padding:16px;margin-bottom:24px;transition:background .16s}
 .maq:hover{background:var(--black-2)}
+.maq:active{background:var(--black-3)}
 .maq-seal{flex-shrink:0;width:56px;height:56px}
 .maq-seal svg{width:100%;height:100%}
 .maq-txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
@@ -101,8 +103,9 @@ button{font-family:var(--sans)}
 
 /* Los 4 botones grandes */
 .bigs{display:flex;flex-direction:column;gap:12px}
-.big{display:flex;align-items:center;gap:16px;min-height:76px;background:var(--bg);border:2px solid var(--line);border-radius:var(--r-lg);padding:16px;color:var(--ink)}
+.big{display:flex;align-items:center;gap:16px;min-height:76px;background:var(--bg);border:2px solid var(--line);border-radius:var(--r-lg);padding:16px;color:var(--ink);transition:border-color .16s,background .16s,transform .1s}
 .big:hover{border-color:var(--red-cta);background:var(--alt)}
+.big:active{transform:scale(.99)}
 .big-ico{flex-shrink:0;width:48px;height:48px;border-radius:50%;background:var(--red-50);color:var(--red-cta);display:flex;align-items:center;justify-content:center}
 .big-ico .ic{width:24px;height:24px}
 .big-txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
@@ -111,8 +114,9 @@ button{font-family:var(--sans)}
 .big-arrow{flex-shrink:0;color:var(--red-cta);font-size:22px;font-weight:700}
 
 /* Botón grande de WhatsApp (la vía principal para pedir ayuda) */
-.wa-big{display:flex;align-items:center;gap:14px;min-height:72px;background:#25D366;color:#fff;border-radius:var(--r-lg);padding:16px 18px;margin-bottom:28px}
+.wa-big{display:flex;align-items:center;gap:14px;min-height:72px;background:#25D366;color:#fff;border-radius:var(--r-lg);padding:16px 18px;margin-bottom:28px;transition:background .16s,transform .1s}
 .wa-big:hover{background:#1eb457}
+.wa-big:active{transform:scale(.99)}
 .wa-ic{flex-shrink:0;width:32px;height:32px}
 .wa-txt{display:flex;flex-direction:column;gap:2px}
 .wa-txt strong{font-family:var(--slab);font-size:18px;font-weight:700}
@@ -127,7 +131,7 @@ button{font-family:var(--sans)}
 /* ---------- Identidad del usuario (pie) ---------- */
 .me{font-size:13px;color:var(--on-black-dim);line-height:1.5;margin-bottom:10px}
 .me strong{display:block;color:var(--on-black);font-size:14px}
-.ctx-out{width:100%;min-height:40px;background:transparent;border:1px solid var(--black-3);color:var(--on-black-dim);border-radius:var(--r);padding:8px 12px;font-size:13px;font-family:var(--sans);cursor:pointer}
+.ctx-out{width:100%;min-height:44px;background:transparent;border:1px solid var(--black-3);color:var(--on-black-dim);border-radius:var(--r);padding:10px 12px;font-size:13px;font-family:var(--sans);cursor:pointer;transition:border-color .14s,color .14s}
 .ctx-out:hover{border-color:var(--red);color:var(--on-black)}
 
 /* ---------- Layout ---------- */
@@ -229,7 +233,7 @@ a.badge-cert:hover{background:var(--black-3)}
 .btn.primary:hover{background:var(--red-dark)}
 .btn.ghost{background:var(--bg);color:var(--ink);border:2px solid var(--line)}
 .btn.ghost:hover{border-color:var(--ink)}
-.btn.sm{padding:8px 16px;font-size:14px;min-height:40px}
+.btn.sm{padding:9px 16px;font-size:14px;min-height:44px}
 .btn:disabled{opacity:.45;cursor:not-allowed}
 .btn:focus-visible,a:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible,button:focus-visible{outline:3px solid var(--red);outline-offset:2px}
 
@@ -284,7 +288,7 @@ a.badge-cert:hover{background:var(--black-3)}
 .toolbar{display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap}
 .filters{display:flex;gap:8px;flex-wrap:wrap}
 .toolbar .btn{margin-left:auto}
-.chip{border:1px solid var(--line);background:var(--bg);cursor:pointer;font-family:var(--sans);font-size:14px;font-weight:700;padding:10px 16px;border-radius:var(--r);color:var(--muted);transition:.14s;min-height:40px}
+.chip{border:1px solid var(--line);background:var(--bg);cursor:pointer;font-family:var(--sans);font-size:14px;font-weight:700;padding:11px 16px;border-radius:var(--r);color:var(--muted);transition:.14s;min-height:44px}
 .chip:hover{border-color:var(--ink);color:var(--ink)}
 .chip.active{background:var(--black);color:#fff;border-color:var(--black)}
 .chips-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center}
@@ -329,7 +333,7 @@ tr:last-child td{border-bottom:none}
 .cert-img{width:100%;height:auto;border-radius:var(--r);display:block}
 
 .empty{padding:32px;text-align:center;color:var(--muted);background:var(--alt);border:1px dashed var(--line);border-radius:var(--r-lg)}
-.mini-select{padding:10px 12px;border:1px solid var(--line);border-radius:var(--r);font-family:var(--sans);font-size:14px;background:var(--bg);color:var(--ink);min-height:40px}
+.mini-select{padding:10px 12px;border:1px solid var(--line);border-radius:var(--r);font-family:var(--sans);font-size:14px;background:var(--bg);color:var(--ink);min-height:44px}
 
 /* ---------- Toast ---------- */
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(16px);background:var(--black);color:#fff;padding:12px 24px;border-radius:var(--r);font-size:14px;font-weight:500;opacity:0;transition:.22s;z-index:50;box-shadow:0 6px 24px rgba(20,20,20,.25)}
@@ -413,14 +417,15 @@ tr:last-child td{border-bottom:none}
 .gate-id-ic{color:var(--red)}
 
 /* ---------- Puerta de entrada: preparar el espacio primero ---------- */
-.prep-cta{display:block;background:var(--black);color:var(--on-black);border-radius:var(--r-lg);padding:18px;margin-bottom:20px;border:2px solid var(--red)}
+.prep-cta{display:block;background:var(--black);color:var(--on-black);border-radius:var(--r-lg);padding:18px;margin-bottom:20px;border:2px solid var(--red);transition:background .16s}
 .prep-cta:hover{background:var(--black-2)}
 .prep-cta-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:10px}
 .prep-cta-top strong{font-family:var(--slab);font-size:18px}
 .prep-cta-top span{font-size:14px;color:var(--on-black-dim);font-variant-numeric:tabular-nums}
 .prep-cta .bar{background:rgba(255,255,255,.15)}
 .prep-cta p{font-size:14px;color:var(--on-black-dim);margin:10px 0 12px;line-height:1.5}
-.prep-cta-btn{display:inline-block;background:var(--red-cta);color:#fff;border-radius:var(--r);padding:12px 18px;font-size:15px;font-weight:700}
+.prep-cta-btn{display:inline-block;background:var(--red-cta);color:#fff;border-radius:var(--r);padding:12px 18px;font-size:15px;font-weight:700;min-height:44px;transition:background .14s}
+.prep-cta:hover .prep-cta-btn{background:var(--red-dark)}
 .big.lock{opacity:.6;cursor:pointer;background:var(--alt);border-style:dashed;width:100%;text-align:left;font-family:var(--sans);font-size:inherit}
 .big.lock .big-ico{background:#ececec;color:var(--muted)}
 .big.lock:hover{border-color:var(--line);background:var(--alt)}
@@ -491,3 +496,68 @@ tr:last-child td{border-bottom:none}
 .pdf-card h3{font-size:15px}
 .pdf-card p{font-size:13px;color:var(--muted);flex:1}
 .pdf-dl{font-size:13px;font-weight:700;color:var(--red-cta)}
+
+/* ---------- Botón WhatsApp (verde real de la marca WhatsApp) ---------- */
+.btn-wa{display:inline-flex;align-items:center;justify-content:center;gap:9px;background:#25D366;color:#fff;font-family:var(--sans);font-weight:700;font-size:15px;padding:12px 20px;border-radius:var(--r);min-height:44px;text-decoration:none}
+.btn-wa:hover{background:#1eb457}
+.btn-wa svg{width:20px;height:20px;flex-shrink:0}
+
+/* Estado "verificando…" del botón de acceso */
+.gate-btn[aria-busy="true"]{opacity:.75;cursor:progress}
+
+/* Panel del agente: botón WhatsApp y responsive */
+.ai-panel .btn-wa{margin-top:2px}
+@media(max-width:880px){
+  .ai-panel{padding:16px}
+  .ai-panel .ai-inner{gap:12px}
+  .ai-btn span{font-weight:500}
+}
+
+/* ---------- Soporte: contexto + deep links por síntoma ---------- */
+.wa-ctx{margin:-18px 0 24px;font-size:13.5px;line-height:1.5}
+.wa-ctx strong{color:var(--ink);font-variant-numeric:tabular-nums}
+.wa-inline{display:inline-flex;align-items:center;gap:8px;min-height:44px;color:#128C4B;font-weight:700;font-size:14px}
+.wa-inline:hover{text-decoration:underline}
+.wa-inline .wa-ic{width:18px;height:18px;flex-shrink:0}
+
+/* ---------- Certificado: verificación por Nº de serie ---------- */
+.cert-maq-grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}
+.cert-maq{display:flex;flex-direction:column;gap:12px}
+.cert-maq-top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.cert-maq-top h3{margin:0}
+.cert-serie{background:var(--alt);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px}
+.cert-serie-lbl{display:block;font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:6px}
+.cert-serie-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.cert-serie-num{font-family:ui-monospace,'SFMono-Regular',Menlo,Consolas,monospace;font-size:15px;font-weight:700;color:var(--ink);letter-spacing:.02em;word-break:break-all;flex:1;min-width:0}
+.cert-copy{flex-shrink:0}
+.cert-maq-meta{margin:0;font-size:13.5px;color:var(--muted)}
+.cert-verif-link{display:inline-flex;align-items:center;min-height:44px;color:var(--red-cta);font-weight:700;font-size:14px}
+.cert-verif-link:hover{text-decoration:underline}
+.cert-verif-note{margin:0;font-size:13px;line-height:1.5}
+
+/* ---------- Refinamiento móvil (~375–560px): jerarquía y aire ---------- */
+@media(max-width:560px){
+  /* Títulos un punto más contenidos para que respiren en pantallas chicas */
+  .saludo{font-size:25px;margin-bottom:16px}
+  .pag-title{font-size:22px}
+  h1{font-size:23px}
+  /* Máquina y botones grandes: mismo peso visual, algo más compactos */
+  .maq{padding:14px;gap:12px}
+  .maq-seal{width:48px;height:48px}
+  .big{min-height:70px;padding:14px;gap:14px}
+  .big-ico{width:44px;height:44px}
+  /* La tarjeta de "Paso 1" es lo más importante: que su cabecera no se apriete */
+  .prep-cta-top{flex-wrap:wrap;gap:4px}
+  .prep-cta-top strong{font-size:17px}
+  /* Guía de preparación: avisos y bloques con encabezado claro */
+  .prep-aviso strong,.prep-ok strong{font-size:15.5px}
+  /* Filas de tickets/solicitudes en columna, sin apretujar el contacto */
+  .row-card{flex-direction:column;padding:16px}
+  .contact-box{min-width:0;width:100%}
+}
+
+/* ---------- Accesibilidad: respetar "menos movimiento" ---------- */
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{transition-duration:.001ms!important;animation-duration:.001ms!important;scroll-behavior:auto!important}
+  .big:active,.wa-big:active,.maq:active{transform:none}
+}
