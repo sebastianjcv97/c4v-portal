@@ -30,7 +30,11 @@ function prepEstado() {
   try { n = lista.filter(c => localStorage.getItem('c4v_prep_' + state.ctx + '_' + c.id) === '1').length; } catch {}
   return { n, total: lista.length, completo: lista.length > 0 && n === lista.length };
 }
-const RUTAS_BLOQUEADAS = ['academia', 'plantillas', 'bolsa'];
+/* Introducción OBLIGATORIA para clientes nuevos.
+   Mientras el checklist de preparación NO esté completo, SOLO estas rutas son accesibles.
+   Es una lista blanca (default-deny): cualquier otra sección — actual o futura —
+   queda bloqueada y redirige a #/preparacion. Así la guía no se puede saltar. */
+const RUTAS_LIBRES = ['inicio', 'preparacion', 'soporte', 'certificado'];
 
 // ---------- data layer ----------
 async function loadDB() {
@@ -169,12 +173,16 @@ const views = {
            <div class="lv-player" hidden></div>
          </li>`;
     const mejorPuntaje = (k) => { try { return JSON.parse(localStorage.getItem('c4v_quiz_' + state.ctx + '_' + k) || 'null'); } catch { return null; } };
+    // Sirve para CUALQUIER curso (c0, c1, c2, c3…). Solo cuenta preguntas bien formadas,
+    // para no romper la vista si otro agente aún está agregando quizzes en data.js.
+    const preguntasValidas = (m) => (m.preguntas || []).filter(p => p && p.q && Array.isArray(p.opciones) && p.opciones.length);
     const quizBox = (c, m, mi) => {
-      if (!m.preguntas || !m.preguntas.length) return '';
+      const preguntas = preguntasValidas(m);
+      if (!preguntas.length) return '';
       const k = c.id + '-' + mi, mejor = mejorPuntaje(k);
       const logro = mejor ? `<span class="qz-logro${mejor.p >= 70 ? ' ok' : ''}">${mejor.p >= 70 ? '🏅' : '📝'} Tu mejor puntaje: ${mejor.b}/${mejor.n}</span>` : '';
       return `<div class="quiz-box" data-key="${k}" data-curso="${c.id}" data-mod="${mi}">
-          <button type="button" class="qz-start">📝 Ponte a prueba <span>(${m.preguntas.length} preguntas)</span></button>${logro}
+          <button type="button" class="qz-start">📝 Ponte a prueba <span>(${preguntas.length} preguntas)</span></button>${logro}
           <div class="qz-area" hidden></div>
         </div>`;
     };
@@ -298,10 +306,19 @@ const views = {
         <tbody>${p.compras.map(c => `<tr><td><strong>${esc(c.item)}</strong></td><td>${esc(c.para)}</td><td>${esc(c.spec)}</td></tr>`).join('')}</tbody></table>
       </div>
 
-      <h2 class="section-title">Checklist <span id="prepCount" style="text-transform:none;letter-spacing:0;color:var(--muted);font-weight:600">${hechos}/${total}</span></h2>
+      <h2 class="section-title">Checklist paso a paso <span id="prepCount" style="text-transform:none;letter-spacing:0;color:var(--muted);font-weight:600">${hechos}/${total}</span></h2>
       <div class="card">
-        <div class="bar" style="margin:0 0 16px"><i id="prepBar" style="width:${total ? Math.round(hechos / total * 100) : 0}%"></i></div>
-        <div id="prepList">${p.checklist.map(c => `<div class="onb-item" data-prep="${c.id}"><input type="checkbox" ${done(c.id) ? 'checked' : ''} aria-label="${esc(c.t)}">${c.img ? `<img class="onb-photo" src="assets/prep/${esc(c.img)}" alt="" loading="lazy" onerror="this.remove()">` : ''}<div class="onb-body"><strong>${esc(c.t)}</strong></div></div>`).join('')}</div>
+        <p class="prep-list-intro">Ve marcando cada punto cuando lo tengas listo. Sigue el orden: cada paso te acerca a cortar desde el primer día. La foto es una referencia de cómo debe verse.</p>
+        <div class="bar" style="margin:0 0 20px"><i id="prepBar" style="width:${total ? Math.round(hechos / total * 100) : 0}%"></i></div>
+        <ol id="prepList" class="prep-steps">${p.checklist.map((c, i) => `<li class="prep-step${done(c.id) ? ' done' : ''}" data-prep="${c.id}">
+            <label class="prep-step-main">
+              <span class="prep-step-num" aria-hidden="true">${i + 1}</span>
+              <input type="checkbox" ${done(c.id) ? 'checked' : ''} aria-label="${esc(c.t)}">
+              <span class="prep-step-txt">${esc(c.t)}</span>
+              <span class="prep-step-check" aria-hidden="true">✓</span>
+            </label>
+            ${c.img ? `<figure class="prep-step-fig"><img src="assets/prep/${esc(c.img)}" alt="Referencia: ${esc(c.t)}" loading="lazy" onerror="this.closest('.prep-step-fig').remove()"><figcaption>Referencia · paso ${i + 1}</figcaption></figure>` : ''}
+          </li>`).join('')}</ol>
       </div>
 
       ${p.kit ? `
@@ -468,10 +485,11 @@ function bind(route) {
   }
   if (route === 'academia') { bindAccordions('.faq-item'); bindAccordions('.course'); bindVideos(); bindQuizzes(); }
   if (route === 'preparacion') {
-    view.querySelectorAll('.onb-item input').forEach(chk => chk.onchange = () => {
-      const id = chk.closest('.onb-item').dataset.prep;
+    view.querySelectorAll('#prepList input[type="checkbox"]').forEach(chk => chk.onchange = () => {
+      const step = chk.closest('.prep-step'); const id = step.dataset.prep;
       try { chk.checked ? localStorage.setItem('c4v_prep_' + state.ctx + '_' + id, '1') : localStorage.removeItem('c4v_prep_' + state.ctx + '_' + id); } catch {}
-      const ins = view.querySelectorAll('.onb-item input'), n = [...ins].filter(i => i.checked).length;
+      step.classList.toggle('done', chk.checked);
+      const ins = view.querySelectorAll('#prepList input[type="checkbox"]'), n = [...ins].filter(i => i.checked).length;
       $('#prepCount').textContent = n + '/' + ins.length;
       $('#prepBar').style.width = Math.round(n / ins.length * 100) + '%';
       // 🎉 Al completar todo, se desbloquea el portal
@@ -538,13 +556,16 @@ function bindQuizzes() {
   view.querySelectorAll('.quiz-box').forEach(box => {
     const curso = state.db.academia.cursos.find(c => c.id === box.dataset.curso);
     const mod = curso?.modulos[Number(box.dataset.mod)];
-    if (!mod || !mod.preguntas) return;
+    if (!mod) return;
+    // Mismo filtro de robustez que en el render: funciona para c0, c3 y cualquier curso nuevo.
+    const preguntas = (mod.preguntas || []).filter(p => p && p.q && Array.isArray(p.opciones) && p.opciones.length);
+    if (!preguntas.length) return;
     const area = box.querySelector('.qz-area'), start = box.querySelector('.qz-start');
-    const total = mod.preguntas.length;
+    const total = preguntas.length;
     let idx = 0, puntos = 0;
 
     const preguntar = () => {
-      const p = mod.preguntas[idx];
+      const p = preguntas[idx];
       area.innerHTML = `
         <div class="qz-prog">Pregunta ${idx + 1} de ${total}</div>
         <div class="qz-q">${esc(p.q)}</div>
@@ -596,9 +617,10 @@ function bindQuizzes() {
 const TITLES = { inicio: 'Inicio', academia: 'Aprender a usar mi máquina', preparacion: 'Preparar mi espacio', soporte: 'Necesito ayuda', bolsa: 'Quiero más clientes', plantillas: 'Banco de Diseños', certificado: 'Tu Certificado de Calidad' };
 function render(route) {
   if (!views[route]) route = 'inicio';
-  // Candado: primero se completa la preparación del espacio, después el resto.
-  if (RUTAS_BLOQUEADAS.includes(route) && !prepEstado().completo) {
-    toast('🔒 Primero completa tu guía «Preparar mi espacio»');
+  // Candado OBLIGATORIO: hasta completar la introducción/preparación, solo rutas libres.
+  // Todo lo demás (academia, bolsa, plantillas, y cualquier sección nueva) va a la guía.
+  if (!RUTAS_LIBRES.includes(route) && !prepEstado().completo) {
+    toast('🔒 Primero completa tu guía «Primeros Pasos: prepara tu espacio»');
     route = 'preparacion';
     if (location.hash !== '#/preparacion') { location.hash = '#/preparacion'; return; }
   }
@@ -653,10 +675,14 @@ function entrar(cliente) {
   } catch {}
   const pe = prepEstado();
   if (!pe.completo) {
-    location.hash = '#/preparacion';
+    // Cliente nuevo (o preparación a medias): SIEMPRE aterriza en la guía de Primeros Pasos,
+    // sin importar el enlace/hash con el que haya entrado. No hay forma de saltarse la introducción.
+    if (location.hash !== '#/preparacion') location.hash = '#/preparacion';
     setTimeout(() => toast(primeraVez
-      ? '👋 ¡Bienvenido! Empieza dejando tu espacio listo'
+      ? '👋 ¡Bienvenido! Empieza aquí: deja tu espacio listo antes de continuar'
       : `📋 Sigues en ${pe.n} de ${pe.total} — completa tu preparación para desbloquear tu portal`), 500);
+    render('preparacion');
+    return;
   }
   render(currentRoute());
 }

@@ -34,7 +34,36 @@ window.C4V_CONFIG = {
     { code: 'CO', nombre: 'Colombia', prefijo: '57',  bandera: '🇨🇴', persona: { doc: 'Cédula (CC)',  ej: '1023456789' },   empresa: { doc: 'NIT', ej: '901234567' } }
   ],
 
-  /* En demo mostramos los documentos de ejemplo para poder entrar.
-     En producción: false (y la validación va contra Odoo). */
+  /* ---------- Verificación de cliente (M1) ----------
+     El login se valida contra NUESTRA base de datos (Postgres `c4v`, tabla
+     c4v.portal_contacts), NO contra Odoo en vivo. Un job (portal/sync-contactos.js)
+     copia periódicamente los contactos de Odoo a esa tabla. El portal solo
+     consulta el endpoint del backend:
+
+        GET {apiBase}{endpoint}?pais=PE&doc=45678123   (opcional &telefono=)
+        → { existe:true, cliente:{...}, maquinas:[...] }   |   { existe:false }
+
+     El `cliente` viene en la MISMA forma que `clientes` de data.js y `maquinas`
+     en la forma de `maquinas` de data.js — el front no transforma nada.
+
+     PASO DE DEMO → PRODUCCIÓN (ver INTEGRACION_ODOO.md):
+       1) Hostea server.js (Railway/Render/VPS) con POSTGRES_URL en el entorno.
+          El portal público es ESTÁTICO (GitHub Pages) y NO puede correr el
+          endpoint por sí solo: necesita ese backend hosteado.
+       2) Corre el sync para poblar la tabla:  node sync-contactos.js
+       3) Pon `apiBase` con la URL pública del backend (o '' si el backend sirve
+          también el HTML), `verificacion.activo = true` y `mostrarNumerosDemo = false`.
+       4) app.js: cuando NO sea demo, llama al endpoint en lugar de validar
+          contra los `clientes` de data.js (ver INTEGRACION_ODOO.md §Cambio en app.js). */
+  verificacion: {
+    endpoint: '/api/cliente',   // ruta del backend de verificación
+    apiBase: '',                // '' = mismo origen; en GitHub Pages, la URL del backend hosteado
+    activo: false               // true cuando el endpoint esté hosteado y la tabla poblada
+  },
+
+  /* En demo mostramos los documentos de ejemplo para poder entrar (validación
+     local contra los `clientes` de data.js).
+     En producción: false → el login verifica contra el endpoint (`verificacion`).
+     Mantén `true` mientras el endpoint NO esté hosteado y poblado. */
   mostrarNumerosDemo: true
 };

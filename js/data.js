@@ -120,10 +120,26 @@ window.__SEED__ = {
         id: "c0", titulo: "Bienvenida a C4V: Tus Primeros Pasos", icono: "🎉", nivel: "Empieza aquí", estado: "disponible",
         descripcion: "Todo lo que necesitas apenas compras tu máquina: tus accesos, tu código, tu certificado y cómo prepararte. (~10 min)",
         modulos: [
-          { titulo: "Tu compra y tus accesos", lecciones: ["Qué incluye tu compra C4V", "Cómo entrar a tu plataforma", "Tu código de máquina (Nº de serie): guárdalo bien"], quizzes: 0 },
-          { titulo: "Tu Certificado de Calidad", lecciones: ["Qué es y qué garantiza tu máquina", "Cómo ver el estado de tu certificado", "«Probada antes de ser tuya»"], quizzes: 0 },
-          { titulo: "Prepara tu espacio", lecciones: ["Lista de compras antes de que llegue", "Instalación eléctrica y pozo a tierra", "Ambiente y seguridad"], quizzes: 0 },
-          { titulo: "Tu primera capacitación", lecciones: ["Continúa con 'Domina tu Láser: Primeros Pasos'", "Únete a la comunidad de +60.000", "Cómo pedir soporte cuando lo necesites"], quizzes: 0 }
+          { titulo: "Tu compra y tus accesos", lecciones: ["Qué incluye tu compra C4V", "Cómo entrar a tu plataforma", "Tu código de máquina (Nº de serie): guárdalo bien"], quizzes: 3, preguntas: [
+            { q: "Además de la máquina, ¿qué incluye tu compra C4V?", opciones: ["Solo la máquina", "Capacitación de por vida, soporte en español, garantía y comunidad", "Únicamente el software"], ok: 1, ex: "Tu compra incluye capacitación de por vida, soporte por WhatsApp, garantía y una comunidad de +60.000 emprendedores." },
+            { q: "¿Cuánto cuesta el acceso a la Academia C4V?", opciones: ["Una suscripción mensual", "Es gratis de por vida, incluido con tu máquina", "Solo el primer mes"], ok: 1, ex: "Tu academia está aquí en tu portal: acceso gratuito de por vida, incluido con tu máquina." },
+            { q: "Tu código de máquina (Nº de serie)…", opciones: ["Da igual si lo pierdes", "Identifica tu máquina y tu certificado: guárdalo bien", "Sirve solo para redes sociales"], ok: 1, ex: "El Nº de serie identifica tu máquina y tu Certificado de Calidad. Guárdalo bien." }
+          ]},
+          { titulo: "Tu Certificado de Calidad", lecciones: ["Qué es y qué garantiza tu máquina", "Cómo ver el estado de tu certificado", "«Probada antes de ser tuya»"], quizzes: 3, preguntas: [
+            { q: "¿Qué es el Certificado de Calidad C4V?", opciones: ["La garantía de 12 meses", "La revisión, prueba y calibración de tu máquina antes de entregártela", "Un cupón de descuento"], ok: 1, ex: "Es la revisión: un técnico la prueba, confirma piezas originales y la calibra antes de que llegue a ti." },
+            { q: "¿El certificado es lo mismo que la garantía?", opciones: ["Verdadero", "Falso"], ok: 1, ex: "No: el certificado es la revisión previa a la entrega; la garantía cubre fallas después." },
+            { q: "El lema del Certificado de Calidad C4V es…", opciones: ["«Probada antes de ser tuya»", "«Compra sin miedo»", "«Garantía para siempre»"], ok: 0, ex: "«Probada antes de ser tuya»: no te entregamos una caja, sino una máquina lista para producir." }
+          ]},
+          { titulo: "Prepara tu espacio", lecciones: ["Lista de compras antes de que llegue", "Instalación eléctrica y pozo a tierra", "Ambiente y seguridad"], quizzes: 3, preguntas: [
+            { q: "¿Qué voltaje necesita tu máquina C4V?", opciones: ["110V", "220V", "380V"], ok: 1, ex: "220V, en un circuito independiente y con cable a tierra." },
+            { q: "¿Qué debes tener listo ANTES de que llegue tu máquina?", opciones: ["Nada, se instala sola", "Todo el kit y la instalación eléctrica lista", "Solo el diseño"], ok: 1, ex: "Ten el espacio, el eléctrico y el kit listos para poder cortar el mismo día." },
+            { q: "¿Se puede instalar sin pozo a tierra?", opciones: ["Sí, si hay apuro", "No: el pozo a tierra es obligatorio"], ok: 1, ex: "El pozo a tierra te protege a ti, a la electrónica y a la calidad del corte. Es la causa #1 de retrasos." }
+          ]},
+          { titulo: "Tu primera capacitación", lecciones: ["Continúa con 'Domina tu Láser: Primeros Pasos'", "Únete a la comunidad de +60.000", "Cómo pedir soporte cuando lo necesites"], quizzes: 3, preguntas: [
+            { q: "Después de esta bienvenida, ¿cuál es el siguiente curso?", opciones: ["«Domina tu Láser: Primeros Pasos»", "«Seguridad y Mantenimiento»", "Ninguno, ya sabes todo"], ok: 0, ex: "Sigue con «Domina tu Láser: Primeros Pasos»: te lleva desde la preparación hasta tu primer corte." },
+            { q: "¿Cómo pides soporte cuando lo necesitas?", opciones: ["Por WhatsApp, en español los 365 días", "Solo por correo postal", "No hay soporte"], ok: 0, ex: "Escríbenos por WhatsApp: te responde una persona del equipo C4V, en español, todo el año." },
+            { q: "La comunidad de emprendedores C4V tiene…", opciones: ["+60.000 emprendedores", "Menos de 100 personas", "No existe"], ok: 0, ex: "Eres parte de una comunidad de +60.000 emprendedores que ya usan su láser C4V." }
+          ]}
         ]
       },
       {
@@ -203,7 +219,12 @@ window.__SEED__ = {
         descripcion: "Curso completo en video del software propio C4VTech: de la instalación a tu primer proyecto real. (20 videos, ~37 min)",
         /* Lecciones en video: { t: título, v: archivo en videos/c4vtech/, dur: segundos } */
         modulos: [
-          { titulo: "Instalación y conexión", quizzes: 0, lecciones: [
+          { titulo: "Instalación y conexión", quizzes: 4, preguntas: [
+            { q: "¿Cómo se conecta la máquina a la computadora en C4VTech?", opciones: ["Solo por Bluetooth", "Por cable de red (Ethernet) o por USB", "Únicamente por WiFi"], ok: 1, ex: "C4VTech se conecta por cable de red (Ethernet) o por USB. Elige el método según tu equipo." },
+            { q: "Para conectar por red, ¿qué dato de la máquina necesitas?", opciones: ["Su dirección IP", "El color del cable", "El modelo del mouse"], ok: 0, ex: "La conexión por red usa la IP de la máquina; el software te muestra cómo encontrarla." },
+            { q: "¿Qué es el «origen» (Job Origin / Machine Zero)?", opciones: ["El punto desde donde la máquina empieza a trabajar tu diseño", "El botón de apagado", "El nombre del archivo"], ok: 0, ex: "El origen define desde qué punto de la mesa arranca el corte. Configurarlo evita errores de posición." },
+            { q: "En la configuración inicial, además de la conexión, debes definir…", opciones: ["Las dimensiones (área de trabajo) de tu máquina", "El idioma del teclado", "La marca del monitor"], ok: 0, ex: "Indica el área de trabajo de tu modelo para que el software ubique bien tus diseños." }
+          ], lecciones: [
             { t: "Intro: cortar y diseñar fácil con C4VTech", v: "t01.mp4", dur: 30 },
             { t: "Instalación del software", v: "t02.mp4", dur: 73 },
             { t: "Finalizar la instalación y crear tu primer proyecto", v: "t03.mp4", dur: 39 },
@@ -213,20 +234,35 @@ window.__SEED__ = {
             { t: "Encontrar la IP de la máquina", v: "t20.mp4", dur: 31 },
             { t: "Configurar el origen (Job Origin / Machine Zero)", v: "t04.mp4", dur: 26 }
           ]},
-          { titulo: "Interfaz y herramientas de diseño", quizzes: 0, lecciones: [
+          { titulo: "Interfaz y herramientas de diseño", quizzes: 4, preguntas: [
+            { q: "En C4VTech, las capas de color sirven para…", opciones: ["Solo decorar el diseño", "Separar grabado, corte y marcado con distintos parámetros", "Cambiar el idioma"], ok: 1, ex: "Cada color es una capa: le das su propia potencia y velocidad para grabar, cortar o marcar." },
+            { q: "La herramienta «Array» sirve para…", opciones: ["Repetir y multiplicar un diseño en filas y columnas", "Borrar el diseño", "Conectar a internet"], ok: 0, ex: "Array duplica tu diseño en una cuadrícula: ideal para producir muchas piezas iguales." },
+            { q: "La herramienta «Offset» sirve para…", opciones: ["Crear un borde o contorno paralelo alrededor de tu diseño", "Apagar la máquina", "Subir la potencia"], ok: 0, ex: "Offset genera un contorno a una distancia fija: perfecto para bordes y fondos." },
+            { q: "Para poder cortar o grabar un texto, primero debes…", opciones: ["Convertir el texto a vector (curvas)", "Imprimirlo en papel", "Guardarlo como foto"], ok: 0, ex: "El texto se pasa a vector para que la máquina lo reconozca como líneas de corte o grabado." }
+          ], lecciones: [
             { t: "Interfaz del programa C4VTech", v: "t08.mp4", dur: 123 },
             { t: "Barra de herramientas de diseño", v: "t09.mp4", dur: 94 },
             { t: "Herramientas Array y Offset", v: "t10.mp4", dur: 127 },
             { t: "Funciones clave: capas grabado / corte / marcado y texto a vector", v: "t11.mp4", dur: 209 }
           ]},
-          { titulo: "Texto y vectores", quizzes: 0, lecciones: [
+          { titulo: "Texto y vectores", quizzes: 4, preguntas: [
+            { q: "La herramienta «Weld» (soldar) se usa para…", opciones: ["Unir letras u objetos que se tocan en una sola pieza", "Separar el diseño en partes", "Borrar el texto"], ok: 0, ex: "Weld funde en una sola figura las letras u objetos superpuestos, sin líneas internas." },
+            { q: "La herramienta «Bridge» (puente) sirve para…", opciones: ["Unir letras sueltas con pequeños puentes para que no se caigan al cortar", "Cambiar el color del diseño", "Aumentar la velocidad"], ok: 0, ex: "Bridge crea puentecitos que sujetan las letras entre sí para que la palabra quede de una pieza." },
+            { q: "¿Por qué son importantes los puentes (Bridge) en toppers y letras?", opciones: ["Para que las partes internas o las letras no se desprendan al cortar", "Para gastar más material", "No sirven de nada"], ok: 0, ex: "Sin puentes, las letras o los centros de la 'a' y la 'o' se caen. Los puentes los mantienen unidos." },
+            { q: "La «vectorización» de una imagen sirve para…", opciones: ["Convertir una foto o logo en líneas que la máquina puede cortar o grabar", "Subir la imagen a internet", "Imprimir a color"], ok: 0, ex: "Vectorizar transforma un logo o imagen en trazos que el láser sí puede seguir." }
+          ], lecciones: [
             { t: "Texto y selección de fuentes", v: "t13.mp4", dur: 88 },
             { t: "Herramienta Weld (soldar texto)", v: "t14.mp4", dur: 100 },
             { t: "Herramienta Bridge (unir letras y objetos)", v: "t15.mp4", dur: 111 },
             { t: "Herramienta Offset (bordes y fondos para toppers)", v: "t17.mp4", dur: 171 },
             { t: "Vectorización de imágenes", v: "t18.mp4", dur: 188 }
           ]},
-          { titulo: "Proyectos reales", quizzes: 0, lecciones: [
+          { titulo: "Proyectos reales", quizzes: 4, preguntas: [
+            { q: "Para enviar tu proyecto a la máquina y cortar, en C4VTech usas…", opciones: ["El botón de enviar/Start hacia la máquina conectada", "El correo electrónico", "Un USB de música"], ok: 0, ex: "Con la máquina conectada, envías el trabajo y presionas Start para que empiece a cortar." },
+            { q: "Antes de cortar tu primer proyecto real, la buena práctica es…", opciones: ["Probar en un retazo del mismo material", "Usar potencia máxima de una vez", "Cortar directo la pieza final"], ok: 0, ex: "Regla de oro C4V: prueba primero en un retazo — cada máquina y material varía un poco." },
+            { q: "Un topper con «puente y base» combina…", opciones: ["Texto con puentes (Bridge) más una base o soporte para pararlo", "Solo una fotografía", "Nada en especial"], ok: 0, ex: "El puente une las letras y la base le da soporte para que el topper se pare solo." },
+            { q: "Antes de mandar a cortar, revisa que cada capa tenga…", opciones: ["La potencia y velocidad correctas según el material", "El mismo color siempre", "El volumen alto"], ok: 0, ex: "Cada capa (grabar / cortar / marcar) necesita sus parámetros según el material que uses." }
+          ], lecciones: [
             { t: "Topper personalizado con puente y base", v: "t16.mp4", dur: 126 },
             { t: "Enviar el proyecto a la máquina y cortar", v: "t12.mp4", dur: 76 },
             { t: "Proyecto integral: llavero familiar", v: "t19.mp4", dur: 405 }
@@ -290,18 +326,18 @@ window.__SEED__ = {
     intro: "Prepara tu espacio ANTES de que llegue tu máquina y podrás cortar el mismo día. Estas 5 cosas marcan la diferencia: electricidad 220V dedicada, pozo a tierra, extracción de humos, agua destilada y un espacio adecuado.",
     /* img: foto REAL (assets/prep/) extraída de las guías técnicas C4V */
     checklist: [
-      { id: "a1", t: "Mide la puerta y el recorrido de entrada (¿pasa la máquina embalada?)" },
-      { id: "a2", t: "Plan B listo: retirar el marco de la puerta o ruta alterna" },
-      { id: "e1", t: "220V en circuito independiente, con su propia llave", img: "e1-electrico.jpg" },
-      { id: "e2", t: "Pozo a tierra verificado por un electricista", img: "e2-tierra.jpg" },
-      { id: "e3", t: "Estabilizador de voltaje instalado", img: "e3-estabilizador.jpg" },
-      { id: "e4", t: "Extractor conectado y con salida al exterior", img: "e4-extractor.jpg" },
-      { id: "e5", t: "Enfriador (chiller) con agua destilada (15–25 °C)", img: "e5-chiller.jpg" },
-      { id: "e6", t: "Compresor / aire listo (si tu modelo lo usa)", img: "e6-aire.jpg" },
-      { id: "e7", t: "Extintor a la mano" },
-      { id: "e8", t: "Espacio nivelado, limpio y ventilado", img: "e8-espacio.jpg" },
-      { id: "e9", t: "Consumibles: agua destilada, aceite 3-EN-1, alcohol isopropílico, microfibra", img: "e9-consumibles.jpg" },
-      { id: "e10", t: "Materiales de prueba: MDF/acrílico (NUNCA PVC)", img: "e10-material.jpg" }
+      { id: "a1", t: "Paso 1 · Mide las puertas y el recorrido: ¿pasa la máquina embalada hasta su lugar?" },
+      { id: "a2", t: "Paso 2 · Ten un plan B de acceso: quitar el marco de la puerta o una ruta alterna" },
+      { id: "e8", t: "Paso 3 · Elige el espacio: piso nivelado, limpio y bien ventilado", img: "e8-espacio.jpg" },
+      { id: "e1", t: "Paso 4 · Instala 220V en circuito independiente, con su propia llave termomagnética", img: "e1-electrico.jpg" },
+      { id: "e2", t: "Paso 5 · Verifica el pozo a tierra con un electricista (obligatorio)", img: "e2-tierra.jpg" },
+      { id: "e3", t: "Paso 6 · Coloca el estabilizador de voltaje entre el enchufe y la máquina", img: "e3-estabilizador.jpg" },
+      { id: "e4", t: "Paso 7 · Conecta el extractor de humos con salida al exterior", img: "e4-extractor.jpg" },
+      { id: "e6", t: "Paso 8 · Prepara el compresor / aire (si tu modelo lo usa)", img: "e6-aire.jpg" },
+      { id: "e5", t: "Paso 9 · Llena el enfriador (chiller) con agua destilada (15–25 °C)", img: "e5-chiller.jpg" },
+      { id: "e7", t: "Paso 10 · Deja un extintor a la mano" },
+      { id: "e9", t: "Paso 11 · Ten los consumibles: agua destilada, aceite 3-EN-1, alcohol isopropílico y microfibra", img: "e9-consumibles.jpg" },
+      { id: "e10", t: "Paso 12 · Consigue material de prueba: MDF o acrílico (NUNCA PVC)", img: "e10-material.jpg" }
     ],
     acceso: {
       titulo: "¿Por dónde va a entrar tu máquina?",
@@ -392,9 +428,9 @@ window.__SEED__ = {
   },
 
   onboarding: [
-    { id: "curso", titulo: "Haz el curso «Bienvenida: Tus Primeros Pasos»", detalle: "10 minutos para conocer tu plataforma y arrancar con el pie derecho.", href: "#/academia" },
-    { id: "cert", titulo: "Conoce tu Certificado de Calidad", detalle: "Mira el estado de tu máquina y qué garantiza.", href: "#/certificado" },
-    { id: "espacio", titulo: "Prepara tu espacio", detalle: "Guía de preinstalación: eléctrico, pozo a tierra y ambiente.", href: "#/preparacion" },
-    { id: "soporte", titulo: "Ten a mano tu soporte", detalle: "WhatsApp 924 662 205, los 365 días. Y descubre la Bolsa de Trabajos.", href: "#/soporte" }
+    { id: "espacio", titulo: "Paso 1 · Prepara tu espacio", detalle: "Empieza aquí: sigue la guía de preinstalación (eléctrico, pozo a tierra, extracción y agua destilada). Al completarla se desbloquea el resto de tu portal.", href: "#/preparacion", img: "e8-espacio.jpg" },
+    { id: "cert", titulo: "Paso 2 · Conoce tu Certificado de Calidad", detalle: "Mira el estado de tu máquina y qué garantiza: probada, calibrada y lista antes de llegar a ti.", href: "#/certificado" },
+    { id: "curso", titulo: "Paso 3 · Haz el curso «Bienvenida: Tus Primeros Pasos»", detalle: "10 minutos para conocer tu plataforma y arrancar con el pie derecho.", href: "#/academia" },
+    { id: "soporte", titulo: "Paso 4 · Ten a mano tu soporte", detalle: "WhatsApp 924 662 205, en español los 365 días. Y descubre la Bolsa de Trabajos gratis para clientes.", href: "#/soporte" }
   ]
 };
