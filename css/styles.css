@@ -136,32 +136,12 @@ button{font-family:var(--sans)}
 
 /* ---------- Layout ---------- */
 .app{display:flex;min-height:100vh}
-.sidebar{width:248px;flex-shrink:0;background:var(--black);color:var(--on-black);display:flex;flex-direction:column;padding:24px 16px;position:sticky;top:0;height:100vh}
 .content{flex:1;min-width:0;display:flex;flex-direction:column}
-
-/* Marca — logo real siempre visible */
-.brand{display:flex;flex-direction:column;gap:8px;padding:0 8px 24px}
-.brand img{width:132px;height:auto;display:block}
-.brand span{font-size:12px;color:var(--on-black-dim);letter-spacing:.04em;text-transform:uppercase;font-weight:600}
-
-/* Nav (sobre negro) */
-.nav{display:flex;flex-direction:column;gap:2px}
-.nav a{display:flex;align-items:center;gap:12px;padding:12px;border-radius:var(--r);font-size:16px;font-weight:500;color:var(--on-black-dim);border-left:3px solid transparent;transition:background .14s,color .14s}
-.nav a .ic{color:inherit}
-.nav a:hover{background:var(--black-2);color:var(--on-black)}
-.nav a.active{background:var(--black-2);color:var(--on-black);border-left-color:var(--red);font-weight:700}
-.sidebar-foot{margin-top:auto;padding-top:16px;border-top:1px solid var(--black-3)}
-.ctx-label{font-size:12px;color:var(--on-black-dim);text-transform:uppercase;letter-spacing:.05em;font-weight:700}
-.ctx-select{width:100%;margin-top:8px;padding:10px 12px;border:1px solid var(--black-3);border-radius:var(--r);font-family:var(--sans);font-size:14px;background:var(--black-2);color:var(--on-black)}
 
 /* Topbar — negro, logo visible en móvil */
 .topbar{display:flex;align-items:center;gap:16px;padding:12px 32px;background:var(--black);color:var(--on-black);position:sticky;top:0;z-index:5}
-.menu-btn{display:none;background:none;border:none;font-size:24px;cursor:pointer;color:var(--on-black);padding:8px;line-height:1}
 .topbar-home{display:flex;align-items:center;min-height:44px}
 .topbar-logo{height:26px;width:auto}
-.topbar-title{font-family:var(--slab);font-size:18px;font-weight:700}
-.badge-cert{margin-left:auto;font-size:14px;font-weight:700;color:var(--on-black);background:var(--black-2);border:1px solid var(--red);padding:8px 12px;border-radius:var(--r);white-space:nowrap}
-a.badge-cert:hover{background:var(--black-3)}
 
 .view{padding:32px;max-width:1020px;width:100%}
 .foot{padding:24px 32px;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center;color:var(--muted);font-size:14px}
@@ -173,17 +153,6 @@ a.badge-cert:hover{background:var(--black-3)}
 .page-head h1{margin-bottom:8px}
 .page-head p{color:var(--muted);font-size:16px;max-width:66ch;margin:0}
 .section-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:32px 0 16px}
-
-/* Hero — panel negro como el sitio comercial */
-.hero{background:var(--black);color:var(--on-black);border-radius:var(--r-lg);padding:32px;margin-bottom:24px}
-.hero h1{color:var(--on-black);margin-bottom:12px}
-.hero h1 em{color:var(--red);font-style:normal}
-.hero p{margin:0 0 16px;color:var(--on-black-dim);max-width:60ch;font-size:16px}
-.hero-cta{display:flex;gap:12px;flex-wrap:wrap}
-.hero .btn.ghost{background:transparent;color:var(--on-black);border:2px solid var(--on-black)}
-.hero .btn.ghost:hover{background:var(--black-2)}
-.hero .btn.primary{background:var(--red)}
-.hero .btn.primary:hover{background:var(--red-cta)}
 
 /* ---------- Grid & cards ---------- */
 .grid{display:grid;gap:16px}
@@ -341,7 +310,7 @@ tr:last-child td{border-bottom:none}
 
 /* ---------- Impresión ---------- */
 @media print{
-  .sidebar,.topbar,.foot,#printPrep,.hero-cta,.demo-band,.skip{display:none!important}
+  .topbar,.foot,#printPrep,.demo-band,.skip{display:none!important}
   body{background:#fff}
   .view{padding:0;max-width:100%}
   .card,.onb-item,table,.guia-thumb{box-shadow:none}
@@ -350,16 +319,11 @@ tr:last-child td{border-bottom:none}
 
 /* ---------- Responsive ---------- */
 @media(max-width:880px){
-  .sidebar{position:fixed;left:-280px;z-index:30;transition:left .22s;height:100%}
-  .sidebar.open{left:0;box-shadow:0 0 0 100vmax rgba(20,20,20,.5)}
-  .menu-btn{display:block}
   .topbar-logo{display:block}
   .topbar{padding:12px 16px}
   .grid.cols-2,.grid.cols-3,.actions{grid-template-columns:1fr}
   .form-row{grid-template-columns:1fr}
-  .badge-cert{display:none}
   .view{padding:16px}
-  .hero{padding:24px}
   h1{font-size:24px}
   .cert-seal{width:112px}
   th,td{padding:8px 12px}

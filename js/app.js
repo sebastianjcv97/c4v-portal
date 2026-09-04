@@ -51,13 +51,15 @@ async function mutate(onlineCall, offlineFn) {
   if (!state.offline) { await onlineCall(); state.db = await loadDB(); } else { offlineFn(state.db); }
 }
 const post = (url, body) => fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).then(r => { if (!r.ok) throw new Error('err'); });
+// Id = max existente + 1 (length+1 repetiría ids si se borra un registro).
+const nextId = (prefix, list, base) => prefix + '-' + (list.reduce((m, x) => { const n = parseInt(String(x.id || '').replace(/^\D+/, ''), 10); return n > m ? n : m; }, base) + 1);
 const actions = {
   crearTicket: (p) => mutate(() => post('/api/tickets', p),
-    (db) => db.tickets.unshift({ id: 'TK-' + (2000 + db.tickets.length + 1), tipo: p.tipo, serie: p.serie || '', pais: p.pais || 'PE', asunto: p.asunto, descripcion: p.descripcion || '', estado: 'nuevo', prioridad: p.prioridad || 'media', asignado_a: assignTicket(db, p.tipo, p.pais || 'PE'), cliente_id: p.cliente_id || null, fecha: today() })),
+    (db) => db.tickets.unshift({ id: nextId('TK', db.tickets, 2000), tipo: p.tipo, serie: p.serie || '', pais: p.pais || 'PE', asunto: p.asunto, descripcion: p.descripcion || '', estado: 'nuevo', prioridad: p.prioridad || 'media', asignado_a: assignTicket(db, p.tipo, p.pais || 'PE'), cliente_id: p.cliente_id || null, fecha: today() })),
   estadoTicket: (id, estado) => mutate(() => post(`/api/tickets/${id}/estado`, { estado }),
     (db) => { const t = db.tickets.find(x => x.id === id); if (t) t.estado = estado; }),
   crearLead: (p) => mutate(() => post('/api/leads', p),
-    (db) => db.leads.unshift({ id: 'lead-' + (1000 + db.leads.length + 1), titulo: p.titulo, descripcion: p.descripcion || '', material: p.material || '', cantidad: p.cantidad || '', pais: p.pais || 'PE', ciudad: p.ciudad || '', contacto: p.contacto, telefono: p.telefono || '', estado: 'nuevo', tomado_por: null, fecha: today() })),
+    (db) => db.leads.unshift({ id: nextId('lead', db.leads, 1000), titulo: p.titulo, descripcion: p.descripcion || '', material: p.material || '', cantidad: p.cantidad || '', pais: p.pais || 'PE', ciudad: p.ciudad || '', contacto: p.contacto, telefono: p.telefono || '', estado: 'nuevo', tomado_por: null, fecha: today() })),
   tomarLead: (id, cliente_id) => mutate(() => post(`/api/leads/${id}/tomar`, { cliente_id }),
     (db) => { const l = db.leads.find(x => x.id === id); if (l) { l.estado = 'tomado'; l.tomado_por = cliente_id; } })
 };
@@ -101,8 +103,8 @@ const diag = (k) => `<svg class="diag" viewBox="0 0 220 120" fill="none">${DIAG[
 
 // ---------- vistas ----------
 const views = {
-  /* Pantalla única: saludo + tu máquina + 4 botones grandes. Nada más.
-     Todo lo demás vive DENTRO de esos 4 botones. */
+  /* Pantalla única: saludo + tu máquina + 5 botones grandes. Nada más.
+     Todo lo demás vive DENTRO de esos botones. */
   inicio() {
     const d = state.db, cli = currentClient();
     const maq = cli ? d.maquinas.find(m => m.cliente_id === cli.id) : null;
@@ -152,6 +154,9 @@ const views = {
         ${prep.completo
           ? bigBtn('#/bolsa', 'bolsa', 'Quiero más clientes', 'Trabajos de corte que te pasamos gratis')
           : lockBtn('bolsa', 'Quiero más clientes')}
+        ${prep.completo
+          ? bigBtn('#/plantillas', 'disenos', 'Banco de Diseños', 'Plantillas listas para cortar (SVG / DXF)')
+          : lockBtn('disenos', 'Banco de Diseños')}
         ${bigBtn('#/soporte', 'soporte', 'Necesito ayuda', 'Habla con nosotros por WhatsApp')}
       </div>`;
   },
@@ -242,7 +247,7 @@ const views = {
 
       <h2 class="section-title">Conoce la línea C4V</h2>
       <p class="muted" style="margin:0 0 12px">${esc(m.intro)}</p>
-      <div class="card" style="padding:0;overflow:hidden">
+      <div class="card tabla-scroll" style="padding:0">
         <table class="table"><thead><tr><th>Modelo</th><th>Área</th><th>Ideal para</th><th>Ref. (PE)</th></tr></thead>
         <tbody>${m.items.map(x => `<tr><td><strong>${esc(x.modelo)}</strong></td><td>${esc(x.area)}</td><td>${esc(x.ideal)}</td><td class="muted">${esc(x.precio)}</td></tr>`).join('')}</tbody></table>
       </div>
@@ -323,7 +328,7 @@ const views = {
 
       ${p.kit ? `
       <h2 class="section-title">${esc(p.kit.titulo)}</h2>
-      <img class="kit-img" src="assets/prep/kit-mantenimiento.png" alt="Kit de mantenimiento C4V Laser" loading="lazy" onerror="this.remove()">
+      ${p.kit.img ? `<img class="kit-img" src="assets/prep/${esc(p.kit.img)}" alt="${esc(p.kit.titulo)}" loading="lazy" onerror="this.remove()">` : ''}
       <div class="card">
         <p style="margin:0 0 12px">${esc(p.kit.nota)}</p>
         <div class="kit-grid">${p.kit.items.map(k => `<div class="kit-item">
@@ -726,7 +731,7 @@ function inyectarCliente(cliente, maquinas) {
   return cliente;
 }
 
-/* Devuelve { estado:'ok', cliente } · { estado:'no_encontrado' } · { estado:'error' }.
+/* Devuelve { estado:'ok', cliente } · { estado:'no_encontrado' } · { estado:'limite' } · { estado:'error' }.
    - modoDemo → valida contra data.js (comportamiento actual).
    - producción → llama al endpoint; existe:false = no_encontrado; red/503 = error. */
 async function verificarCliente({ pais, doc }) {
@@ -734,14 +739,16 @@ async function verificarCliente({ pais, doc }) {
     const cli = buscarClientePorDocumento(doc);
     return cli ? { estado: 'ok', cliente: cli } : { estado: 'no_encontrado' };
   }
-  // NOTA PII: el documento viaja en la query del GET. Es un backend propio y
-  // así lo define INTEGRACION_ODOO.md §6; la decisión sobre OTP/rate-limiting
-  // (§9 SEGURIDAD) es de producto y se toma antes de activar producción.
+  // PII: el documento viaja en el BODY de un POST (no en la URL → no queda en
+  // logs/proxies/historial). El backend rate-limita por IP; la decisión sobre
+  // OTP (INTEGRACION_ODOO.md §9 SEGURIDAD) es de producto, previa a producción.
   const base = VERIF.apiBase || '';
   const ep = VERIF.endpoint || '/api/cliente';
-  const url = `${base}${ep}?pais=${encodeURIComponent(pais || '')}&doc=${encodeURIComponent(doc)}`;
   let r;
-  try { r = await fetch(url); } catch { return { estado: 'error' }; }
+  try {
+    r = await fetch(`${base}${ep}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pais: pais || '', doc }) });
+  } catch { return { estado: 'error' }; }
+  if (r.status === 429) return { estado: 'limite' };
   if (!r.ok) return { estado: 'error' };          // 400/503/… → no distinguir para el usuario
   let j;
   try { j = await r.json(); } catch { return { estado: 'error' }; }
@@ -860,11 +867,13 @@ function initGate() {
     if (res.estado === 'ok') { guardarSesion(doc, pais); entrar(res.cliente); return; }
 
     err.hidden = false;
-    if (res.estado === 'error') {
+    if (res.estado === 'limite') {
+      err.innerHTML = `Hiciste demasiados intentos seguidos. Espera unos minutos y vuelve a probar, o <a href="${waLink('Hola, no puedo entrar a mi Central de Postventa C4V. ¿Me ayudan?')}" target="_blank" rel="noopener">escríbenos por WhatsApp</a>.`;
+    } else if (res.estado === 'error') {
       // Falla de red / backend (503): no es culpa del documento.
       err.innerHTML = `No pudimos verificar tu documento en este momento. Revisa tu conexión e inténtalo de nuevo, o <a href="${waLink('Hola, no puedo entrar a mi Central de Postventa C4V (error al verificar). ¿Me ayudan?')}" target="_blank" rel="noopener">escríbenos por WhatsApp</a>.`;
     } else {
-      err.innerHTML = `No encontramos tu ${esc(info.doc)} <strong>${esc(inp.value.trim())}</strong> entre nuestros clientes. Revísalo o <a href="${waLink('Hola, mi documento no aparece en la Central de Postventa C4V. ¿Me ayudan?')}" target="_blank" rel="noopener">escríbenos por WhatsApp</a> y te ayudamos.`;
+      err.innerHTML = `No encontramos tu ${esc(info.doc)} <strong>${esc(inp.value.trim())}</strong> entre nuestros clientes. Revisa el número, el país y si compraste como persona o empresa, o <a href="${waLink('Hola, mi documento no aparece en la Central de Postventa C4V. ¿Me ayudan?')}" target="_blank" rel="noopener">escríbenos por WhatsApp</a> y te ayudamos.`;
     }
     err.focus?.();
   };
