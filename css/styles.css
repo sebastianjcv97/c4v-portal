@@ -525,3 +525,45 @@ tr:last-child td{border-bottom:none}
   *,*::before,*::after{transition-duration:.001ms!important;animation-duration:.001ms!important;scroll-behavior:auto!important}
   .big:active,.wa-big:active,.maq:active{transform:none}
 }
+
+/* ---------- Ruta de aprendizaje / pilares (Academia) ---------- */
+a.chip{text-decoration:none;color:var(--ink)}
+.chip.soon{color:var(--muted);background:var(--alt);cursor:default;border-style:dashed}
+.chip.soon small{font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.04em;margin-left:4px}
+.pilares{margin-bottom:8px}
+.pilar h3{font-family:var(--slab);font-size:16px;margin:0 0 6px}
+.pilar p{margin:0 0 10px;color:var(--muted);font-size:14px}
+.pilar.soon{background:var(--alt);border-style:dashed}
+.pilar-meta{display:block;margin-top:8px;font-size:12px;color:var(--muted)}
+
+/* ---------- Ruta de inicio (Inicio) ---------- */
+.ruta-inicio{background:var(--bg);border:2px solid var(--line);border-radius:var(--r-lg);padding:16px 18px;margin-bottom:20px}
+.ruta-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:6px}
+.ruta-head strong{font-family:var(--slab);font-size:18px}
+.ruta-head span{font-size:14px;color:var(--muted);font-variant-numeric:tabular-nums}
+.ruta-msg{margin:0 0 10px;font-size:14px;color:var(--muted);line-height:1.5}
+.ruta-pasos{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.ruta-pasos a{display:flex;gap:12px;align-items:flex-start;padding:10px 8px;border-radius:var(--r);color:inherit;text-decoration:none;min-height:44px}
+.ruta-pasos a:hover{background:var(--alt)}
+.ruta-num{flex-shrink:0;width:28px;height:28px;border-radius:50%;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;margin-top:2px}
+.ruta-pasos li.done .ruta-num{background:var(--ok);border-color:var(--ok);color:#fff}
+.ruta-pasos li.done .ruta-txt strong{text-decoration:line-through;color:var(--muted)}
+.ruta-pasos li.lock{opacity:.6}
+.ruta-txt{display:flex;flex-direction:column;gap:2px}
+.ruta-txt strong{font-size:15px}
+.ruta-txt small{font-size:13px;color:var(--muted);line-height:1.45}
+
+/* ---------- Según tu modelo (Preparación) ---------- */
+.modelo-card h3{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:16px;margin:0 0 8px}
+.modelo-card h3 .muted{font-weight:500;font-size:13px}
+.modelo-card.mio{border:2px solid var(--red)}
+.modelo-card p{margin:0 0 6px;font-size:14px}
+.confirma{margin-top:14px;background:var(--alt)}
+.confirma p{margin:0 0 8px}
+.confirma .wa-inline{margin-top:10px}
+
+/* ---------- Redes y lives (Soporte) ---------- */
+.redes{margin-top:16px}
+.redes p{margin:0 0 6px;font-size:14px}
+.redes-links{display:flex;flex-wrap:wrap;gap:6px 16px;color:var(--muted)}
+.redes-links a{color:var(--red-cta);font-weight:700}

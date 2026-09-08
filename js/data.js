@@ -110,11 +110,20 @@ window.__SEED__ = {
     acceso: "Tu academia está aquí, en tu portal: acceso gratuito de por vida, incluido con tu máquina C4V. Todos los cursos, para todos los clientes.",
     plataforma: "Academia C4V · guiados por CeVi el Toro 🐂 y Lumo el Búho 🦉",
     pilares: [
-      { titulo: "C4V Tec — Técnico", detalle: "Operar la máquina y el software." },
-      { titulo: "Quiero Emprender — Negocio", detalle: "Qué producir y cómo venderlo (el diferenciador)." },
-      { titulo: "Irene Coach — Coaching", detalle: "Mentalidad y ventas con Irene Velasco." }
+      { titulo: "C4V Tec — Técnico", detalle: "Operar la máquina y el software.", estado: "disponible", cursos: "4 cursos · 20 videos · 19 quizzes" },
+      { titulo: "Quiero Emprender — Negocio", detalle: "Qué producir y cómo venderlo (el diferenciador).", estado: "proximamente", cursos: "Contenido en preparación" },
+      { titulo: "Irene Coach — Coaching", detalle: "Mentalidad y ventas con Irene Velasco.", estado: "proximamente", cursos: "Contenido en preparación" }
     ],
-    ruta: ["Prepararte", "Operar", "Mantener", "Software", "Producir", "Especializarte"],
+    /* Ruta de aprendizaje: cada tramo apunta a lo que EXISTE. Los que aún no tienen
+       curso se muestran como "próximamente" — nunca se finge contenido. */
+    ruta: [
+      { t: "Prepararte", href: "#/preparacion" },
+      { t: "Operar", curso: "c1" },
+      { t: "Mantener", curso: "c2" },
+      { t: "Software", curso: "c3" },
+      { t: "Producir", proximamente: "Tu primer producto en 30 minutos" },
+      { t: "Especializarte", proximamente: "Tu primer mes vendiendo" }
+    ],
     cursos: [
       {
         id: "c0", titulo: "Bienvenida a C4V: Tus Primeros Pasos", icono: "🎉", nivel: "Empieza aquí", estado: "disponible",
@@ -385,7 +394,16 @@ window.__SEED__ = {
       { item: "Extractor + ducto", para: "Sacar humo al exterior", spec: "Diámetro según la boca de la máquina" },
       { item: "Extintor", para: "Seguridad", spec: "Polvo químico seco o CO₂" }
     ],
-    modelos: "6040 / 9060 (compactas): instalación remota con acompañamiento hasta tu primer corte. 13100–18120 (grandes): instalación presencial incluida; requieren más espacio y mayor capacidad eléctrica. Tu asesor confirma los específicos de tu modelo."
+    modelos: "6040 / 9060 (compactas): instalación remota con acompañamiento hasta tu primer corte. 13100–18120 (grandes): instalación presencial incluida; requieren más espacio y mayor capacidad eléctrica. Tu asesor confirma los específicos de tu modelo.",
+    /* Según tu modelo — fuente: P2/GUIA_PREINSTALACION.md §9. Solo datos confirmados;
+       lo que depende del equipo exacto va en `confirma` y lo cierra el asesor. */
+    porModelo: {
+      grupos: [
+        { key: "compacta", nombre: "Compactas", modelos: ["4040", "6040", "6090", "9060"], instalacion: "Remota, con acompañamiento del ingeniero hasta tu primer corte", foco: "Eléctrico 220V dedicado · pozo a tierra · chiller con agua destilada", nota: "Viene casi lista para conectar." },
+        { key: "grande", nombre: "Grandes / industriales", modelos: ["1390", "1610", "13100", "18120"], instalacion: "Presencial, incluida (el ingeniero la instala)", foco: "Más espacio · mayor capacidad eléctrica y de extracción", nota: "Tu asesor confirma si requiere alimentación trifásica." }
+      ],
+      confirma: ["Amperaje y calibre del cable", "Capacidad del estabilizador", "Diámetro del ducto de extracción", "Si usa compresor (air assist)", "Medidas y peso de la máquina embalada"]
+    }
   },
 
   faqs: [

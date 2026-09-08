@@ -64,6 +64,31 @@ const actions = {
     (db) => { const l = db.leads.find(x => x.id === id); if (l) { l.estado = 'tomado'; l.tomado_por = cliente_id; } })
 };
 
+// ---------- Ruta de inicio (onboarding en 4 pasos, en el inicio) ----------
+// Cada paso se marca hecho con señales reales: preparación completa, certificado
+// visitado, quiz del curso de bienvenida aprobado (≥70%), soporte visitado.
+// Cuando los 4 están hechos, la ruta desaparece: el inicio queda limpio.
+function rutaInicio(d, cli, prep, certificada) {
+  const pasos = d.onboarding || [];
+  if (!pasos.length || !cli) return '';
+  const ls = (k) => { try { return localStorage.getItem(k); } catch { return null; } };
+  const quizC0 = () => { try { return Object.keys(localStorage).some(k => k.startsWith('c4v_quiz_' + state.ctx + '_c0-') && (JSON.parse(localStorage.getItem(k) || '{}').p || 0) >= 70); } catch { return false; } };
+  const hecho = { espacio: prep.completo, cert: !!ls('c4v_visto_certificado_' + state.ctx), curso: quizC0(), soporte: !!ls('c4v_visto_soporte_' + state.ctx) };
+  const n = pasos.filter(p => hecho[p.id]).length;
+  if (n === pasos.length) return '';
+  const bloqueado = (p) => p.id !== 'espacio' && p.id !== 'cert' && p.id !== 'soporte' && !prep.completo;
+  return `
+      <section class="ruta-inicio" aria-label="Tu ruta de inicio">
+        <div class="ruta-head"><strong>Tu ruta de inicio</strong><span>${n} de ${pasos.length}</span></div>
+        ${!certificada && d.bienvenida?.mensaje ? `<p class="ruta-msg">${esc(d.bienvenida.mensaje)}</p>` : ''}
+        <ol class="ruta-pasos">${pasos.map(p => `<li class="${hecho[p.id] ? 'done' : bloqueado(p) ? 'lock' : ''}">
+          <a href="${bloqueado(p) ? '#/preparacion' : esc(p.href)}">
+            <span class="ruta-num" aria-hidden="true">${hecho[p.id] ? '✓' : bloqueado(p) ? '🔒' : ''}</span>
+            <span class="ruta-txt"><strong>${esc(p.titulo)}</strong><small>${esc(p.detalle)}</small></span>
+          </a></li>`).join('')}</ol>
+      </section>`;
+}
+
 // ---------- SVG mini-previews (plantillas) ----------
 const THUMBS = {
   llaveros: '<rect x="52" y="34" width="96" height="52" rx="14"/><circle cx="70" cy="52" r="7"/><line x1="92" y1="60" x2="132" y2="60"/>',
@@ -144,6 +169,8 @@ const views = {
         <span class="prep-cta-btn">Continuar mi preparación →</span>
       </a>`}
 
+      ${rutaInicio(d, cli, prep, certificada)}
+
       <div class="bigs">
         ${prep.completo
           ? bigBtn('#/preparacion', 'prep', 'Preparar mi espacio', 'Tu checklist quedó completo ✓')
@@ -195,7 +222,7 @@ const views = {
       const estado = c.estado === 'disponible' ? '<span class="badge ok">Disponible</span>' : c.estado === 'en_proceso' ? '<span class="badge warn">En construcción</span>' : '<span class="badge grey">Próximamente</span>';
       const nLes = c.modulos.reduce((s, m) => s + m.lecciones.length, 0);
       const esVideo = c.modulos.some(m => m.lecciones.some(l => typeof l !== 'string'));
-      return `<div class="course"><button type="button" class="course-head" aria-expanded="false">
+      return `<div class="course" id="curso-${esc(c.id)}"><button type="button" class="course-head" aria-expanded="false">
           <div class="course-ico">${i + 1}</div>
           <div style="flex:1"><h3>${esc(c.titulo)} ${estado} ${esVideo ? '<span class="badge red">🎬 en video</span>' : ''}</h3>
             <div class="sub">${esc(c.nivel)} · ${c.modulos.length} módulos · ${nLes} lecciones — ${esc(c.descripcion)}</div></div>
@@ -211,7 +238,19 @@ const views = {
     const faqCats = [...new Set(faqs.map(f => f.categoria))];
     return `
       <div class="page-head"><p>${esc(a.acceso)}</p></div>
-      <div class="chips-row">${a.ruta.map((r, i) => `<span class="chip">${i + 1}. ${esc(r)}</span>`).join('')}</div>
+      <div class="chips-row ruta">${a.ruta.map((r, i) => {
+        const t = typeof r === 'string' ? { t: r } : r;
+        const href = t.href || (t.curso ? '#curso-' + t.curso : '');
+        return t.proximamente
+          ? `<span class="chip soon" title="${esc(t.proximamente)}">${i + 1}. ${esc(t.t)} <small>próximamente</small></span>`
+          : `<a class="chip" href="${href}">${i + 1}. ${esc(t.t)}</a>`;
+      }).join('')}</div>
+
+      ${a.pilares ? `<div class="grid cols-3 pilares">${a.pilares.map(p => `<div class="card pilar${p.estado === 'proximamente' ? ' soon' : ''}">
+          <h3>${esc(p.titulo)}</h3><p>${esc(p.detalle)}</p>
+          <span class="badge ${p.estado === 'proximamente' ? 'grey' : 'ok'}">${p.estado === 'proximamente' ? 'Próximamente' : 'Disponible'}</span>
+          ${p.cursos ? `<span class="pilar-meta">${esc(p.cursos)}</span>` : ''}
+        </div>`).join('')}</div>` : ''}
 
       <h2 class="section-title">Cursos por módulos</h2>
       ${a.cursos.map(cursoCard).join('')}
@@ -255,6 +294,7 @@ const views = {
         <div class="card"><h3>Materiales</h3><p>${esc(m.materiales)}</p></div>
         <div class="card"><h3>Mejoras nuevas</h3><p>${esc(m.mejoras)}</p></div>
       </div>
+      ${m.incluye ? `<p class="muted" style="margin:12px 0 0;font-size:14px">${esc(m.incluye)}</p>` : ''}
 
       <h2 class="section-title">Prepara tu espacio</h2>
       <div class="help-card"><div class="grow"><h3>Antes de instalar, deja tu espacio listo</h3>
@@ -304,6 +344,29 @@ const views = {
         </div>
       </div>` : ''}
 
+      ${p.porModelo ? (() => {
+        const cli = currentClient();
+        const maq = cli ? state.db.maquinas.find(x => x.cliente_id === cli.id) : null;
+        const modelo = String(maq?.modelo || '').replace(/\D/g, '');
+        const grupos = p.porModelo.grupos || [];
+        const mio = grupos.find(g => g.modelos.includes(modelo));
+        return `
+      <h2 class="section-title">Según tu modelo${maq ? ` · ${esc(maq.modelo)}` : ''}</h2>
+      <div class="grid cols-2">
+        ${grupos.map(g => `<div class="card modelo-card${mio && mio.key === g.key ? ' mio' : ''}">
+          <h3>${esc(g.nombre)} <span class="muted">${g.modelos.join(' · ')}</span>${mio && mio.key === g.key ? '<span class="badge red">Tu máquina</span>' : ''}</h3>
+          <p><strong>Instalación:</strong> ${esc(g.instalacion)}</p>
+          <p><strong>Prioridad:</strong> ${esc(g.foco)}</p>
+          <p class="muted">${esc(g.nota)}</p>
+        </div>`).join('')}
+      </div>
+      <div class="card confirma">
+        <p><strong>Datos que dependen de tu equipo exacto</strong> — te los confirma tu asesor C4V (no los adivines):</p>
+        <ul class="ulist">${(p.porModelo.confirma || []).map(x => `<li>${esc(x)}</li>`).join('')}</ul>
+        <a class="wa-inline" href="${waLink(`Hola, estoy preparando mi espacio${maq ? ` para mi ${maq.modelo}` : ''}. ¿Me confirman amperaje, estabilizador, ducto, compresor y medidas embaladas?`)}" target="_blank" rel="noopener">Pedir los datos de mi modelo por WhatsApp →</a>
+      </div>`;
+      })() : ''}
+
       <h2 class="section-title">🛒 Lista de compras — cómprala COMPLETA antes de que llegue</h2>
       <div class="card compras-destacada">
         <p class="compras-nota">Esto es <strong>súper importante</strong>: tu máquina no se puede instalar si falta algo de esta lista. Cómpralo todo con anticipación y tenlo esperándola — así produces desde el primer día.</p>
@@ -342,7 +405,7 @@ const views = {
         ${p.guias.map(g => `<div class="card guia"><div class="guia-thumb">${diag(g.key)}</div><h3>${esc(g.titulo)}</h3><ul class="ulist">${g.pasos.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>`).join('')}
       </div>
 
-      <div class="card" style="margin-top:20px"><h3>Según tu modelo</h3><p>${esc(p.modelos)}</p></div>`;
+      <p class="muted" style="margin-top:20px;font-size:14px">${esc(p.modelos)}</p>`;
   },
 
   soporte() {
@@ -369,6 +432,17 @@ const views = {
         <div class="wa-txt"><strong>Escríbenos por WhatsApp</strong><span>${esc(sop.whatsapp)} · ${esc(sop.horario)}</span></div>
       </a>
       ${maq ? `<p class="wa-ctx muted">Tu mensaje ya llevará tu Nº de serie (<strong>${esc(maq.serie)}</strong>) para atenderte más rápido.</p>` : ''}
+
+      ${(sop.lives || sop.redes) ? `
+      <div class="card redes">
+        ${sop.lives ? `<p><strong>📺 Lives de soporte en vivo:</strong> ${esc(sop.lives)}</p>` : ''}
+        ${sop.redes ? `<p class="redes-links">
+          ${sop.redes.tiktok ? `<a href="${esc(sop.redes.tiktok_url || '#')}" target="_blank" rel="noopener">TikTok ${esc(sop.redes.tiktok)}</a>` : ''}
+          ${sop.redes.instagram ? `<span>Instagram ${esc(sop.redes.instagram)}</span>` : ''}
+          ${sop.redes.facebook ? `<span>Facebook ${esc(sop.redes.facebook)}</span>` : ''}
+          ${sop.fijo ? `<span>Fijo ${esc(sop.fijo)}</span>` : ''}
+        </p>` : ''}
+      </div>` : ''}
 
       <h2 class="section-title">O mira si es algo común</h2>
       <div id="guiaList">
@@ -610,6 +684,9 @@ function bindVideos() {
 }
 
 // ---------- quizzes interactivos (Academia) ----------
+// Fisher-Yates: el orden de las opciones cambia en cada intento, así la respuesta
+// correcta no queda siempre en la misma posición (varios módulos la tenían fija).
+function barajar(arr) { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 function bindQuizzes() {
   view.querySelectorAll('.quiz-box').forEach(box => {
     const curso = state.db.academia.cursos.find(c => c.id === box.dataset.curso);
@@ -627,7 +704,7 @@ function bindQuizzes() {
       area.innerHTML = `
         <div class="qz-prog">Pregunta ${idx + 1} de ${total}</div>
         <div class="qz-q">${esc(p.q)}</div>
-        <div class="qz-opts">${p.opciones.map((o, i) => `<button type="button" class="qz-opt" data-i="${i}">${esc(o)}</button>`).join('')}</div>
+        <div class="qz-opts">${barajar(p.opciones.map((_, i) => i)).map(i => `<button type="button" class="qz-opt" data-i="${i}">${esc(p.opciones[i])}</button>`).join('')}</div>
         <div class="qz-ex" hidden></div>`;
       area.querySelectorAll('.qz-opt').forEach(b => b.onclick = () => {
         const elegido = Number(b.dataset.i), acierto = elegido === p.ok;
@@ -687,6 +764,7 @@ function render(route) {
     : `<a class="volver" href="#/inicio"><span aria-hidden="true">←</span> Volver al inicio</a>
        <h1 class="pag-title">${esc(TITLES[route])}</h1>`;
   view.innerHTML = volver + views[route]();
+  if (route === 'certificado' || route === 'soporte') { try { localStorage.setItem('c4v_visto_' + route + '_' + state.ctx, '1'); } catch {} }
   bind(route); window.scrollTo(0, 0);
 }
 const currentRoute = () => (location.hash.replace('#/', '') || 'inicio');
