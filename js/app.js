@@ -1450,6 +1450,18 @@ function bloqueModelo(p, maq, waFicha) {
 function tarjetaCorreo() {
   if (modoDemo()) return '';                       // en demostración no se envía nada
   const g = state.guiaPorCorreo;
+  // Si el servidor no puede mandar correo, no se pide uno que no vamos a usar:
+  // se ofrece descargar la guía, que resuelve lo mismo (llevársela a la ferretería).
+  if (g && g.disponible === false) {
+    return `<div class="correo-caja">
+        <div class="correo-ic" aria-hidden="true">📄</div>
+        <div class="grow">
+          <strong>Llévate esta guía contigo</strong>
+          <p>Descárgala o imprímela para tenerla en la ferretería y pasársela a tu electricista.</p>
+          <button type="button" class="btn primary" id="guiaDescargar">Descargar mi guía</button>
+        </div>
+      </div>`;
+  }
   if (g && g.enviada) {
     return `<div class="correo-caja lista">
         <div class="correo-ic" aria-hidden="true">✅</div>
@@ -1504,6 +1516,8 @@ function bindCorreo() {
   }
   const otra = $('#correoOtra');
   if (otra) otra.onclick = () => { state.guiaPorCorreo = null; render('preparacion'); setTimeout(() => $('#correoInput')?.focus(), 80); };
+  const desc = $('#guiaDescargar');
+  if (desc) desc.onclick = () => window.print();
 }
 
 // ---------- pie legal (datos del proveedor + accesos obligatorios) ----------

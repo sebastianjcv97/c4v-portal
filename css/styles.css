@@ -803,3 +803,21 @@ button.big{width:100%;text-align:left;font-family:inherit;cursor:pointer}
 
 /* El subtexto del botón de WhatsApp perdía contraste por la opacidad. */
 .wa-txt span{opacity:1}
+
+/* ---------- La guía impresa: es lo que el cliente se lleva a la ferretería ---------- */
+@media print{
+  .topbar,.foot,.pie-legal,.volver,.ai-panel,.ai-btn,.correo-caja,.prep-imprimir,
+  .cuenta,.demo-band,.skip,.toast,.prep-step-fig,.acceso-diag{display:none!important}
+  body{background:#fff;color:#000}
+  .view{padding:0;max-width:100%}
+  .card,.prep-aviso,.prep-ok{box-shadow:none;border:1px solid #ccc;break-inside:avoid;padding:12px}
+  .card.peligro{border:2px solid #000}
+  .section-h{font-size:16px;margin:16px 0 8px;break-after:avoid}
+  .prep-step{break-inside:avoid;padding:6px 0}
+  .prep-step-num{border:1px solid #000}
+  .prep-como-txt{display:block!important}
+  .prep-como-btn{display:none}
+  .tabla-scroll{overflow:visible}
+  table{font-size:11px}
+  a[href^="http"]::after{content:" (" attr(href) ")";font-size:9px;color:#555}
+}
