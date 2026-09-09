@@ -240,7 +240,7 @@ const views = {
            <button type="button" class="lv-btn">
              <span class="lv-play" aria-hidden="true">▶</span>
              <span class="lv-tit">${esc(l.t)}</span>
-             <span class="lv-dur">${visto(l.v) ? '✓ visto · ' : ''}${fmtDur(l.dur)}</span>
+             <span class="lv-dur">${visto(l.v) ? 'visto, ' : ''}${fmtDur(l.dur)}</span>
            </button>
            <div class="lv-player" hidden></div>
          </li>`;
@@ -264,9 +264,10 @@ const views = {
       const esVideo = c.modulos.some(m => m.lecciones.some(l => typeof l !== 'string'));
       return `<div class="course" id="curso-${esc(c.id)}"><button type="button" class="course-head" aria-expanded="false">
           <div class="course-ico">${i + 1}</div>
-          <div style="flex:1"><h3>${esc(c.titulo)} ${estado} ${esVideo ? '<span class="badge red">🎬 en video</span>' : ''}</h3>
-            <div class="sub">${esc(c.nivel)} · ${c.modulos.length} módulos · ${nLes} lecciones — ${esc(c.descripcion)}</div></div>
-          <span class="chev" aria-hidden="true">＋</span></button>
+          <div style="flex:1"><h3>${esc(c.titulo)} ${estado} ${esVideo ? '<span class="badge red">en video</span>' : ''}</h3>
+            <div class="sub">${esc(c.descripcion)}</div>
+            <div class="sub">${esc(c.nivel)}. ${c.modulos.length} módulos, ${nLes} lecciones.</div></div>
+          <span class="chev" aria-hidden="true">+</span></button>
         <div class="course-body">
           ${c.modulos.map((m, mi) => `<div class="module">
             <h4><span class="num-mod">${mi + 1}</span> ${esc(m.titulo)} ${m.quizzes ? `<span class="badge red" style="margin-left:auto">${m.quizzes} preguntas</span>` : ''}</h4>
@@ -281,7 +282,7 @@ const views = {
 
       ${a.seguridad ? `
       <div class="card peligro">
-        <h2 class="section-h" style="margin-top:0">⚠️ ${esc(a.seguridad.titulo)}</h2>
+        <h2 class="section-h" style="margin-top:0">${esc(a.seguridad.titulo)}</h2>
         <ul class="lista-peligro">
           ${a.seguridad.puntos.map(x => `<li><strong>${esc(x.t)}.</strong> ${esc(x.d)}</li>`).join('')}
         </ul>
@@ -309,7 +310,7 @@ const views = {
         <p style="margin:0 0 12px">${esc(a.parametros.intro)}</p>
         <div class="tabla-scroll">
           <table class="tabla-params"><thead><tr>
-            <th>Material</th><th>Grosor</th><th>✂️ Corte<br><span>Pot / Vel</span></th><th>✏️ Marcado<br><span>Pot / Vel</span></th><th>🖼️ Grabado<br><span>Pot / Vel</span></th><th>Seal</th>
+            <th>Material</th><th>Grosor</th><th>Corte<br><span>Potencia / velocidad</span></th><th>Marcado<br><span>Potencia / velocidad</span></th><th>Grabado<br><span>Potencia / velocidad</span></th><th>Seal</th>
           </tr></thead>
           <tbody>${a.parametros.filas.map(f => `<tr><td><strong>${esc(f.m)}</strong></td><td>${esc(f.g)}</td><td>${esc(f.corte)}</td><td>${esc(f.marcado)}</td><td>${esc(f.grabado)}</td><td>${esc(f.seal)}</td></tr>`).join('')}</tbody></table>
         </div>
@@ -325,12 +326,12 @@ const views = {
           <div class="pdf-ico">PDF</div>
           <h3>${esc(g.titulo)}</h3>
           <p>${esc(g.desc)}</p>
-          <span class="pdf-dl">⬇ Descargar · ${esc(g.tam)}</span>
+          <span class="pdf-dl">Descargar, ${esc(g.tam)}</span>
         </a>`).join('')}
       </div>` : ''}
 
       <h2 class="section-h">Próximamente</h2>
-      <div class="grid cols-3">${a.proximamente.map(p => `<div class="card"><p>🔜 ${esc(p)}</p></div>`).join('')}</div>
+      <ul class="proximo">${a.proximamente.map(p => `<li>${esc(p)}</li>`).join('')}</ul>
 
       <h2 class="section-h">Conoce la línea C4V</h2>
       <p class="muted" style="margin:0 0 12px">${esc(m.intro)}</p>
@@ -351,7 +352,7 @@ const views = {
 
       <h2 class="section-h">Preguntas frecuentes</h2>
       ${faqCats.map(cat => `<h4 style="font-size:14px;margin:16px 0 8px">${esc(cat)}</h4>
-        ${faqs.filter(f => f.categoria === cat).map(f => `<div class="faq-item"><button type="button" class="faq-q" aria-expanded="false"><span>${esc(f.pregunta)}</span><span class="chev" aria-hidden="true">＋</span></button><div class="faq-a">${esc(f.respuesta)}</div></div>`).join('')}`).join('')}`;
+        ${faqs.filter(f => f.categoria === cat).map(f => `<div class="faq-item"><button type="button" class="faq-q" aria-expanded="false"><span>${esc(f.pregunta)}</span><span class="chev" aria-hidden="true">+</span></button><div class="faq-a">${esc(f.respuesta)}</div></div>`).join('')}`).join('')}`;
   },
 
   preparacion() {
@@ -491,11 +492,11 @@ const views = {
       <h2 class="section-h">Antes de escribir, mira si es algo común</h2>
       <p class="muted" style="margin:0 0 14px;font-size:15px">Estos son los problemas que más nos consultan. Muchos se resuelven en un minuto.</p>
       <div id="guiaList">
-        ${d.soporte_guia.map(g => `<div class="faq-item guia"><button type="button" class="faq-q" aria-expanded="false"><span>${esc(g.titulo)}</span><span class="chev" aria-hidden="true">＋</span></button>
+        ${d.soporte_guia.map(g => `<div class="faq-item guia"><button type="button" class="faq-q" aria-expanded="false"><span>${esc(g.titulo)}</span><span class="chev" aria-hidden="true">+</span></button>
           <div class="faq-a"><p style="margin:0 0 6px"><strong>Qué pasa:</strong> ${esc(g.sintoma)}</p>
           <p style="margin:0 0 6px"><strong>Por qué:</strong> ${esc(g.causas)}</p>
           <p style="margin:0 0 12px"><strong>Qué hacer:</strong> ${esc(g.accion)}</p>
-          <a class="wa-inline" href="${waSoporte(`Sigo con este problema: «${g.titulo}».`)}" target="_blank" rel="noopener">${wa()}<span>Sigo igual — escribir por WhatsApp</span></a></div></div>`).join('')}
+          <a class="wa-inline" href="${waSoporte(`Sigo con este problema: «${g.titulo}».`)}" target="_blank" rel="noopener">${wa()}<span>Sigo igual, quiero escribir por WhatsApp</span></a></div></div>`).join('')}
       </div>`;
   },
 
@@ -561,11 +562,11 @@ const views = {
         : enRevision ? '<span class="badge warn">En revisión y calibración</span>'
         : '<span class="badge grey">Estado por confirmar</span>';
       const meta = ok
-        ? (cert.fecha ? `<p class="cert-maq-meta">Certificada el ${esc(cert.fecha)}${cert.tecnico ? ` · por ${esc(nombrePropio(cert.tecnico))}` : ''}</p>` : '')
+        ? (cert.fecha ? `<p class="cert-maq-meta">Certificada el ${esc(cert.fecha)}${cert.tecnico ? ` por ${esc(nombrePropio(cert.tecnico))}` : ''}</p>` : '')
         : enRevision ? '<p class="cert-maq-meta">La estamos probando y calibrando antes de entregártela.</p>'
         : `<p class="cert-maq-meta">Todavía no tenemos el estado de esta máquina. <a href="${waLink(`Hola, quiero saber el estado del Certificado de Calidad de mi máquina${m.modelo ? ' ' + m.modelo : ''}${m.pedido ? ' (pedido ' + m.pedido + ')' : ''}.`)}" target="_blank" rel="noopener">Pregúntanos por WhatsApp</a> y te lo confirmamos.</p>`;
       const publico = cert.url
-        ? `<a class="cert-verif-link" href="${esc(cert.url)}" target="_blank" rel="noopener">Ver certificado público ↗</a>` : '';
+        ? `<a class="cert-verif-link" href="${esc(cert.url)}" target="_blank" rel="noopener">Ver el certificado público</a>` : '';
       // La serie es la llave del certificado. Hoy Odoo no la guarda para la
       // mayoría: en vez de una caja vacía con un botón que no copia nada, se
       // muestra la referencia que SÍ existe (el número de pedido).
@@ -595,7 +596,7 @@ const views = {
     return `
       <div class="cert-hero">
         <div class="cert-seal">${SEAL}</div>
-        <div><h1>${esc(ci.nombre)}</h1>
+        <div><h2 class="cert-hero-t">${esc(ci.nombre)}</h2>
           <p class="cert-lema">«${esc(ci.lema)}»</p>
           <p class="muted" style="max-width:52ch">${esc(ci.frase_ancla)}</p></div>
       </div>
@@ -619,7 +620,7 @@ const views = {
       <div class="card" style="padding:12px"><img src="assets/certificado-calidad-c4v.png" alt="Certificado de Calidad C4V" class="cert-img" onerror="this.parentElement.remove()"/></div>
 
       <h2 class="section-h">Preguntas frecuentes</h2>
-      ${ci.faq.map(f => `<div class="faq-item"><button type="button" class="faq-q" aria-expanded="false"><span>${esc(f.q)}</span><span class="chev" aria-hidden="true">＋</span></button><div class="faq-a">${esc(f.a)}</div></div>`).join('')}`;
+      ${ci.faq.map(f => `<div class="faq-item"><button type="button" class="faq-q" aria-expanded="false"><span>${esc(f.q)}</span><span class="chev" aria-hidden="true">+</span></button><div class="faq-a">${esc(f.a)}</div></div>`).join('')}`;
   }
 };
 
@@ -671,7 +672,7 @@ function bind(route) {
     });
     state.veniaDe = '';
     bindCorreo();
-    const ih = $('#imprimirHoja'); if (ih) ih.onclick = () => window.print();
+    const ih = $('#imprimirHoja'); if (ih) ih.onclick = () => imprimirSoloHoja();
     // "¿Cómo lo hago?" pegado a cada paso: antes la explicación estaba tres
     // bloques más abajo y nadie bajaba a buscarla.
     view.querySelectorAll('.prep-como-btn').forEach(b => b.onclick = () => {
@@ -801,7 +802,7 @@ function bindQuizzes() {
           <div class="qz-emoji">${paso ? '🏅' : '💪'}</div>
           <div class="qz-nota">${puntos} de ${total} correctas</div>
           <p>${paso ? '¡Excelente! Dominas este módulo.' : 'Buen intento — repasa las lecciones y vuelve a probar. Tú puedes.'}</p>
-          <button type="button" class="btn primary sm qz-retry">↺ Intentar de nuevo</button>
+          <button type="button" class="btn primary sm qz-retry">Intentar de nuevo</button>
         </div>`;
       area.querySelector('.qz-retry').onclick = () => { idx = 0; puntos = 0; preguntar(); };
     };
@@ -1410,6 +1411,17 @@ function initAgente() {
 }
 window.ceviAbrir = ceviAbrir;
 
+/* Al imprimir desde la guía queda SOLO la hoja. La marca vive en el <body> para
+   que el resto del sitio (y sobre todo la constancia del Libro de Reclamaciones)
+   siga imprimiéndose entero. */
+function imprimirSoloHoja() {
+  document.body.classList.add('solo-hoja');
+  const limpiar = () => document.body.classList.remove('solo-hoja');
+  window.addEventListener('afterprint', limpiar, { once: true });
+  setTimeout(limpiar, 3000);
+  window.print();
+}
+
 /* ---------- Resumen imprimible ----------
    Una hoja con todo: lo que hay que comprar y lo que hay que hacer, en casillas.
    Es lo que el cliente se lleva a la ferretería y le pasa a su electricista.
@@ -1577,7 +1589,7 @@ function bindCorreo() {
   const otra = $('#correoOtra');
   if (otra) otra.onclick = () => { state.guiaPorCorreo = null; render('preparacion'); setTimeout(() => $('#correoInput')?.focus(), 80); };
   const desc = $('#guiaDescargar');
-  if (desc) desc.onclick = () => { document.getElementById('hojaResumen')?.scrollIntoView({ behavior: 'smooth' }); setTimeout(() => window.print(), 500); };
+  if (desc) desc.onclick = () => { document.getElementById('hojaResumen')?.scrollIntoView({ behavior: 'smooth' }); setTimeout(imprimirSoloHoja, 500); };
 }
 
 // ---------- pie legal (datos del proveedor + accesos obligatorios) ----------

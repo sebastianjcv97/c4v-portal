@@ -10,7 +10,7 @@ window.__SEED__ = {
     wa_link: "https://wa.me/51924662205",
     fijo: "905474440",
     horario: "Soporte en español los 365 días",
-    lives: "TikTok @c4vlaser — L a V 1:00 p.m. y 6:00 p.m. · Sábados 11:30 a.m.",
+    lives: "TikTok @c4vlaser, de lunes a viernes a la 1:00 p.m. y a las 6:00 p.m. Sábados a las 11:30 a.m.",
     redes: { tiktok: "@c4vlaser", instagram: "@c4v_laser", facebook: "C4V Laser PE", tiktok_url: "https://www.tiktok.com/@c4vlaser" }
   },
 
@@ -53,11 +53,11 @@ window.__SEED__ = {
       "Entregada con guía de preparación del espacio"
     ],
     etapas: [
-      { n: 1, titulo: "Origen — Fábrica China", detalle: "Selección, piezas originales y control de calidad en planta." },
+      { n: 1, titulo: "Origen en fábrica", detalle: "Selección, piezas originales y control de calidad en planta." },
       { n: 2, titulo: "Certificación", detalle: "Pruebas, piezas originales y calibración al llegar al país." },
-      { n: 3, titulo: "Transporte & seguridad", detalle: "Sellado, stickers de seguridad y trazabilidad por Nº de serie." },
+      { n: 3, titulo: "Transporte y seguridad", detalle: "Sellado, stickers de seguridad y trazabilidad por Nº de serie." },
       { n: 4, titulo: "Preinstalación", detalle: "Lista de compras, instalación eléctrica, pozo a tierra y ambiente." },
-      { n: 5, titulo: "Entrega & sello", detalle: "Puesta en marcha hasta el primer corte y activación del certificado." }
+      { n: 5, titulo: "Entrega y sello", detalle: "Puesta en marcha hasta el primer corte y activación del certificado." }
     ],
     lema: "Probada antes de ser tuya.",
     frase_ancla: "No te entregamos una caja, te entregamos una máquina lista para producir.",
@@ -119,11 +119,11 @@ window.__SEED__ = {
       ]
     },
     acceso: "Tu academia está aquí, en tu portal: acceso gratuito de por vida, incluido con tu máquina C4V. Todos los cursos, para todos los clientes.",
-    plataforma: "Academia C4V · guiados por CeVi el Toro 🐂 y Lumo el Búho 🦉",
+    plataforma: "Academia C4V, con CeVi el Toro y Lumo el Búho de guías",
     pilares: [
-      { titulo: "C4V Tec — Técnico", detalle: "Operar la máquina y el software.", estado: "disponible", cursos: "4 cursos · 20 videos · 19 quizzes" },
-      { titulo: "Quiero Emprender — Negocio", detalle: "Qué producir y cómo venderlo (el diferenciador).", estado: "proximamente", cursos: "Contenido en preparación" },
-      { titulo: "Irene Coach — Coaching", detalle: "Mentalidad y ventas con Irene Velasco.", estado: "proximamente", cursos: "Contenido en preparación" }
+      { titulo: "C4V Tec, la parte técnica", detalle: "Operar la máquina y el software.", estado: "disponible", cursos: "4 cursos, 20 videos y 19 quizzes" },
+      { titulo: "Quiero Emprender, la parte del negocio", detalle: "Qué producir y cómo venderlo (el diferenciador).", estado: "proximamente", cursos: "Contenido en preparación" },
+      { titulo: "Irene Coach, la parte de mentalidad", detalle: "Mentalidad y ventas con Irene Velasco.", estado: "proximamente", cursos: "Contenido en preparación" }
     ],
     /* Ruta de aprendizaje: cada tramo apunta a lo que EXISTE. Los que aún no tienen
        curso se muestran como "próximamente" — nunca se finge contenido. */

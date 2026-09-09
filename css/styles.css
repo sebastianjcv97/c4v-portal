@@ -82,7 +82,7 @@ button{font-family:var(--sans)}
 .gate-error{margin-top:16px;background:#3a1414;border:1px solid var(--red);color:#ffd7d7;border-radius:var(--r);padding:12px 14px;font-size:14px;line-height:1.5}
 .gate-error a{color:#fff;font-weight:700}
 .gate-demo{margin-top:28px;border-top:1px solid var(--black-3);padding-top:20px;text-align:left}
-.gate-demo h2{font-size:13px;font-weight:700;color:var(--on-black-dim);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px}
+.gate-demo h2{font-size:13px;font-weight:700;color:var(--on-black-dim);margin-bottom:10px;letter-spacing:.5px}
 .gate-demo button{display:block;width:100%;text-align:left;background:var(--black-2);border:1px solid var(--black-3);color:var(--on-black);border-radius:var(--r);padding:12px 14px;margin-bottom:8px;font-size:14px;font-family:var(--sans);cursor:pointer}
 .gate-demo button:hover{border-color:var(--red)}
 .gate-demo button span{display:block;color:var(--on-black-dim);font-size:12px;margin-top:2px}
@@ -94,7 +94,7 @@ button{font-family:var(--sans)}
 .ai-btn:hover{background:var(--red-dark)}
 .ai-btn strong{font-weight:700}
 .ai-ic{width:18px;height:18px;flex-shrink:0}
-.ai-panel{background:var(--alt);border-bottom:1px solid var(--line);padding:20px 32px}
+.ai-panel{background:var(--alt)}
 .ai-panel .ai-inner{max-width:1020px;display:flex;gap:16px;align-items:flex-start}
 .ai-panel h3{font-family:var(--slab);font-size:17px;font-weight:700;margin-bottom:4px}
 .ai-panel p{color:var(--muted);font-size:14px;line-height:1.55;margin-bottom:12px}
@@ -199,7 +199,7 @@ button{font-family:var(--sans)}
 .ulist{margin:8px 0 0;padding-left:18px;color:var(--muted);font-size:14px;line-height:1.8}
 
 /* Ayuda destacada */
-.help-card{display:flex;gap:16px;align-items:center;flex-wrap:wrap;background:var(--alt);border:1px solid var(--line);border-radius:var(--r-lg);padding:24px}
+.help-card{display:flex;gap:16px;align-items:center;flex-wrap:wrap;background:var(--papel);border:1px solid var(--regla);border-radius:var(--r-lg);padding:24px}
 .help-card .ic{width:24px;height:24px;color:var(--red-cta);flex-shrink:0}
 .help-card .grow{flex:1;min-width:220px}
 .help-card h3{margin:0 0 4px;font-family:var(--slab);font-size:18px}
@@ -231,7 +231,7 @@ button{font-family:var(--sans)}
 .row-card h4{margin:0 0 4px;font-size:16px;font-weight:700}
 .row-card .meta{font-size:14px;color:var(--muted);display:flex;gap:12px;flex-wrap:wrap;margin-top:8px;align-items:center}
 .contact-box{background:var(--alt);border:1px solid var(--line);border-radius:var(--r);padding:12px;font-size:14px;min-width:168px}
-.contact-box .lbl{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:700}
+.contact-box .lbl{font-size:12px;letter-spacing:.05em;color:var(--muted);font-weight:700}
 .contact-box strong{display:block;margin-top:2px}
 
 /* ---------- Formularios ---------- */
@@ -292,7 +292,7 @@ button{font-family:var(--sans)}
 .course{background:var(--bg);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--sh);overflow:hidden;margin-bottom:12px}
 .course-head{width:100%;text-align:left;background:none;border:none;display:flex;gap:16px;align-items:center;padding:16px 24px;cursor:pointer;color:var(--ink);font-family:var(--sans)}
 .course-head:hover{background:var(--alt)}
-.course-ico{width:40px;height:40px;border-radius:var(--r);background:var(--black);color:var(--red);font-family:var(--slab);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;flex-shrink:0}
+.course-ico{width:40px;height:40px;border-radius:var(--r);background:var(--black);color:#fff;font-family:var(--slab);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;flex-shrink:0}
 .course-head h3{font-family:var(--slab);font-size:18px;font-weight:700;margin:0}
 .course-head .sub{font-size:14px;color:var(--muted);margin-top:2px}
 .course-body{display:none;padding:4px 24px 16px;border-top:1px solid var(--line)}
@@ -305,7 +305,7 @@ button{font-family:var(--sans)}
 
 /* ---------- Tabla ---------- */
 table{width:100%;border-collapse:collapse;font-size:14px;background:var(--bg);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden}
-th{text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);padding:12px 16px;background:var(--alt);border-bottom:1px solid var(--line)}
+th{text-align:left;font-size:12px;letter-spacing:.05em;color:var(--muted);padding:12px 16px;background:var(--alt);border-bottom:1px solid var(--line)}
 td{padding:12px 16px;border-bottom:1px solid var(--line);color:var(--muted)}
 td strong{color:var(--ink)}
 tr:last-child td{border-bottom:none}
@@ -328,7 +328,7 @@ tr:last-child td{border-bottom:none}
 
 /* ---------- Impresión ---------- */
 @media print{
-  .topbar,.foot,#printPrep,.demo-band,.skip{display:none!important}
+  .topbar,.foot,.demo-band,.skip,.ai-btn{display:none!important}
   body{background:#fff}
   .view{padding:0;max-width:100%}
   .card,.onb-item,table,.guia-thumb{box-shadow:none}
@@ -381,7 +381,7 @@ tr:last-child td{border-bottom:none}
 .qz-logro{font-size:13px;color:var(--muted)}
 .qz-logro.ok{color:var(--ok);font-weight:700}
 .qz-area{background:var(--alt);border:1px solid var(--line);border-radius:var(--r-lg);padding:16px}
-.qz-prog{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:8px}
+.qz-prog{font-size:12px;font-weight:700;letter-spacing:.05em;color:var(--muted);margin-bottom:8px}
 .qz-q{font-family:var(--slab);font-size:17px;font-weight:700;margin-bottom:12px}
 .qz-opts{display:flex;flex-direction:column;gap:8px}
 .qz-opt{text-align:left;background:var(--bg);border:2px solid var(--line);border-radius:var(--r);padding:12px 14px;font-size:15px;font-family:var(--sans);cursor:pointer;min-height:48px;color:var(--ink)}
@@ -479,7 +479,6 @@ tr:last-child td{border-bottom:none}
 /* Panel del agente: botón WhatsApp y responsive */
 .ai-panel .btn-wa{margin-top:2px}
 @media(max-width:880px){
-  .ai-panel{padding:16px}
   .ai-panel .ai-inner{gap:12px}
   .ai-btn span{font-weight:500}
 }
@@ -497,7 +496,7 @@ tr:last-child td{border-bottom:none}
 .cert-maq-top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .cert-maq-top h3{margin:0}
 .cert-serie{background:var(--alt);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px}
-.cert-serie-lbl{display:block;font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:6px}
+.cert-serie-lbl{display:block;font-size:11.5px;font-weight:700;letter-spacing:.05em;color:var(--muted);margin-bottom:6px}
 .cert-serie-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .cert-serie-num{font-family:ui-monospace,'SFMono-Regular',Menlo,Consolas,monospace;font-size:15px;font-weight:700;color:var(--ink);letter-spacing:.02em;word-break:break-all;flex:1;min-width:0}
 .cert-copy{flex-shrink:0}
@@ -536,7 +535,7 @@ tr:last-child td{border-bottom:none}
 /* ---------- Ruta de aprendizaje / pilares (Academia) ---------- */
 a.chip{text-decoration:none;color:var(--ink)}
 .chip.soon{color:var(--muted);background:var(--alt);cursor:default;border-style:dashed}
-.chip.soon small{font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.04em;margin-left:4px}
+.chip.soon small{font-weight:600;font-size:11px;letter-spacing:.04em;margin-left:4px}
 .pilares{margin-bottom:8px}
 .pilar h3{font-family:var(--slab);font-size:16px;margin:0 0 6px}
 .pilar p{margin:0 0 10px;color:var(--muted);font-size:14px}
@@ -573,7 +572,9 @@ a.chip{text-decoration:none;color:var(--ink)}
 /* ---------- Redes y lives (Soporte) ---------- */
 .redes{margin-top:16px}
 .redes p{margin:0 0 6px;font-size:14px}
-.redes-links{display:flex;flex-wrap:wrap;gap:6px 16px;color:var(--muted)}
+.redes-links{display:flex;flex-direction:column;gap:0;color:var(--grafito)}
+.redes-links > *{padding:6px 0;border-bottom:1px solid var(--regla)}
+.redes-links > *:last-child{border-bottom:none}
 .redes-links a{color:var(--red-cta);font-weight:700}
 
 /* ---------- CeVi · panel de chat y voz ---------- */
@@ -724,7 +725,7 @@ button.big{width:100%;text-align:left;font-family:inherit;cursor:pointer}
 
 /* ---------- Paso 0: pedir la ficha del modelo ---------- */
 .card.paso0{border:2px solid var(--ink)}
-.paso0-tag{display:inline-block;background:var(--ink);color:var(--on-black);font-size:var(--t-xs);font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:5px 10px;border-radius:var(--r-sm)}
+.paso0-tag{display:inline-block;background:var(--ink);color:var(--on-black);font-size:var(--t-xs);font-weight:700;letter-spacing:.05em;padding:5px 10px;border-radius:var(--r-sm)}
 .card.paso0 .btn{margin-top:6px}
 
 /* ---------- Checklist: tiempos, opcionales y "¿cómo lo hago?" ---------- */
@@ -803,16 +804,6 @@ button.big{width:100%;text-align:left;font-family:inherit;cursor:pointer}
    el objeto quedaba diminuto dentro de un cuadro gris, y eso era el espacio
    vacío que se veía. */
 .seccion-bajada{margin:0 0 var(--s-4);font-size:var(--t-md);max-width:var(--medida)}
-.compras{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:var(--s-3);margin-bottom:var(--s-6)}
-.compra{display:flex;gap:var(--s-3);align-items:flex-start;background:var(--bg);border:1px solid var(--line);border-radius:var(--r-lg);padding:var(--s-3) var(--s-4);box-shadow:var(--sh)}
-.compra-img{flex-shrink:0;width:96px;display:flex;align-items:center;justify-content:center}
-.compra-img img{width:100%;height:auto;display:block;mix-blend-mode:multiply}
-.compra-txt{flex:1;min-width:0}
-.compra-txt h3{font-family:var(--slab);font-size:var(--t-md);margin:0 0 3px;line-height:var(--lh-snug)}
-.compra-para{margin:0 0 5px;font-size:13px;color:var(--red-cta);font-weight:700;line-height:var(--lh-snug)}
-.compra-spec{margin:0 0 5px;font-size:13px;line-height:1.5;color:var(--ink)}
-.compra-donde{margin:0 0 6px;font-size:12.5px;color:var(--muted)}
-.compra .badge{font-size:11px;padding:3px 7px}
 
 /* El aviso de la ficha: dos frases, no un párrafo */
 .card.ficha-modelo{border:2px solid var(--ink);margin-bottom:var(--s-4);padding:var(--s-4)}
@@ -824,40 +815,6 @@ button.big{width:100%;text-align:left;font-family:inherit;cursor:pointer}
   .compra{padding:var(--s-3)}
   .compra-img{width:88px}
 }
-
-/* ---------- Cuenta regresiva hasta la entrega ---------- */
-.cuenta{display:flex;gap:12px;align-items:flex-start;background:var(--black);color:var(--on-black);border-radius:var(--r-lg);padding:16px 18px;margin-bottom:var(--s-5)}
-.cuenta.urgente{background:var(--red-dark)}
-.cuenta-ic{font-size:22px;line-height:1;flex-shrink:0}
-.cuenta strong{display:block;font-family:var(--slab);font-size:var(--t-lg);line-height:var(--lh-snug);margin-bottom:4px}
-.cuenta span{font-size:var(--t-sm);color:var(--on-black-dim)}
-.cuenta.urgente span{color:#ffd9da}
-.cuenta strong strong{display:inline;font-family:inherit;font-size:inherit;color:var(--amber)}
-
-/* ---------- Lo que puede lastimarte, arriba y en rojo ---------- */
-.card.peligro{border:2px solid var(--red);background:var(--red-50)}
-.lista-peligro{margin:0;padding-left:20px}
-.lista-peligro li{margin-bottom:10px;font-size:var(--t-md);line-height:var(--lh-base)}
-.lista-peligro li:last-child{margin-bottom:0}
-
-/* ---------- Paso 0: pedir la ficha del modelo ---------- */
-.card.paso0{border:2px solid var(--ink)}
-.paso0-tag{display:inline-block;background:var(--ink);color:var(--on-black);font-size:var(--t-xs);font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:5px 10px;border-radius:var(--r-sm)}
-.card.paso0 .btn{margin-top:6px}
-
-/* ---------- Checklist: tiempos, opcionales y "¿cómo lo hago?" ---------- */
-.prep-tiempo{display:block;margin-top:5px;font-size:var(--t-sm);font-weight:600;color:var(--grafito)}
-.prep-opcional{display:block;margin-top:5px;font-size:var(--t-sm);color:var(--muted);font-weight:400}
-.prep-como{padding:0 0 0 44px}
-.prep-como-btn{background:none;border:none;color:var(--grafito);font-family:var(--sans);font-size:var(--t-sm);font-weight:700;cursor:pointer;padding:8px 0;min-height:var(--tap);text-decoration:underline}
-.prep-como-txt{background:var(--alt);border-radius:var(--r);padding:14px 16px;margin:4px 0 10px}
-.prep-como-txt .ulist{margin:0}
-.prep-como-txt li{font-size:var(--t-sm);line-height:var(--lh-base);margin-bottom:8px}
-
-/* ---------- El día que llega ---------- */
-.dia-entrega .acceso-pasos li.destacado{font-weight:700;color:var(--red-dark)}
-@media(max-width:560px){.prep-como{padding-left:0}}
-
 
 /* ---------- Dibujo de cada paso ----------
    Sin marco ni fondo: el dibujo ya es blanco. Más chico que antes: siete pasos
@@ -889,19 +846,22 @@ button.big{width:100%;text-align:left;font-family:inherit;cursor:pointer}
 /* Al imprimir queda SOLO la hoja: es una lista para llevar, no la web en papel. */
 @media print{
   body{background:#fff;color:#000}
-  .topbar,.foot,.pie-legal,.volver,.pag-title,.ai-panel,.ai-btn,.toast,.skip,.demo-band,.no-print,
-  .prep-aviso,.prep-ok,.cuenta,.correo-caja,.section-h,.seccion-bajada,.compras,.card,.help-card,
-  .bar,.prep-steps,.prep-imprimir{display:none!important}
-  .hoja{display:block!important;border:none;padding:0;margin:0}
-  .hoja-cab{display:none}
-  .hoja-marca{display:block!important;border-bottom:2px solid #000;padding-bottom:8px;margin-bottom:16px}
+  .solo-hoja .topbar,.solo-hoja .foot,.solo-hoja .pie-legal,.solo-hoja .volver,.solo-hoja .pag-title,
+  .solo-hoja .ai-panel,.solo-hoja .ai-btn,.solo-hoja .toast,.solo-hoja .skip,.solo-hoja .demo-band,
+  .solo-hoja .no-print,.solo-hoja .prep-aviso,.solo-hoja .prep-ok,.solo-hoja .cuenta,
+  .solo-hoja .correo-caja,.solo-hoja .section-h,.solo-hoja .seccion-bajada,.solo-hoja .card,
+  .solo-hoja .help-card,.solo-hoja .avance,.solo-hoja .lista,.solo-hoja .prep-imprimir{display:none!important}
+  .solo-hoja .hoja{display:block!important;border:none;padding:0;margin:0;box-shadow:none}
+  .solo-hoja .hoja-cab{display:none}
+  .hoja-marca{display:none}
+  .solo-hoja .hoja-marca{display:block!important;border-bottom:2px solid #000;padding-bottom:8px;margin-bottom:16px}
   .hoja-marca strong{display:block;font-family:var(--slab);font-size:20px}
   .hoja-marca span{font-size:12px;color:#444}
   .hoja-cols{display:grid!important;grid-template-columns:1fr 1fr;gap:24px}
   .hoja-col li{break-inside:avoid;padding:6px 0;font-size:11.5px}
   .hoja-box{border-color:#000}
-  .hoja-ficha,.hoja-pie{display:block!important}
-  .view{padding:0;max-width:100%}
+  .solo-hoja .hoja-ficha,.solo-hoja .hoja-pie{display:block!important}
+  .view{padding:0;max-width:100%;box-shadow:none;margin:0}
   @page{margin:14mm}
 }
 
@@ -985,3 +945,47 @@ body{background:var(--mesa)}
 .hoja-ficha ul{list-style:none;margin:0;padding:0}
 .hoja-ficha li{font-size:var(--t-sm);line-height:var(--lh-base);padding:3px 0}
 .hoja-col em.urg{display:block}
+
+/* Las preguntas frecuentes son un indice, no doce tarjetas: fila con regla,
+   igual que la lista de compras y el checklist. */
+.faq-item{background:transparent;border:none;border-bottom:1px solid var(--regla);border-radius:0;margin-bottom:0}
+.faq-item:first-of-type{border-top:2px solid var(--tinta)}
+.faq-q{padding:var(--s-4) 0;font-size:var(--t-md)}
+.faq-q:hover{background:transparent;color:var(--rojo-tinta)}
+.faq-a{padding:0 0 var(--s-4)}
+.chev{color:var(--grafito);font-size:var(--t-lg)}
+
+/* El pie dejo de estar sobre negro cuando la vista paso a ser una hoja blanca:
+   estos colores venian de ahi y quedaban en 1.96:1 sobre papel. */
+.me{color:var(--grafito);font-size:var(--t-xs)}
+.me strong{color:var(--tinta);font-size:var(--t-sm)}
+.ctx-out{border:1px solid var(--regla);color:var(--grafito);font-size:var(--t-xs)}
+.ctx-out:hover{border-color:var(--tinta);color:var(--tinta)}
+
+/* El numero del paso hecho quedaba en 1.28:1: invisible. El tachado y la casilla
+   ya dicen que esta hecho, asi que el numero solo se apaga un tono. */
+.lista-pasos .prep-step.done .prep-step-num{color:var(--grafito)}
+/* Rojo puro sobre negro se queda en 4.42:1; el blanco es el numero, no el color. */
+.step .n{color:#fff}
+
+/* El pie se alinea con la hoja, no con el ancho viejo de 1020px. */
+.foot,.pie-legal-inner{max-width:860px}
+.pie-legal{background:transparent;color:var(--grafito);font-size:var(--t-xs)}
+/* El padding de la hoja tiene que ceder antes de los 620px: en tablet vertical
+   se quedaba en 32px porque esta regla iba despues del media query viejo. */
+@media(max-width:880px){.view{padding:var(--s-5)}}
+@media(max-width:620px){.view{padding:var(--s-4) var(--s-4) var(--s-6)}}
+
+/* Jerarquia de titulos: pagina 24px, seccion 19px, bloque 16px. Antes el titulo
+   de seccion (19px) era mas chico que los h3 que colgaban de el (18px). */
+.card h3,.help-card h3,.course-head h3{font-size:var(--t-md)}
+
+/* Lo que viene: una lista, no tres tarjetas blancas con una frase cada una. */
+.proximo{list-style:none;margin:0 0 var(--s-6);padding:0;border-top:1px solid var(--regla)}
+.proximo li{padding:var(--s-3) 0;border-bottom:1px solid var(--regla);color:var(--grafito);font-size:var(--t-sm)}
+/* La tabla vive dentro de una tarjeta: un marco basta. */
+.tabla-scroll table{border:none;border-radius:0}
+/* Las lecciones en video son un indice del curso, no veinte pildoras grises. */
+.lv-btn{background:transparent;border:none;border-bottom:1px solid var(--regla);border-radius:0}
+.lv-btn:hover{background:transparent;color:var(--rojo-tinta)}
+.cert-hero-t{font-family:var(--slab);font-size:var(--t-xl);line-height:var(--lh-snug);margin:0 0 4px}
