@@ -1460,7 +1460,7 @@ function ceviPintar() {
 /* Parte la respuesta en trozos que se puedan sintetizar rápido. Se corta por
    frases; si una frase es muy larga se parte por comas. Un trozo corto se
    sintetiza en menos de un segundo, así CeVi empieza a hablar casi al instante. */
-function ceviTrozos(texto, max = 150) {
+function ceviTrozos(texto, max = 150, primero = 70) {
   const frases = String(texto).match(/[^.!?…]+[.!?…]*\s*/g) || [String(texto)];
   const salida = [];
   let acc = '';
@@ -1478,18 +1478,41 @@ function ceviTrozos(texto, max = 150) {
     else { if (acc) salida.push(acc); acc = f; }
   }
   if (acc) salida.push(acc);
-  return salida.filter(Boolean);
+  const lista = salida.filter(Boolean);
+  /* El primer trozo se parte más corto todavía: es el único que se espera en
+     silencio, y sintetizar 60 caracteres tarda la mitad que 150. */
+  if (lista.length && lista[0].length > primero * 1.4) {
+    const t = lista[0];
+    let corte = t.lastIndexOf(',', primero);
+    if (corte < primero * 0.4) corte = t.lastIndexOf(' ', primero);
+    if (corte > primero * 0.4) lista.splice(0, 1, t.slice(0, corte + 1).trim(), t.slice(corte + 1).trim());
+  }
+  return lista.filter(Boolean);
 }
 
-async function ceviPedirTts(texto, señal) {
-  const r = await fetch(`${CFG.ceviApi}/tts`, {
-    method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ text: texto }), signal: señal
-  });
-  if (!r.ok) throw new Error('tts ' + r.status);
-  const blob = await r.blob();
-  if (!blob.size) throw new Error('audio vacío');
-  return URL.createObjectURL(blob);
+/* Cachea la síntesis por texto: el saludo y las repreguntas se repiten, y cada
+   ida al servidor cuesta casi un segundo entero. Se guarda la promesa, no el
+   resultado, para que dos pedidos a la vez no disparen dos síntesis. */
+const ttsCache = new Map();
+const TTS_CACHE_MAX = 24;
+
+function ceviPedirTts(texto, señal) {
+  const clave = String(texto).trim();
+  if (ttsCache.has(clave)) return ttsCache.get(clave);
+  const promesa = (async () => {
+    const r = await fetch(`${CFG.ceviApi}/tts`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: clave }), signal: señal
+    });
+    if (!r.ok) throw new Error('tts ' + r.status);
+    const blob = await r.blob();
+    if (!blob.size) throw new Error('audio vacío');
+    return URL.createObjectURL(blob);
+  })();
+  promesa.catch(() => ttsCache.delete(clave));      // un fallo no se cachea
+  ttsCache.set(clave, promesa);
+  if (ttsCache.size > TTS_CACHE_MAX) ttsCache.delete(ttsCache.keys().next().value);
+  return promesa;
 }
 
 // Reproduce un trozo y espera a que termine. Devuelve false si no sonó nada.
@@ -1530,15 +1553,13 @@ async function ceviHablar(texto) {
   ceviEstado('hablando');
   const turno = ++cevi.turnoVoz;                  // si llega otro, este se abandona
   const trozos = ceviTrozos(texto);
-  const urls = [];
   let sonóAlgo = false;
 
   try {
     let siguiente = ceviPedirTts(trozos[0]);
     for (let i = 0; i < trozos.length; i++) {
       const url = await siguiente;
-      if (turno !== cevi.turnoVoz) { URL.revokeObjectURL(url); return; }
-      urls.push(url);
+      if (turno !== cevi.turnoVoz) return;
       // Pide el siguiente ANTES de reproducir este: se solapan y no hay pausa.
       siguiente = trozos[i + 1] ? ceviPedirTts(trozos[i + 1]).catch(() => null) : null;
       const ok = await ceviReproducirTrozo(url);
@@ -1549,7 +1570,7 @@ async function ceviHablar(texto) {
     }
   } catch { /* sin voz, el texto ya está en pantalla */ }
   finally {
-    urls.forEach(u => setTimeout(() => URL.revokeObjectURL(u), 1500));
+    // No se revocan: viven en el caché y se vuelven a usar.
     if (turno === cevi.turnoVoz) {
       cevi.hablando = null;
       if (cevi.estado === 'hablando') ceviEstado('reposo');
@@ -1867,10 +1888,15 @@ function ceviPaginaIniciar() {
   if (primera) {
     cevi.historial.push({
       role: 'assistant',
-      content: `Hola${cli ? ' ' + primerNombre(cli.nombre) : ''}. Soy CeVi.${maq?.modelo ? ` Veo que tienes tu ${maq.modelo}.` : ''} Háblame: pregúntame sobre parámetros, mantenimiento o cualquier problema con tu máquina.`
+      /* Corto y en pregunta. El saludo largo tardaba ocho segundos en decirse y
+         la persona no podía hablar hasta el final; además una pregunta invita a
+         contestar, que es justo lo que hace falta en un asistente de voz. */
+      content: `Hola${cli ? ' ' + primerNombre(cli.nombre) : ''}, soy CeVi. ¿En qué te ayudo con tu ${maq?.modelo || 'máquina'}?`
     });
   }
   ceviPintar();
+  // Se pide la voz del saludo ya, mientras la pantalla termina de pintarse.
+  if (primera) ceviPedirTts(ceviTrozos(cevi.historial[0].content)[0]).catch(() => {});
   if (!HAY_DICTADO) { ceviAviso('Tu navegador no puede escuchar. Escríbeme tu pregunta aquí abajo.'); return; }
   /* El primer toque de la persona fue el enlace que trajo aquí, así que el
      altavoz ya está desbloqueado y puede saludar sola. */
@@ -1999,10 +2025,14 @@ function ceviAbrir() {
   if (primera) {
     cevi.historial.push({
       role: 'assistant',
-      content: `Hola${cli ? ' ' + primerNombre(cli.nombre) : ''}. Soy CeVi.${maq?.modelo ? ` Veo que tienes tu ${maq.modelo}.` : ''} Háblame: pregúntame sobre parámetros, mantenimiento o cualquier problema con tu máquina.`
+      /* Corto y en pregunta. El saludo largo tardaba ocho segundos en decirse y
+         la persona no podía hablar hasta el final; además una pregunta invita a
+         contestar, que es justo lo que hace falta en un asistente de voz. */
+      content: `Hola${cli ? ' ' + primerNombre(cli.nombre) : ''}, soy CeVi. ¿En qué te ayudo con tu ${maq?.modelo || 'máquina'}?`
     });
   }
   ceviPintar();
+  if (primera) ceviPedirTts(ceviTrozos(cevi.historial[0].content)[0]).catch(() => {});
 
   ceviCablear(panel);
   $('#ceviClose').onclick = ceviCerrar;
