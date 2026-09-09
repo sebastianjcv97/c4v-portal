@@ -143,6 +143,9 @@ const ICONS = {
   monitor: '<rect x="3" y="4.5" width="18" height="12" rx="2"/><path d="M9 20.5h6"/><path d="M12 16.5v4"/>',
   alerta: '<path d="M12 4 2.5 20h19z"/><path d="M12 10v5"/><path d="M12 17.5v.5"/>',
   descarga: '<path d="M12 3v11"/><path d="M8 10.5 12 14.5l4-4"/><path d="M4.5 18.5h15"/>',
+  play: '<circle cx="12" cy="12" r="8.5"/><path d="M10.2 8.8 15.5 12l-5.3 3.2z"/>',
+  visto: '<circle cx="12" cy="12" r="8.5"/><path d="M8.4 12.2 11 14.8l4.6-5"/>',
+  prueba: '<path d="M6.5 3.5h11v17h-11z"/><path d="M9.5 9h5"/><path d="M9.5 13h5"/><path d="M9.5 17h3"/>',
   tabla: '<rect x="3.5" y="4.5" width="17" height="15" rx="2"/><path d="M3.5 9.5h17"/><path d="M9.5 9.5v10"/>',
   // Globo de conversación con tres puntos: se habla con una persona.
   soporte: '<path d="M20 12.5a7.5 7.5 0 0 1-11 6.6L4 20.5l1.5-4.5A7.5 7.5 0 1 1 20 12.5z"/><path d="M8.5 12.5h.01M12 12.5h.01M15.5 12.5h.01"/>',
@@ -186,22 +189,47 @@ function cursoIcono(clave) {
 function vistaCurso(a, id) {
   const c = (a.cursos || []).find(x => x.id === id);
   if (!c) return '<p class="bajada">Ese curso ya no está.</p>';
+
   const fmtDur = (sg) => `${Math.floor(sg / 60)}:${String(sg % 60).padStart(2, '0')}`;
   const visto = (v) => { try { return localStorage.getItem('c4v_video_' + state.ctx + '_' + v) === '1'; } catch { return false; } };
+  const mejor = (k) => { try { return JSON.parse(localStorage.getItem('c4v_quiz_' + state.ctx + '_' + k) || 'null'); } catch { return null; } };
+
   const leccion = (l) => typeof l === 'string'
-    ? `<li class="lec-texto">${esc(l)}</li>`
-    : `<li class="lesson-video${visto(l.v) ? ' visto' : ''}" data-video="${esc(l.v)}">
+    ? `<li class="lec">${esc(l)}</li>`
+    : `<li class="lec lec-video${visto(l.v) ? ' visto' : ''}" data-video="${esc(l.v)}">
          <button type="button" class="lv-btn">
+           <span class="lv-ico" aria-hidden="true">${icon(visto(l.v) ? 'visto' : 'play')}</span>
            <span class="lv-tit">${esc(l.t)}</span>
            <span class="lv-dur">${fmtDur(l.dur)}</span>
          </button>
          <div class="lv-player" hidden></div>
        </li>`;
 
-  const modulos = c.modulos.map(m => `<div class="module">
-      <h4>${esc(m.titulo)}</h4>
-      ${m.lecciones.length ? `<ul class="lessons">${m.lecciones.map(leccion).join('')}</ul>` : ''}
-    </div>`).join('');
+  /* La evaluación de cada módulo: un solo botón, con el mejor puntaje al lado si
+     ya la hizo. Antes estaba fuera de la vista del curso y no se podía llegar. */
+  const evaluacion = (m, mi) => {
+    const preguntas = (m.preguntas || []).filter(p => p && p.q && Array.isArray(p.opciones) && p.opciones.length);
+    if (!preguntas.length) return '';
+    const k = c.id + '-' + mi, b = mejor(k);
+    return `<div class="quiz-box" data-key="${k}" data-curso="${c.id}" data-mod="${mi}">
+        <button type="button" class="qz-start">
+          <span class="destino-ico" aria-hidden="true">${icon('prueba')}</span>
+          <span class="destino-txt"><strong>Ponte a prueba</strong>
+            <small>${preguntas.length} preguntas${b ? ` · tu mejor: ${b.b} de ${b.n}` : ''}</small></span>
+          <span class="destino-flecha" aria-hidden="true">›</span>
+        </button>
+        <div class="qz-area" hidden></div>
+      </div>`;
+  };
+
+  const modulos = c.modulos.map((m, mi) => {
+    const lecciones = m.lecciones || [];
+    return `<section class="modulo">
+      <h3 class="modulo-tit"><span class="modulo-n">${mi + 1}</span>${esc(m.titulo)}</h3>
+      ${lecciones.length ? `<ul class="lecciones">${lecciones.map(leccion).join('')}</ul>` : ''}
+      ${evaluacion(m, mi)}
+    </section>`;
+  }).join('');
 
   // Las guías de ESTE curso, al final, donde ya se entiende para qué sirven.
   const guias = (a.guiasPdf || []).filter(g => g.curso === c.id);
@@ -253,7 +281,7 @@ const views = {
 
     return `
       <div class="saludo-fila">
-        <img class="saludo-toro" src="assets/cevi/saluda.png" width="182" height="234" alt="" aria-hidden="true" decoding="async">
+        <img class="saludo-toro" src="assets/cevi/saluda.png" width="124" height="160" loading="lazy" alt="" aria-hidden="true" decoding="async">
         <h1 class="saludo">${cli ? `Hola, ${esc(primerNombre(cli.nombre))}` : 'Hola'}</h1>
       </div>
 
@@ -342,7 +370,7 @@ const views = {
     if (hechos === total) {
       return `
         <div class="paso-fin">
-          <img class="fin-toro" src="assets/cevi/gracias.png" width="230" height="214" alt="" aria-hidden="true" decoding="async">
+          <img class="fin-toro" src="assets/cevi/gracias.png" width="200" height="186" loading="lazy" alt="" aria-hidden="true" decoding="async">
           <h2>Tu espacio está listo</h2>
           <p>Ya puedes recibir tu máquina con confianza.</p>
           <a class="btn primary" href="#/academia">Aprender a usarla</a>
@@ -463,7 +491,7 @@ const views = {
       ${refMaq ? `<p class="wa-ctx muted">Tu mensaje ya lleva los datos de tu máquina (<strong>${esc(refMaq)}</strong>) para atenderte más rápido.</p>` : ''}
 
       <div class="help-card cevi-card">
-        <div class="big-ico" aria-hidden="true"><img class="toro-cara" src="assets/cevi/listo.png" width="236" height="236" alt="" decoding="async"></div>
+        <div class="big-ico" aria-hidden="true"><img class="toro-cara" src="assets/cevi/listo-sm.png" width="96" height="96" alt="" decoding="async"></div>
         <div class="grow"><h3>¿Quieres una respuesta ahora mismo?</h3>
           <p>Háblale a CeVi y te contesta en voz alta sobre potencias, mantenimiento y fallas. Si no puede, te pasa con una persona.</p></div>
         <a class="btn primary sm" href="#/cevi">Habla con CeVi</a>
@@ -674,7 +702,7 @@ function bind(route) {
     cevi.manosLibres = false; cevi.abierto = false;
     ceviCallar(); ceviParaVoz(); orbeParar();
   }
-  if (route === 'academia' && state.sub.startsWith('curso/')) { bindVideos(); bindGuias(); }
+  if (route === 'academia' && state.sub.startsWith('curso/')) { bindVideos(); bindGuias(); bindQuizzes(); }
   if (route === 'preparacion') {
     /* La marca se puede poner y quitar: alguien que se equivocó tiene que poder
        corregirlo sin empezar de cero. Al marcar el último que faltaba, se cierra
@@ -767,7 +795,7 @@ function bindGuias() {
 }
 
 function bindVideos() {
-  view.querySelectorAll('.lesson-video').forEach(li => {
+  view.querySelectorAll('.lec-video').forEach(li => {
     const btn = li.querySelector('.lv-btn'), box = li.querySelector('.lv-player'), archivo = li.dataset.video;
     btn.onclick = () => {
       const abierto = !box.hidden;
@@ -817,6 +845,7 @@ function bindQuizzes() {
       const p = preguntas[idx];
       area.innerHTML = `
         <div class="qz-prog">Pregunta ${idx + 1} de ${total}</div>
+        <div class="qz-barra"><i style="width:${Math.round((idx + 1) / total * 100)}%"></i></div>
         <div class="qz-q">${esc(p.q)}</div>
         <div class="qz-opts">${barajar(p.opciones.map((_, i) => i)).map(i => `<button type="button" class="qz-opt" data-i="${i}">${esc(p.opciones[i])}</button>`).join('')}</div>
         <div class="qz-ex" hidden></div>`;
@@ -830,8 +859,9 @@ function bindQuizzes() {
         });
         const ex = area.querySelector('.qz-ex');
         ex.hidden = false;
-        ex.innerHTML = `${acierto ? '✅ <b>¡Correcto!</b>' : '❌ <b>Casi.</b>'} 🦉 ${esc(p.ex)}
-          <button type="button" class="btn primary sm qz-next">${idx + 1 < total ? 'Siguiente pregunta' : 'Ver mi resultado 🏁'}</button>`;
+        ex.className = 'qz-ex ' + (acierto ? 'bien' : 'mal');
+        ex.innerHTML = `<strong>${acierto ? 'Correcto' : 'No era esa'}</strong><span>${esc(p.ex)}</span>
+          <button type="button" class="btn primary qz-next">${idx + 1 < total ? 'Siguiente pregunta' : 'Ver mi resultado'}</button>`;
         ex.querySelector('.qz-next').onclick = () => { idx++; idx < total ? preguntar() : terminar(); };
         ex.querySelector('.qz-next').focus();
       });
@@ -846,18 +876,23 @@ function bindQuizzes() {
       } catch {}
       area.innerHTML = `
         <div class="qz-fin ${paso ? 'ok' : ''}">
-          <div class="qz-emoji">${paso ? '🏅' : '💪'}</div>
-          <div class="qz-nota">${puntos} de ${total} correctas</div>
-          <p>${paso ? '¡Excelente! Dominas este módulo.' : 'Buen intento — repasa las lecciones y vuelve a probar. Tú puedes.'}</p>
-          <button type="button" class="btn primary sm qz-retry">Intentar de nuevo</button>
+          <div class="qz-nota">${puntos} de ${total}</div>
+          <p>${paso ? 'Dominas este módulo.' : 'Repasa las lecciones de arriba y vuelve a probar.'}</p>
+          <button type="button" class="btn primary qz-retry">Intentar de nuevo</button>
+          <button type="button" class="paso-link qz-cerrar">Cerrar</button>
         </div>`;
+      area.querySelector('.qz-cerrar').onclick = () => { area.hidden = true; render('academia'); location.hash = '#/academia/curso/' + box.dataset.curso; };
       area.querySelector('.qz-retry').onclick = () => { idx = 0; puntos = 0; preguntar(); };
     };
 
     start.onclick = () => {
       const abierto = !area.hidden;
       area.hidden = abierto;
-      if (!abierto) { idx = 0; puntos = 0; preguntar(); }
+      start.setAttribute('aria-expanded', String(!abierto));
+      if (!abierto) {
+        idx = 0; puntos = 0; preguntar();
+        area.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
     };
   });
 }
@@ -1561,7 +1596,7 @@ function orbeParar() {
    en cada sitio (blanco sobre el disco negro, rojo sobre papel). */
 /* El personaje real de C4V, no la silueta de una tinta. Va con medidas fijas
    para que el navegador reserve el hueco y la página no salte al cargarlo. */
-const TORO = '<img class="toro-cara" src="assets/cevi/listo.png" width="236" height="236" alt="" aria-hidden="true" decoding="async">';
+const TORO = '<img class="toro-cara" src="assets/cevi/listo-sm.png" width="96" height="96" alt="" aria-hidden="true" decoding="async">';
 
 const CEVI_ICONOS = {
   mic: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0"/><path d="M12 18v3"/></svg>',
