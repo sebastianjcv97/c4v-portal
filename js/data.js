@@ -429,9 +429,6 @@ window.__SEED__ = {
       { item: "Extintor", img: "extintor.png", para: "Por seguridad",
         spec: "De polvo químico seco tipo ABC. Cuélgalo a la vista, cerca de la máquina.",
         donde: "Tiendas de seguridad industrial" },
-      { item: "Mesa o base firme", img: "mesa.png", para: "Para apoyar la máquina",
-        spec: "Solo si el piso no está parejo o quieres trabajarla a otra altura. Tiene que aguantar el peso de tu modelo.",
-        donde: "Carpinterías o tiendas de muebles", pedirFicha: true },
       { item: "Material para tus primeras pruebas", img: "material.png", para: "Para tus primeros cortes",
         spec: "MDF o acrílico de 3 mm. Nunca PVC.",
         donde: "Madereras y tiendas de acrílico" }

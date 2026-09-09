@@ -941,8 +941,12 @@ window.addEventListener('hashchange', () => render(currentRoute()));
 window.toast = toast;
 
 // ---------- identidad: tu documento es tu llave ----------
-/* persona → DNI / Cédula / CI / RUT / CC · empresa → RUC / NIT / RUT (según país).
-   Normalización: mayúsculas, solo dígitos y K (dígito verificador del RUT chileno). */
+/* persona → DNI / Cédula (CI) / RUN / Cédula (CC) según país.
+   empresa → RUC / NIT / RUT según país.
+   En Chile el documento de la persona es la Cédula de Identidad y su número es
+   el RUN; el RUT es el tributario y es el de la empresa. El número coincide,
+   pero el nombre no, y al cliente hay que pedirle el que dice su documento.
+   Normalización: mayúsculas, solo dígitos y la K del dígito verificador. */
 function normalizarDoc(raw) {
   return String(raw || '').toUpperCase().replace(/[^0-9K]/g, '');
 }
