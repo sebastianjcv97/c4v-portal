@@ -804,22 +804,125 @@ button.big{width:100%;text-align:left;font-family:inherit;cursor:pointer}
 /* El subtexto del botón de WhatsApp perdía contraste por la opacidad. */
 .wa-txt span{opacity:1}
 
-/* ---------- La guía impresa: es lo que el cliente se lleva a la ferretería ---------- */
-@media print{
-  .topbar,.foot,.pie-legal,.volver,.ai-panel,.ai-btn,.correo-caja,.prep-imprimir,
-  .cuenta,.demo-band,.skip,.toast,.prep-step-fig,.acceso-diag{display:none!important}
-  body{background:#fff;color:#000}
-  .view{padding:0;max-width:100%}
-  .card,.prep-aviso,.prep-ok{box-shadow:none;border:1px solid #ccc;break-inside:avoid;padding:12px}
-  .card.peligro{border:2px solid #000}
-  .section-h{font-size:16px;margin:16px 0 8px;break-after:avoid}
-  .prep-step{break-inside:avoid;padding:6px 0}
-  .prep-step-num{border:1px solid #000}
-  .prep-como-txt{display:block!important}
-  .prep-como-btn{display:none}
-  .tabla-scroll{overflow:visible}
-  table{font-size:11px}
-  a[href^="http"]::after{content:" (" attr(href) ")";font-size:9px;color:#555}
+}
+
+/* ---------- Lista de compras ----------
+   Dos columnas en pantalla ancha: la lista tiene 8 cosas y en una sola columna
+   obligaba a hacer scroll de más. El dibujo va grande y sin caja de fondo: antes
+   el objeto quedaba diminuto dentro de un cuadro gris, y eso era el espacio
+   vacío que se veía. */
+.seccion-bajada{margin:0 0 var(--s-4);font-size:var(--t-md);max-width:var(--medida)}
+.compras{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:var(--s-3);margin-bottom:var(--s-6)}
+.compra{display:flex;gap:var(--s-3);align-items:flex-start;background:var(--bg);border:1px solid var(--line);border-radius:var(--r-lg);padding:var(--s-3) var(--s-4);box-shadow:var(--sh)}
+.compra-img{flex-shrink:0;width:96px;display:flex;align-items:center;justify-content:center}
+.compra-img img{width:100%;height:auto;display:block;mix-blend-mode:multiply}
+.compra-txt{flex:1;min-width:0}
+.compra-txt h3{font-family:var(--slab);font-size:var(--t-md);margin:0 0 3px;line-height:var(--lh-snug)}
+.compra-para{margin:0 0 5px;font-size:13px;color:var(--red-cta);font-weight:700;line-height:var(--lh-snug)}
+.compra-spec{margin:0 0 5px;font-size:13px;line-height:1.5;color:var(--ink)}
+.compra-donde{margin:0 0 6px;font-size:12.5px;color:var(--muted)}
+.compra .badge{font-size:11px;padding:3px 7px}
+
+/* El aviso de la ficha: dos frases, no un párrafo */
+.card.ficha-modelo{border:2px solid var(--ink);margin-bottom:var(--s-4);padding:var(--s-4)}
+.ficha-modelo strong{display:block;font-family:var(--slab);font-size:var(--t-md);margin-bottom:4px}
+.ficha-modelo p{margin:0 0 var(--s-3);font-size:var(--t-sm);max-width:var(--medida)}
+
+@media(max-width:560px){
+  .compras{grid-template-columns:1fr}
+  .compra{padding:var(--s-3)}
+  .compra-img{width:78px}
+}
+
+/* ---------- Cuenta regresiva hasta la entrega ---------- */
+.cuenta{display:flex;gap:12px;align-items:flex-start;background:var(--black);color:var(--on-black);border-radius:var(--r-lg);padding:16px 18px;margin-bottom:var(--s-5)}
+.cuenta.urgente{background:var(--red-dark)}
+.cuenta-ic{font-size:22px;line-height:1;flex-shrink:0}
+.cuenta strong{display:block;font-family:var(--slab);font-size:var(--t-lg);line-height:var(--lh-snug);margin-bottom:4px}
+.cuenta span{font-size:var(--t-sm);color:var(--on-black-dim)}
+.cuenta.urgente span{color:#ffd9da}
+.cuenta strong strong{display:inline;font-family:inherit;font-size:inherit;color:var(--amber)}
+
+/* ---------- Lo que puede lastimarte, arriba y en rojo ---------- */
+.card.peligro{border:2px solid var(--red);background:var(--red-50)}
+.lista-peligro{margin:0;padding-left:20px}
+.lista-peligro li{margin-bottom:10px;font-size:var(--t-md);line-height:var(--lh-base)}
+.lista-peligro li:last-child{margin-bottom:0}
+
+/* ---------- Paso 0: pedir la ficha del modelo ---------- */
+.card.paso0{border:2px solid var(--ink)}
+.paso0-tag{display:inline-block;background:var(--ink);color:var(--on-black);font-size:var(--t-xs);font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:5px 10px;border-radius:var(--r-sm)}
+.card.paso0 .btn{margin-top:6px}
+
+/* ---------- Checklist: tiempos, opcionales y "¿cómo lo hago?" ---------- */
+.prep-tiempo{display:block;margin-top:5px;font-size:var(--t-sm);font-weight:700;color:var(--red-cta)}
+.prep-opcional{display:block;margin-top:5px;font-size:var(--t-sm);color:var(--muted);font-weight:400}
+.prep-como{padding:0 0 0 44px}
+.prep-como-btn{background:none;border:none;color:var(--red-cta);font-family:var(--sans);font-size:var(--t-sm);font-weight:700;cursor:pointer;padding:8px 0;min-height:var(--tap);text-decoration:underline}
+.prep-como-txt{background:var(--alt);border-radius:var(--r);padding:14px 16px;margin:4px 0 10px}
+.prep-como-txt .ulist{margin:0}
+.prep-como-txt li{font-size:var(--t-sm);line-height:var(--lh-base);margin-bottom:8px}
+
+/* ---------- El día que llega ---------- */
+.dia-entrega .acceso-pasos li.destacado{font-weight:700;color:var(--red-dark)}
+@media(max-width:560px){.prep-como{padding-left:0}}
+
+/* ============================================================
+   Correcciones de accesibilidad (auditoría WCAG 2.2 AA)
+   Van al final a propósito: pisan por orden a las reglas previas,
+   sin tener que reescribir el archivo entero.
+   ============================================================ */
+
+/* El texto del consentimiento legal estaba en 2.89:1 sobre el fondo negro del
+   acceso: ilegible, y encima es el texto que hay que leer ANTES de aceptar. */
+.gate-consent,
+.gate-consent.opcional em,
+.otp-pasos p,
+.otp-estado,
+.gate-volver,
+.gate-legal a,
+.otp-codigo-manual{color:var(--on-black-dim);opacity:1}
+.gate-consent a{color:#FF6B70}                 /* 5.6:1 sobre negro */
+.gate-foot a,.gate-paso strong{color:#FF6B70}
+.gate-doc-ej{color:var(--on-black-dim);font-size:var(--t-sm);margin:8px 0 0}
+
+/* El botón del acceso se volvía ilegible justo al pulsarlo (3.87:1). */
+.gate-btn[aria-busy="true"]{opacity:1;background:var(--red-dark);cursor:progress}
+
+/* No se quita el indicador de foco: se reemplaza por uno más visible. */
+.cevi-form input:focus-visible,
+.otp-form input:focus-visible,
+.correo-form input:focus-visible,
+.lr-form input:focus-visible,
+.lr-form textarea:focus-visible,
+.lr-form select:focus-visible{outline:3px solid var(--red-cta);outline-offset:2px;border-color:var(--red-cta)}
+
+/* El borde de los campos no se distinguía del fondo (1.23:1). Ahora 4.5:1. */
+.field input,.field textarea,.field select,
+.otp-form input,.correo-form input,.cevi-form input{border-color:#767676}
+#gateDoc,.gate-tipos button,.gate-paises button{border-color:#5a5a5a}
+
+/* Elegido vs no elegido se distinguía solo por color. */
+.gate-paises button[aria-checked="true"],
+.gate-tipos button[aria-checked="true"]{box-shadow:inset 0 0 0 2px rgba(255,255,255,.22)}
+
+/* A 320px o con zoom al 200% los cinco países se desbordaban. */
+.gate-paises{grid-template-columns:repeat(auto-fit,minmax(64px,1fr))}
+@media(max-width:360px){.gate-paises{grid-template-columns:repeat(3,1fr)}}
+.cert-maq-grid{grid-template-columns:repeat(auto-fill,minmax(min(300px,100%),1fr))}
+
+/* El foco no debe quedar debajo de la barra superior fija. */
+.view :is(a,button,input,select,textarea,summary){scroll-margin-top:72px}
+
+/* «Saltar al contenido» apuntaba a #view, que está oculto mientras se accede. */
+.gate:not([hidden]) ~ .skip,body:has(.gate:not([hidden])) .skip{display:none}
+
+/* Texto solo para lectores de pantalla (avisos de "abre en otra pestaña"). */
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+
+/* El subtexto del botón de WhatsApp perdía contraste por la opacidad. */
+.wa-txt span{opacity:1}
+
 }
 
 /* ---------- Lista de compras: lo primero de la guía ----------
@@ -846,8 +949,48 @@ button.big{width:100%;text-align:left;font-family:inherit;cursor:pointer}
 }
 @media print{.compra-img{width:70px;height:70px}.compra{break-inside:avoid}}
 
-/* ---------- Dibujos de cada paso: más grandes, sin marco ni pie ---------- */
-.prep-step-fig{margin:10px 0 4px 44px;max-width:420px}
-.prep-step-fig img{width:100%;height:auto;display:block;border-radius:var(--r);background:var(--alt);mix-blend-mode:multiply}
-@media(max-width:560px){.prep-step-fig{margin-left:0;max-width:100%}}
-@media print{.prep-step-fig{display:block!important;max-width:200px;margin-left:0}}
+/* ---------- Dibujo de cada paso ----------
+   Sin marco ni fondo: el dibujo ya es blanco. Más chico que antes: siete pasos
+   con una imagen de 400px cada uno hacían una página larguísima. */
+.prep-step-fig{margin:8px 0 4px 44px;max-width:300px}
+.prep-step-fig img{width:100%;height:auto;display:block;mix-blend-mode:multiply}
+@media(max-width:560px){.prep-step-fig{margin-left:0;max-width:240px}}
+
+
+/* ---------- Hoja resumen: lo que el cliente se lleva ---------- */
+.hoja{border:2px solid var(--ink);border-radius:var(--r-lg);padding:var(--s-5);margin-top:var(--s-6);background:var(--bg)}
+.hoja-cab{display:flex;gap:var(--s-4);align-items:flex-start;justify-content:space-between;flex-wrap:wrap;margin-bottom:var(--s-4)}
+.hoja-cab h2{font-family:var(--slab);font-size:var(--t-xl);margin:0 0 4px;line-height:var(--lh-snug)}
+.hoja-cab p{margin:0;font-size:var(--t-sm);color:var(--muted)}
+.hoja-marca{display:none}
+.hoja-cols{display:grid;grid-template-columns:1fr 1fr;gap:var(--s-5)}
+.hoja-col h3{font-family:var(--slab);font-size:var(--t-md);text-transform:uppercase;letter-spacing:.06em;margin:0 0 var(--s-3);padding-bottom:6px;border-bottom:2px solid var(--line)}
+.hoja-col ul{list-style:none;margin:0;padding:0}
+.hoja-col li{display:flex;gap:10px;align-items:flex-start;padding:7px 0;font-size:var(--t-sm);line-height:var(--lh-snug);border-bottom:1px solid var(--line)}
+.hoja-col li:last-child{border-bottom:none}
+.hoja-col em{font-style:normal;color:var(--red-cta);font-weight:700}
+.hoja-box{flex-shrink:0;width:16px;height:16px;border:2px solid var(--ink);border-radius:3px;margin-top:2px}
+.hoja-ficha{margin-top:var(--s-4);padding-top:var(--s-4);border-top:2px solid var(--line)}
+.hoja-ficha h3{font-family:var(--slab);font-size:var(--t-md);text-transform:uppercase;letter-spacing:.06em;margin:0 0 6px}
+.hoja-ficha p{margin:0;font-size:var(--t-sm);line-height:var(--lh-base)}
+.hoja-pie{margin:var(--s-4) 0 0;font-size:var(--t-sm);color:var(--muted)}
+@media(max-width:620px){.hoja-cols{grid-template-columns:1fr;gap:var(--s-4)}.hoja{padding:var(--s-4)}}
+
+/* Al imprimir queda SOLO la hoja: es una lista para llevar, no la web en papel. */
+@media print{
+  body{background:#fff;color:#000}
+  .topbar,.foot,.pie-legal,.volver,.pag-title,.ai-panel,.ai-btn,.toast,.skip,.demo-band,.no-print,
+  .prep-aviso,.prep-ok,.cuenta,.correo-caja,.section-h,.seccion-bajada,.compras,.card,.help-card,
+  .bar,.prep-steps,.prep-imprimir{display:none!important}
+  .hoja{display:block!important;border:none;padding:0;margin:0}
+  .hoja-cab{display:none}
+  .hoja-marca{display:block!important;border-bottom:2px solid #000;padding-bottom:8px;margin-bottom:16px}
+  .hoja-marca strong{display:block;font-family:var(--slab);font-size:20px}
+  .hoja-marca span{font-size:12px;color:#444}
+  .hoja-cols{display:grid!important;grid-template-columns:1fr 1fr;gap:24px}
+  .hoja-col li{break-inside:avoid;padding:6px 0;font-size:11.5px}
+  .hoja-box{border-color:#000}
+  .hoja-ficha,.hoja-pie{display:block!important}
+  .view{padding:0;max-width:100%}
+  @page{margin:14mm}
+}

@@ -361,7 +361,7 @@ window.__SEED__ = {
        aparte, el aviso vive DENTRO de la lista, que es donde el cliente lo necesita. */
     fichaModelo: {
       titulo: "Tres de estas compras dependen de tu modelo",
-      intro: "Pídenos la ficha de tu máquina antes de comprar. Te la pasamos el mismo día e incluye la capacidad del estabilizador, el diámetro del extractor, el peso que debe aguantar la mesa, y también el amperaje para tu electricista y las medidas de la caja para medir la puerta."
+      intro: "Pídenos la ficha de tu máquina antes de comprar. Te la pasamos el mismo día."
     },
     /* Solo ACCIONES. Lo que hay que comprar vive en `compras`: antes estaba en
        las dos listas y el cliente leía lo mismo dos veces. */

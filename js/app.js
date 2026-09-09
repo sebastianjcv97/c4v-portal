@@ -398,7 +398,6 @@ const views = {
       <p class="muted seccion-bajada">En este orden: primero lo que depende de otras personas y toma días.</p>
       <div class="card">
         <div class="bar" style="margin:0 0 20px"><i id="prepBar" style="width:${total ? Math.round(hechos / total * 100) : 0}%"></i></div>
-        <div class="prep-imprimir"><button class="btn ghost sm" id="printPrep">🖨 Imprimir esta guía</button></div>
         <ol id="prepList" class="prep-steps">${p.checklist.map((c, i) => {
           const g = c.guia ? guiaDe(c.guia) : null;
           return `<li class="prep-step${done(c.id) ? ' done' : ''}" data-prep="${c.id}">
@@ -429,9 +428,11 @@ const views = {
         <ol class="acceso-pasos">${p.diaEntrega.pasos.map(x => `<li${x.destacado ? ' class="destacado"' : ''}>${esc(x.t)}</li>`).join('')}</ol>
       </div>` : ''}
 
+      ${resumenImprimible(p, cli, maq)}
+
       <div class="help-card" style="margin-top:28px">
         <div class="grow"><h3>Ya está tu espacio, ¿y ahora?</h3>
-          <p>Cuando tengas todo listo, entra a la Academia: ahí están las reglas de seguridad y los cursos para usarla desde el primer día.</p></div>
+          <p>Entra a la Academia: ahí están las reglas de seguridad y los cursos para usarla desde el primer día.</p></div>
         <a class="btn primary sm" href="#/academia">Ir a la Academia</a>
       </div>`;
   },
@@ -654,6 +655,7 @@ function bind(route) {
       }
     });
     bindCorreo();
+    const ih = $('#imprimirHoja'); if (ih) ih.onclick = () => window.print();
     // "¿Cómo lo hago?" pegado a cada paso: antes la explicación estaba tres
     // bloques más abajo y nadie bajaba a buscarla.
     view.querySelectorAll('.prep-como-btn').forEach(b => b.onclick = () => {
@@ -662,7 +664,7 @@ function bind(route) {
       b.setAttribute('aria-expanded', String(!abierto));
       b.textContent = abierto ? '¿Cómo lo hago?' : 'Ocultar';
     });
-    const pb = $('#printPrep'); if (pb) pb.onclick = () => window.print();
+
   }
   if (route === 'certificado') {
     bindAccordions('.faq-item');
@@ -1384,6 +1386,48 @@ function initAgente() {
 }
 window.ceviAbrir = ceviAbrir;
 
+/* ---------- Resumen imprimible ----------
+   Una hoja con todo: lo que hay que comprar y lo que hay que hacer, en casillas.
+   Es lo que el cliente se lleva a la ferretería y le pasa a su electricista.
+   Al imprimir, el resto del portal desaparece y queda solo esto. */
+function resumenImprimible(p, cli, maq) {
+  const casilla = '<span class="hoja-box" aria-hidden="true"></span>';
+  return `
+    <section class="hoja" id="hojaResumen">
+      <div class="hoja-cab">
+        <div>
+          <h2>Todo lo que necesitas, en una hoja</h2>
+          <p>Imprímela o guárdala en el celular. Ve marcando lo que ya tienes.</p>
+        </div>
+        <button type="button" class="btn primary sm no-print" id="imprimirHoja">🖨 Imprimir</button>
+      </div>
+
+      <div class="hoja-marca">
+        <strong>C4V Láser</strong>
+        <span>Preparación de tu espacio${cli ? ` · ${esc(nombrePropio(cli.nombre))}` : ''}${maq?.modelo ? ` · láser ${esc(maq.modelo)}` : ''}</span>
+      </div>
+
+      <div class="hoja-cols">
+        <div class="hoja-col">
+          <h3>Lo que compro</h3>
+          <ul>${p.compras.map(c => `<li>${casilla}<span>${esc(c.item)}${c.pedirFicha ? ' <em>(pide la medida)</em>' : ''}</span></li>`).join('')}</ul>
+        </div>
+        <div class="hoja-col">
+          <h3>Lo que hago</h3>
+          <ul>${p.checklist.map(c => `<li>${casilla}<span>${esc(c.t)}${c.tiempo ? ` <em>${esc(c.tiempo)}</em>` : ''}</span></li>`).join('')}</ul>
+        </div>
+      </div>
+
+      ${p.fichaModelo ? `
+      <div class="hoja-ficha">
+        <h3>Lo que le pido a mi asesor</h3>
+        <p>Capacidad del estabilizador · diámetro del extractor · peso de la máquina · amperaje y grosor del cable · medidas de la caja</p>
+      </div>` : ''}
+
+      <p class="hoja-pie">¿Dudas? WhatsApp ${esc((CFG.contacto || {}).whatsapp_visible || '')} — te responde una persona, todos los días.</p>
+    </section>`;
+}
+
 /* ---------- Cuenta regresiva hasta la entrega ----------
    La fecha ya venía de Odoo y no se mostraba en ningún lado. Sin fecha, "prepara
    tu espacio antes de que llegue" es una idea abstracta; con fecha, es un plazo. */
@@ -1502,7 +1546,7 @@ function bindCorreo() {
   const otra = $('#correoOtra');
   if (otra) otra.onclick = () => { state.guiaPorCorreo = null; render('preparacion'); setTimeout(() => $('#correoInput')?.focus(), 80); };
   const desc = $('#guiaDescargar');
-  if (desc) desc.onclick = () => window.print();
+  if (desc) desc.onclick = () => { document.getElementById('hojaResumen')?.scrollIntoView({ behavior: 'smooth' }); setTimeout(() => window.print(), 500); };
 }
 
 // ---------- pie legal (datos del proveedor + accesos obligatorios) ----------
