@@ -420,18 +420,6 @@ window.__SEED__ = {
       ] }
     ],
 
-    /* Lo que se lleva el cliente el día de la entrega. Sin plazos ni avisos. */
-    diaEntrega: {
-      titulo: "El día que llega tu máquina",
-      intro: "Estaremos contigo hasta tu primer corte.",
-      pasos: [
-        { t: "Revisa que la caja llegue sin golpes antes de firmar." },
-        { t: "Un ingeniero te acompaña por videollamada, o va a tu taller si tu modelo lo incluye." },
-        { t: "Enciende primero el estabilizador, después el enfriador y al final la máquina.", destacado: true },
-        { t: "Hacemos juntos tu primer corte." }
-      ]
-    },
-
     modelos: "Las máquinas compactas (4040, 6040, 6090 y 9060) se instalan de forma remota: un ingeniero te acompaña por videollamada hasta tu primer corte. Las grandes (1390 y 1610) llevan instalación presencial incluida y necesitan más espacio y más capacidad eléctrica."
   },
 

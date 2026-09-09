@@ -727,7 +727,6 @@ function bind(route) {
     });
     state.veniaDe = '';
     bindCorreo();
-    const ih = $('#imprimirHoja'); if (ih) ih.onclick = () => imprimirSoloHoja();
     // "¿Cómo lo hago?" pegado a cada paso: antes la explicación estaba tres
     // bloques más abajo y nadie bajaba a buscarla.
     view.querySelectorAll('.prep-como-btn').forEach(b => b.onclick = () => {
@@ -2466,8 +2465,6 @@ function bindCorreo() {
   }
   const otra = $('#correoOtra');
   if (otra) otra.onclick = () => { state.guiaPorCorreo = null; render('preparacion'); setTimeout(() => $('#correoInput')?.focus(), 80); };
-  const desc = $('#guiaDescargar');
-  if (desc) desc.onclick = () => { document.getElementById('hojaResumen')?.scrollIntoView({ behavior: 'smooth' }); setTimeout(imprimirSoloHoja, 500); };
 }
 
 // ---------- pie legal (datos del proveedor + accesos obligatorios) ----------
