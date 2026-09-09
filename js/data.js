@@ -137,7 +137,7 @@ window.__SEED__ = {
     ],
     cursos: [
       {
-        id: "c0", titulo: "Bienvenida a C4V: Tus Primeros Pasos", icono: "🎉", nivel: "Empieza aquí", estado: "disponible",
+        id: "c0", icono: "bienvenida", titulo: "Bienvenida a C4V: Tus Primeros Pasos", nivel: "Empieza aquí", estado: "disponible",
         descripcion: "Todo lo que necesitas apenas compras tu máquina: tus accesos, tu código, tu certificado y cómo prepararte. (~10 min)",
         modulos: [
           { titulo: "Tu compra y tus accesos", lecciones: ["Qué incluye tu compra C4V", "Cómo entrar a tu plataforma", "Tu código de máquina (Nº de serie): guárdalo bien"], quizzes: 3, preguntas: [
@@ -163,7 +163,7 @@ window.__SEED__ = {
         ]
       },
       {
-        id: "c1", titulo: "Domina tu Láser: Primeros Pasos", icono: "🚀", nivel: "Básico", estado: "disponible",
+        id: "c1", icono: "laser", titulo: "Domina tu Láser: Primeros Pasos", nivel: "Básico", estado: "disponible",
         descripcion: "Desde antes de recibir la máquina hasta tu primer corte real, sin errores graves. (~25-35 min)",
         /* preguntas: { q, opciones, ok (índice correcto), ex (explicación de Lumo 🦉) } */
         modulos: [
@@ -201,7 +201,7 @@ window.__SEED__ = {
         ]
       },
       {
-        id: "c2", titulo: "Seguridad, Limpieza y Mantenimiento", icono: "🧰", nivel: "Intermedio", estado: "disponible",
+        id: "c2", icono: "llave", titulo: "Seguridad, Limpieza y Mantenimiento", nivel: "Intermedio", estado: "disponible",
         descripcion: "Prevén fallas, extiende la vida útil y mantén el rendimiento. Requiere el Curso 1. (~30-40 min)",
         modulos: [
           { titulo: "Tu kit de mantenimiento (5 materiales)", lecciones: ["Agua destilada (Vistony)", "Aceite 3-EN-UNO para rieles", "Alcohol isopropílico", "Hisopos de alta calidad", "Paño de microfibra sin pelusa"], quizzes: 3, preguntas: [
@@ -235,7 +235,7 @@ window.__SEED__ = {
         ]
       },
       {
-        id: "c3", titulo: "Domina C4VTech: Diseño y Corte (software)", icono: "💻", nivel: "Intermedio", estado: "disponible",
+        id: "c3", icono: "monitor", titulo: "Domina C4VTech: Diseño y Corte (software)", nivel: "Intermedio", estado: "disponible",
         descripcion: "Curso completo en video del software propio C4VTech: de la instalación a tu primer proyecto real. (20 videos, ~37 min)",
         /* Lecciones en video: { t: título, v: archivo en videos/c4vtech/, dur: segundos } */
         modulos: [
@@ -339,14 +339,14 @@ window.__SEED__ = {
     },
     /* Guías técnicas oficiales en PDF (portal/public/guias/) */
     guiasPdf: [
-      { archivo: "instalacion-9060-6040.pdf", titulo: "Instalación de tu máquina (9060 / 6040)", desc: "Armado de la base, ruedas y montaje, paso a paso con fotos", tam: "0.5 MB" },
-      { archivo: "parametros.pdf", titulo: "Parámetros por material", desc: "La tabla oficial de potencia y velocidad + tutorial RDWorks", tam: "4.4 MB" },
-      { archivo: "mantenimiento.pdf", titulo: "Mantenimiento completo", desc: "Normas de uso, limpieza de lente y espejos, chiller y rieles", tam: "1.4 MB" },
-      { archivo: "limpieza.pdf", titulo: "Limpieza rápida", desc: "La rutina corta de limpieza de óptica", tam: "0.2 MB" },
-      { archivo: "instalar-rdworks.pdf", titulo: "Instalar RDWorks", desc: "Cómo instalar el software de corte en tu computadora", tam: "0.4 MB" },
-      { archivo: "cable-red.pdf", titulo: "Conexión por cable de red", desc: "Conecta la máquina a tu computadora por red", tam: "0.6 MB" },
-      { archivo: "modulo-rotacion.pdf", titulo: "Módulo de rotación", desc: "Instala y usa el rotativo para vasos y cilindros", tam: "0.4 MB" },
-      { archivo: "mesa-extendida.pdf", titulo: "Mesa extendida", desc: "Uso de la mesa extendida para piezas grandes", tam: "0.8 MB" }
+      { curso: "c1", archivo: "instalacion-9060-6040.pdf", titulo: "Instalación de tu máquina (9060 / 6040)", desc: "Armado de la base, ruedas y montaje, paso a paso con fotos", tam: "0.5 MB" },
+      { curso: "c1", archivo: "parametros.pdf", titulo: "Parámetros por material", desc: "La tabla oficial de potencia y velocidad + tutorial RDWorks", tam: "4.4 MB" },
+      { curso: "c2", archivo: "mantenimiento.pdf", titulo: "Mantenimiento completo", desc: "Normas de uso, limpieza de lente y espejos, chiller y rieles", tam: "1.4 MB" },
+      { curso: "c2", archivo: "limpieza.pdf", titulo: "Limpieza rápida", desc: "La rutina corta de limpieza de óptica", tam: "0.2 MB" },
+      { curso: "c3", archivo: "instalar-rdworks.pdf", titulo: "Instalar RDWorks", desc: "Cómo instalar el software de corte en tu computadora", tam: "0.4 MB" },
+      { curso: "c3", archivo: "cable-red.pdf", titulo: "Conexión por cable de red", desc: "Conecta la máquina a tu computadora por red", tam: "0.6 MB" },
+      { curso: "c3", archivo: "modulo-rotacion.pdf", titulo: "Módulo de rotación", desc: "Instala y usa el rotativo para vasos y cilindros", tam: "0.4 MB" },
+      { curso: "c1", archivo: "mesa-extendida.pdf", titulo: "Mesa extendida", desc: "Uso de la mesa extendida para piezas grandes", tam: "0.8 MB" }
     ]
   },
 

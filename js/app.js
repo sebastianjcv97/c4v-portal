@@ -125,17 +125,6 @@ const actions = {
 // visitado, quiz del curso de bienvenida aprobado (≥70%), soporte visitado.
 // Cuando los 4 están hechos, la ruta desaparece: el inicio queda limpio.
 
-// ---------- SVG mini-previews (plantillas) ----------
-const THUMBS = {
-  llaveros: '<rect x="52" y="34" width="96" height="52" rx="14"/><circle cx="70" cy="52" r="7"/><line x1="92" y1="60" x2="132" y2="60"/>',
-  cajas: '<path d="M60 45 L100 32 L140 45 L100 58 Z"/><path d="M60 45 V85 L100 98 V58"/><path d="M140 45 V85 L100 98"/>',
-  senaletica: '<rect x="58" y="34" width="84" height="44" rx="6"/><line x1="72" y1="50" x2="128" y2="50"/><line x1="72" y1="62" x2="112" y2="62"/><line x1="100" y1="78" x2="100" y2="92"/>',
-  toppers: '<path d="M100 30 l6 14 15 1 -11 10 4 15 -14 -8 -14 8 4 -15 -11 -10 15 -1 z"/><line x1="100" y1="70" x2="100" y2="94"/><rect x="80" y="92" width="40" height="6" rx="3"/>',
-  moda: '<path d="M74 40 l14 -6 6 8 12 0 6 -8 14 6 -8 14 -6 -3 v27 h-28 v-27 l-6 3 z"/>',
-  arquitectura: '<path d="M70 58 L100 40 L130 58"/><rect x="76" y="58" width="48" height="30"/><line x1="94" y1="58" x2="94" y2="88"/><line x1="112" y1="58" x2="112" y2="88"/>',
-  regalos: '<rect x="64" y="46" width="72" height="44" rx="4"/><line x1="100" y1="46" x2="100" y2="90"/><path d="M100 46 c-10 -14 -24 -2 0 0 c10 -14 24 -2 0 0"/>'
-};
-const thumb = (key) => `<svg aria-hidden="true" viewBox="0 0 200 120" fill="none" stroke="#F9020B" stroke-width="3" stroke-linejoin="round" stroke-linecap="round">${THUMBS[key] || '<rect x="60" y="40" width="80" height="40" rx="6"/>'}</svg>`;
 
 // Sello del Certificado de Calidad C4V (de P2/COMUNICACION.md)
 const CANDADO = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" style="width:14px;height:14px"><rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8.5 10.5V7.5a3.5 3.5 0 0 1 7 0v3"/></svg>`;
@@ -146,6 +135,15 @@ const SEAL = `<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" role
    teléfono. Cada uno dibuja la cosa, no una metáfora: un globo de conversación
    para pedir ayuda, un maletín para los encargos, tres figuras para los diseños. */
 const ICONS = {
+  /* Un icono por curso: se reconoce antes de leer el título, que es de lo que
+     se trata cuando alguien abre la Academia sin saber por dónde empezar. */
+  bienvenida: '<path d="M4 5.5h16v13H4z"/><path d="M4 9.5h16"/><path d="M8 5.5v4"/>',
+  laser: '<path d="M12 3v5"/><path d="M8.5 8.5h7l1.5 4h-10z"/><path d="M12 12.5V21"/><path d="M7 21h10"/>',
+  llave: '<path d="M14.5 6.5a3.5 3.5 0 1 0 3.2 4.9l2.8 2.8-2.1 2.1-2.8-2.8a3.5 3.5 0 0 1-4.9-3.2"/><path d="M11.7 10.3 4 18v2h2l7.7-7.7"/>',
+  monitor: '<rect x="3" y="4.5" width="18" height="12" rx="2"/><path d="M9 20.5h6"/><path d="M12 16.5v4"/>',
+  alerta: '<path d="M12 4 2.5 20h19z"/><path d="M12 10v5"/><path d="M12 17.5v.5"/>',
+  descarga: '<path d="M12 3v11"/><path d="M8 10.5 12 14.5l4-4"/><path d="M4.5 18.5h15"/>',
+  tabla: '<rect x="3.5" y="4.5" width="17" height="15" rx="2"/><path d="M3.5 9.5h17"/><path d="M9.5 9.5v10"/>',
   // Globo de conversación con tres puntos: se habla con una persona.
   soporte: '<path d="M20 12.5a7.5 7.5 0 0 1-11 6.6L4 20.5l1.5-4.5A7.5 7.5 0 1 1 20 12.5z"/><path d="M8.5 12.5h.01M12 12.5h.01M15.5 12.5h.01"/>',
   // Maletín: encargos de trabajo.
@@ -177,32 +175,14 @@ const diag = (k) => `<svg class="diag" aria-hidden="true" viewBox="0 0 220 120" 
 
 // ---------- vistas ----------
 /* ---------- Las pantallas de la Academia ----------
-   Una por destino. Cada una empieza con el enlace de vuelta y no lleva nada
-   que no sea de esa pantalla. */
+   La portada son los cursos y nada más. Las guías en PDF y la tabla de
+   parámetros dejaron de ser secciones sueltas: viven dentro del curso al que
+   pertenecen, que es donde alguien las va a buscar. */
 
-function vistaSeguridad(a) {
-  const s = a.seguridad;
-  if (!s) return '';
-  return `    <ul class="reglas">
-      ${s.puntos.map(x => `<li><strong>${esc(x.t)}</strong><span>${esc(x.d)}</span></li>`).join('')}
-    </ul>`;
+function cursoIcono(clave) {
+  return `<span class="destino-ico" aria-hidden="true">${icon(clave || 'academia')}</span>`;
 }
 
-function vistaCursos(a) {
-  const disponibles = (a.cursos || []).filter(c => c.estado === 'disponible');
-  const pronto = (a.cursos || []).filter(c => c.estado !== 'disponible');
-  const nLec = (c) => c.modulos.reduce((t, m) => t + m.lecciones.length, 0);
-  return `
-    <div class="destinos">
-      ${disponibles.map(c => `<a class="destino" href="#/academia/cursos/${esc(c.id)}">
-        <span class="destino-txt"><strong>${esc(c.titulo)}</strong><small>${nLec(c)} lecciones</small></span>
-        <span class="destino-flecha" aria-hidden="true">›</span>
-      </a>`).join('')}
-    </div>
-    ${pronto.length ? `<ul class="proximo">${pronto.map(c => `<li>${esc(c.titulo)}</li>`).join('')}</ul>` : ''}`;
-}
-
-/* Un curso, con sus lecciones a la vista. Nada plegado: lo que hay que ver se ve. */
 function vistaCurso(a, id) {
   const c = (a.cursos || []).find(x => x.id === id);
   if (!c) return '<p class="bajada">Ese curso ya no está.</p>';
@@ -217,40 +197,36 @@ function vistaCurso(a, id) {
          </button>
          <div class="lv-player" hidden></div>
        </li>`;
-  return c.modulos.map(m => `<div class="module">
+
+  const modulos = c.modulos.map(m => `<div class="module">
       <h4>${esc(m.titulo)}</h4>
       ${m.lecciones.length ? `<ul class="lessons">${m.lecciones.map(leccion).join('')}</ul>` : ''}
     </div>`).join('');
-}
 
-function vistaParametros(a) {
+  // Las guías de ESTE curso, al final, donde ya se entiende para qué sirven.
+  const guias = (a.guiasPdf || []).filter(g => g.curso === c.id);
+  const bloqueGuias = guias.length ? `
+    <h2 class="section-h">Para descargar</h2>
+    <div class="destinos">
+      ${guias.map(g => `<button type="button" class="destino" data-guia="${esc(g.archivo)}">
+        <span class="destino-ico" aria-hidden="true">${icon('descarga')}</span>
+        <span class="destino-txt"><strong>${esc(g.titulo)}</strong><small>${esc(g.tam)}</small></span>
+      </button>`).join('')}
+    </div>` : '';
+
+  // La tabla de potencia y velocidad vive en el curso de operación.
   const p = a.parametros;
-  if (!p) return '';
-  return `    <p class="bajada">${esc(p.intro)}</p>
+  const bloqueParams = (c.id === 'c1' && p) ? `
+    <h2 class="section-h">Potencia y velocidad por material</h2>
     <div class="tabla-scroll">
       <table class="tabla-params"><thead><tr>
         <th>Material</th><th>Grosor</th><th>Corte</th><th>Marcado</th><th>Grabado</th>
       </tr></thead>
       <tbody>${p.filas.map(f => `<tr><td><strong>${esc(f.m)}</strong></td><td>${esc(f.g)}</td><td>${esc(f.corte)}</td><td>${esc(f.marcado)}</td><td>${esc(f.grabado)}</td></tr>`).join('')}</tbody></table>
     </div>
-    <p class="bajada">${esc(p.nota)}</p>`;
-}
+    <p class="bajada">${esc(p.nota)}</p>` : '';
 
-function vistaGuias(a) {
-  const g = a.guiasPdf || [];
-  return `    <div class="destinos">
-      ${g.map(x => `<button type="button" class="destino" data-guia="${esc(x.archivo)}">
-        <span class="destino-txt"><strong>${esc(x.titulo)}</strong><small>${esc(x.tam)}</small></span>
-        <span class="destino-flecha" aria-hidden="true">↓</span>
-      </button>`).join('')}
-    </div>`;
-}
-
-function vistaPreguntas(faqs) {
-  return `    ${faqs.map(f => `<div class="faq-item">
-      <button type="button" class="faq-q" aria-expanded="false"><span>${esc(f.pregunta)}</span><span class="chev" aria-hidden="true">+</span></button>
-      <div class="faq-a">${esc(f.respuesta)}</div>
-    </div>`).join('')}`;
+  return modulos + bloqueParams + bloqueGuias;
 }
 
 const views = {
@@ -312,40 +288,42 @@ const views = {
       </div>`;
   },
 
-  /* ---------- La Academia, un menú de destinos ----------
-     Era una sola página con las reglas de seguridad, la ruta, los pilares, los
-     cursos abiertos, la tabla de parámetros, los PDF, la línea de máquinas y
-     treinta preguntas, todo seguido. Nadie lee eso. Ahora la portada son cinco
-     botones grandes y cada uno abre su propia pantalla. */
+  /* ---------- La Academia: los cursos, y ya ----------
+     Tenía cinco destinos: seguridad, cursos, parámetros, guías y preguntas.
+     Los parámetros y las guías eran secciones sueltas que nadie relacionaba con
+     nada, así que se metieron dentro del curso al que pertenecen. Las preguntas
+     se fueron a «Necesito ayuda», que es donde se buscan. Aquí quedan los
+     cursos: cuatro botones con su icono. */
   academia(ruta) {
-    const a = state.db.academia, faqs = state.db.faqs;
+    const a = state.db.academia;
     const [sec, id] = String(ruta || '').split('/');
+    if (sec === 'curso' && id) return vistaCurso(a, id);
 
-    if (sec === 'seguridad') return vistaSeguridad(a);
-    if (sec === 'cursos') return id ? vistaCurso(a, id) : vistaCursos(a);
-    if (sec === 'parametros') return vistaParametros(a);
-    if (sec === 'guias') return vistaGuias(a);
-    if (sec === 'preguntas') return vistaPreguntas(faqs);
-
-    const nCursos = (a.cursos || []).filter(c => c.estado === 'disponible').length;
-    const nVideos = (a.cursos || []).reduce((s, c) =>
-      s + c.modulos.reduce((t, m) => t + m.lecciones.filter(l => typeof l !== 'string').length, 0), 0);
-    const nGuias = (a.guiasPdf || []).length;
-
-    const destino = (href, titulo, detalle, tono = '') => `
-      <a class="destino ${tono}" href="${href}">
-        <span class="destino-txt"><strong>${titulo}</strong><small>${detalle}</small></span>
-        <span class="destino-flecha" aria-hidden="true">›</span>
-      </a>`;
+    const nLec = (c) => c.modulos.reduce((t, m) => t + m.lecciones.length, 0);
+    const nGuias = (c) => (a.guiasPdf || []).filter(g => g.curso === c.id).length;
+    const disponibles = (a.cursos || []).filter(c => c.estado === 'disponible');
+    const pronto = (a.cursos || []).filter(c => c.estado !== 'disponible');
+    const s = a.seguridad;
 
     return `
+      ${s ? `<a class="aviso-reglas" href="#/academia/curso/c2">
+        <span class="destino-ico" aria-hidden="true">${icon('alerta')}</span>
+        <span class="destino-txt"><strong>${esc(s.titulo)}</strong>
+          <small>${s.puntos.map(x => esc(x.t)).join('. ')}.</small></span>
+      </a>` : ''}
+
       <div class="destinos">
-        ${destino('#/academia/seguridad', 'Antes de encender', 'Tres reglas que no puedes saltarte', 'peligro')}
-        ${destino('#/academia/cursos', 'Cursos', `${nCursos} cursos, ${nVideos} videos`)}
-        ${destino('#/academia/parametros', 'Parámetros de corte', 'Potencia y velocidad por material')}
-        ${destino('#/academia/guias', 'Guías en PDF', `${nGuias} guías para descargar`)}
-        ${destino('#/academia/preguntas', 'Preguntas frecuentes', `${faqs.length} respuestas`)}
-      </div>`;
+        ${disponibles.map(c => {
+          const g = nGuias(c);
+          return `<a class="destino" href="#/academia/curso/${esc(c.id)}">
+            ${cursoIcono(c.icono)}
+            <span class="destino-txt"><strong>${esc(c.titulo)}</strong>
+              <small>${nLec(c)} lecciones${g ? ` · ${g} guía${g > 1 ? 's' : ''}` : ''}</small></span>
+            <span class="destino-flecha" aria-hidden="true">›</span>
+          </a>`;
+        }).join('')}
+      </div>
+      ${pronto.length ? `<ul class="proximo">${pronto.map(c => `<li>${esc(c.titulo)}</li>`).join('')}</ul>` : ''}`;
   },
 
   /* ---------- La guía, una pantalla por paso ----------
@@ -464,7 +442,7 @@ const views = {
   },
 
   soporte() {
-    const d = state.db, cli = currentClient(), sop = d.soporte;
+    const d = state.db, cli = currentClient(), sop = d.soporte, faqs = d.faqs || [];
     const maq = cli ? d.maquinas.find(x => x.cliente_id === cli.id) : null;
     const wa = () => `<svg class="wa-ic" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.5 14.4c-.3-.2-1.7-.9-2-1-.3-.1-.5-.1-.6.2-.2.3-.7.9-.9 1.1-.2.2-.3.2-.6.1-.3-.2-1.2-.5-2.3-1.4-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.5.1-.6l.5-.5c.1-.2.2-.3.3-.5v-.5c-.1-.2-.6-1.6-.9-2.2-.2-.5-.4-.4-.6-.5h-.5c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.4s1.1 2.8 1.2 3c.2.2 2.1 3.2 5.1 4.4 1.9.8 2.6.9 3.5.7.6-.1 1.7-.7 1.9-1.4.2-.7.2-1.2.2-1.4-.1-.1-.3-.2-.6-.3z"/><path d="M12 2C6.5 2 2 6.5 2 12c0 1.8.5 3.4 1.3 4.9L2 22l5.3-1.4c1.4.8 3 1.2 4.7 1.2 5.5 0 10-4.5 10-10S17.5 2 12 2zm0 18.2c-1.6 0-3.1-.4-4.4-1.2l-.3-.2-3.1.8.8-3-.2-.3c-.9-1.4-1.3-3-1.3-4.6C3.5 7.3 7.3 3.5 12 3.5S20.5 7.3 20.5 12 16.7 20.2 12 20.2z"/></svg>`;
     // Identifica al cliente y su máquina con lo que EXISTE (hoy Odoo no guarda la serie).
@@ -481,7 +459,7 @@ const views = {
       ${refMaq ? `<p class="wa-ctx muted">Tu mensaje ya lleva los datos de tu máquina (<strong>${esc(refMaq)}</strong>) para atenderte más rápido.</p>` : ''}
 
       <div class="help-card cevi-card">
-        <div class="big-ico" aria-hidden="true"><span class="toro"></span></div>
+        <div class="big-ico" aria-hidden="true"><img class="toro-cara" src="assets/cevi/listo.png" width="236" height="236" alt="" decoding="async"></div>
         <div class="grow"><h3>¿Quieres una respuesta ahora mismo?</h3>
           <p>Háblale a CeVi y te contesta en voz alta sobre potencias, mantenimiento y fallas. Si no puede, te pasa con una persona.</p></div>
         <a class="btn primary sm" href="#/cevi">Habla con CeVi</a>
@@ -508,6 +486,13 @@ const views = {
           <p style="margin:0 0 12px"><strong>Qué hacer:</strong> ${esc(g.accion)}</p>
           <a class="wa-inline" href="${waSoporte(`Sigo con este problema: «${g.titulo}».`)}" target="_blank" rel="noopener">${wa()}<span>Sigo igual, quiero escribir por WhatsApp</span></a></div></div>`).join('')}
       </div>
+
+      ${faqs.length ? `
+      <h2 class="section-h">Preguntas frecuentes</h2>
+      ${faqs.map(f => `<div class="faq-item">
+        <button type="button" class="faq-q" aria-expanded="false"><span>${esc(f.pregunta)}</span><span class="chev" aria-hidden="true">+</span></button>
+        <div class="faq-a">${esc(f.respuesta)}</div>
+      </div>`).join('')}` : ''}
 `;
   },
 
@@ -540,19 +525,24 @@ const views = {
         <a class="btn ghost sm" href="solicita.html" target="_blank" rel="noopener">Abrir página de solicitudes</a></div>`;
   },
 
+  /* Era una página de 3264px con siete tarjetas que decían "Muy pronto" y ni un
+     botón: se entraba desde el inicio y no se podía hacer nada. Ahora es una
+     pantalla honesta, corta, con una sola acción: avisarnos de que lo quieres. */
   plantillas() {
-    const pl = state.db.plantillas;
+    const cli = currentClient();
+    const cats = (state.db.plantillas?.categorias || []).map(c => c.categoria);
+    const wa = waLink(`Hola, soy ${cli ? nombrePropio(cli.nombre) : 'cliente C4V'}. Avísenme cuando esté listo el Banco de Diseños.`);
     return `
-      <div class="page-head"><p>${esc(pl.intro)}</p></div>
-      <div class="chips-row"><span class="badge warn">${esc(pl.estado)}</span></div>
-      <div class="grid cols-3">
-        ${pl.categorias.map(c => `<div class="card tpl">
-          <div class="tpl-thumb">${thumb(c.key)}</div>
-          <h3>${esc(c.categoria)}</h3>
-          <p>${esc(c.descripcion)}</p>
-          <div class="chips-row" style="margin:10px 0 12px">${c.ejemplos.map(e => `<span class="badge grey">${esc(e)}</span>`).join('')}<span class="badge info">${esc(c.formato)}</span></div>
-          <span class="badge warn">Muy pronto</span>
-        </div>`).join('')}
+      <div class="page-head">
+        <p>Diseños listos para cortar, incluidos con tu máquina. Todavía los estamos preparando.</p>
+      </div>
+      ${cats.length ? `
+      <h2 class="section-h">Lo que vas a encontrar</h2>
+      <ul class="proximo">${cats.map(c => `<li>${esc(c)}</li>`).join('')}</ul>` : ''}
+      <div class="help-card" style="margin-top:24px">
+        <div class="grow"><h3>Te avisamos en cuanto estén</h3>
+          <p>Escríbenos y te escribimos el día que los publiquemos.</p></div>
+        <a class="btn primary sm" href="${wa}" target="_blank" rel="noopener">Avísame por WhatsApp</a>
       </div>`;
   },
 
@@ -675,12 +665,7 @@ function bind(route) {
     cevi.manosLibres = false; cevi.abierto = false;
     ceviCallar(); ceviParaVoz(); orbeParar();
   }
-  if (route === 'academia') {
-    // Cada subpágina engancha solo lo suyo; los quizzes salieron de en medio.
-    if (state.sub === 'preguntas') bindAccordions('.faq-item');
-    if (state.sub.startsWith('cursos')) bindVideos();
-    if (state.sub === 'guias') bindGuias();
-  }
+  if (route === 'academia' && state.sub.startsWith('curso/')) { bindVideos(); bindGuias(); }
   if (route === 'preparacion') {
     /* La marca se puede poner y quitar: alguien que se equivocó tiene que poder
        corregirlo sin empezar de cero. Al marcar el último que faltaba, se cierra
@@ -748,9 +733,9 @@ function bind(route) {
 /* Las guías en PDF también son contenido pagado: se piden firmadas en el
    momento, no cuelgan de una URL pública. */
 function bindGuias() {
-  view.querySelectorAll('.pdf-card[data-guia]').forEach(b => {
+  view.querySelectorAll('[data-guia]').forEach(b => {
     b.onclick = async () => {
-      const etiqueta = b.querySelector('.pdf-dl');
+      const etiqueta = b.querySelector('.pdf-dl, .destino-txt small');
       const original = etiqueta.textContent;
       etiqueta.textContent = 'Preparando…';
       /* Con sesión real, la guía sale firmada y caduca desde la API. Mientras el
@@ -878,13 +863,14 @@ function render(route) {
      que se ve al entrar, pero invita en vez de bloquear. */
   document.querySelectorAll('.menu a').forEach(a => a.setAttribute('aria-current', a.dataset.nav === route ? 'page' : 'false'));
   // El título ya lo dice el menú; dentro solo hace falta el nombre de la página.
-  let titulo = SUBTITULOS[route + '/' + state.sub] || TITLES[route];
-  if (route === 'academia' && state.sub.startsWith('cursos/')) {
+  let titulo = TITLES[route];
+  if (route === 'academia' && state.sub.startsWith('curso/')) {
     const c = (state.db.academia.cursos || []).find(x => x.id === state.sub.split('/')[1]);
     if (c) titulo = c.titulo;
   }
+  // Toda subpágina vuelve a la portada de su sección: un solo camino de vuelta.
   const atras = state.sub
-    ? `<a class="volver" href="#/${route}${state.sub.includes('/') ? '/' + state.sub.split('/')[0] : ''}"><span aria-hidden="true">←</span> ${esc(state.sub.includes('/') ? SUBTITULOS[route + '/' + state.sub.split('/')[0]] || TITLES[route] : TITLES[route])}</a>`
+    ? `<a class="volver" href="#/${route}"><span aria-hidden="true">←</span> ${esc(TITLES[route])}</a>`
     : '';
   const cabecera = route === 'inicio' ? '' : atras + `<h1 class="pag-title">${esc(titulo)}</h1>`;
   /* La ruta queda en el DOM: el CSS la necesita para subir el botón de CeVi
@@ -894,13 +880,6 @@ function render(route) {
   if (route === 'certificado' || route === 'soporte') { try { localStorage.setItem('c4v_visto_' + route + '_' + state.ctx, '1'); } catch {} }
   bind(route); window.scrollTo(0, 0);
 }
-const SUBTITULOS = {
-  'academia/seguridad': 'Antes de encender',
-  'academia/cursos': 'Cursos',
-  'academia/parametros': 'Parámetros de corte',
-  'academia/guias': 'Guías en PDF',
-  'academia/preguntas': 'Preguntas frecuentes'
-};
 const currentRoute = () => (location.hash.replace('#/', '') || 'inicio');
 window.addEventListener('hashchange', () => render(currentRoute()));
 window.toast = toast;
@@ -1462,7 +1441,7 @@ function orbeHTML(tam = 'grande') {
     <span class="orbe-halo"></span>
     <span class="orbe-anillo"></span>
     <span class="orbe-anillo dos"></span>
-    <span class="orbe-disco"><span class="toro" aria-hidden="true"></span></span>
+    <span class="orbe-disco"><img class="toro-cara" src="assets/cevi/listo.png" width="236" height="236" alt="" aria-hidden="true" decoding="async"></span>
   </div>`;
 }
 
@@ -1562,7 +1541,9 @@ function orbeParar() {
 
 /* El toro de C4V. Va como máscara CSS para poder pintarlo del color que toque
    en cada sitio (blanco sobre el disco negro, rojo sobre papel). */
-const TORO = '<span class="toro" aria-hidden="true"></span>';
+/* El personaje real de C4V, no la silueta de una tinta. Va con medidas fijas
+   para que el navegador reserve el hueco y la página no salte al cargarlo. */
+const TORO = '<img class="toro-cara" src="assets/cevi/listo.png" width="236" height="236" alt="" aria-hidden="true" decoding="async">';
 
 const CEVI_ICONOS = {
   mic: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0"/><path d="M12 18v3"/></svg>',
