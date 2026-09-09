@@ -70,11 +70,17 @@ const RUTAS_LIBRES = ['inicio', 'preparacion', 'soporte', 'certificado', 'cevi']
 
 // ---------- data layer ----------
 async function loadDB() {
-  // Hosting estático (GitHub Pages / archivo local): el contenido fijo (cursos,
-  // guías, FAQ) sale de data.js. Lo que cambia por cliente se pide al backend.
-  if (location.hostname.endsWith('github.io') || location.protocol === 'file:') { state.offline = true; return JSON.parse(JSON.stringify(window.__SEED__)); }
-  try { const db = await apiGet('/api/bootstrap'); state.offline = false; return db; }
-  catch { state.offline = true; return JSON.parse(JSON.stringify(window.__SEED__)); }
+  /* El contenido fijo (cursos, guías, FAQ) sale de data.js; lo que cambia por
+     cliente lo sirve el backend, y se le pregunta SIEMPRE que haya a dónde.
+     La ruta iba sin `apiBase`, así que en app.c4vlaser.com pedía /api/bootstrap
+     al servicio del front, recibía 404 y se quedaba con los datos de ejemplo:
+     la Bolsa mostraba cuatro trabajos inventados como si fueran reales. */
+  if (location.protocol === 'file:') { state.offline = true; return JSON.parse(JSON.stringify(window.__SEED__)); }
+  try {
+    const db = await apiGet(`${VERIF.apiBase || ''}/api/bootstrap`);
+    state.offline = false;
+    return db;
+  } catch { state.offline = true; return JSON.parse(JSON.stringify(window.__SEED__)); }
 }
 
 /* Con la verificación real activa, los trabajos de la Bolsa y los tickets TIENEN
