@@ -84,6 +84,9 @@ window.C4V_CONFIG = {
   verificacion: {
     endpoint: '/api/cliente',   // ruta del backend de verificación (POST)
     // En local (npm start) el mismo servidor sirve portal y API; en producción, Railway.
+    /* Vacío solo en local, donde el mismo proceso sirve página y API. En
+       app.c4vlaser.com y en GitHub Pages el front es estático y la API vive en
+       su propio servicio. */
     apiBase: /^(localhost|127\.0\.0\.1)$/.test(location.hostname)
       ? '' : 'https://portal-api-general.up.railway.app',
     /* ⚠️ INTERRUPTOR DE SALIDA A PRODUCCIÓN — hoy en false A PROPÓSITO.

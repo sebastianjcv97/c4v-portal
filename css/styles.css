@@ -1210,3 +1210,5 @@ body{background:var(--mesa)}
    quedaba en 4.42:1, justo por debajo del mínimo. */
 .gate-legal .lr-link{color:#fff}
 .gate-foot a,.gate-paso strong{color:#FF8A8F}
+.lv-cargando{margin:0;padding:18px;text-align:center;color:var(--grafito);font-size:var(--t-sm)}
+.pdf-card{text-align:left;width:100%;font-family:var(--sans);cursor:pointer}

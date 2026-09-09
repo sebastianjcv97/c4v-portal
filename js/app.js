@@ -35,6 +35,19 @@ function toast(msg) {
   clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('show'), Math.max(4000, msg.length * 80));
 }
 async function apiGet(url) { const r = await fetch(url); if (!r.ok) throw new Error('http'); return r.json(); }
+
+/* Los videos del curso y las guías en PDF ya no cuelgan de una URL pública:
+   se piden firmados y con caducidad, y solo se entregan con sesión válida.
+   Antes cualquiera con el enlace se los descargaba sin haber comprado nada. */
+async function enlaceMedio(tipo, archivo) {
+  const ses = leerSesion();
+  if (!ses?.t) return null;
+  try {
+    const r = await apiPost('/api/media', { token: ses.t, archivos: [{ tipo, archivo }] });
+    const ruta = r?.urls?.[`${tipo}/${archivo}`];
+    return ruta ? (VERIF.apiBase || '') + ruta : null;
+  } catch { return null; }
+}
 function currentClient() { return state.db.clientes.find(c => c.id === state.ctx) || null; }
 
 /* Preparación del espacio: la puerta de entrada. El resto del portal se
@@ -322,12 +335,12 @@ const views = {
       ${a.guiasPdf ? `
       <h2 class="section-h">Guías técnicas para descargar (PDF)</h2>
       <div class="grid cols-3">
-        ${a.guiasPdf.map(g => `<a class="card pdf-card" href="guias/${esc(g.archivo)}" target="_blank" rel="noopener" download>
+        ${a.guiasPdf.map(g => `<button type="button" class="card pdf-card" data-guia="${esc(g.archivo)}">
           <div class="pdf-ico">PDF</div>
           <h3>${esc(g.titulo)}</h3>
           <p>${esc(g.desc)}</p>
           <span class="pdf-dl">Descargar, ${esc(g.tam)}</span>
-        </a>`).join('')}
+        </button>`).join('')}
       </div>` : ''}
 
       <h2 class="section-h">Próximamente</h2>
@@ -706,7 +719,7 @@ function bind(route) {
     cevi.manosLibres = false; cevi.abierto = false;
     ceviCallar(); ceviParaVoz(); orbeParar();
   }
-  if (route === 'academia') { bindAccordions('.faq-item'); bindAccordions('.course'); bindVideos(); bindQuizzes(); }
+  if (route === 'academia') { bindAccordions('.faq-item'); bindAccordions('.course'); bindVideos(); bindQuizzes(); bindGuias(); }
   if (route === 'preparacion') {
     view.querySelectorAll('#prepList input[type="checkbox"]').forEach(chk => chk.onchange = () => {
       const step = chk.closest('.prep-step'); const id = step.dataset.prep;
@@ -774,6 +787,24 @@ function bind(route) {
 }
 
 // ---------- lecciones en video (Academia) ----------
+/* Las guías en PDF también son contenido pagado: se piden firmadas en el
+   momento, no cuelgan de una URL pública. */
+function bindGuias() {
+  view.querySelectorAll('.pdf-card[data-guia]').forEach(b => {
+    b.onclick = async () => {
+      const etiqueta = b.querySelector('.pdf-dl');
+      const original = etiqueta.textContent;
+      etiqueta.textContent = 'Preparando…';
+      /* Con sesión real, la guía sale firmada y caduca desde la API. Mientras el
+         portal siga en demo no hay sesión que firmar, así que se abre la copia
+         pública. Al activar la verificación real, esto se cierra solo. */
+      const url = await enlaceMedio('guias', b.dataset.guia) || `guias/${b.dataset.guia}`;
+      etiqueta.textContent = original;
+      window.open(url, '_blank', 'noopener');
+    };
+  });
+}
+
 function bindVideos() {
   view.querySelectorAll('.lesson-video').forEach(li => {
     const btn = li.querySelector('.lv-btn'), box = li.querySelector('.lv-player'), archivo = li.dataset.video;
@@ -782,11 +813,15 @@ function bindVideos() {
       // Solo un video abierto a la vez (ahorra datos y evita audios cruzados)
       view.querySelectorAll('.lv-player').forEach(p => { p.hidden = true; p.innerHTML = ''; });
       if (abierto) return;
+      box.hidden = false;
+      /* PENDIENTE: los videos siguen colgando de una ruta pública. Las guías ya
+         salen firmadas desde /api/media; los videos no pueden hacerlo todavía
+         porque sus 65 MB no caben en la subida de `railway up`. En cuanto estén
+         en el volumen, esto pasa a `await enlaceMedio('videos', archivo)`. */
       box.innerHTML = `<video controls autoplay playsinline preload="none" controlsList="nodownload">
           <source src="videos/c4vtech/${archivo}" type="video/mp4">
-          Tu navegador no puede reproducir este video. <a href="videos/c4vtech/${archivo}">Descárgalo aquí</a>.
+          Tu navegador no puede reproducir este video.
         </video>`;
-      box.hidden = false;
       const vid = box.querySelector('video');
       // Marcar como visto al llegar al 80%
       vid.ontimeupdate = () => {
