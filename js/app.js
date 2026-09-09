@@ -66,7 +66,7 @@ function prepEstado() {
    - la guía es corta (7 pasos, no 12),
    - el motivo se explica en la propia pantalla, no con un aviso que se desvanece,
    - y el canal de ayuda queda siempre a la vista. */
-const RUTAS_LIBRES = ['inicio', 'preparacion', 'soporte', 'certificado', 'cevi'];
+/* Ya no hay rutas cerradas: nada se bloquea, todo está a un toque. */
 
 // ---------- data layer ----------
 async function loadDB() {
@@ -124,30 +124,6 @@ const actions = {
 // Cada paso se marca hecho con señales reales: preparación completa, certificado
 // visitado, quiz del curso de bienvenida aprobado (≥70%), soporte visitado.
 // Cuando los 4 están hechos, la ruta desaparece: el inicio queda limpio.
-function rutaInicio(d, cli, prep, certificada) {
-  let pasos = d.onboarding || [];
-  if (!pasos.length || !cli) return '';
-  // Mientras la preparación está pendiente, la tarjeta negra de arriba ya lo dice
-  // todo: repetirlo aquí era el mismo "Paso 1" dos veces con dos diseños.
-  if (!prep.completo) pasos = pasos.filter(x => x.id !== 'espacio');
-  if (!pasos.length) return '';
-  const ls = (k) => { try { return localStorage.getItem(k); } catch { return null; } };
-  const quizC0 = () => { try { return Object.keys(localStorage).some(k => k.startsWith('c4v_quiz_' + state.ctx + '_c0-') && (JSON.parse(localStorage.getItem(k) || '{}').p || 0) >= 70); } catch { return false; } };
-  const hecho = { espacio: prep.completo, cert: !!ls('c4v_visto_certificado_' + state.ctx), curso: quizC0(), soporte: !!ls('c4v_visto_soporte_' + state.ctx) };
-  const n = pasos.filter(p => hecho[p.id]).length;
-  if (n === pasos.length) return '';
-  const bloqueado = (p) => p.id !== 'espacio' && p.id !== 'cert' && p.id !== 'soporte' && !prep.completo;
-  return `
-      <section class="ruta-inicio" aria-label="Tus primeros pasos">
-        <div class="ruta-head"><strong>Tus primeros pasos</strong><span>${n} de ${pasos.length}</span></div>
-        ${!certificada && d.bienvenida?.mensaje ? `<p class="ruta-msg">${esc(d.bienvenida.mensaje)}</p>` : ''}
-        <ol class="ruta-pasos">${pasos.map(p => `<li class="${hecho[p.id] ? 'done' : bloqueado(p) ? 'lock' : ''}">
-          <a href="${bloqueado(p) ? '#/preparacion' : esc(p.href)}">
-            <span class="ruta-num" aria-hidden="true">${hecho[p.id] ? '✓' : bloqueado(p) ? CANDADO : ''}</span>
-            <span class="ruta-txt"><strong>${esc(p.titulo)}</strong><small>${esc(p.detalle)}</small></span>
-          </a></li>`).join('')}</ol>
-      </section>`;
-}
 
 // ---------- SVG mini-previews (plantillas) ----------
 const THUMBS = {
@@ -200,17 +176,15 @@ const views = {
     // 'desconocido' = el dato no está en Odoo. No es lo mismo que "en calibración":
     // afirmarlo sería prometerle al cliente algo que no podemos comprobar.
     const enRevision = ['en_revision', 'en_proceso'].includes(maq?.certificado?.estado);
+    const prep = prepEstado();
 
-    const bigBtn = (href, ic, t, desc, ext) => `<a class="big" href="${href}"${ext ? ' target="_blank" rel="noopener"' : ''}>
+    /* El inicio ya no repite lo que está en el menú de arriba. Solo tres cosas:
+       tu máquina, lo único que toca hacer ahora, y dónde pedir ayuda. Antes eran
+       seis botones grandes, tres de ellos duplicando el menú, y dos "cerrados"
+       que decían cuánto te faltaba en vez de dejarte pasar. */
+    const bigBtn = (href, ic, t, desc) => `<a class="big" href="${href}">
         <div class="big-ico">${icon(ic)}</div>
         <div class="big-txt"><strong>${t}</strong><span>${desc}</span></div>
-        <div class="big-arrow" aria-hidden="true">›</div></a>`;
-
-    const prep = prepEstado();
-    // «Cerrado», no «bloqueado»: dice cuánto falta y lleva a completarlo.
-    const btnCerrado = (ic, t, p) => `<a class="big cerrado" href="#/preparacion">
-        <div class="big-ico">${icon(ic)}</div>
-        <div class="big-txt"><strong>${t}</strong><span>Se abre cuando termines tu guía. Te faltan ${p.total - p.n} de ${p.total}</span></div>
         <div class="big-arrow" aria-hidden="true">›</div></a>`;
 
     return `
@@ -229,30 +203,28 @@ const views = {
         </div>
         <div class="big-arrow" aria-hidden="true">›</div></a>` : ''}
 
-      ${prep.completo ? '' : `
+      ${prep.completo ? `
+      <a class="prep-cta lista" href="#/academia">
+        <div class="prep-cta-top"><strong>Ya tienes todo listo</strong><span>${prep.total} de ${prep.total}</span></div>
+        <p>Ahora aprende a usar tu máquina.</p>
+        <span class="prep-cta-btn">Ir a la Academia</span>
+      </a>` : `
       <a class="prep-cta" href="#/preparacion">
-        <div class="prep-cta-top"><strong>Deja tu espacio listo</strong><span>${prep.n} de ${prep.total}</span></div>
+        <div class="prep-cta-top"><strong>Empieza por aquí</strong><span>${prep.n} de ${prep.total}</span></div>
         <div class="bar"><i style="width:${prep.total ? Math.round(prep.n / prep.total * 100) : 0}%"></i></div>
-        <p>Antes de usar tu máquina, completa la guía: eléctrico, pozo a tierra, extracción y agua destilada. Así tu instalación sale bien a la primera.</p>
-        <span class="prep-cta-btn">Continuar mi preparación</span>
+        <p>Cinco pasos para dejar tu espacio listo.</p>
+        <span class="prep-cta-btn">Ver mis primeros pasos</span>
       </a>`}
 
-      ${rutaInicio(d, cli, prep, certificada)}
-
       <div class="bigs">
-        ${prep.completo ? bigBtn('#/preparacion', 'prep', 'Preparar mi espacio', 'Ya terminaste tu lista ✓') : ''}
-        ${prep.completo
-          ? bigBtn('#/academia', 'academia', 'Aprender a usar mi máquina', 'Videos, prácticas y las dudas más comunes')
-          : btnCerrado('academia', 'Aprender a usar mi máquina', prep)}
-        ${bigBtn('#/soporte', 'soporte', 'Necesito ayuda', 'Escríbenos por WhatsApp')}
         <a class="big" href="#/cevi">
           <div class="big-ico"><span class="toro" aria-hidden="true"></span></div>
-          <div class="big-txt"><strong>Habla con CeVi</strong><span>Háblale y te contesta en voz alta: potencias, limpieza y fallas</span></div>
+          <div class="big-txt"><strong>Habla con CeVi</strong><span>Pregúntale en voz alta</span></div>
           <div class="big-arrow" aria-hidden="true">›</div>
         </a>
-        ${prep.completo
-          ? bigBtn('#/bolsa', 'bolsa', 'Quiero más clientes', 'Trabajos de corte que te pasamos gratis')
-          : btnCerrado('bolsa', 'Quiero más clientes', prep)}
+        ${bigBtn('#/soporte', 'soporte', 'Necesito ayuda', 'Escríbenos por WhatsApp')}
+        ${bigBtn('#/bolsa', 'bolsa', 'Trabajos para ti', 'Encargos de corte que te pasamos gratis')}
+        ${bigBtn('#/plantillas', 'disenos', 'Diseños para cortar', 'Listos para usar, incluidos con tu máquina')}
       </div>`;
   },
 
@@ -383,78 +355,67 @@ const views = {
         ${faqs.filter(f => f.categoria === cat).map(f => `<div class="faq-item"><button type="button" class="faq-q" aria-expanded="false"><span>${esc(f.pregunta)}</span><span class="chev" aria-hidden="true">+</span></button><div class="faq-a">${esc(f.respuesta)}</div></div>`).join('')}`).join('')}`;
   },
 
+  /* ---------- La guía, una pantalla por paso ----------
+     Antes era una sola página larga con todo a la vez y un «¿Cómo lo hago?» que
+     había que pulsar en cada paso. Ahora se ve UN paso, con lo que hay que hacer
+     escrito delante, y un solo botón para avanzar. */
   preparacion() {
-    const p = state.db.preparacion;
-    const cli = currentClient();
-    const maq = cli ? state.db.maquinas.find(x => x.cliente_id === cli.id && x.modelo) : null;
+    const d = state.db, p = d.preparacion, cli = currentClient();
     const done = (id) => { try { return localStorage.getItem('c4v_prep_' + state.ctx + '_' + id) === '1'; } catch { return false; } };
-    const hechos = p.checklist.filter(c => done(c.id)).length, total = p.checklist.length;
-    const completo = total > 0 && hechos === total;
-    const guiaDe = (k) => (p.guias || []).find(g => g.key === k);
+    const total = p.checklist.length;
+    const hechos = p.checklist.filter(c => done(c.id)).length;
 
-    // Mensaje ya escrito para pedir la ficha del modelo: es lo que destraba tres
-    // de las ocho compras, el trabajo del electricista y la medida de la puerta.
-    const waFicha = waLink(`Hola, soy ${cli ? nombrePropio(cli.nombre) : 'cliente C4V'}${maq ? ` y compré una ${maq.modelo}` : ''}${maq?.pedido ? ` (pedido ${maq.pedido})` : ''}. Estoy preparando mi espacio y necesito la ficha de mi máquina: capacidad del estabilizador, diámetro del extractor, peso, amperaje y medidas de la caja.`);
+    if (hechos === total) {
+      return `
+        <div class="paso-fin">
+          <h2>Tu espacio está listo</h2>
+          <p>Ya puedes recibir tu máquina con confianza.</p>
+          <a class="btn primary" href="#/academia">Aprender a usarla</a>
+          <button type="button" class="paso-link" data-ir="0">Volver a ver la guía</button>
+        </div>`;
+    }
 
-    return `
-      ${!completo && state.veniaDe ? `<div class="card desvio">
-          <strong>Antes de ver «${esc(state.veniaDe)}», deja tu espacio listo</strong>
-          <p>Son ${total} pasos. Al terminarlos se abre todo tu portal, y tu máquina llega a un lugar seguro.</p>
-        </div>` : ''}
-      ${completo
-        ? `<div class="prep-ok"><strong>Tu espacio está listo</strong>
-             <p>Completaste toda la guía. Ya puedes recibir tu máquina con confianza.</p>
-             <a class="btn primary sm" href="#/academia">Aprender a usarla</a></div>`
-        : ''}
+    // Se abre por el primer paso sin marcar, salvo que el cliente navegue a otro.
+    if (state.paso == null || state.paso < 0 || state.paso >= total) {
+      const i = p.checklist.findIndex(c => !done(c.id));
+      state.paso = i === -1 ? 0 : i;
+    }
+    const n = state.paso, c = p.checklist[n], hecho = done(c.id);
 
-
-      <h2 class="section-h">Tu lista de compras</h2>
-      <p class="muted seccion-bajada">Cinco cosas que vas a usar desde el primer día.</p>
-
-
-      <div class="lista">
-        ${p.compras.map((c, i) => `
+    const compras = c.lista ? `
+      <div class="lista paso-compras">
+        ${p.compras.map((x, k) => `
           <article class="lista-fila">
-            <div class="lista-num" aria-hidden="true">${i + 1}</div>
+            <div class="lista-num" aria-hidden="true">${k + 1}</div>
             <div class="lista-dibujo">
-              ${c.img ? `<img src="assets/compras/${esc(c.img)}" alt="Dibujo de ${esc(c.item)}" loading="lazy" onerror="this.remove()">` : ''}
+              ${x.img ? `<img src="assets/compras/${esc(x.img)}" alt="Dibujo de ${esc(x.item)}" loading="lazy" onerror="this.remove()">` : ''}
             </div>
             <div class="lista-txt">
-              <h3>${esc(c.item)}</h3>
-              <p class="para">${esc(c.para)}</p>
-              <p class="spec">${esc(c.spec)}</p>
-              <p class="donde">Se consigue en ${esc((c.donde || '').toLowerCase() || 'ferreterías')}</p>
+              <h3>${esc(x.item)}</h3>
+              <p class="spec">${esc(x.spec)}</p>
+              <p class="donde">Se consigue en ${esc((x.donde || '').toLowerCase() || 'ferreterías')}</p>
             </div>
           </article>`).join('')}
-      </div>
+      </div>` : '';
 
-      <h2 class="section-h">Tus cinco pasos <span class="contador" id="prepCount">${hechos} de ${total}</span></h2>
-      <div class="avance"><div class="bar"><i id="prepBar" style="width:${total ? Math.round(hechos / total * 100) : 0}%"></i></div></div>
-      <div class="lista lista-pasos">
-        <ol id="prepList" class="prep-steps">${p.checklist.map((c, i) => {
-          const g = c.guia ? guiaDe(c.guia) : null;
-          return `<li class="prep-step${done(c.id) ? ' done' : ''}" data-prep="${c.id}">
-            <span class="prep-step-num" aria-hidden="true">${i + 1}</span>
-            <label class="prep-step-main">
-              <input type="checkbox" ${done(c.id) ? 'checked' : ''} aria-label="${esc(c.t)}">
-              <span class="prep-step-txt">${esc(c.t)}
-              </span>
-              <span class="prep-step-check" aria-hidden="true">✓</span>
-            </label>
-            ${g ? `<div class="prep-como">
-              <button type="button" class="prep-como-btn" aria-expanded="false">¿Cómo lo hago?</button>
-              <div class="prep-como-txt" hidden><ul class="ulist">${g.pasos.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>
-            </div>` : ''}
-            ${c.img ? `<figure class="prep-step-fig"><img src="assets/prep/${esc(c.img)}" alt="Dibujo: ${esc(c.t)}" loading="lazy" onerror="this.closest('.prep-step-fig').remove()"></figure>` : ''}
-          </li>`;
-        }).join('')}</ol>
-      </div>
+    return `
+      <section class="paso">
+        <p class="paso-cuenta">Paso ${n + 1} de ${total}</p>
+        <div class="paso-barra"><i style="width:${Math.round((n + 1) / total * 100)}%"></i></div>
 
-      <div class="help-card" style="margin-top:28px">
-        <div class="grow"><h3>¿Ya terminaste?</h3>
-          <p>Entra a la Academia y aprende a usar tu máquina.</p></div>
-        <a class="btn primary sm" href="#/academia">Ir a la Academia</a>
-      </div>`;
+        <h2 class="paso-titulo">${esc(c.t)}</h2>
+
+        ${c.img ? `<figure class="paso-dibujo"><img src="assets/prep/${esc(c.img)}" alt="Dibujo: ${esc(c.t)}" onerror="this.closest('.paso-dibujo').remove()"></figure>` : ''}
+
+        <ul class="paso-detalle">${(c.detalle || []).map(x => `<li>${esc(x)}</li>`).join('')}</ul>
+
+        ${compras}
+
+        <div class="paso-pie">
+          <button type="button" class="btn primary paso-listo" data-paso="${esc(c.id)}">${hecho ? 'Siguiente' : 'Ya lo hice'}</button>
+          ${n > 0 ? `<button type="button" class="paso-link" data-ir="${n - 1}">Atrás</button>` : ''}
+        </div>
+      </section>`;
   },
 
   /* Página propia de CeVi. Es el mismo asistente que el botón flotante, con los
@@ -712,30 +673,22 @@ function bind(route) {
   }
   if (route === 'academia') { bindAccordions('.faq-item'); bindAccordions('.course'); bindVideos(); bindQuizzes(); bindGuias(); }
   if (route === 'preparacion') {
-    view.querySelectorAll('#prepList input[type="checkbox"]').forEach(chk => chk.onchange = () => {
-      const step = chk.closest('.prep-step'); const id = step.dataset.prep;
-      try { chk.checked ? localStorage.setItem('c4v_prep_' + state.ctx + '_' + id, '1') : localStorage.removeItem('c4v_prep_' + state.ctx + '_' + id); } catch {}
-      step.classList.toggle('done', chk.checked);
-      const ins = view.querySelectorAll('#prepList input[type="checkbox"]'), n = [...ins].filter(i => i.checked).length;
-      $('#prepCount').textContent = n + ' de ' + ins.length;
-      $('#prepBar').style.width = Math.round(n / ins.length * 100) + '%';
-      // 🎉 Al completar todo, se desbloquea el portal
-      if (n === ins.length && ins.length) {
-        toast('🎉 ¡Espacio listo! Se desbloqueó tu Academia');
-        render('preparacion'); window.scrollTo(0, 0);
-      }
+    /* Un solo botón por pantalla: marca el paso y pasa al siguiente. Antes había
+       una casilla, un «¿Cómo lo hago?» y una barra que había que interpretar. */
+    view.querySelectorAll('.paso-listo').forEach(b => b.onclick = () => {
+      const id = b.dataset.paso;
+      try { localStorage.setItem('c4v_prep_' + state.ctx + '_' + id, '1'); } catch {}
+      const total = state.db.preparacion.checklist.length;
+      state.paso = Math.min(state.paso + 1, total);
+      const hechos = state.db.preparacion.checklist
+        .filter(c => { try { return localStorage.getItem('c4v_prep_' + state.ctx + '_' + c.id) === '1'; } catch { return false; } }).length;
+      if (hechos === total) state.paso = null;
+      render('preparacion'); window.scrollTo(0, 0);
     });
-    state.veniaDe = '';
-    bindCorreo();
-    // "¿Cómo lo hago?" pegado a cada paso: antes la explicación estaba tres
-    // bloques más abajo y nadie bajaba a buscarla.
-    view.querySelectorAll('.prep-como-btn').forEach(b => b.onclick = () => {
-      const caja = b.nextElementSibling, abierto = !caja.hidden;
-      caja.hidden = abierto;
-      b.setAttribute('aria-expanded', String(!abierto));
-      b.textContent = abierto ? '¿Cómo lo hago?' : 'Ocultar';
+    view.querySelectorAll('[data-ir]').forEach(b => b.onclick = () => {
+      state.paso = Number(b.dataset.ir);
+      render('preparacion'); window.scrollTo(0, 0);
     });
-
   }
   if (route === 'certificado') {
     bindAccordions('.faq-item');
@@ -892,22 +845,21 @@ function bindQuizzes() {
 }
 
 // ---------- router ----------
-const TITLES = { inicio: 'Inicio', cevi: 'Habla con CeVi', academia: 'Aprender a usar mi máquina', preparacion: 'Preparar mi espacio', soporte: 'Necesito ayuda', bolsa: 'Quiero más clientes', plantillas: 'Diseños listos para cortar', certificado: 'Tu Certificado de Calidad' };
+/* Títulos cortos: los largos ("Aprender a usar mi máquina") no cabían en el
+   menú ni en la cabecera del móvil. */
+const TITLES = { inicio: 'Inicio', cevi: 'Habla con CeVi', academia: 'Academia', preparacion: 'Primeros pasos', soporte: 'Necesito ayuda', bolsa: 'Trabajos para ti', plantillas: 'Diseños para cortar', certificado: 'Tu Certificado de Calidad' };
 // El aviso del candado ya no existe; la preparación se acompaña, no se bloquea.
 function render(route) {
   if (!views[route]) route = 'inicio';
-  // Si va a una sección que aún no se abre, se le lleva a la guía y se le explica
-  // AHÍ por qué, en vez de con un aviso que desaparece a los segundos.
-  if (!RUTAS_LIBRES.includes(route) && !prepEstado().completo) {
-    state.veniaDe = TITLES[route] || '';
-    if (location.hash !== '#/preparacion') { location.hash = '#/preparacion'; return; }
-    route = 'preparacion';
-  }
-  // Sin menú: en cualquier pantalla que no sea el inicio, un solo camino de vuelta.
-  const volver = route === 'inicio' ? ''
-    : `<a class="volver" href="#/inicio"><span aria-hidden="true">←</span> Volver al inicio</a>
-       <h1 class="pag-title">${esc(TITLES[route])}</h1>`;
-  view.innerHTML = volver + views[route]();
+  /* Ya no se desvía a nadie. Antes, tocar "Academia" sin la guía terminada te
+     dejaba en otra pantalla sin avisar: tocabas una cosa y aparecías en otra.
+     Además la Academia es justo donde están las reglas de seguridad, así que
+     cerrarla era al revés de lo que conviene. La guía sigue siendo lo primero
+     que se ve al entrar, pero invita en vez de bloquear. */
+  document.querySelectorAll('.menu a').forEach(a => a.setAttribute('aria-current', a.dataset.nav === route ? 'page' : 'false'));
+  // El título ya lo dice el menú; dentro solo hace falta el nombre de la página.
+  const cabecera = route === 'inicio' ? '' : `<h1 class="pag-title">${esc(TITLES[route])}</h1>`;
+  view.innerHTML = cabecera + views[route]();
   if (route === 'certificado' || route === 'soporte') { try { localStorage.setItem('c4v_visto_' + route + '_' + state.ctx, '1'); } catch {} }
   bind(route); window.scrollTo(0, 0);
 }
@@ -1057,6 +1009,23 @@ async function entrar(cliente) {
    Si el servidor no exige código (OTP apagado), el paso A entra directo. */
 const otpEstado = { solicitud: null, pais: null, sondeo: null, directo: false, faltan: 0 };
 
+/* En modo demostración no hay backend ni WhatsApp, pero el recorrido tiene que
+   verse igual que el de verdad: documento, teléfono, código. El código se
+   muestra en pantalla y se dice claramente que es una prueba. */
+const demoAcceso = { cliente: null, codigo: null };
+
+const PISTA_DIGITOS = 3;
+const PREFIJOS_PAIS = { PE: '51', EC: '593', BO: '591', CL: '56', CO: '57' };
+
+const digitosDe = (s) => String(s || '').replace(/\D/g, '');
+
+// Número sin el prefijo del país: es el que la persona conoce de memoria.
+function numeroNacional(tel, pais) {
+  const d = digitosDe(tel);
+  const p = PREFIJOS_PAIS[String(pais || '').toUpperCase()];
+  return p && d.length > p.length && d.startsWith(p) ? d.slice(p.length) : d;
+}
+
 async function apiPost(ruta, cuerpo) {
   const base = VERIF.apiBase || '';
   const r = await fetch(`${base}${ruta}`, {
@@ -1096,7 +1065,7 @@ function pintarPasoTel(datos, pais) {
 }
 
 /* El código ya salió: aquí solo se teclea. */
-function pintarPasoCodigo(pista) {
+function pintarPasoCodigo(pista, codigoDePrueba) {
   otpEstado.directo = true;
   $('#otpSubDirecto').hidden = false;
   $('#otpSubInvertido').hidden = true;
@@ -1105,7 +1074,14 @@ function pintarPasoCodigo(pista) {
   $('#otpPista4').textContent = pista || '';
   $('#otpCodigoDirecto').value = '';
   $('#otpErrorDirecto').hidden = true;
-  $('#otpEstadoDirecto').textContent = 'Te llega en unos segundos. Revisa tu WhatsApp.';
+  const est = $('#otpEstadoDirecto');
+  if (codigoDePrueba) {
+    est.innerHTML = `<strong>Modo de prueba:</strong> todavía no enviamos WhatsApp, así que tu código es <strong class="codigo-prueba">${esc(codigoDePrueba)}</strong>.`;
+    est.classList.add('es-prueba');
+  } else {
+    est.textContent = 'Te llega en unos segundos. Revisa tu WhatsApp.';
+    est.classList.remove('es-prueba');
+  }
   mostrarPaso('otp');
 }
 
@@ -1299,7 +1275,24 @@ function initGate() {
     }
 
     setCargando(false);
-    if (res.estado === 'ok') { entrar(res.cliente); return; }
+    if (res.estado === 'ok') {
+      /* En demostración también se recorre el segundo factor, para poder verlo
+         y probarlo. Con verificación real esto lo decide el servidor. */
+      if (modoDemo() && res.cliente?.telefono) {
+        apiPost('/api/consentimiento', { doc, pais, acepta_datos: true, acepta_marketing: marketing.checked }).catch(() => {});
+        demoAcceso.cliente = res.cliente;
+        demoAcceso.codigo = null;
+        const nac = numeroNacional(res.cliente.telefono, pais);
+        pintarPasoTel({
+          solicitud: 'DEMO',
+          pista: nac.slice(-PISTA_DIGITOS),
+          largo: nac.length,
+          faltan: Math.max(0, nac.length - PISTA_DIGITOS)
+        }, pais);
+        return;
+      }
+      entrar(res.cliente); return;
+    }
 
     err.hidden = false;
     if (res.estado === 'limite') {
@@ -1365,6 +1358,21 @@ function initGate() {
     }
     telBtn.disabled = true; telBtn.textContent = 'Enviando…';
     const completo = escrito + ($('#telCola').textContent || '');
+
+    if (otpEstado.solicitud === 'DEMO') {
+      // Demostración: se compara aquí mismo, sin servidor ni WhatsApp.
+      const suyo = numeroNacional(demoAcceso.cliente?.telefono, otpEstado.pais);
+      telBtn.disabled = false; telBtn.textContent = 'Enviarme el código';
+      if (digitosDe(completo).slice(-8) !== suyo.slice(-8)) {
+        telErr.hidden = false;
+        telErr.textContent = 'Ese número no coincide con el que tenemos.';
+        marcarError(telInp, telErr); return;
+      }
+      demoAcceso.codigo = String(Math.floor(100000 + Math.random() * 900000));
+      pintarPasoCodigo(suyo.slice(-PISTA_DIGITOS), demoAcceso.codigo);
+      return;
+    }
+
     const r = await apiPost('/api/acceso/enviar', { solicitud: otpEstado.solicitud, telefono: completo });
     telBtn.disabled = false; telBtn.textContent = 'Enviarme el código';
 
@@ -1393,6 +1401,12 @@ function initGate() {
     if (codigo.length !== 6) { dirErr.hidden = false; dirErr.textContent = 'Escribe los 6 números que te llegaron por WhatsApp.'; marcarError(dirInp, dirErr); return; }
     const boton = dirForm.querySelector('button');
     boton.disabled = true; boton.textContent = 'Entrando…';
+    if (otpEstado.solicitud === 'DEMO') {
+      boton.disabled = false; boton.textContent = 'Entrar';
+      if (codigo === demoAcceso.codigo) { entrar(demoAcceso.cliente); return; }
+      dirErr.hidden = false; dirErr.textContent = 'Ese código no es el correcto.';
+      marcarError(dirInp, dirErr); return;
+    }
     const r = await apiPost('/api/otp/verificar', { solicitud: otpEstado.solicitud, codigo });
     boton.disabled = false; boton.textContent = 'Entrar';
     if (r.json.ok && r.json.token) {

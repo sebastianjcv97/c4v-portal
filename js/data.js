@@ -378,42 +378,32 @@ window.__SEED__ = {
         donde: "Madereras y tiendas de acrílico" }
     ],
 
-    /* Cinco pasos, en el orden en que se hacen. Sin tiempos: cada taller es
-       distinto y poner plazos solo asustaba. */
+    /* Cinco pasos, uno por pantalla. El «cómo se hace» va escrito en la propia
+       pantalla del paso: antes estaba escondido detrás de un «¿Cómo lo hago?»
+       que había que pulsar, y nadie pulsa lo que no sabe que necesita. */
     checklist: [
-      /* Sin dibujo: la lista de arriba ya es la ilustración de este paso. */
-      { id: "p1", t: "Compra lo de la lista", guia: "compras" },
-      { id: "p2", t: "Mide las puertas y el camino", img: "puerta.png", guia: "acceso" },
-      { id: "p3", t: "Deja lista la electricidad", img: "electrico.png", guia: "electrico" },
-      { id: "p4", t: "Prepara tu zona de trabajo", img: "extractor.png", guia: "zona" },
-      { id: "p5", t: "Ten lista tu computadora", img: "computadora.png", guia: "computadora" }
-    ],
-
-    /* Cada guía es el «¿Cómo lo hago?» de su paso: tres líneas, en el orden en
-       que se hacen las cosas. Si hace falta más, es que el paso está mal partido. */
-    guias: [
-      { key: "compras", titulo: "Cómo comprar la lista", pasos: [
-        "Compra los cinco de arriba antes de que llegue tu máquina.",
+      { id: "p1", t: "Compra lo que necesitas", lista: true, detalle: [
+        "Son cinco cosas y las vas a usar desde el primer día.",
         "Se consiguen en ferreterías, grifos y tiendas de electrónica.",
-        "Si no encuentras alguno, escríbenos y te decimos dónde."
+        "Si no encuentras alguna, escríbenos y te decimos dónde."
       ] },
-      { key: "acceso", titulo: "Cómo medir el camino", pasos: [
+      { id: "p2", t: "Mide las puertas y el camino", img: "puerta.png", detalle: [
         "Mide el ancho y el alto de las puertas, los pasillos y los giros de escalera.",
         "Escríbenos y te pasamos las medidas de la caja de tu máquina.",
-        "Si algo no pasa, avísanos antes de la entrega y lo resolvemos juntos."
+        "Si algo no pasa, avísanos antes de la entrega y lo vemos juntos."
       ] },
-      { key: "electrico", titulo: "Cómo dejar lista la electricidad", pasos: [
+      { id: "p3", t: "Deja lista la electricidad", img: "electrico.png", detalle: [
         "Llama a un electricista y pídele un punto de 220V solo para la máquina, con cable de cobre número 12.",
         "En tu tablero: un térmico de 20 amperios y un diferencial de 30 A / 30 mA.",
-        "Pozo a tierra con varilla de cobre enterrada. Si ya lo tienes, pide que lo midan.",
-        "Compra un estabilizador de voltaje de 3000VA como mínimo, tipo servomotor. Una zapatilla con protector de picos no sirve."
+        "Pozo a tierra con varilla de cobre enterrada.",
+        "Compra un estabilizador de 3000VA como mínimo, tipo servomotor."
       ] },
-      { key: "zona", titulo: "Cómo preparar la zona", pasos: [
+      { id: "p4", t: "Prepara tu zona de trabajo", img: "extractor.png", detalle: [
         "Elige un lugar firme y parejo, con espacio para abrir la tapa y pasar alrededor.",
-        "Compra un extractor con su manguera de aluminio y dos abrazaderas, y ponlo con salida a la calle.",
-        "Deja libre la salida del humo: no la conectes a un ducto compartido."
+        "Compra un extractor con su manguera de aluminio y dos abrazaderas.",
+        "Ponlo con salida a la calle, no a un ducto compartido."
       ] },
-      { key: "computadora", titulo: "Cómo dejar lista la computadora", pasos: [
+      { id: "p5", t: "Ten lista tu computadora", img: "computadora.png", detalle: [
         "Cualquier computadora con Windows sirve. Windows 11 de preferencia.",
         "Déjala cerca de la máquina, con su cable USB a la mano.",
         "El programa de corte lo instalamos contigo el día de la entrega."

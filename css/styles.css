@@ -1213,3 +1213,54 @@ body{background:var(--mesa)}
 .tel-caja input::placeholder{color:#6a6a6a;letter-spacing:.14em}
 .gate-tel-ic{color:var(--rojo)}
 .otp-form-solo{margin:0 auto;max-width:320px}
+
+/* ---------- Menú de tres destinos ----------
+   No había menú: cada pantalla solo ofrecía "Volver al inicio", así que pasar de
+   una sección a otra costaba dos toques y desorientaba. Tres pestañas, siempre
+   las mismas, con la actual marcada. */
+.menu{display:flex;gap:4px;margin-left:auto;flex-wrap:wrap}
+.menu a{display:inline-flex;align-items:center;min-height:var(--tap);padding:6px 14px;
+  border-radius:var(--r-full);color:var(--on-black-dim);font-size:var(--t-sm);font-weight:600;
+  white-space:nowrap;transition:background .14s,color .14s}
+.menu a:hover{color:#fff;background:var(--black-2)}
+.menu a[aria-current="page"]{background:#fff;color:var(--tinta);font-weight:700}
+@media(max-width:620px){
+  .topbar{flex-wrap:wrap;gap:8px 12px;padding:10px 16px}
+  .menu{width:100%;margin-left:0;gap:6px;justify-content:space-between}
+  .menu a{flex:1;justify-content:center;padding:6px 8px;font-size:var(--t-xs)}
+}
+/* El código de prueba se ve distinto para que nadie lo confunda con el real. */
+.otp-estado.es-prueba{background:var(--black-2);border:1px dashed #767676;border-radius:var(--r);
+  padding:12px 14px;margin-top:12px;color:var(--on-black)}
+.codigo-prueba{font-size:22px;letter-spacing:.14em;color:#FF8A8F;display:inline-block;margin-top:4px}
+
+/* ════════════════════════════════════════════════════════════════════════
+   LA GUÍA, UNA PANTALLA POR PASO
+   Antes todo cabía en una página larga con casillas, barras y un
+   «¿Cómo lo hago?» plegado. Ahora se ve un paso, con lo que hay que hacer
+   escrito delante, y un solo botón para avanzar.
+   ════════════════════════════════════════════════════════════════════════ */
+.paso{display:flex;flex-direction:column;gap:var(--s-4)}
+.paso-cuenta{margin:0;font-size:var(--t-sm);font-weight:700;color:var(--grafito)}
+.paso-barra{height:6px;border-radius:var(--r-full);background:var(--regla);overflow:hidden;margin:0 0 var(--s-2)}
+.paso-barra i{display:block;height:100%;background:var(--rojo-tinta);transition:width .3s}
+.paso-titulo{font-family:var(--slab);font-size:var(--t-2xl);line-height:var(--lh-snug);margin:0}
+.paso-dibujo{margin:0;display:grid;place-items:center;padding:var(--s-2) 0}
+.paso-dibujo img{max-width:260px;max-height:220px;width:auto;height:auto;mix-blend-mode:multiply}
+.paso-detalle{list-style:none;margin:0;padding:0;border-top:1px solid var(--regla)}
+.paso-detalle li{padding:var(--s-3) 0;border-bottom:1px solid var(--regla);
+  font-size:var(--t-md);line-height:var(--lh-base);max-width:var(--medida)}
+.paso-compras .lista-fila{padding:var(--s-3) 0}
+.paso-compras .lista-txt h3{font-size:var(--t-md)}
+.paso-pie{display:flex;flex-direction:column;align-items:stretch;gap:var(--s-2);margin-top:var(--s-3)}
+.paso-pie .btn{width:100%;justify-content:center;font-size:var(--t-lg);padding:16px 20px}
+.paso-link{background:none;border:none;padding:12px;min-height:var(--tap);
+  font-family:var(--sans);font-size:var(--t-sm);color:var(--grafito);text-decoration:underline;cursor:pointer}
+.paso-link:hover{color:var(--tinta)}
+.paso-fin{display:flex;flex-direction:column;align-items:flex-start;gap:var(--s-4);padding:var(--s-5) 0}
+.paso-fin h2{font-family:var(--slab);font-size:var(--t-2xl);margin:0}
+.paso-fin p{margin:0;font-size:var(--t-md);color:var(--grafito)}
+@media(min-width:700px){
+  .paso-pie{flex-direction:row-reverse;justify-content:flex-end;align-items:center;gap:var(--s-4)}
+  .paso-pie .btn{width:auto;min-width:240px}
+}
