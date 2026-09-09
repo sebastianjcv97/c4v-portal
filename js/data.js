@@ -360,7 +360,9 @@ window.__SEED__ = {
     /* Tres de las ocho compras dependen del modelo exacto. En vez de una sección
        aparte, el aviso vive DENTRO de la lista, que es donde el cliente lo necesita. */
     fichaModelo: {
-      titulo: "Tres de estas compras dependen de tu modelo",
+      /* El número lo cuenta app.js sobre `pedirFicha`: escribirlo a mano hacía
+         que dijera "tres" después de quitar un ítem de la lista. */
+      titulo: "de estas compras dependen de tu modelo",
       intro: "Pídenos la ficha de tu máquina antes de comprar. Te la pasamos el mismo día."
     },
     /* Solo ACCIONES. Lo que hay que comprar vive en `compras`: antes estaba en

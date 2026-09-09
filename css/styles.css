@@ -900,7 +900,8 @@ body{background:var(--mesa)}
             align-items:start;padding:var(--s-4) 0;border-bottom:1px solid var(--regla)}
 .lista-num{font-family:var(--slab);font-weight:800;font-size:var(--t-xl);line-height:1;
            color:var(--tinta);font-variant-numeric:tabular-nums;padding-top:2px}
-.lista-dibujo img{width:100%;height:auto;display:block;mix-blend-mode:multiply}
+.lista-dibujo{width:104px;height:104px;display:grid;place-items:center}
+.lista-dibujo img{max-width:104px;max-height:104px;width:auto;height:auto;display:block;mix-blend-mode:multiply}
 .lista-txt h3{font-family:var(--slab);font-size:var(--t-lg);font-weight:700;line-height:var(--lh-snug);margin:0 0 4px}
 .lista-txt .para{margin:0 0 6px;font-size:var(--t-sm);color:var(--rojo-tinta);font-weight:700;line-height:var(--lh-snug)}
 .lista-txt .spec{margin:0 0 6px;font-size:var(--t-sm);line-height:var(--lh-base);max-width:var(--medida)}
@@ -909,6 +910,8 @@ body{background:var(--mesa)}
                   color:var(--rojo-tinta);border:1px solid var(--rojo-tinta);border-radius:var(--r-sm);padding:3px 7px}
 @media(max-width:620px){
   .lista-fila{grid-template-columns:1.5rem 92px 1fr;gap:var(--s-3);padding:var(--s-3) 0}
+  .lista-dibujo{width:92px;height:92px}
+  .lista-dibujo img{max-width:92px;max-height:92px}
   .lista-num{font-size:var(--t-lg);padding-top:1px}
   .lista-txt h3{font-size:var(--t-md)}
 }
@@ -932,12 +935,14 @@ body{background:var(--mesa)}
 .lista-pasos .prep-step.done .prep-step-txt{color:var(--grafito);text-decoration:line-through}
 .lista-pasos .prep-step-main input{width:30px;height:30px;accent-color:var(--rojo-tinta);cursor:pointer;margin:0;flex-shrink:0}
 .lista-pasos .prep-step-check{display:none}
-.lista-pasos .prep-step-fig{grid-area:fig;margin:0;width:116px}
+.lista-pasos .prep-step-fig{grid-area:fig;margin:0;width:116px;height:116px;display:grid;place-items:center}
+.lista-pasos .prep-step-fig img{max-width:116px;max-height:116px;width:auto;height:auto}
 .lista-pasos .prep-como{grid-area:como;padding-left:calc(2.2rem + var(--s-3))}
 @media(max-width:620px){
   .lista-pasos .prep-step{grid-template-columns:1.5rem 1fr auto;gap:var(--s-2) var(--s-3);padding:var(--s-3) 0}
   .lista-pasos .prep-step-num{font-size:var(--t-lg)}
-  .lista-pasos .prep-step-fig{width:92px}
+  .lista-pasos .prep-step-fig{width:92px;height:92px}
+  .lista-pasos .prep-step-fig img{max-width:92px;max-height:92px}
   .lista-pasos .prep-como{padding-left:calc(1.5rem + var(--s-3))}
 }
 .prep-urgente{display:block;margin-top:5px;font-size:var(--t-sm);font-weight:700;color:var(--rojo-tinta)}

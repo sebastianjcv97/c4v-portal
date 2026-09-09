@@ -18,7 +18,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@700;800&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/styles.css?v=20260912e" />
+  <link rel="stylesheet" href="css/styles.css?v=20260912i" />
 </head>
 <body>
   <a class="skip" href="#view">Saltar al contenido</a>
@@ -74,16 +74,57 @@
         <div class="gate-demo" id="gateDemo" hidden></div>
       </section>
 
-      <!-- ---------- Paso B · Confirma que eres tú ---------- -->
+      <!-- ---------- Paso B · Completa tu WhatsApp ----------
+           Se le muestran los últimos 4 dígitos del teléfono que tenemos en Odoo
+           y él completa el resto. Sirve para dos cosas a la vez: demuestra que
+           el número es suyo y le dice a dónde le va a llegar el código. -->
+      <section id="gatePasoTel" hidden>
+        <div class="gate-wa-ic gate-tel-ic" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="3"/><path d="M10.5 18.5h3"/></svg>
+        </div>
+
+        <h1>Completa tu WhatsApp</h1>
+        <p class="gate-sub">Tenemos tu número, pero no lo mostramos entero.<br />Escribe los <strong id="telFaltan">dígitos que faltan</strong> y te mandamos el código.</p>
+
+        <form class="gate-form" id="telForm" novalidate>
+          <div class="tel-caja">
+            <span class="tel-prefijo" id="telPrefijo">+51</span>
+            <input id="telInput" type="text" inputmode="numeric" autocomplete="tel-national"
+                   placeholder="•••••" aria-label="Los dígitos que faltan de tu número" />
+            <span class="tel-cola" id="telCola">0000</span>
+          </div>
+          <p class="gate-doc-ej">Los últimos cuatro ya están puestos. Escribe solo lo que falta.</p>
+
+          <button class="btn primary gate-btn" id="telBtn" type="submit">Enviarme el código</button>
+          <div class="gate-error" id="telError" role="alert" tabindex="-1" hidden></div>
+        </form>
+
+        <button type="button" class="gate-volver" id="telVolver">Volver y cambiar mi documento</button>
+      </section>
+
+      <!-- ---------- Paso C · Confirma que eres tú ---------- -->
       <section id="gatePasoOtp" hidden>
         <div class="gate-wa-ic gate-otp-ic" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2.5" width="16" height="19" rx="3"/><path d="M10 5.5h4"/><path d="M8.5 12.5l2.5 2.5 4.5-4.5"/></svg>
         </div>
 
-        <h1>Confirma que eres tú</h1>
-        <p class="gate-sub">Solo falta un paso: confirma que este WhatsApp es tuyo <strong id="otpPista"></strong>.</p>
+        <h1>Escribe tu código</h1>
+        <p class="gate-sub" id="otpSubDirecto" hidden>Te lo mandamos por WhatsApp al número que termina en <strong id="otpPista4"></strong>.</p>
+        <p class="gate-sub" id="otpSubInvertido">Solo falta un paso: confirma que este WhatsApp es tuyo <strong id="otpPista"></strong>.</p>
 
-        <ol class="otp-pasos">
+        <!-- Camino directo: el código ya salió, solo hay que teclearlo. -->
+        <div id="otpDirecto" hidden>
+          <form id="otpFormDirecto" class="otp-form otp-form-solo" novalidate>
+            <input id="otpCodigoDirecto" type="text" inputmode="numeric" autocomplete="one-time-code"
+                   maxlength="6" pattern="[0-9]{6}" placeholder="000000" aria-label="Código de 6 dígitos" />
+            <button class="btn primary" type="submit">Entrar</button>
+          </form>
+          <p class="otp-estado" id="otpEstadoDirecto" role="status" aria-live="polite"></p>
+          <div class="gate-error" id="otpErrorDirecto" role="alert" tabindex="-1" hidden></div>
+          <button type="button" class="gate-volver" id="otpReenviar">No me llegó, enviarlo otra vez</button>
+        </div>
+
+        <ol class="otp-pasos" id="otpInvertido">
           <li>
             <span class="otp-num">1</span>
             <div>
@@ -157,8 +198,8 @@
     </div>
   </div>
 
-  <script src="js/config.js?v=20260912e"></script>
-  <script src="js/data.js?v=20260912e"></script>
-  <script src="js/app.js?v=20260912e"></script>
+  <script src="js/config.js?v=20260912i"></script>
+  <script src="js/data.js?v=20260912i"></script>
+  <script src="js/app.js?v=20260912i"></script>
 </body>
 </html>

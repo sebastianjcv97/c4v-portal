@@ -415,7 +415,7 @@ const views = {
 
       ${p.fichaModelo ? `
       <div class="card ficha-modelo">
-        <strong>${esc(p.fichaModelo.titulo)}</strong>
+        <strong>${((n) => n === 1 ? 'Una' : n === 2 ? 'Dos' : n === 3 ? 'Tres' : n)(p.compras.filter(c => c.pedirFicha).length)} ${esc(p.fichaModelo.titulo)}</strong>
         <p>${esc(p.fichaModelo.intro)}</p>
         <a class="btn primary" href="${waFicha}" target="_blank" rel="noopener">Pedir la ficha de mi máquina<span class="sr-only"> (se abre WhatsApp)</span></a>
       </div>` : ''}
@@ -1080,7 +1080,7 @@ async function entrar(cliente) {
    Paso B: el cliente nos escribe por WhatsApp (así demuestra que el número es
    suyo) y el bot le responde un código de 6 dígitos que teclea aquí.
    Si el servidor no exige código (OTP apagado), el paso A entra directo. */
-const otpEstado = { solicitud: null, pais: null, sondeo: null };
+const otpEstado = { solicitud: null, pais: null, sondeo: null, directo: false, faltan: 0 };
 
 async function apiPost(ruta, cuerpo) {
   const base = VERIF.apiBase || '';
@@ -1094,8 +1094,44 @@ async function apiPost(ruta, cuerpo) {
 
 function mostrarPaso(cual) {
   $('#gatePasoDoc').hidden = cual !== 'doc';
+  $('#gatePasoTel').hidden = cual !== 'tel';
   $('#gatePasoOtp').hidden = cual !== 'otp';
-  if (cual === 'otp') setTimeout(() => $('#otpCodigo')?.focus(), 80);
+  if (cual === 'tel') setTimeout(() => $('#telInput')?.focus(), 80);
+  if (cual === 'otp') setTimeout(() => (otpEstado.directo ? $('#otpCodigoDirecto') : $('#otpCodigo'))?.focus(), 80);
+}
+
+/* ── Paso: completar el teléfono ────────────────────────────────────────────
+   Se muestran los últimos 4 dígitos que hay en Odoo y la persona escribe el
+   resto. Sirve a la vez de prueba (solo el dueño sabe su número entero) y de
+   aviso (le dice a qué número le va a llegar el código). */
+function pintarPasoTel(datos, pais) {
+  otpEstado.solicitud = datos.solicitud;
+  otpEstado.pais = pais;
+  otpEstado.faltan = datos.faltan || 0;
+  const prefijo = (CFG.paises || []).find(p => p.code === pais)?.prefijo || '51';
+  $('#telPrefijo').textContent = '+' + prefijo;
+  $('#telCola').textContent = datos.pista || '';
+  $('#telFaltan').textContent = datos.faltan ? `${datos.faltan} dígitos que faltan` : 'dígitos que faltan';
+  const inp = $('#telInput');
+  inp.value = '';
+  inp.placeholder = '•'.repeat(Math.max(3, datos.faltan || 5));
+  inp.maxLength = Math.max(3, (datos.faltan || 5) + 3);   // holgura por si guardaron el prefijo
+  $('#telError').hidden = true;
+  mostrarPaso('tel');
+}
+
+/* El código ya salió: aquí solo se teclea. */
+function pintarPasoCodigo(pista) {
+  otpEstado.directo = true;
+  $('#otpSubDirecto').hidden = false;
+  $('#otpSubInvertido').hidden = true;
+  $('#otpDirecto').hidden = false;
+  $('#otpInvertido').hidden = true;
+  $('#otpPista4').textContent = pista || '';
+  $('#otpCodigoDirecto').value = '';
+  $('#otpErrorDirecto').hidden = true;
+  $('#otpEstadoDirecto').textContent = 'Te llega en unos segundos. Revisa tu WhatsApp.';
+  mostrarPaso('otp');
 }
 
 function detenerSondeo() {
@@ -1247,6 +1283,23 @@ function initGate() {
 
     // El servidor pide segundo factor: solicitamos el código.
     if (res.estado === 'otp') {
+      /* Primero el camino directo: le pedimos la pista de su teléfono. Si el
+         canal de envío no está configurado, se cae al camino de siempre (que
+         el cliente escriba primero por WhatsApp), que sí funciona hoy. */
+      const d = await apiPost('/api/acceso/identificar', { pais, doc });
+      if (d.json.ok && d.json.canal === 'whatsapp') {
+        setCargando(false);
+        apiPost('/api/consentimiento', { doc, pais, acepta_datos: true, acepta_marketing: marketing.checked }).catch(() => {});
+        pintarPasoTel(d.json, pais);
+        return;
+      }
+      if (d.json.ok === false && d.json.motivo === 'sin_telefono') {
+        setCargando(false);
+        err.hidden = false;
+        err.innerHTML = `No tenemos tu WhatsApp registrado, así que no podemos enviarte el código. <a href="${waLink('Hola, quiero entrar a mi Central de Postventa C4V pero no tienen mi WhatsApp registrado. ¿Me ayudan?')}" target="_blank" rel="noopener">Escríbenos y lo actualizamos</a> en un minuto.`;
+        marcarError(inp, err); return;
+      }
+
       const r = await apiPost('/api/otp/solicitar', { pais, doc });
       setCargando(false);
       if (r.status === 429) { err.hidden = false; err.innerHTML = 'Pediste muchos códigos seguidos. Espera 5 minutos y vuelve a intentar.'; return; }
