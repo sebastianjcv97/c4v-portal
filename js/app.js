@@ -177,18 +177,33 @@ const diag = (k) => `<svg class="diag" aria-hidden="true" viewBox="0 0 220 120" 
 /* ---------- Las pantallas de la Academia ----------
    Una por destino. Cada una empieza con el enlace de vuelta y no lleva nada
    que no sea de esa pantalla. */
-const volverAcademia = '<a class="volver" href="#/academia"><span aria-hidden="true">←</span> Academia</a>';
 
 function vistaSeguridad(a) {
   const s = a.seguridad;
-  if (!s) return volverAcademia;
-  return `${volverAcademia}
-    <ul class="reglas">
+  if (!s) return '';
+  return `    <ul class="reglas">
       ${s.puntos.map(x => `<li><strong>${esc(x.t)}</strong><span>${esc(x.d)}</span></li>`).join('')}
     </ul>`;
 }
 
 function vistaCursos(a) {
+  const disponibles = (a.cursos || []).filter(c => c.estado === 'disponible');
+  const pronto = (a.cursos || []).filter(c => c.estado !== 'disponible');
+  const nLec = (c) => c.modulos.reduce((t, m) => t + m.lecciones.length, 0);
+  return `
+    <div class="destinos">
+      ${disponibles.map(c => `<a class="destino" href="#/academia/cursos/${esc(c.id)}">
+        <span class="destino-txt"><strong>${esc(c.titulo)}</strong><small>${nLec(c)} lecciones</small></span>
+        <span class="destino-flecha" aria-hidden="true">›</span>
+      </a>`).join('')}
+    </div>
+    ${pronto.length ? `<ul class="proximo">${pronto.map(c => `<li>${esc(c.titulo)}</li>`).join('')}</ul>` : ''}`;
+}
+
+/* Un curso, con sus lecciones a la vista. Nada plegado: lo que hay que ver se ve. */
+function vistaCurso(a, id) {
+  const c = (a.cursos || []).find(x => x.id === id);
+  if (!c) return '<p class="bajada">Ese curso ya no está.</p>';
   const fmtDur = (sg) => `${Math.floor(sg / 60)}:${String(sg % 60).padStart(2, '0')}`;
   const visto = (v) => { try { return localStorage.getItem('c4v_video_' + state.ctx + '_' + v) === '1'; } catch { return false; } };
   const leccion = (l) => typeof l === 'string'
@@ -200,31 +215,16 @@ function vistaCursos(a) {
          </button>
          <div class="lv-player" hidden></div>
        </li>`;
-  const disponibles = (a.cursos || []).filter(c => c.estado === 'disponible');
-  const pronto = (a.cursos || []).filter(c => c.estado !== 'disponible');
-  return `${volverAcademia}
-    ${disponibles.map((c, i) => `
-      <div class="course" id="curso-${esc(c.id)}">
-        <button type="button" class="course-head" aria-expanded="false">
-          <div class="course-ico">${i + 1}</div>
-          <div class="grow"><h3>${esc(c.titulo)}</h3></div>
-          <span class="chev" aria-hidden="true">+</span>
-        </button>
-        <div class="course-body">
-          ${c.modulos.map(m => `<div class="module">
-            <h4>${esc(m.titulo)}</h4>
-            ${m.lecciones.length ? `<ul class="lessons">${m.lecciones.map(leccion).join('')}</ul>` : ''}
-          </div>`).join('')}
-        </div>
-      </div>`).join('')}
-    ${pronto.length ? `<ul class="proximo">${pronto.map(c => `<li>${esc(c.titulo)}</li>`).join('')}</ul>` : ''}`;
+  return c.modulos.map(m => `<div class="module">
+      <h4>${esc(m.titulo)}</h4>
+      ${m.lecciones.length ? `<ul class="lessons">${m.lecciones.map(leccion).join('')}</ul>` : ''}
+    </div>`).join('');
 }
 
 function vistaParametros(a) {
   const p = a.parametros;
-  if (!p) return volverAcademia;
-  return `${volverAcademia}
-    <p class="bajada">${esc(p.intro)}</p>
+  if (!p) return '';
+  return `    <p class="bajada">${esc(p.intro)}</p>
     <div class="tabla-scroll">
       <table class="tabla-params"><thead><tr>
         <th>Material</th><th>Grosor</th><th>Corte</th><th>Marcado</th><th>Grabado</th>
@@ -236,8 +236,7 @@ function vistaParametros(a) {
 
 function vistaGuias(a) {
   const g = a.guiasPdf || [];
-  return `${volverAcademia}
-    <div class="destinos">
+  return `    <div class="destinos">
       ${g.map(x => `<button type="button" class="destino" data-guia="${esc(x.archivo)}">
         <span class="destino-txt"><strong>${esc(x.titulo)}</strong><small>${esc(x.tam)}</small></span>
         <span class="destino-flecha" aria-hidden="true">↓</span>
@@ -246,8 +245,7 @@ function vistaGuias(a) {
 }
 
 function vistaPreguntas(faqs) {
-  return `${volverAcademia}
-    ${faqs.map(f => `<div class="faq-item">
+  return `    ${faqs.map(f => `<div class="faq-item">
       <button type="button" class="faq-q" aria-expanded="false"><span>${esc(f.pregunta)}</span><span class="chev" aria-hidden="true">+</span></button>
       <div class="faq-a">${esc(f.respuesta)}</div>
     </div>`).join('')}`;
@@ -317,11 +315,12 @@ const views = {
      cursos abiertos, la tabla de parámetros, los PDF, la línea de máquinas y
      treinta preguntas, todo seguido. Nadie lee eso. Ahora la portada son cinco
      botones grandes y cada uno abre su propia pantalla. */
-  academia(sec) {
+  academia(ruta) {
     const a = state.db.academia, faqs = state.db.faqs;
+    const [sec, id] = String(ruta || '').split('/');
 
     if (sec === 'seguridad') return vistaSeguridad(a);
-    if (sec === 'cursos') return vistaCursos(a);
+    if (sec === 'cursos') return id ? vistaCurso(a, id) : vistaCursos(a);
     if (sec === 'parametros') return vistaParametros(a);
     if (sec === 'guias') return vistaGuias(a);
     if (sec === 'preguntas') return vistaPreguntas(faqs);
@@ -677,7 +676,7 @@ function bind(route) {
   if (route === 'academia') {
     // Cada subpágina engancha solo lo suyo; los quizzes salieron de en medio.
     if (state.sub === 'preguntas') bindAccordions('.faq-item');
-    if (state.sub === 'cursos') { bindAccordions('.course'); bindVideos(); }
+    if (state.sub.startsWith('cursos')) bindVideos();
     if (state.sub === 'guias') bindGuias();
   }
   if (route === 'preparacion') {
@@ -867,9 +866,9 @@ function render(route) {
   /* Las secciones pueden tener subpáginas: `#/academia/cursos`. Así cada una es
      una pantalla propia, con su título y su botón de atrás, y el botón «volver»
      del navegador funciona como la gente espera. */
-  const [base, sub] = String(route).split('/');
+  const [base, ...resto] = String(route).split('/');
   route = views[base] ? base : 'inicio';
-  state.sub = route === base ? (sub || '') : '';
+  state.sub = route === base ? resto.join('/') : '';
   /* Ya no se desvía a nadie. Antes, tocar "Academia" sin la guía terminada te
      dejaba en otra pantalla sin avisar: tocabas una cosa y aparecías en otra.
      Además la Academia es justo donde están las reglas de seguridad, así que
@@ -877,8 +876,15 @@ function render(route) {
      que se ve al entrar, pero invita en vez de bloquear. */
   document.querySelectorAll('.menu a').forEach(a => a.setAttribute('aria-current', a.dataset.nav === route ? 'page' : 'false'));
   // El título ya lo dice el menú; dentro solo hace falta el nombre de la página.
-  const titulo = SUBTITULOS[route + '/' + state.sub] || TITLES[route];
-  const cabecera = route === 'inicio' ? '' : `<h1 class="pag-title">${esc(titulo)}</h1>`;
+  let titulo = SUBTITULOS[route + '/' + state.sub] || TITLES[route];
+  if (route === 'academia' && state.sub.startsWith('cursos/')) {
+    const c = (state.db.academia.cursos || []).find(x => x.id === state.sub.split('/')[1]);
+    if (c) titulo = c.titulo;
+  }
+  const atras = state.sub
+    ? `<a class="volver" href="#/${route}${state.sub.includes('/') ? '/' + state.sub.split('/')[0] : ''}"><span aria-hidden="true">←</span> ${esc(state.sub.includes('/') ? SUBTITULOS[route + '/' + state.sub.split('/')[0]] || TITLES[route] : TITLES[route])}</a>`
+    : '';
+  const cabecera = route === 'inicio' ? '' : atras + `<h1 class="pag-title">${esc(titulo)}</h1>`;
   view.innerHTML = cabecera + views[route](state.sub);
   if (route === 'certificado' || route === 'soporte') { try { localStorage.setItem('c4v_visto_' + route + '_' + state.ctx, '1'); } catch {} }
   bind(route); window.scrollTo(0, 0);
