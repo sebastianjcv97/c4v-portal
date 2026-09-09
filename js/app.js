@@ -407,8 +407,6 @@ const views = {
              <a class="btn primary sm" href="#/academia">Aprender a usarla</a></div>`
         : ''}
 
-      ${fechaEntrega(maq)}
-      ${tarjetaCorreo()}
 
       <h2 class="section-h">Tu lista de compras</h2>
       <p class="muted seccion-bajada">Cinco cosas que vas a usar desde el primer día.</p>
@@ -452,20 +450,9 @@ const views = {
         }).join('')}</ol>
       </div>
 
-      ${bloqueModelo(p, maq, waFicha)}
-
-      ${p.diaEntrega ? `
-      <h2 class="section-h">${esc(p.diaEntrega.titulo)}</h2>
-      <div class="card dia-entrega">
-        <p>${esc(p.diaEntrega.intro)}</p>
-        <ol class="acceso-pasos">${p.diaEntrega.pasos.map(x => `<li${x.destacado ? ' class="destacado"' : ''}>${esc(x.t)}</li>`).join('')}</ol>
-      </div>` : ''}
-
-      ${resumenImprimible(p, cli, maq)}
-
       <div class="help-card" style="margin-top:28px">
-        <div class="grow"><h3>Ya está tu espacio, ¿y ahora?</h3>
-          <p>Entra a la Academia: ahí están las reglas de seguridad y los cursos para usarla desde el primer día.</p></div>
+        <div class="grow"><h3>¿Ya terminaste?</h3>
+          <p>Entra a la Academia y aprende a usar tu máquina.</p></div>
         <a class="btn primary sm" href="#/academia">Ir a la Academia</a>
       </div>`;
   },
@@ -2444,141 +2431,10 @@ function initAgente() {
 }
 window.ceviAbrir = ceviAbrir;
 
-/* Al imprimir desde la guía queda SOLO la hoja. La marca vive en el <body> para
-   que el resto del sitio (y sobre todo la constancia del Libro de Reclamaciones)
-   siga imprimiéndose entero. */
-function imprimirSoloHoja() {
-  document.body.classList.add('solo-hoja');
-  const limpiar = () => document.body.classList.remove('solo-hoja');
-  window.addEventListener('afterprint', limpiar, { once: true });
-  setTimeout(limpiar, 3000);
-  window.print();
-}
-
-/* ---------- Resumen imprimible ----------
-   Una hoja con todo: lo que hay que comprar y lo que hay que hacer, en casillas.
-   Es lo que el cliente se lleva a la ferretería y le pasa a su electricista.
-   Al imprimir, el resto del portal desaparece y queda solo esto. */
-function resumenImprimible(p, cli, maq) {
-  const casilla = '<span class="hoja-box" aria-hidden="true"></span>';
-  return `
-    <section class="hoja" id="hojaResumen">
-      <div class="hoja-cab">
-        <div>
-          <h2>Todo lo que necesitas, en una hoja</h2>
-          <p>Guárdala en tu celular y llévala cuando vayas a comprar. Ve marcando lo que ya tienes.</p>
-        </div>
-        <button type="button" class="btn primary no-print" id="imprimirHoja">Descargar en PDF</button>
-      </div>
-
-      <div class="hoja-marca">
-        <strong>C4V Láser</strong>
-        <span>Preparación de tu espacio${cli ? ` para ${esc(nombrePropio(cli.nombre))}` : ''}${maq?.modelo ? `, láser ${esc(maq.modelo)}` : ''}</span>
-      </div>
-
-      <div class="hoja-cols">
-        <div class="hoja-col">
-          <h3>Lo que compro</h3>
-          <ul>${p.compras.map(c => `<li>${casilla}<span>${esc(c.item)}</span></li>`).join('')}</ul>
-        </div>
-        <div class="hoja-col">
-          <h3>Lo que hago</h3>
-          <ul>${p.checklist.map(c => `<li>${casilla}<span>${esc(c.t)}</span></li>`).join('')}</ul>
-        </div>
-      </div>
 
 
-      <p class="hoja-ayuda no-print">Se abrirá el cuadro de impresión: elige <strong>«Guardar como PDF»</strong> o <strong>«PDF»</strong>.</p>
-      <p class="hoja-pie">¿Dudas? Escríbenos al WhatsApp ${esc((CFG.contacto || {}).whatsapp_visible || '')}. Te responde una persona.</p>
-    </section>`;
-}
 
-/* ---------- Cuenta regresiva hasta la entrega ----------
-   La fecha ya venía de Odoo y no se mostraba en ningún lado. Sin fecha, "prepara
-   tu espacio antes de que llegue" es una idea abstracta; con fecha, es un plazo. */
-function fechaEntrega(maq) {
-  const f = maq?.fecha_entrega;
-  if (!f) return '';
-  const fecha = new Date(f + 'T12:00:00');
-  if (isNaN(fecha)) return '';
-  const dias = Math.round((fecha - new Date()) / 864e5);
-  const bonito = fecha.toLocaleDateString('es-PE', { day: 'numeric', month: 'long' });
-  if (dias < -30) return '';                       // entrega antigua: ya no es una cuenta regresiva
-  const txt = dias > 1 ? `Te quedan <strong>${dias} días</strong>`
-    : dias === 1 ? 'Es <strong>mañana</strong>'
-    : dias === 0 ? 'Es <strong>hoy</strong>'
-    : 'Ya debería estar contigo';
-  return `<div class="cuenta ${dias <= 7 ? 'urgente' : ''}">
-      <span class="cuenta-ic" aria-hidden="true">📅</span>
-      <div><strong>Tu ${esc(maq.modelo ? 'láser ' + maq.modelo : 'máquina')} llega alrededor del ${esc(bonito)}</strong>
-      <span>${txt} para dejar tu espacio listo.</span></div>
-    </div>`;
-}
 
-/* Solo el grupo del cliente. Mostrar los dos hacía que alguien con una compacta
-   leyera especificaciones industriales que no le tocan y se asustara. */
-function bloqueModelo(p, maq, waFicha) {
-  const pm = p.porModelo;
-  if (!pm) return '';
-  const modelo = String(maq?.modelo || '').replace(/\D/g, '');
-  const mio = (pm.grupos || []).find(g => g.modelos.includes(modelo));
-  if (!mio) {
-    return `<h2 class="section-h">Según tu modelo</h2>
-      <div class="card">
-        <p>No tenemos cargado qué modelo compraste, así que no podemos decirte si tu instalación es remota o presencial.</p>
-        <a class="wa-inline" href="${waFicha}" target="_blank" rel="noopener">Pregúntanos por WhatsApp</a>
-      </div>`;
-  }
-  return `<h2 class="section-h">Tu modelo${maq?.modelo ? `, el ${esc(maq.modelo)}` : ''}</h2>
-    <div class="card modelo-card mio">
-      <p><strong>Instalación:</strong> ${esc(mio.instalacion)}</p>
-      <p><strong>En qué concentrarte:</strong> ${esc(mio.foco)}</p>
-      <p class="muted">${esc(mio.nota)}</p>
-    </div>`;
-}
-
-/* ---------- Llevarse la guía al correo ----------
-   El cliente va a ir a comprar con el celular en la mano y va a hablar con un
-   electricista. Tener la lista en su correo (y poder reenviársela) vale más que
-   tenerla solo aquí. Se le pide el correo UNA vez y se explica para qué. */
-function tarjetaCorreo() {
-  if (modoDemo()) return '';                       // en demostración no se envía nada
-  const g = state.guiaPorCorreo;
-  // Si el servidor no puede mandar correo, no se pide uno que no vamos a usar:
-  // se ofrece descargar la guía, que resuelve lo mismo (llevársela a la ferretería).
-  if (g && g.disponible === false) {
-    return `<div class="correo-caja">
-        <div class="correo-ic" aria-hidden="true">📄</div>
-        <div class="grow">
-          <strong>Llévate esta guía contigo</strong>
-          <p>Descárgala o imprímela para tenerla en la ferretería y pasársela a tu electricista.</p>
-          <button type="button" class="btn primary" id="guiaDescargar">Descargar mi guía en PDF</button>
-        </div>
-      </div>`;
-  }
-  if (g && g.enviada) {
-    return `<div class="correo-caja lista">
-        <div class="correo-ic" aria-hidden="true">✅</div>
-        <div class="grow">
-          <strong>Te enviamos esta guía a ${esc(g.email || 'tu correo')}</strong>
-          <p>Llévala contigo cuando vayas a comprar y pásasela a tu electricista. ¿No llegó? Mira en tu carpeta de spam.</p>
-        </div>
-        <button type="button" class="btn ghost sm" id="correoOtra">Enviarla a otro correo</button>
-      </div>`;
-  }
-  return `<div class="correo-caja">
-      <div class="correo-ic" aria-hidden="true">📩</div>
-      <div class="grow">
-        <strong>Llévate esta guía en tu correo</strong>
-        <p>Te mandamos la lista de compras y el checklist completos. Así los tienes en la ferretería y se los puedes reenviar a tu electricista.</p>
-        <form class="correo-form" id="correoForm">
-          <input type="email" id="correoInput" placeholder="tucorreo@ejemplo.com" autocomplete="email" aria-label="Tu correo electrónico" required>
-          <button class="btn primary" type="submit">Enviármela</button>
-        </form>
-        <div class="correo-msg" id="correoMsg" role="status" hidden></div>
-      </div>
-    </div>`;
-}
 
 async function pedirEstadoGuia() {
   if (modoDemo()) return;
