@@ -901,3 +901,13 @@ button.big{width:100%;text-align:left;font-family:inherit;cursor:pointer}
   .view{padding:0;max-width:100%}
   @page{margin:14mm}
 }
+
+/* ---------- Secciones que aún no se abren ---------- */
+.big.cerrado{background:var(--alt);border-style:dashed}
+.big.cerrado .big-txt strong{color:var(--muted)}
+.big.cerrado .big-ico{opacity:.55}
+.big.cerrado .big-arrow{color:var(--muted)}
+.card.desvio{border:2px solid var(--red);background:var(--red-50);margin-bottom:var(--s-4)}
+.card.desvio strong{display:block;font-family:var(--slab);font-size:var(--t-lg);margin-bottom:5px}
+.card.desvio p{margin:0;font-size:var(--t-sm)}
+.hoja-ayuda{margin:var(--s-3) 0 0;font-size:var(--t-sm);color:var(--muted)}

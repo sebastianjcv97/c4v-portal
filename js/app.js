@@ -45,15 +45,15 @@ function prepEstado() {
   try { n = lista.filter(c => localStorage.getItem('c4v_prep_' + state.ctx + '_' + c.id) === '1').length; } catch {}
   return { n, total: lista.length, completo: lista.length > 0 && n === lista.length };
 }
-/* La preparación es lo primero que ve un cliente nuevo (ver `entrar`), y su avance
-   manda en la pantalla de inicio. Pero YA NO BLOQUEA el resto del portal:
-   - El curso «Bienvenida» y las preguntas frecuentes explican justamente cómo
-     prepararse, y estaban detrás del candado que exigía estar preparado.
-   - Preparar el espacio depende de un electricista y toma una o dos semanas.
-     Apagar el portal durante ese tiempo dejaba solo al cliente justo cuando más
-     dudas tiene.
-   - Marcar 12 casillas no prueba nada: quien tiene prisa las marca en 8 segundos.
-   Se acompaña, no se castiga. */
+/* Rutas siempre abiertas. El resto (academia y bolsa) se abre cuando el cliente
+   completa su guía: una máquina instalada sin pozo a tierra o sin extractor se
+   daña o hace daño, y esa guía es lo que lo evita.
+   Soporte y el certificado NUNCA se cierran: pedir ayuda no se condiciona.
+   La revisión de experiencia advirtió de tres riesgos del candado, y por eso:
+   - la guía es corta (7 pasos, no 12),
+   - el motivo se explica en la propia pantalla, no con un aviso que se desvanece,
+   - y el canal de ayuda queda siempre a la vista. */
+const RUTAS_LIBRES = ['inicio', 'preparacion', 'soporte', 'certificado'];
 
 // ---------- data layer ----------
 async function loadDB() {
@@ -178,6 +178,11 @@ const views = {
         <div class="big-arrow" aria-hidden="true">→</div></a>`;
 
     const prep = prepEstado();
+    // «Cerrado», no «bloqueado»: dice cuánto falta y lleva a completarlo.
+    const btnCerrado = (ic, t, p) => `<a class="big cerrado" href="#/preparacion">
+        <div class="big-ico">${icon(ic)}</div>
+        <div class="big-txt"><strong>${t}</strong><span>Se abre cuando termines tu guía · te faltan ${p.total - p.n} de ${p.total}</span></div>
+        <div class="big-arrow" aria-hidden="true">→</div></a>`;
 
     return `
       <h1 class="saludo">${cli ? `Hola, ${esc(primerNombre(cli.nombre))}` : 'Hola'}</h1>
@@ -207,14 +212,18 @@ const views = {
 
       <div class="bigs">
         ${prep.completo ? bigBtn('#/preparacion', 'prep', 'Preparar mi espacio', 'Ya terminaste tu lista ✓') : ''}
-        ${bigBtn('#/academia', 'academia', 'Aprender a usar mi máquina', 'Videos, prácticas y las dudas más comunes')}
+        ${prep.completo
+          ? bigBtn('#/academia', 'academia', 'Aprender a usar mi máquina', 'Videos, prácticas y las dudas más comunes')
+          : btnCerrado('academia', 'Aprender a usar mi máquina', prep)}
         ${bigBtn('#/soporte', 'soporte', 'Necesito ayuda', 'Escríbenos por WhatsApp')}
         <button type="button" class="big" data-cevi="1">
           <div class="big-ico">${icon('cevi')}</div>
           <div class="big-txt"><strong>Pregúntale a CeVi</strong><span>Te responde al toque: potencias, limpieza y fallas</span></div>
           <div class="big-arrow" aria-hidden="true">→</div>
         </button>
-        ${bigBtn('#/bolsa', 'bolsa', 'Quiero más clientes', 'Trabajos de corte que te pasamos gratis')}
+        ${prep.completo
+          ? bigBtn('#/bolsa', 'bolsa', 'Quiero más clientes', 'Trabajos de corte que te pasamos gratis')
+          : btnCerrado('bolsa', 'Quiero más clientes', prep)}
       </div>`;
   },
 
@@ -358,6 +367,10 @@ const views = {
     const waFicha = waLink(`Hola, soy ${cli ? nombrePropio(cli.nombre) : 'cliente C4V'}${maq ? ` y compré una ${maq.modelo}` : ''}${maq?.pedido ? ` (pedido ${maq.pedido})` : ''}. Estoy preparando mi espacio y necesito la ficha de mi máquina: capacidad del estabilizador, diámetro del extractor, peso, amperaje y medidas de la caja.`);
 
     return `
+      ${!completo && state.veniaDe ? `<div class="card desvio">
+          <strong>Antes de ver «${esc(state.veniaDe)}», deja tu espacio listo</strong>
+          <p>Son ${total} pasos. Al terminarlos se abre todo tu portal, y tu máquina llega a un lugar seguro.</p>
+        </div>` : ''}
       ${completo
         ? `<div class="prep-ok"><strong>🎉 Tu espacio está listo</strong>
              <p>Completaste toda la guía. Ya puedes recibir tu máquina con confianza.</p>
@@ -654,6 +667,7 @@ function bind(route) {
         render('preparacion'); window.scrollTo(0, 0);
       }
     });
+    state.veniaDe = '';
     bindCorreo();
     const ih = $('#imprimirHoja'); if (ih) ih.onclick = () => window.print();
     // "¿Cómo lo hago?" pegado a cada paso: antes la explicación estaba tres
@@ -803,6 +817,13 @@ const TITLES = { inicio: 'Inicio', academia: 'Aprender a usar mi máquina', prep
 // El aviso del candado ya no existe; la preparación se acompaña, no se bloquea.
 function render(route) {
   if (!views[route]) route = 'inicio';
+  // Si va a una sección que aún no se abre, se le lleva a la guía y se le explica
+  // AHÍ por qué, en vez de con un aviso que desaparece a los segundos.
+  if (!RUTAS_LIBRES.includes(route) && !prepEstado().completo) {
+    state.veniaDe = TITLES[route] || '';
+    if (location.hash !== '#/preparacion') { location.hash = '#/preparacion'; return; }
+    route = 'preparacion';
+  }
   // Sin menú: en cualquier pantalla que no sea el inicio, un solo camino de vuelta.
   const volver = route === 'inicio' ? ''
     : `<a class="volver" href="#/inicio"><span aria-hidden="true">←</span> Volver al inicio</a>
@@ -933,8 +954,9 @@ async function entrar(cliente) {
     if (!localStorage.getItem('c4v_hola_' + cliente.id)) { localStorage.setItem('c4v_hola_' + cliente.id, '1'); primeraVez = true; }
   } catch {}
   const pe = prepEstado();
-  const sinRuta = !location.hash || location.hash === '#/' || location.hash === '#/inicio';
-  if (!pe.completo && sinRuta) {
+  // Mientras la guía no esté completa, siempre se entra por ella: es lo que el
+  // cliente necesita hoy y lo que abre el resto del portal.
+  if (!pe.completo) {
     location.hash = '#/preparacion';
     setTimeout(() => toast(primeraVez
       ? `👋 ¡Hola${cliente.nombre ? ', ' + primerNombre(cliente.nombre) : ''}! Empieza por dejar tu espacio listo`
@@ -1397,9 +1419,9 @@ function resumenImprimible(p, cli, maq) {
       <div class="hoja-cab">
         <div>
           <h2>Todo lo que necesitas, en una hoja</h2>
-          <p>Imprímela o guárdala en el celular. Ve marcando lo que ya tienes.</p>
+          <p>Guárdala en tu celular y llévala cuando vayas a comprar. Ve marcando lo que ya tienes.</p>
         </div>
-        <button type="button" class="btn primary sm no-print" id="imprimirHoja">🖨 Imprimir</button>
+        <button type="button" class="btn primary no-print" id="imprimirHoja">📄 Descargar en PDF</button>
       </div>
 
       <div class="hoja-marca">
@@ -1424,6 +1446,7 @@ function resumenImprimible(p, cli, maq) {
         <p>Capacidad del estabilizador · diámetro del extractor · peso de la máquina · amperaje y grosor del cable · medidas de la caja</p>
       </div>` : ''}
 
+      <p class="hoja-ayuda no-print">Se abrirá el cuadro de impresión: elige <strong>«Guardar como PDF»</strong> o <strong>«PDF»</strong>.</p>
       <p class="hoja-pie">¿Dudas? WhatsApp ${esc((CFG.contacto || {}).whatsapp_visible || '')} — te responde una persona, todos los días.</p>
     </section>`;
 }
@@ -1487,7 +1510,7 @@ function tarjetaCorreo() {
         <div class="grow">
           <strong>Llévate esta guía contigo</strong>
           <p>Descárgala o imprímela para tenerla en la ferretería y pasársela a tu electricista.</p>
-          <button type="button" class="btn primary" id="guiaDescargar">Descargar mi guía</button>
+          <button type="button" class="btn primary" id="guiaDescargar">📄 Descargar mi guía en PDF</button>
         </div>
       </div>`;
   }
