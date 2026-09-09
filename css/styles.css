@@ -371,7 +371,7 @@ tr:last-child td{border-bottom:none}
 #gateDoc{flex:1;min-width:0;background:var(--black-2);color:var(--on-black);border:1px solid var(--black-3);border-radius:var(--r);padding:16px;font-size:22px;font-weight:700;letter-spacing:1px;font-family:var(--sans)}
 #gateDoc:focus{outline:2px solid var(--red);outline-offset:1px;border-color:var(--red)}
 #gateDoc::placeholder{color:#6a6a6a;font-weight:400;letter-spacing:0}
-.gate-paso strong#gateDocLabel{color:var(--red)}
+.gate-paso strong#gateDocLabel{color:#FF8A8F}
 
 /* ---------- Quizzes interactivos (Academia) ---------- */
 .quiz-box{margin:10px 0 4px;display:flex;flex-direction:column;gap:8px}
@@ -930,7 +930,7 @@ body{background:var(--mesa)}
 .lista-pasos .prep-step.done .prep-step-num{color:var(--regla)}
 .lista-pasos .prep-step-txt{font-size:var(--t-md);line-height:var(--lh-snug);font-weight:500}
 .lista-pasos .prep-step.done .prep-step-txt{color:var(--grafito);text-decoration:line-through}
-.lista-pasos .prep-step-main input{width:26px;height:26px;accent-color:var(--rojo-tinta);cursor:pointer;margin:0}
+.lista-pasos .prep-step-main input{width:30px;height:30px;accent-color:var(--rojo-tinta);cursor:pointer;margin:0;flex-shrink:0}
 .lista-pasos .prep-step-check{display:none}
 .lista-pasos .prep-step-fig{grid-area:fig;margin:0;width:116px}
 .lista-pasos .prep-como{grid-area:como;padding-left:calc(2.2rem + var(--s-3))}
@@ -1177,7 +1177,8 @@ body{background:var(--mesa)}
    que ahí se habla, no se escribe. */
 .ai-btn{padding:10px 20px 10px 10px;gap:12px;align-items:center;text-align:left}
 .ai-txt{display:flex;flex-direction:column;line-height:1.25;white-space:nowrap}
-.ai-txt strong{font-weight:800;font-size:var(--t-md)}
+.ai-linea{font-size:var(--t-md);font-weight:600}
+.ai-txt strong{font-weight:800}
 .ai-txt small{font-size:var(--t-xs);font-weight:400;color:#c9c9c9}
 .ai-orbe{position:relative;width:46px;height:46px;flex-shrink:0;display:grid;place-items:center}
 .ai-orbe > *{grid-area:1/1;border-radius:50%}
@@ -1190,7 +1191,7 @@ body{background:var(--mesa)}
 @media(max-width:620px){
   .ai-btn{padding:8px 18px 8px 8px;gap:10px}
   .ai-orbe{width:44px;height:44px}
-  .ai-txt strong{font-size:var(--t-sm)}
+  .ai-linea{font-size:var(--t-sm)}
   .ai-txt small{font-size:11px}
 }
 @media (prefers-reduced-motion:reduce){ .ai-orbe-halo{animation:none} }
@@ -1204,3 +1205,8 @@ body{background:var(--mesa)}
   padding:9px 16px;font-size:var(--t-sm);font-weight:700;text-decoration:none;
   min-height:var(--tap);display:inline-flex;align-items:center}
 .cevi-wa:hover{background:#0e7a40}
+/* El enlace al Libro de Reclamaciones estaba en color de texto oscuro sobre el
+   fondo negro de la entrada: invisible (1:1). Y el rótulo rojo de cada paso se
+   quedaba en 4.42:1, justo por debajo del mínimo. */
+.gate-legal .lr-link{color:#fff}
+.gate-foot a,.gate-paso strong{color:#FF8A8F}
