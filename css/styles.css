@@ -661,3 +661,6 @@ button.big{width:100%;text-align:left;font-family:inherit;cursor:pointer}
 .boot-barra i{display:block;width:40%;height:100%;background:var(--red);border-radius:2px;animation:bootCorre 1.1s ease-in-out infinite}
 @keyframes bootCorre{0%{transform:translateX(-110%)}100%{transform:translateX(320%)}}
 @media(prefers-reduced-motion:reduce){.boot-barra i{animation:none;width:100%}}
+.card.vacio{text-align:center;padding:32px 24px}
+.card.vacio h3{font-family:var(--slab);font-size:18px;margin:0 0 8px}
+.card.vacio p{color:var(--muted);margin:0 0 16px;max-width:46ch;margin-left:auto;margin-right:auto}

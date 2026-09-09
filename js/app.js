@@ -53,10 +53,27 @@ const RUTAS_LIBRES = ['inicio', 'preparacion', 'soporte', 'certificado'];
 
 // ---------- data layer ----------
 async function loadDB() {
-  // Hosting estático (GitHub Pages / archivo local): demo directa, sin esperar un 404.
+  // Hosting estático (GitHub Pages / archivo local): el contenido fijo (cursos,
+  // guías, FAQ) sale de data.js. Lo que cambia por cliente se pide al backend.
   if (location.hostname.endsWith('github.io') || location.protocol === 'file:') { state.offline = true; return JSON.parse(JSON.stringify(window.__SEED__)); }
   try { const db = await apiGet('/api/bootstrap'); state.offline = false; return db; }
   catch { state.offline = true; return JSON.parse(JSON.stringify(window.__SEED__)); }
+}
+
+/* Con la verificación real activa, los trabajos de la Bolsa y los tickets TIENEN
+   que venir del backend. Los de data.js son ejemplos con nombres y teléfonos
+   inventados: enseñárselos a un cliente real sería ofrecerle trabajo que no
+   existe. Si el backend no responde, se muestra vacío, nunca los de ejemplo. */
+async function cargarDatosVivos() {
+  if (modoDemo()) return;
+  const base = VERIF.apiBase || '';
+  state.db.leads = [];
+  state.db.tickets = [];
+  state.leadsCargados = false;
+  try {
+    const r = await fetch(`${base}/api/leads`);
+    if (r.ok) { const j = await r.json(); if (Array.isArray(j)) { state.db.leads = j; state.leadsCargados = true; } }
+  } catch { /* sin conexión: la Bolsa se muestra vacía y lo explica */ }
 }
 function assignTicket(db, tipo, pais) {
   if (tipo === 'soporte') { const t = db.tecnicos.find(x => x.pais === pais && !x.nombre.includes('Por asignar')); return t ? t.nombre : `Soporte ${pais}`; }
@@ -507,7 +524,15 @@ const views = {
           <button class="chip" data-filter="CO">🇨🇴 Colombia</button></div>
         <button class="btn primary sm" id="newLeadBtn">+ Publicar solicitud</button></div>
       <div id="leadForm"></div>
-      <div class="list" id="leadList">${leadRows(state.db.leads)}</div>
+      ${state.db.leads.length
+        ? `<div class="list" id="leadList">${leadRows(state.db.leads)}</div>`
+        : `<div class="card vacio" id="leadList">
+             <h3>Todavía no hay trabajos publicados</h3>
+             <p>${state.leadsCargados === false && !modoDemo()
+                 ? 'No pudimos cargar los trabajos en este momento. Vuelve a intentarlo en un rato.'
+                 : 'Cuando alguien nos pida un servicio de corte, lo publicamos aquí y podrás tomarlo. Vuelve a mirar en unos días.'}</p>
+             <a class="btn ghost sm" href="${waLink('Hola, quiero que me avisen cuando publiquen trabajos en la Bolsa de C4V.')}" target="_blank" rel="noopener">Avísenme cuando haya trabajos</a>
+           </div>`}
       <h2 class="section-title">Trae más trabajos a la red</h2>
       <div class="help-card">${icon('bolsa')}
         <div class="grow"><h3>¿Conoces a alguien que necesita corte láser?</h3>
@@ -688,7 +713,12 @@ function bind(route) {
   if (route === 'soporte') bindAccordions('.faq-item');
   if (route === 'bolsa') {
     let filtro = 'todos';
-    const apply = () => { $('#leadList').innerHTML = leadRows(filtro === 'todos' ? state.db.leads : state.db.leads.filter(l => l.pais === filtro)); bindTake(); };
+    const apply = () => {
+      const lista = filtro === 'todos' ? state.db.leads : state.db.leads.filter(l => l.pais === filtro);
+      const caja = $('#leadList'); if (!caja) return;
+      caja.innerHTML = lista.length ? leadRows(lista) : '<p class="muted" style="padding:18px">No hay trabajos publicados en ese país por ahora.</p>';
+      bindTake();
+    };
     view.querySelectorAll('[data-filter]').forEach(b => b.onclick = () => { filtro = b.dataset.filter; view.querySelectorAll('.chip').forEach(c => c.classList.toggle('active', c === b)); apply(); });
     $('#newLeadBtn').onclick = () => {
       const box = $('#leadForm'); if (box.innerHTML) { box.innerHTML = ''; return; }
@@ -925,8 +955,9 @@ const docInfo = (paisCode, tipo) => {
   return (p && p[tipo]) || { doc: 'Documento', ej: '' };
 };
 
-function entrar(cliente) {
+async function entrar(cliente) {
   state.ctx = cliente.id;
+  await cargarDatosVivos();
   $('#gate').hidden = true; $('#app').hidden = false;
   const info = docInfo(cliente.pais, cliente.tipo || 'persona');
   $('#me').innerHTML = `<strong>${esc(nombrePropio(cliente.nombre))}</strong>${esc(info.doc)} ${esc(cliente.documento)}`;
