@@ -268,6 +268,14 @@ const views = {
     const faqCats = [...new Set(faqs.map(f => f.categoria))];
     return `
       <div class="page-head"><p>${esc(a.acceso)}</p></div>
+
+      ${a.seguridad ? `
+      <div class="card peligro">
+        <h2 class="section-h" style="margin-top:0">⚠️ ${esc(a.seguridad.titulo)}</h2>
+        <ul class="lista-peligro">
+          ${a.seguridad.puntos.map(x => `<li><strong>${esc(x.t)}.</strong> ${esc(x.d)}</li>`).join('')}
+        </ul>
+      </div>` : ''}
       <div class="chips-row ruta">${a.ruta.map((r, i) => {
         const t = typeof r === 'string' ? { t: r } : r;
         const href = t.href || (t.curso ? '#curso-' + t.curso : '');
@@ -345,44 +353,52 @@ const views = {
     const completo = total > 0 && hechos === total;
     const guiaDe = (k) => (p.guias || []).find(g => g.key === k);
 
-    // Mensaje para pedirle al asesor la ficha del modelo. Es el paso que
-    // desbloquea todo lo demás, así que el texto va ya escrito.
-    const waFicha = waLink(`Hola, soy ${cli ? nombrePropio(cli.nombre) : 'cliente C4V'}${maq ? ` y compré una ${maq.modelo}` : ''}${maq?.pedido ? ` (pedido ${maq.pedido})` : ''}. Estoy preparando mi espacio y necesito la ficha de mi máquina: medidas y peso de la caja, amperaje y grosor del cable, capacidad del estabilizador, diámetro de la salida de humo y si lleva compresora de aire.`);
+    // Mensaje ya escrito para pedir la ficha del modelo: es lo que destraba tres
+    // de las ocho compras, el trabajo del electricista y la medida de la puerta.
+    const waFicha = waLink(`Hola, soy ${cli ? nombrePropio(cli.nombre) : 'cliente C4V'}${maq ? ` y compré una ${maq.modelo}` : ''}${maq?.pedido ? ` (pedido ${maq.pedido})` : ''}. Estoy preparando mi espacio y necesito la ficha de mi máquina: capacidad del estabilizador, diámetro del extractor, peso, amperaje y medidas de la caja.`);
 
     return `
       ${completo
         ? `<div class="prep-ok"><strong>🎉 Tu espacio está listo</strong>
              <p>Completaste toda la guía. Ya puedes recibir tu máquina con confianza.</p>
-             <a class="btn primary sm" href="#/academia">Ir a la Academia →</a></div>`
-        : `<div class="prep-aviso"><strong>Ten esto listo antes de que llegue tu máquina</strong>
-             <p>Si preparas tu espacio a tiempo, puedes cortar el mismo día que la recibes. Si no, se queda esperando. Toma unos 15 días, así que empieza hoy.</p></div>`}
+             <a class="btn primary sm" href="#/academia">Aprender a usarla →</a></div>`
+        : `<div class="prep-aviso"><strong>Empieza por comprar lo que falta</strong>
+             <p>Si tienes todo listo cuando llegue tu máquina, cortas el mismo día. Prepararse toma unas dos semanas, así que empieza hoy.</p></div>`}
 
       ${fechaEntrega(maq)}
       ${tarjetaCorreo()}
 
-      ${p.seguridad ? `
-      <div class="card peligro">
-        <h2 class="section-h" style="margin-top:0">⚠️ ${esc(p.seguridad.titulo)}</h2>
-        <ul class="lista-peligro">
-          ${p.seguridad.puntos.map(x => `<li><strong>${esc(x.t)}.</strong> ${esc(x.d)}</li>`).join('')}
-        </ul>
+      <h2 class="section-h">1 · Tu lista de compras</h2>
+      <p class="muted seccion-bajada">Cómprala completa antes de que llegue tu máquina. Si falta algo, la instalación se detiene.</p>
+
+      ${p.fichaModelo ? `
+      <div class="card ficha-modelo">
+        <strong>${esc(p.fichaModelo.titulo)}</strong>
+        <p>${esc(p.fichaModelo.intro)}</p>
+        <a class="btn primary" href="${waFicha}" target="_blank" rel="noopener">Pedir la ficha de mi máquina<span class="sr-only"> (se abre WhatsApp)</span></a>
       </div>` : ''}
 
-      ${p.paso0 ? `
-      <div class="card paso0">
-        <span class="paso0-tag">Empieza por aquí · te toma 1 minuto</span>
-        <h2 class="section-h" style="margin-top:8px">${esc(p.paso0.titulo)}</h2>
-        <p>${esc(p.paso0.intro)}</p>
-        <ul class="ulist">${p.paso0.datos.map(d => `<li>${esc(d)}</li>`).join('')}</ul>
-        <a class="btn primary" href="${waFicha}" target="_blank" rel="noopener">Pedir la ficha de mi máquina por WhatsApp</a>
-        <p class="muted" style="font-size:14px;margin:12px 0 0">Guarda la respuesta: la vas a usar cinco veces en esta guía y se la vas a mostrar a tu electricista.</p>
-      </div>` : ''}
+      <div class="compras">
+        ${p.compras.map((c, i) => `
+          <article class="compra">
+            <div class="compra-img">
+              ${c.img ? `<img src="assets/compras/${esc(c.img)}" alt="Dibujo de ${esc(c.item)}" loading="lazy" onerror="this.remove()">` : ''}
+            </div>
+            <div class="compra-txt">
+              <h3>${i + 1}. ${esc(c.item)}</h3>
+              <p class="compra-para">${esc(c.para)}</p>
+              <p class="compra-spec">${esc(c.spec)}</p>
+              <p class="compra-donde">Dónde: ${esc(c.donde || '—')}</p>
+              ${c.pedirFicha ? '<span class="badge warn">Necesitas la ficha de tu modelo</span>' : ''}
+            </div>
+          </article>`).join('')}
+      </div>
 
-      <h2 class="section-h">Tu checklist <span class="contador" id="prepCount">${hechos} de ${total}</span></h2>
+      <h2 class="section-h">2 · Deja tu espacio listo <span class="contador" id="prepCount">${hechos} de ${total}</span></h2>
+      <p class="muted seccion-bajada">En este orden: primero lo que depende de otras personas y toma días.</p>
       <div class="card">
-        <p class="prep-list-intro">Están en el orden en que conviene hacerlos: primero lo que depende de otras personas y toma días. Toca «¿Cómo lo hago?» si no sabes por dónde empezar.</p>
         <div class="bar" style="margin:0 0 20px"><i id="prepBar" style="width:${total ? Math.round(hechos / total * 100) : 0}%"></i></div>
-        <div class="prep-imprimir"><button class="btn ghost sm" id="printPrep">🖨 Imprimir mi checklist</button></div>
+        <div class="prep-imprimir"><button class="btn ghost sm" id="printPrep">🖨 Imprimir esta guía</button></div>
         <ol id="prepList" class="prep-steps">${p.checklist.map((c, i) => {
           const g = c.guia ? guiaDe(c.guia) : null;
           return `<li class="prep-step${done(c.id) ? ' done' : ''}" data-prep="${c.id}">
@@ -404,17 +420,8 @@ const views = {
         }).join('')}</ol>
       </div>
 
-      <h2 class="section-h">Tu lista de compras</h2>
-      <p class="muted" style="margin:0 0 12px;font-size:15px">Cómprala completa antes de que llegue. Si falta algo, la instalación se detiene.</p>
-      <div class="card tabla-scroll" style="padding:0">
-        <table class="tabla-params"><thead><tr><th>Qué</th><th>Para qué</th><th>Cuál exactamente</th><th>Dónde</th></tr></thead>
-        <tbody>${p.compras.map(c => `<tr>
-          <td><strong>${esc(c.item)}</strong></td><td>${esc(c.para)}</td><td>${esc(c.spec)}</td><td class="muted">${esc(c.donde || '—')}</td>
-        </tr>`).join('')}</tbody></table>
-      </div>
-
       ${p.acceso ? `
-      <h2 class="section-h">${esc(p.acceso.titulo)}</h2>
+      <h2 class="section-h">3 · ${esc(p.acceso.titulo)}</h2>
       <div class="card acceso">
         <div class="acceso-diag" aria-hidden="true">
           <svg viewBox="0 0 220 150" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -433,24 +440,18 @@ const views = {
 
       ${bloqueModelo(p, maq, waFicha)}
 
-      ${p.kit ? `
-      <h2 class="section-h">${esc(p.kit.titulo)}</h2>
-      <div class="card">
-        <p style="margin:0 0 12px">${esc(p.kit.nota)}</p>
-        <div class="kit-grid">${p.kit.items.map(k => `<div class="kit-item">
-            ${k.img ? `<img src="assets/prep/${esc(k.img)}" alt="" loading="lazy" onerror="this.remove()">` : ''}
-            <strong>${esc(k.t)}</strong><span>${esc(k.d)}</span>
-          </div>`).join('')}</div>
-      </div>` : ''}
-
       ${p.diaEntrega ? `
-      <h2 class="section-h">${esc(p.diaEntrega.titulo)}</h2>
+      <h2 class="section-h">4 · ${esc(p.diaEntrega.titulo)}</h2>
       <div class="card dia-entrega">
         <p>${esc(p.diaEntrega.intro)}</p>
         <ol class="acceso-pasos">${p.diaEntrega.pasos.map(x => `<li${x.destacado ? ' class="destacado"' : ''}>${esc(x.t)}</li>`).join('')}</ol>
       </div>` : ''}
 
-      <p class="muted" style="margin-top:24px;font-size:14px">${esc(p.modelos)}</p>`;
+      <div class="help-card" style="margin-top:28px">
+        <div class="grow"><h3>Ya está tu espacio, ¿y ahora?</h3>
+          <p>Cuando tengas todo listo, entra a la Academia: ahí están las reglas de seguridad y los cursos para usarla desde el primer día.</p></div>
+        <a class="btn primary sm" href="#/academia">Ir a la Academia</a>
+      </div>`;
   },
 
   soporte() {

@@ -107,6 +107,17 @@ window.__SEED__ = {
   ],
 
   academia: {
+    /* Las reglas que pueden costarte la máquina o un accidente. Van aquí, en el
+       contenido de USO: en la guía de preparación asustaban a alguien que todavía
+       no ha encendido nada. */
+    seguridad: {
+      titulo: "Tres cosas que no puedes saltarte",
+      puntos: [
+        { t: "Nunca cortes PVC", d: "Suelta gas cloro: te hace daño a ti y corroe la máquina por dentro." },
+        { t: "Nunca enciendas el láser sin el enfriador", d: "El tubo se sobrecalienta y se quema. Es la falla más cara y la más fácil de evitar." },
+        { t: "Nunca la dejes cortando sola", d: "Quédate cerca mientras trabaja. Ten el extintor a la mano." }
+      ]
+    },
     acceso: "Tu academia está aquí, en tu portal: acceso gratuito de por vida, incluido con tu máquina C4V. Todos los cursos, para todos los clientes.",
     plataforma: "Academia C4V · guiados por CeVi el Toro 🐂 y Lumo el Búho 🦉",
     pilares: [
@@ -346,16 +357,11 @@ window.__SEED__ = {
        `tiempo`: lo que tarda en la vida real — es lo que hace que el cliente
        llame al electricista hoy y no la próxima semana.
        `opcional`: el paso puede no aplicar a su modelo. */
-    paso0: {
-      titulo: "Antes de comprar nada, pide estos datos",
-      intro: "Cinco datos dependen del modelo exacto que compraste. Sin ellos no puedes comprar el estabilizador ni el extractor, ni medir bien la puerta. Pídelos ahora: te los pasamos el mismo día.",
-      datos: [
-        "Amperaje y grosor del cable que necesita tu máquina",
-        "Qué capacidad de estabilizador comprar",
-        "Diámetro del tubo del extractor",
-        "Si tu modelo usa compresor de aire",
-        "Cuánto mide y pesa la caja en la que llega"
-      ]
+    /* Tres de las ocho compras dependen del modelo exacto. En vez de una sección
+       aparte, el aviso vive DENTRO de la lista, que es donde el cliente lo necesita. */
+    fichaModelo: {
+      titulo: "Tres de estas compras dependen de tu modelo",
+      intro: "Pídenos la ficha de tu máquina antes de comprar. Te la pasamos el mismo día e incluye la capacidad del estabilizador, el diámetro del extractor, el peso que debe aguantar la mesa, y también el amperaje para tu electricista y las medidas de la caja para medir la puerta."
     },
     checklist: [
       { id: "a1", t: "Mide las puertas y el camino: ¿pasa la máquina embalada hasta su lugar?", guia: "acceso", tiempo: "20 minutos" },
@@ -382,17 +388,6 @@ window.__SEED__ = {
         "¿Dudas? Mándanos fotos y medidas por WhatsApp y lo revisamos contigo antes del despacho."
       ]
     },
-    kit: {
-      titulo: "Kit de mantenimiento — lo esencial",
-      nota: "Tenlo listo desde el primer día. Es lo que tu máquina necesita para durar años:",
-      items: [
-        { t: "2 galones de agua destilada", d: "También la venden como «agua desionizada» o «agua para baterías». Es para el enfriador." },
-        { t: "Alcohol isopropílico", d: "Para limpiar el lente y los espejos", img: "kit-espejo.jpg" },
-        { t: "Aceite 3-EN-1", d: "Para lubricar los rieles" },
-        { t: "Paño de microfibra o algodón", d: "Que no suelte pelusa", img: "kit-pano.jpg" },
-        { t: "Hisopos de buena calidad", d: "De marca conocida — para el lente", img: "e9-consumibles.jpg" }
-      ]
-    },
     guias: [
       { key: "electrico", titulo: "El punto de 220V", pasos: ["Voltaje: 220V.", "Solo para la máquina: tiene que tener su propia llave en el tablero (llave térmica), sin compartirla con otros equipos. Si la comparte, se cae la corriente y falla el corte.", "El estabilizador va entre el enchufe y la máquina.", "El amperaje y el grosor del cable dependen de tu modelo: es uno de los cinco datos que te pasa tu asesor."] },
       { key: "tierra", titulo: "El pozo a tierra", pasos: ["Es un cable enterrado que desvía la electricidad que se escapa. Protege tres cosas: a ti, a la electrónica de la máquina y a la calidad del corte.", "No basta el tercer agujero del enchufe: tiene que haber un pozo de verdad conectado.", "Que un electricista lo revise y lo mida antes de que llegue la máquina.", "Si no lo tienes, hay que construirlo y toma días. Es lo que más retrasa las instalaciones: empieza por aquí."] },
@@ -403,23 +398,31 @@ window.__SEED__ = {
       { key: "computadora", titulo: "La computadora", pasos: ["Necesitas una computadora o laptop con Windows para usar C4VTech, el programa con el que diseñas y envías los cortes.", "Se conecta a la máquina por cable de red o por USB.", "No necesita ser potente, pero sí tener Windows y un puerto libre.", "El curso de C4VTech en tu Academia te muestra la instalación paso a paso."] },
       { key: "acceso", titulo: "El día que llega", pasos: ["Ten a alguien que ayude a bajarla y moverla: pesa bastante y viene en una caja grande.", "Deja libre el camino desde la puerta hasta su lugar.", "Antes de encenderla revisa: extractor conectado, enfriador con agua destilada, corriente y tierra listas.", "Enciende siempre en este orden: 1) estabilizador, 2) enfriador, 3) máquina.", "Tu ingeniero C4V te acompaña hasta tu primer corte."] }
     ],
-    seguridad: {
-      titulo: "Tres cosas que no puedes saltarte",
-      puntos: [
-        { t: "Nunca cortes PVC", d: "Suelta gas cloro: te hace daño a ti y corroe la máquina por dentro." },
-        { t: "Nunca enciendas el láser sin el enfriador", d: "El tubo se sobrecalienta y se quema. Es la falla más cara y la más fácil de evitar." },
-        { t: "Nunca la dejes cortando sola", d: "Quédate cerca mientras trabaja. Ten el extintor a la mano." }
-      ]
-    },
     compras: [
-      { item: "Agua destilada (2 galones)", para: "Para el enfriador que viene con tu máquina", spec: "En las tiendas se pide como «agua de batería». Sirve destilada o desmineralizada. NO sirve la del caño, hervida, mineral ni de mesa: los minerales arruinan el tubo y eso no lo cubre la garantía", donde: "Grifos, lubricentros y ferreterías" },
-      { item: "Aceite 3-EN-1", para: "Para lubricar los rieles", spec: "Marca 3-EN-UNO. No sirve el WD-40 ni el aceite de motor o de cocina", donde: "Ferreterías" },
-      { item: "Alcohol isopropílico al 99%", para: "Para limpiar el lente y los espejos", spec: "Al 99%, NO el alcohol medicinal de farmacia al 70%: ese tiene agua y mancha el lente. Súmale hisopos de buena marca (los baratos sueltan pelusa) y un paño de microfibra", donde: "Tiendas de electrónica" },
-      { item: "Estabilizador de voltaje", para: "Para que los cortes de luz no dañen la electrónica", spec: "⚠️ La capacidad depende de tu modelo — pídesela a tu asesor antes de comprarlo", donde: "Tiendas de electricidad" },
-      { item: "Extractor, manguera y abrazaderas", para: "Para sacar el humo a la calle", spec: "Son tres cosas: el motor extractor, la manguera flexible de aluminio (compra un metro de más) y dos abrazaderas para sujetarla. ⚠️ El diámetro depende de tu modelo: pídeselo a tu asesor", donde: "Ferreterías y tiendas de ventilación" },
-      { item: "Extintor", para: "Por seguridad", spec: "De polvo químico seco tipo ABC. Cuélgalo a la vista, cerca de la máquina", donde: "Tiendas de seguridad industrial" },
-      { item: "Mesa o base firme", para: "Para apoyar la máquina", spec: "Solo si el piso no está parejo o quieres trabajarla a otra altura. Tiene que aguantar el peso de tu modelo (pídeselo a tu asesor)", donde: "Carpinterías o tiendas de muebles" },
-      { item: "Material de prueba", para: "Para tus primeros cortes", spec: "MDF o acrílico de 3 mm. Nunca PVC", donde: "Madereras y tiendas de acrílico" }
+      { item: "Estabilizador de voltaje", img: "estabilizador.png", para: "Para que los bajones de luz no quemen la electrónica",
+        spec: "La capacidad depende de tu modelo. No es lo mismo que una zapatilla con protector de picos.",
+        donde: "Tiendas de electricidad", pedirFicha: true },
+      { item: "Extractor, manguera y abrazaderas", img: "extractor.png", para: "Para sacar el humo a la calle",
+        spec: "Son tres cosas: el motor, la manguera flexible de aluminio (compra un metro de más) y dos abrazaderas. El diámetro depende de tu modelo.",
+        donde: "Ferreterías y tiendas de ventilación", pedirFicha: true },
+      { item: "Agua destilada · 2 galones", img: "agua.png", para: "Para el enfriador (viene incluido con tu máquina)",
+        spec: "En las tiendas se pide como «agua de batería». NO sirve la del caño, hervida ni mineral: los minerales arruinan el tubo, y eso no lo cubre la garantía.",
+        donde: "Grifos, lubricentros y ferreterías" },
+      { item: "Alcohol isopropílico al 99%, hisopos y paño de microfibra", img: "alcohol.png", para: "Para limpiar el lente y los espejos",
+        spec: "Al 99%, no el alcohol de farmacia al 70%: ese tiene agua y mancha el lente. Los hisopos baratos sueltan pelusa.",
+        donde: "Tiendas de electrónica" },
+      { item: "Aceite 3-EN-1", img: "aceite.png", para: "Para lubricar los rieles",
+        spec: "Marca 3-EN-UNO. No sirve el WD-40 ni el aceite de motor o de cocina.",
+        donde: "Ferreterías" },
+      { item: "Extintor", img: "extintor.png", para: "Por seguridad",
+        spec: "De polvo químico seco tipo ABC. Cuélgalo a la vista, cerca de la máquina.",
+        donde: "Tiendas de seguridad industrial" },
+      { item: "Mesa o base firme", img: "mesa.png", para: "Para apoyar la máquina",
+        spec: "Solo si el piso no está parejo o quieres trabajarla a otra altura. Tiene que aguantar el peso de tu modelo.",
+        donde: "Carpinterías o tiendas de muebles", pedirFicha: true },
+      { item: "Material para tus primeras pruebas", img: "material.png", para: "Para tus primeros cortes",
+        spec: "MDF o acrílico de 3 mm. Nunca PVC.",
+        donde: "Madereras y tiendas de acrílico" }
     ],
     /* Según el modelo: solo se muestra el grupo del cliente. Los modelos son los
        que están realmente en catálogo (no existen 13100 ni 18120). */
