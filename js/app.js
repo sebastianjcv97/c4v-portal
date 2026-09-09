@@ -156,6 +156,8 @@ const ICONS = {
   academia: '<path d="M12 7c0-1.7-2.2-3-5-3s-4 .7-4 .7v13s1.2-.7 4-.7 5 1.3 5 1.3"/><path d="M12 7c0-1.7 2.2-3 5-3s4 .7 4 .7v13s-1.2-.7-4-.7-5 1.3-5 1.3"/>',
   // Casilla marcada: los primeros pasos.
   prep: '<rect x="3.5" y="3.5" width="17" height="17" rx="3"/><path d="M8 12.2l2.8 2.8L16.5 9.3"/>',
+  // Casa: el inicio.
+  inicio: '<path d="M3.5 10.5L12 3.5l8.5 7"/><path d="M5.5 9.5v10h13v-10"/><path d="M9.5 19.5v-6h5v6"/>',
   // Signo de pregunta: dudas.
   help: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9.3a2.5 2.5 0 1 1 3.3 2.4c-.8.3-1.2.9-1.2 1.7"/><path d="M11.6 16.6h.8"/>'
 };
@@ -2482,7 +2484,14 @@ function pintarPieLegal() {
 }
 
 // ---------- init ----------
+/* Los iconos del menú se pintan aquí y no en el HTML para no repetir el SVG
+   entero tres veces: el <span> solo lleva el nombre del icono. */
+function pintarIconosMenu() {
+  document.querySelectorAll('.menu-ic[data-ic]').forEach(el => { el.innerHTML = icon(el.dataset.ic); });
+}
+
 async function init() {
+  pintarIconosMenu();
   state.db = await loadDB();
   const cargando = document.getElementById('bootCargando');
   if (cargando) cargando.remove();

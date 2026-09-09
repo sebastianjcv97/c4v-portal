@@ -1331,3 +1331,16 @@ body{background:var(--mesa)}
 .reglas strong{font-family:var(--slab);font-size:var(--t-lg);color:var(--rojo-tinta);line-height:var(--lh-snug)}
 .reglas span{font-size:var(--t-md);line-height:var(--lh-base);max-width:var(--medida)}
 .bajada{margin:0 0 var(--s-4);font-size:var(--t-md);color:var(--grafito);max-width:var(--medida)}
+
+/* Icono en cada pestaña del menú: en el teléfono se reconoce la forma antes que
+   la palabra, y "Primeros pasos" en 12px cuesta leer sobre negro. */
+.menu a{gap:7px}
+.menu-ic{display:flex;flex-shrink:0}
+.menu-ic .ic{width:18px;height:18px}
+@media(max-width:620px){
+  /* Icono arriba y palabra debajo: así caben los tres con el dedo cómodo.
+     La barra se ajusta para no comerse la pantalla. */
+  .topbar{padding:8px 16px 6px;gap:4px}
+  .menu a{flex-direction:column;gap:2px;padding:4px;line-height:1.1;min-height:46px}
+  .menu-ic .ic{width:20px;height:20px}
+}
