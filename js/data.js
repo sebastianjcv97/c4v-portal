@@ -382,11 +382,7 @@ window.__SEED__ = {
        pantalla del paso: antes estaba escondido detrás de un «¿Cómo lo hago?»
        que había que pulsar, y nadie pulsa lo que no sabe que necesita. */
     checklist: [
-      { id: "p1", t: "Compra lo que necesitas", lista: true, detalle: [
-        "Son cinco cosas y las vas a usar desde el primer día.",
-        "Se consiguen en ferreterías, grifos y tiendas de electrónica.",
-        "Si no encuentras alguna, escríbenos y te decimos dónde."
-      ] },
+      { id: "p1", t: "Compra lo que necesitas", lista: true },
       { id: "p2", t: "Mide las puertas y el camino", img: "puerta.png", detalle: [
         "Mide el ancho y el alto de las puertas, los pasillos y los giros de escalera.",
         "Escríbenos y te pasamos las medidas de la caja de tu máquina.",

@@ -1272,3 +1272,62 @@ body{background:var(--mesa)}
 .gate-tipos.bloqueado,.gate-paises.bloqueado{opacity:.45;pointer-events:none}
 #gateDoc:disabled,#gateTel:disabled{opacity:.5;cursor:default}
 .codigo-prueba{font-size:20px;letter-spacing:.14em;color:#FF8A8F;display:inline-block;margin-top:4px}
+/* El teléfono lleva un icono a la izquierda y la pista como marca de agua. */
+.gate-row-tel{display:flex;align-items:center;gap:10px;background:var(--black-2);
+  border:1px solid #5a5a5a;border-radius:var(--r);padding:0 14px}
+.gate-row-tel:focus-within{outline:2px solid var(--red);outline-offset:1px;border-color:var(--red)}
+.gate-tel-ic{flex-shrink:0;width:22px;height:22px;color:#8a8a8a;display:flex}
+.gate-tel-ic svg{width:100%;height:100%}
+.gate-row-tel #gateTel{background:none;border:none;padding:16px 0}
+.gate-row-tel #gateTel:focus{outline:none;border:none}
+
+/* ---------- Guía: flechas grandes y marca reversible ----------
+   Se pasa de paso con el pulgar, sin buscar un enlace pequeño, y se puede
+   desmarcar lo que se marcó por error. */
+.paso-nav{display:flex;align-items:center;gap:12px;margin-top:28px}
+.paso-flecha{flex-shrink:0;width:60px;height:60px;border-radius:50%;
+  background:var(--papel);border:2px solid var(--tinta);color:var(--tinta);
+  display:flex;align-items:center;justify-content:center;cursor:pointer;
+  transition:background .14s,color .14s}
+.paso-flecha svg{width:28px;height:28px}
+.paso-flecha:hover:not(:disabled){background:var(--tinta);color:var(--papel)}
+.paso-flecha:disabled{opacity:.2;cursor:default}
+.paso-marca{flex:1;min-height:60px;border-radius:var(--r-full);cursor:pointer;
+  background:var(--rojo-tinta);border:2px solid var(--rojo-tinta);color:#fff;
+  font-family:var(--sans);font-size:var(--t-md);font-weight:700;
+  display:flex;align-items:center;justify-content:center;gap:8px;padding:0 12px}
+.paso-marca:hover{background:#a80207;border-color:#a80207}
+.paso-marca.hecho{background:var(--papel);border-color:var(--ok);color:var(--ok)}
+.paso-marca.hecho:hover{background:var(--ok-50)}
+.paso-marca-ic{font-size:20px;line-height:1}
+@media(max-width:400px){
+  .paso-flecha{width:52px;height:52px}
+  .paso-marca{font-size:var(--t-sm);min-height:52px}
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   DESTINOS: botones grandes que abren una pantalla
+   La Academia era una sola página con todo seguido. Ahora su portada son
+   cinco botones y cada uno lleva a lo suyo.
+   ════════════════════════════════════════════════════════════════════════ */
+.destinos{display:flex;flex-direction:column;gap:var(--s-3)}
+.destino{display:flex;align-items:center;gap:var(--s-4);width:100%;text-align:left;
+  background:var(--papel);border:2px solid var(--regla);border-radius:var(--r-lg);
+  padding:var(--s-4) var(--s-5);min-height:76px;cursor:pointer;
+  font-family:var(--sans);color:var(--tinta);text-decoration:none;
+  transition:border-color .16s}
+.destino:hover{border-color:var(--tinta)}
+.destino-txt{display:flex;flex-direction:column;gap:3px;flex:1;min-width:0}
+.destino-txt strong{font-family:var(--slab);font-size:var(--t-lg);line-height:var(--lh-snug)}
+.destino-txt small{font-size:var(--t-sm);color:var(--grafito)}
+.destino-flecha{font-size:26px;color:var(--grafito);line-height:1;flex-shrink:0}
+.destino.peligro{border-color:var(--rojo-tinta)}
+.destino.peligro strong{color:var(--rojo-tinta)}
+
+/* Las tres reglas: una debajo de otra, sin caja de aviso ni adornos. */
+.reglas{list-style:none;margin:0;padding:0;border-top:2px solid var(--tinta)}
+.reglas li{display:flex;flex-direction:column;gap:4px;padding:var(--s-4) 0;
+  border-bottom:1px solid var(--regla)}
+.reglas strong{font-family:var(--slab);font-size:var(--t-lg);color:var(--rojo-tinta);line-height:var(--lh-snug)}
+.reglas span{font-size:var(--t-md);line-height:var(--lh-base);max-width:var(--medida)}
+.bajada{margin:0 0 var(--s-4);font-size:var(--t-md);color:var(--grafito);max-width:var(--medida)}

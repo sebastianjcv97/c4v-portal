@@ -142,16 +142,25 @@ const CANDADO = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stro
 const SEAL = `<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Certificado de Calidad C4V"><circle cx="100" cy="100" r="96" fill="#fdeeee" stroke="#F9020B" stroke-width="5"/><circle cx="100" cy="100" r="84" fill="none" stroke="#F9020B" stroke-width="1.5" stroke-dasharray="2 4"/><text x="100" y="54" text-anchor="middle" font-family="'Roboto Slab', serif" font-size="12" font-weight="700" letter-spacing="2" fill="#c40309">CERTIFICADO</text><text x="100" y="70" text-anchor="middle" font-family="'Roboto Slab', serif" font-size="10" letter-spacing="4" fill="#141414">DE CALIDAD</text><text x="100" y="121" text-anchor="middle" font-family="'Roboto Slab', serif" font-size="38" font-weight="800" fill="#F9020B">C4V</text><text x="100" y="150" text-anchor="middle" font-family="'Roboto', sans-serif" font-size="8.5" font-weight="700" letter-spacing="1.5" fill="#141414">PROBADA · CALIBRADA · LISTA</text></svg>`;
 
 // Íconos de línea (profesional, sin emojis)
+/* Iconos de línea, trazo grueso, pensados para leerse de un vistazo en un
+   teléfono. Cada uno dibuja la cosa, no una metáfora: un globo de conversación
+   para pedir ayuda, un maletín para los encargos, tres figuras para los diseños. */
 const ICONS = {
-  academia: '<path d="M12 6.5C12 5 10 4 7.5 4S4 4.8 4 4.8v13s1-.8 3.5-.8 4.5 1 4.5 1"/><path d="M12 6.5C12 5 14 4 16.5 4S20 4.8 20 4.8v13s-1-.8-3.5-.8-4.5 1-4.5 1"/><path d="M12 6.5v11"/>',
-  soporte: '<path d="M4 5.5A1.5 1.5 0 0 1 5.5 4h13A1.5 1.5 0 0 1 20 5.5v9a1.5 1.5 0 0 1-1.5 1.5H9l-4.5 4z"/>',
-  bolsa: '<rect x="3" y="7.5" width="18" height="12" rx="2"/><path d="M8.5 7.5v-2A1.5 1.5 0 0 1 10 4h4a1.5 1.5 0 0 1 1.5 1.5v2"/>',
-  disenos: '<rect x="4" y="4" width="6.5" height="6.5" rx="1.2"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.2"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.2"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.2"/>',
-  prep: '<path d="M9 3v4M15 3v4M7 7h10v5a5 5 0 0 1-10 0z"/><path d="M12 17v4"/>',
-  cevi: '<path d="M4 5.5A1.5 1.5 0 0 1 5.5 4h13A1.5 1.5 0 0 1 20 5.5v7A1.5 1.5 0 0 1 18.5 14H9l-4.5 3.5z"/><path d="M9 8.5h6M9 11h3.5"/>',
-  help: '<circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.4 2.4 0 1 1 3.1 2.3c-.7.3-1.1.8-1.1 1.6"/><path d="M12 16.4h.01"/>'
+  // Globo de conversación con tres puntos: se habla con una persona.
+  soporte: '<path d="M20 12.5a7.5 7.5 0 0 1-11 6.6L4 20.5l1.5-4.5A7.5 7.5 0 1 1 20 12.5z"/><path d="M8.5 12.5h.01M12 12.5h.01M15.5 12.5h.01"/>',
+  // Maletín: encargos de trabajo.
+  bolsa: '<rect x="3" y="7.5" width="18" height="12.5" rx="2.5"/><path d="M8.5 7.5V6a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v1.5"/><path d="M3 12.5h18"/>',
+  // Tres figuras: un cuadrado, un círculo y un triángulo. Eso es un diseño.
+  disenos: '<rect x="3.5" y="3.5" width="8" height="8" rx="1.5"/><circle cx="17" cy="7.5" r="4"/><path d="M7.5 13.5l4.5 7h-9z"/>',
+  // Libro abierto: aprender.
+  academia: '<path d="M12 7c0-1.7-2.2-3-5-3s-4 .7-4 .7v13s1.2-.7 4-.7 5 1.3 5 1.3"/><path d="M12 7c0-1.7 2.2-3 5-3s4 .7 4 .7v13s-1.2-.7-4-.7-5 1.3-5 1.3"/>',
+  // Casilla marcada: los primeros pasos.
+  prep: '<rect x="3.5" y="3.5" width="17" height="17" rx="3"/><path d="M8 12.2l2.8 2.8L16.5 9.3"/>',
+  // Signo de pregunta: dudas.
+  help: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9.3a2.5 2.5 0 1 1 3.3 2.4c-.8.3-1.2.9-1.2 1.7"/><path d="M11.6 16.6h.8"/>'
 };
-const icon = (n) => `<svg class="ic" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${ICONS[n] || ''}</svg>`;
+
+const icon = (n) => `<svg class="ic" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS[n] || ''}</svg>`;
 
 // Diagramas simples para la guía de preparación (accentos en currentColor = rojo de marca)
 const DIAG = {
@@ -165,6 +174,85 @@ const DIAG = {
 const diag = (k) => `<svg class="diag" aria-hidden="true" viewBox="0 0 220 120" fill="none">${DIAG[k] || ''}</svg>`;
 
 // ---------- vistas ----------
+/* ---------- Las pantallas de la Academia ----------
+   Una por destino. Cada una empieza con el enlace de vuelta y no lleva nada
+   que no sea de esa pantalla. */
+const volverAcademia = '<a class="volver" href="#/academia"><span aria-hidden="true">←</span> Academia</a>';
+
+function vistaSeguridad(a) {
+  const s = a.seguridad;
+  if (!s) return volverAcademia;
+  return `${volverAcademia}
+    <ul class="reglas">
+      ${s.puntos.map(x => `<li><strong>${esc(x.t)}</strong><span>${esc(x.d)}</span></li>`).join('')}
+    </ul>`;
+}
+
+function vistaCursos(a) {
+  const fmtDur = (sg) => `${Math.floor(sg / 60)}:${String(sg % 60).padStart(2, '0')}`;
+  const visto = (v) => { try { return localStorage.getItem('c4v_video_' + state.ctx + '_' + v) === '1'; } catch { return false; } };
+  const leccion = (l) => typeof l === 'string'
+    ? `<li class="lec-texto">${esc(l)}</li>`
+    : `<li class="lesson-video${visto(l.v) ? ' visto' : ''}" data-video="${esc(l.v)}">
+         <button type="button" class="lv-btn">
+           <span class="lv-tit">${esc(l.t)}</span>
+           <span class="lv-dur">${fmtDur(l.dur)}</span>
+         </button>
+         <div class="lv-player" hidden></div>
+       </li>`;
+  const disponibles = (a.cursos || []).filter(c => c.estado === 'disponible');
+  const pronto = (a.cursos || []).filter(c => c.estado !== 'disponible');
+  return `${volverAcademia}
+    ${disponibles.map((c, i) => `
+      <div class="course" id="curso-${esc(c.id)}">
+        <button type="button" class="course-head" aria-expanded="false">
+          <div class="course-ico">${i + 1}</div>
+          <div class="grow"><h3>${esc(c.titulo)}</h3></div>
+          <span class="chev" aria-hidden="true">+</span>
+        </button>
+        <div class="course-body">
+          ${c.modulos.map(m => `<div class="module">
+            <h4>${esc(m.titulo)}</h4>
+            ${m.lecciones.length ? `<ul class="lessons">${m.lecciones.map(leccion).join('')}</ul>` : ''}
+          </div>`).join('')}
+        </div>
+      </div>`).join('')}
+    ${pronto.length ? `<ul class="proximo">${pronto.map(c => `<li>${esc(c.titulo)}</li>`).join('')}</ul>` : ''}`;
+}
+
+function vistaParametros(a) {
+  const p = a.parametros;
+  if (!p) return volverAcademia;
+  return `${volverAcademia}
+    <p class="bajada">${esc(p.intro)}</p>
+    <div class="tabla-scroll">
+      <table class="tabla-params"><thead><tr>
+        <th>Material</th><th>Grosor</th><th>Corte</th><th>Marcado</th><th>Grabado</th>
+      </tr></thead>
+      <tbody>${p.filas.map(f => `<tr><td><strong>${esc(f.m)}</strong></td><td>${esc(f.g)}</td><td>${esc(f.corte)}</td><td>${esc(f.marcado)}</td><td>${esc(f.grabado)}</td></tr>`).join('')}</tbody></table>
+    </div>
+    <p class="bajada">${esc(p.nota)}</p>`;
+}
+
+function vistaGuias(a) {
+  const g = a.guiasPdf || [];
+  return `${volverAcademia}
+    <div class="destinos">
+      ${g.map(x => `<button type="button" class="destino" data-guia="${esc(x.archivo)}">
+        <span class="destino-txt"><strong>${esc(x.titulo)}</strong><small>${esc(x.tam)}</small></span>
+        <span class="destino-flecha" aria-hidden="true">↓</span>
+      </button>`).join('')}
+    </div>`;
+}
+
+function vistaPreguntas(faqs) {
+  return `${volverAcademia}
+    ${faqs.map(f => `<div class="faq-item">
+      <button type="button" class="faq-q" aria-expanded="false"><span>${esc(f.pregunta)}</span><span class="chev" aria-hidden="true">+</span></button>
+      <div class="faq-a">${esc(f.respuesta)}</div>
+    </div>`).join('')}`;
+}
+
 const views = {
   /* Pantalla única: saludo + tu máquina + 5 botones grandes. Nada más.
      Todo lo demás vive DENTRO de esos botones. */
@@ -195,10 +283,10 @@ const views = {
         <div class="maq-txt">
           <strong>Tu láser ${esc(maq.modelo)}</strong>
           <span>${certificada
-            ? 'Probada y calibrada. Ver tu Certificado de Calidad'
+            ? 'Probada y calibrada'
             : enRevision
-              ? 'La estamos probando y calibrando. Ver qué significa'
-              : 'Ver tu Certificado de Calidad'}</span>
+              ? 'La estamos probando'
+              : 'Ver tu certificado'}</span>
           ${lista.length > 1 ? `<span class="muted">y ${lista.length - 1} máquina${lista.length > 2 ? 's' : ''} más</span>` : ''}
         </div>
         <div class="big-arrow" aria-hidden="true">›</div></a>` : ''}
@@ -219,136 +307,44 @@ const views = {
       <div class="bigs">
         <!-- CeVi no va aquí: el botón flotante lo ofrece en todas las pantallas. -->
         ${bigBtn('#/soporte', 'soporte', 'Necesito ayuda', 'Escríbenos por WhatsApp')}
-        ${bigBtn('#/bolsa', 'bolsa', 'Trabajos para ti', 'Encargos de corte que te pasamos gratis')}
-        ${bigBtn('#/plantillas', 'disenos', 'Diseños para cortar', 'Listos para usar, incluidos con tu máquina')}
+        ${bigBtn('#/bolsa', 'bolsa', 'Trabajos para ti', 'Encargos de corte, gratis')}
+        ${bigBtn('#/plantillas', 'disenos', 'Diseños para cortar', 'Incluidos con tu máquina')}
       </div>`;
   },
 
-  academia() {
-    const a = state.db.academia, faqs = state.db.faqs, m = state.db.modelos;
-    const fmtDur = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
-    const vistoKey = (v) => 'c4v_video_' + state.ctx + '_' + v;
-    const visto = (v) => { try { return localStorage.getItem(vistoKey(v)) === '1'; } catch { return false; } };
-    // Una lección puede ser texto (string) o video ({t, v, dur})
-    const leccion = (l) => typeof l === 'string'
-      ? `<li>${esc(l)}</li>`
-      : `<li class="lesson-video${visto(l.v) ? ' visto' : ''}" data-video="${esc(l.v)}">
-           <button type="button" class="lv-btn">
-             <span class="lv-play" aria-hidden="true">▶</span>
-             <span class="lv-tit">${esc(l.t)}</span>
-             <span class="lv-dur">${visto(l.v) ? 'visto, ' : ''}${fmtDur(l.dur)}</span>
-           </button>
-           <div class="lv-player" hidden></div>
-         </li>`;
-    const mejorPuntaje = (k) => { try { return JSON.parse(localStorage.getItem('c4v_quiz_' + state.ctx + '_' + k) || 'null'); } catch { return null; } };
-    // Sirve para CUALQUIER curso (c0, c1, c2, c3…). Solo cuenta preguntas bien formadas,
-    // para no romper la vista si otro agente aún está agregando quizzes en data.js.
-    const preguntasValidas = (m) => (m.preguntas || []).filter(p => p && p.q && Array.isArray(p.opciones) && p.opciones.length);
-    const quizBox = (c, m, mi) => {
-      const preguntas = preguntasValidas(m);
-      if (!preguntas.length) return '';
-      const k = c.id + '-' + mi, mejor = mejorPuntaje(k);
-      const logro = mejor ? `<span class="qz-logro${mejor.p >= 70 ? ' ok' : ''}">${mejor.p >= 70 ? '🏅' : '📝'} Tu mejor puntaje: ${mejor.b}/${mejor.n}</span>` : '';
-      return `<div class="quiz-box" data-key="${k}" data-curso="${c.id}" data-mod="${mi}">
-          <button type="button" class="qz-start">Ponte a prueba <span>(${preguntas.length} preguntas)</span></button>${logro}
-          <div class="qz-area" hidden></div>
-        </div>`;
-    };
-    const cursoCard = (c, i) => {
-      const estado = c.estado === 'disponible' ? '<span class="badge ok">Disponible</span>' : c.estado === 'en_proceso' ? '<span class="badge warn">En construcción</span>' : '<span class="badge grey">Próximamente</span>';
-      const nLes = c.modulos.reduce((s, m) => s + m.lecciones.length, 0);
-      const esVideo = c.modulos.some(m => m.lecciones.some(l => typeof l !== 'string'));
-      return `<div class="course" id="curso-${esc(c.id)}"><button type="button" class="course-head" aria-expanded="false">
-          <div class="course-ico">${i + 1}</div>
-          <div style="flex:1"><h3>${esc(c.titulo)} ${estado} ${esVideo ? '<span class="badge red">en video</span>' : ''}</h3>
-            <div class="sub">${esc(c.descripcion)}</div>
-            <div class="sub">${esc(c.nivel)}. ${c.modulos.length} módulos, ${nLes} lecciones.</div></div>
-          <span class="chev" aria-hidden="true">+</span></button>
-        <div class="course-body">
-          ${c.modulos.map((m, mi) => `<div class="module">
-            <h4><span class="num-mod">${mi + 1}</span> ${esc(m.titulo)}</h4>
-            ${m.lecciones.length ? `<ul class="lessons">${m.lecciones.map(leccion).join('')}</ul>` : ''}
-            ${quizBox(c, m, mi)}
-          </div>`).join('')}
-        </div></div>`;
-    };
-    const faqCats = [...new Set(faqs.map(f => f.categoria))];
+  /* ---------- La Academia, un menú de destinos ----------
+     Era una sola página con las reglas de seguridad, la ruta, los pilares, los
+     cursos abiertos, la tabla de parámetros, los PDF, la línea de máquinas y
+     treinta preguntas, todo seguido. Nadie lee eso. Ahora la portada son cinco
+     botones grandes y cada uno abre su propia pantalla. */
+  academia(sec) {
+    const a = state.db.academia, faqs = state.db.faqs;
+
+    if (sec === 'seguridad') return vistaSeguridad(a);
+    if (sec === 'cursos') return vistaCursos(a);
+    if (sec === 'parametros') return vistaParametros(a);
+    if (sec === 'guias') return vistaGuias(a);
+    if (sec === 'preguntas') return vistaPreguntas(faqs);
+
+    const nCursos = (a.cursos || []).filter(c => c.estado === 'disponible').length;
+    const nVideos = (a.cursos || []).reduce((s, c) =>
+      s + c.modulos.reduce((t, m) => t + m.lecciones.filter(l => typeof l !== 'string').length, 0), 0);
+    const nGuias = (a.guiasPdf || []).length;
+
+    const destino = (href, titulo, detalle, tono = '') => `
+      <a class="destino ${tono}" href="${href}">
+        <span class="destino-txt"><strong>${titulo}</strong><small>${detalle}</small></span>
+        <span class="destino-flecha" aria-hidden="true">›</span>
+      </a>`;
+
     return `
-      <div class="page-head"><p>${esc(a.acceso)}</p></div>
-
-      ${a.seguridad ? `
-      <div class="card peligro">
-        <h2 class="section-h" style="margin-top:0">${esc(a.seguridad.titulo)}</h2>
-        <ul class="lista-peligro">
-          ${a.seguridad.puntos.map(x => `<li><strong>${esc(x.t)}.</strong> ${esc(x.d)}</li>`).join('')}
-        </ul>
-      </div>` : ''}
-      <div class="chips-row ruta">${a.ruta.map((r, i) => {
-        const t = typeof r === 'string' ? { t: r } : r;
-        const href = t.href || (t.curso ? '#curso-' + t.curso : '');
-        return t.proximamente
-          ? `<span class="chip soon" title="${esc(t.proximamente)}">${i + 1}. ${esc(t.t)} <small>próximamente</small></span>`
-          : `<a class="chip" href="${href}">${i + 1}. ${esc(t.t)}</a>`;
-      }).join('')}</div>
-
-      ${a.pilares ? `<div class="grid cols-3 pilares">${a.pilares.map(p => `<div class="card pilar${p.estado === 'proximamente' ? ' soon' : ''}">
-          <h3>${esc(p.titulo)}</h3><p>${esc(p.detalle)}</p>
-          <span class="badge ${p.estado === 'proximamente' ? 'grey' : 'ok'}">${p.estado === 'proximamente' ? 'Próximamente' : 'Disponible'}</span>
-          ${p.cursos ? `<span class="pilar-meta">${esc(p.cursos)}</span>` : ''}
-        </div>`).join('')}</div>` : ''}
-
-      <h2 class="section-h">Cursos por módulos</h2>
-      ${a.cursos.map(cursoCard).join('')}
-
-      ${a.parametros ? `
-      <h2 class="section-h">Parámetros por material (potencia / velocidad)</h2>
-      <div class="card">
-        <p style="margin:0 0 12px">${esc(a.parametros.intro)}</p>
-        <div class="tabla-scroll">
-          <table class="tabla-params"><thead><tr>
-            <th>Material</th><th>Grosor</th><th>Corte<br><span>Potencia / velocidad</span></th><th>Marcado<br><span>Potencia / velocidad</span></th><th>Grabado<br><span>Potencia / velocidad</span></th><th>Seal</th>
-          </tr></thead>
-          <tbody>${a.parametros.filas.map(f => `<tr><td><strong>${esc(f.m)}</strong></td><td>${esc(f.g)}</td><td>${esc(f.corte)}</td><td>${esc(f.marcado)}</td><td>${esc(f.grabado)}</td><td>${esc(f.seal)}</td></tr>`).join('')}</tbody></table>
-        </div>
-        <p class="muted" style="margin:12px 0 0;font-size:13px">${esc(a.parametros.nota)}</p>
-        <h3 style="margin:16px 0 8px;font-size:15px">Cómo aplicarlos en RDWorks</h3>
-        <ol class="acceso-pasos">${a.parametros.rdworks.map(x => `<li>${esc(x)}</li>`).join('')}</ol>
-      </div>` : ''}
-
-      ${a.guiasPdf ? `
-      <h2 class="section-h">Guías técnicas para descargar (PDF)</h2>
-      <div class="grid cols-3">
-        ${a.guiasPdf.map(g => `<button type="button" class="card pdf-card" data-guia="${esc(g.archivo)}">
-          <div class="pdf-ico">PDF</div>
-          <h3>${esc(g.titulo)}</h3>
-          <p>${esc(g.desc)}</p>
-          <span class="pdf-dl">Descargar, ${esc(g.tam)}</span>
-        </button>`).join('')}
-      </div>` : ''}
-
-      <h2 class="section-h">Próximamente</h2>
-      <ul class="proximo">${a.proximamente.map(p => `<li>${esc(p)}</li>`).join('')}</ul>
-
-      <h2 class="section-h">Conoce la línea C4V</h2>
-      <p class="muted" style="margin:0 0 12px">${esc(m.intro)}</p>
-      <div class="card tabla-scroll" style="padding:0">
-        <table class="table"><thead><tr><th>Modelo</th><th>Área</th><th>Ideal para</th><th>Ref. (PE)</th></tr></thead>
-        <tbody>${m.items.map(x => `<tr><td><strong>${esc(x.modelo)}</strong></td><td>${esc(x.area)}</td><td>${esc(x.ideal)}</td><td class="muted">${esc(x.precio)}</td></tr>`).join('')}</tbody></table>
-      </div>
-      <div class="grid cols-2" style="margin-top:14px">
-        <div class="card"><h3>Materiales</h3><p>${esc(m.materiales)}</p></div>
-        <div class="card"><h3>Mejoras nuevas</h3><p>${esc(m.mejoras)}</p></div>
-      </div>
-      ${m.incluye ? `<p class="muted" style="margin:12px 0 0;font-size:14px">${esc(m.incluye)}</p>` : ''}
-
-      <h2 class="section-h">Prepara tu espacio</h2>
-      <div class="help-card"><div class="grow"><h3>Antes de instalar, deja tu espacio listo</h3>
-        <p>Checklist imprimible y guías paso a paso: eléctrico, pozo a tierra, extracción y agua destilada.</p></div>
-        <a class="btn primary sm" href="#/preparacion">Abrir la guía</a></div>
-
-      <h2 class="section-h">Preguntas frecuentes</h2>
-      ${faqCats.map(cat => `<h4 style="font-size:14px;margin:16px 0 8px">${esc(cat)}</h4>
-        ${faqs.filter(f => f.categoria === cat).map(f => `<div class="faq-item"><button type="button" class="faq-q" aria-expanded="false"><span>${esc(f.pregunta)}</span><span class="chev" aria-hidden="true">+</span></button><div class="faq-a">${esc(f.respuesta)}</div></div>`).join('')}`).join('')}`;
+      <div class="destinos">
+        ${destino('#/academia/seguridad', 'Antes de encender', 'Tres reglas que no puedes saltarte', 'peligro')}
+        ${destino('#/academia/cursos', 'Cursos', `${nCursos} cursos, ${nVideos} videos`)}
+        ${destino('#/academia/parametros', 'Parámetros de corte', 'Potencia y velocidad por material')}
+        ${destino('#/academia/guias', 'Guías en PDF', `${nGuias} guías para descargar`)}
+        ${destino('#/academia/preguntas', 'Preguntas frecuentes', `${faqs.length} respuestas`)}
+      </div>`;
   },
 
   /* ---------- La guía, una pantalla por paso ----------
@@ -407,9 +403,19 @@ const views = {
 
         ${compras}
 
-        <div class="paso-pie">
-          <button type="button" class="btn primary paso-listo" data-paso="${esc(c.id)}">${hecho ? 'Siguiente' : 'Ya lo hice'}</button>
-          ${n > 0 ? `<button type="button" class="paso-link" data-ir="${n - 1}">Atrás</button>` : ''}
+        <!-- Flechas grandes a los lados y la marca en medio: se pasa de paso con
+             el pulgar y se puede marcar y desmarcar sin salir de la pantalla. -->
+        <div class="paso-nav">
+          <button type="button" class="paso-flecha" data-ir="${n - 1}" ${n === 0 ? 'disabled' : ''} aria-label="Paso anterior">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
+          </button>
+          <button type="button" class="paso-marca${hecho ? ' hecho' : ''}" data-paso="${esc(c.id)}" aria-pressed="${hecho}">
+            <span class="paso-marca-ic" aria-hidden="true">${hecho ? '✓' : ''}</span>
+            <span>${hecho ? 'Hecho' : 'Marcar como hecho'}</span>
+          </button>
+          <button type="button" class="paso-flecha" data-ir="${n + 1}" ${n === total - 1 ? 'disabled' : ''} aria-label="Paso siguiente">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>
+          </button>
         </div>
       </section>`;
   },
@@ -500,13 +506,14 @@ const views = {
           <p style="margin:0 0 6px"><strong>Por qué:</strong> ${esc(g.causas)}</p>
           <p style="margin:0 0 12px"><strong>Qué hacer:</strong> ${esc(g.accion)}</p>
           <a class="wa-inline" href="${waSoporte(`Sigo con este problema: «${g.titulo}».`)}" target="_blank" rel="noopener">${wa()}<span>Sigo igual, quiero escribir por WhatsApp</span></a></div></div>`).join('')}
-      </div>`;
+      </div>
+`;
   },
 
   bolsa() {
     return `
       <div class="page-head">
-        <p><strong>Beneficio gratis, solo para clientes C4V.</strong> Cada día nos escriben personas pidiendo servicio de corte láser. Nosotros no damos ese servicio — fabricamos las máquinas — así que sus pedidos se publican aquí <strong>para ti</strong>: tómalos, contáctalos y produce. El contacto se revela al tomar el trabajo.</p></div>
+        <p>Nos escriben personas buscando quien les corte algo. Nosotros solo fabricamos las máquinas, así que sus encargos se publican aquí para ti. Toma el que quieras y verás su contacto.</p></div>
       <div class="toolbar"><div class="filters">
           <button class="chip active" data-filter="todos">Todos</button>
           <button class="chip" data-filter="PE">🇵🇪 Perú</button>
@@ -667,18 +674,29 @@ function bind(route) {
     cevi.manosLibres = false; cevi.abierto = false;
     ceviCallar(); ceviParaVoz(); orbeParar();
   }
-  if (route === 'academia') { bindAccordions('.faq-item'); bindAccordions('.course'); bindVideos(); bindQuizzes(); bindGuias(); }
+  if (route === 'academia') {
+    // Cada subpágina engancha solo lo suyo; los quizzes salieron de en medio.
+    if (state.sub === 'preguntas') bindAccordions('.faq-item');
+    if (state.sub === 'cursos') { bindAccordions('.course'); bindVideos(); }
+    if (state.sub === 'guias') bindGuias();
+  }
   if (route === 'preparacion') {
-    /* Un solo botón por pantalla: marca el paso y pasa al siguiente. Antes había
-       una casilla, un «¿Cómo lo hago?» y una barra que había que interpretar. */
-    view.querySelectorAll('.paso-listo').forEach(b => b.onclick = () => {
+    /* La marca se puede poner y quitar: alguien que se equivocó tiene que poder
+       corregirlo sin empezar de cero. Al marcar el último que faltaba, se cierra
+       la guía; en cualquier otro caso avanza al siguiente. */
+    view.querySelectorAll('.paso-marca').forEach(b => b.onclick = () => {
       const id = b.dataset.paso;
-      try { localStorage.setItem('c4v_prep_' + state.ctx + '_' + id, '1'); } catch {}
-      const total = state.db.preparacion.checklist.length;
-      state.paso = Math.min(state.paso + 1, total);
-      const hechos = state.db.preparacion.checklist
-        .filter(c => { try { return localStorage.getItem('c4v_prep_' + state.ctx + '_' + c.id) === '1'; } catch { return false; } }).length;
-      if (hechos === total) state.paso = null;
+      const clave = 'c4v_prep_' + state.ctx + '_' + id;
+      let estaba = false;
+      try { estaba = localStorage.getItem(clave) === '1'; } catch {}
+      try { estaba ? localStorage.removeItem(clave) : localStorage.setItem(clave, '1'); } catch {}
+
+      const lista = state.db.preparacion.checklist, total = lista.length;
+      const hechos = lista.filter(c => { try { return localStorage.getItem('c4v_prep_' + state.ctx + '_' + c.id) === '1'; } catch { return false; } }).length;
+      if (!estaba) {
+        if (hechos === total) state.paso = null;
+        else state.paso = Math.min(state.paso + 1, total - 1);
+      }
       render('preparacion'); window.scrollTo(0, 0);
     });
     view.querySelectorAll('[data-ir]').forEach(b => b.onclick = () => {
@@ -846,7 +864,12 @@ function bindQuizzes() {
 const TITLES = { inicio: 'Inicio', cevi: 'Habla con CeVi', academia: 'Academia', preparacion: 'Primeros pasos', soporte: 'Necesito ayuda', bolsa: 'Trabajos para ti', plantillas: 'Diseños para cortar', certificado: 'Tu Certificado de Calidad' };
 // El aviso del candado ya no existe; la preparación se acompaña, no se bloquea.
 function render(route) {
-  if (!views[route]) route = 'inicio';
+  /* Las secciones pueden tener subpáginas: `#/academia/cursos`. Así cada una es
+     una pantalla propia, con su título y su botón de atrás, y el botón «volver»
+     del navegador funciona como la gente espera. */
+  const [base, sub] = String(route).split('/');
+  route = views[base] ? base : 'inicio';
+  state.sub = route === base ? (sub || '') : '';
   /* Ya no se desvía a nadie. Antes, tocar "Academia" sin la guía terminada te
      dejaba en otra pantalla sin avisar: tocabas una cosa y aparecías en otra.
      Además la Academia es justo donde están las reglas de seguridad, así que
@@ -854,11 +877,19 @@ function render(route) {
      que se ve al entrar, pero invita en vez de bloquear. */
   document.querySelectorAll('.menu a').forEach(a => a.setAttribute('aria-current', a.dataset.nav === route ? 'page' : 'false'));
   // El título ya lo dice el menú; dentro solo hace falta el nombre de la página.
-  const cabecera = route === 'inicio' ? '' : `<h1 class="pag-title">${esc(TITLES[route])}</h1>`;
-  view.innerHTML = cabecera + views[route]();
+  const titulo = SUBTITULOS[route + '/' + state.sub] || TITLES[route];
+  const cabecera = route === 'inicio' ? '' : `<h1 class="pag-title">${esc(titulo)}</h1>`;
+  view.innerHTML = cabecera + views[route](state.sub);
   if (route === 'certificado' || route === 'soporte') { try { localStorage.setItem('c4v_visto_' + route + '_' + state.ctx, '1'); } catch {} }
   bind(route); window.scrollTo(0, 0);
 }
+const SUBTITULOS = {
+  'academia/seguridad': 'Antes de encender',
+  'academia/cursos': 'Cursos',
+  'academia/parametros': 'Parámetros de corte',
+  'academia/guias': 'Guías en PDF',
+  'academia/preguntas': 'Preguntas frecuentes'
+};
 const currentRoute = () => (location.hash.replace('#/', '') || 'inicio');
 window.addEventListener('hashchange', () => render(currentRoute()));
 window.toast = toast;
@@ -1042,6 +1073,13 @@ function mostrarPaso(cual) {
    El formulario crece: primero el documento, después el WhatsApp completo,
    después el código. Lo ya escrito se queda a la vista pero bloqueado, para que
    la persona no pierda de vista dónde está. Sin pantallas nuevas. */
+/* La pista se ve dentro del campo, como marca de agua: ••••••321. Mostrar un
+   número de ejemplo completo confundía, porque parecía el suyo ya escrito. */
+function pistaEnCampo(cola) {
+  const el = $('#gateTel');
+  if (el) el.placeholder = '•'.repeat(6) + (cola || '');
+}
+
 function faseAcceso(fase) {
   acceso.fase = fase;
   const tel = $('#gateTelBloque'), cod = $('#gateCodBloque'), btn = $('#gateForm .gate-btn');
@@ -1121,7 +1159,7 @@ function limpiarError(campo, caja) {
 function initGate() {
   const gate = $('#gate'), form = $('#gateForm'), inp = $('#gateDoc'), err = $('#gateError');
   const tiposBox = $('#gateTipos'), paisesBox = $('#gatePaises'), docLabel = $('#gateDocLabel');
-  const acepta = $('#gateAcepta'), marketing = $('#gateMarketing');
+  const acepta = $('#gateAcepta');
   const paises = CFG.paises || [];
   let tipo = 'persona', pais = paises[0]?.code || 'PE';
 
@@ -1217,9 +1255,9 @@ function initGate() {
     // Demostración: el mismo recorrido, sin backend ni WhatsApp.
     if (res.estado === 'ok' && modoDemo() && res.cliente?.telefono) {
       acceso.cliente = res.cliente; acceso.codigo = null; acceso.solicitud = 'DEMO'; acceso.pais = pais;
-      $('#gateTelCola').textContent = numeroNacional(res.cliente.telefono, pais).slice(-PISTA_DIGITOS);
+      pistaEnCampo(numeroNacional(res.cliente.telefono, pais).slice(-PISTA_DIGITOS));
       setCargando(false); faseAcceso('tel');
-      apiPost('/api/consentimiento', { doc, pais, acepta_datos: true, acepta_marketing: marketing.checked }).catch(() => {});
+      apiPost('/api/consentimiento', { doc, pais, acepta_datos: true, acepta_marketing: false }).catch(() => {});
       return;
     }
     if (res.estado === 'ok') { setCargando(false); entrar(res.cliente); return; }
@@ -1229,9 +1267,9 @@ function initGate() {
       if (d.status === 429) return fallo(inp, 'Probaste demasiadas veces seguidas. Espera cinco minutos y vuelve a intentar.');
       if (d.json.ok && d.json.canal === 'whatsapp') {
         acceso.solicitud = d.json.solicitud; acceso.pais = pais; acceso.cliente = null; acceso.codigo = null;
-        $('#gateTelCola').textContent = d.json.pista || '';
+        pistaEnCampo(d.json.pista || '');
         setCargando(false); faseAcceso('tel');
-        apiPost('/api/consentimiento', { doc, pais, acepta_datos: true, acepta_marketing: marketing.checked }).catch(() => {});
+        apiPost('/api/consentimiento', { doc, pais, acepta_datos: true, acepta_marketing: false }).catch(() => {});
         return;
       }
       if (d.json.ok === false && d.json.motivo === 'sin_telefono') return fallo(inp, sinTelefono);
@@ -1241,7 +1279,7 @@ function initGate() {
       setCargando(false);
       if (r.status === 429) return fallo(inp, 'Pediste muchos códigos seguidos. Espera 5 minutos y vuelve a intentar.');
       if (r.json.ok) {
-        apiPost('/api/consentimiento', { doc, pais, acepta_datos: true, acepta_marketing: marketing.checked }).catch(() => {});
+        apiPost('/api/consentimiento', { doc, pais, acepta_datos: true, acepta_marketing: false }).catch(() => {});
         pintarPasoOtp(r.json, pais);
         return;
       }
