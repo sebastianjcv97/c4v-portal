@@ -845,3 +845,9 @@ button.big{width:100%;text-align:left;font-family:inherit;cursor:pointer}
   .compra-txt h3{font-size:var(--t-md)}
 }
 @media print{.compra-img{width:70px;height:70px}.compra{break-inside:avoid}}
+
+/* ---------- Dibujos de cada paso: más grandes, sin marco ni pie ---------- */
+.prep-step-fig{margin:10px 0 4px 44px;max-width:420px}
+.prep-step-fig img{width:100%;height:auto;display:block;border-radius:var(--r);background:var(--alt);mix-blend-mode:multiply}
+@media(max-width:560px){.prep-step-fig{margin-left:0;max-width:100%}}
+@media print{.prep-step-fig{display:block!important;max-width:200px;margin-left:0}}
