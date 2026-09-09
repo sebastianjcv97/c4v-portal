@@ -7,6 +7,16 @@
   const api = (L.apiBase || '');
   let tipo = 'reclamo';
 
+  // El consumidor debe poder identificar CON QUIÉN contrató: en C4V venden tres
+  // empresas distintas y cada una responde por sus propias ventas.
+  const registro = (window.C4V_CONFIG || {}).empresas || {};
+  const sel = $('#lrEmpresa');
+  if (sel) {
+    sel.innerHTML = '<option value="">Elige una…</option>' +
+      Object.entries(registro).map(([k, v]) =>
+        `<option value="${L.esc(k)}" ${v.ruc === L.empresa.ruc ? 'selected' : ''}>${L.esc(v.razon_social)} — RUC ${L.esc(v.ruc)}</option>`).join('');
+  }
+
   // Tipo: reclamo o queja (la distinción es obligatoria)
   const tipos = document.querySelectorAll('#lrTipos .lr-tipo');
   const marcar = (b) => { tipo = b.dataset.tipo; tipos.forEach(x => x.setAttribute('aria-checked', x === b)); };
@@ -52,8 +62,10 @@
       bien_descripcion: $('#lrBienDesc').value.trim(),
       monto: $('#lrMonto').value.trim(),
       detalle: $('#lrDetalle').value.trim(),
-      pedido: $('#lrPedido').value.trim()
+      pedido: $('#lrPedido').value.trim(),
+      empresa: sel ? sel.value : ''
     };
+    if (sel && !sel.value) return mostrarErrores(['Elige con cuál de nuestras empresas contrataste. Está en tu boleta o factura.']);
     if (!$('#lrAcepta').checked) return mostrarErrores(['Marca la casilla de declaración para poder registrar tu hoja.']);
 
     const btn = $('#lrEnviar');
@@ -69,6 +81,9 @@
       }
       $('#lrFormBox').hidden = true;
       $('#lrOkBox').hidden = false;
+      // Sin esto, quien usa lector de pantalla no se entera de que se registró
+      // ni escucha su número de hoja: el foco estaba en un botón que desapareció.
+      $('#lrOkBox').focus();
       $('#lrCodigo').textContent = j.codigo;
       $('#lrPlazoOk').textContent = `Te responderemos a más tardar el ${new Date(j.plazo_respuesta).toLocaleDateString('es-PE', { day: 'numeric', month: 'long', year: 'numeric' })}.`;
       $('#lrConstancia').textContent = j.constancia;

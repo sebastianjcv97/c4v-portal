@@ -1,7 +1,7 @@
 /* Central de Postventa C4V — SPA (vanilla JS). Sin login (modo local).
    Funciona con servidor (npm start) o en modo DEMO con datos embebidos (data.js). */
 
-const state = { db: null, ctx: null, offline: false, telefono: null, guiaPorCorreo: null };
+const state = { db: null, ctx: null, offline: false, telefono: null, guiaPorCorreo: null, empresaVendedora: null };
 const CFG = window.C4V_CONFIG || {};
 const SESION_DIAS = 90; // A5: sesión recordada 90 días en el dispositivo
 
@@ -857,6 +857,7 @@ const modoDemo = () => !VERIF.activo;
 // Inserta/actualiza el cliente verificado y sus máquinas en la base en memoria.
 function inyectarCliente(cliente, maquinas) {
   if (!cliente) return null;
+  if (cliente.empresa_vendedora) state.empresaVendedora = cliente.empresa_vendedora;
   state.db.clientes = state.db.clientes || [];
   const i = state.db.clientes.findIndex(c => c.id === cliente.id);
   if (i >= 0) state.db.clientes[i] = cliente; else state.db.clientes.push(cliente);
@@ -937,6 +938,7 @@ async function entrar(cliente) {
   await cargarDatosVivos();
   pedirEstadoGuia();   // sin await: no debe retrasar la entrada
   $('#gate').hidden = true; $('#app').hidden = false;
+  pintarPieLegal();   // ahora sabemos con qué empresa contrató
   const info = docInfo(cliente.pais, cliente.tipo || 'persona');
   $('#me').innerHTML = `<strong>${esc(nombrePropio(cliente.nombre))}</strong>${esc(info.doc)} ${esc(cliente.documento)}`;
   // El cliente nuevo aterriza en la guía de preparación: es lo que necesita hoy.
@@ -1524,10 +1526,20 @@ function bindCorreo() {
 /* El consumidor debe poder ver CON QUIÉN contrata y llegar al Libro de
    Reclamaciones desde cualquier página. Si falta un dato societario, se avisa
    en rojo: es preferible verlo nosotros a publicar un pie incompleto. */
+/* Devuelve los datos de la empresa que le vendió a ESTE cliente. Si no lo
+   sabemos (aún no sincronizado, o visitante sin sesión), la de por defecto. */
+function empresaDelCliente() {
+  const reg = CFG.empresas || {};
+  const clave = state.empresaVendedora || CFG.empresaPorDefecto;
+  const datos = reg[clave] || reg[CFG.empresaPorDefecto] || {};
+  return { ...datos, ...(CFG.contacto || {}) };
+}
+window.empresaDelCliente = empresaDelCliente;
+
 function pintarPieLegal() {
   const pie = $('#pieLegal');
   if (!pie) return;
-  const e = CFG.empresa || {};
+  const e = empresaDelCliente();
   const faltan = ['razon_social', 'ruc', 'domicilio'].filter(k => !e[k]);
   // Se avisa por consola a quien mantiene el portal, nunca en pantalla: el
   // cliente no tiene por qué enterarse de nuestros pendientes internos.

@@ -8,8 +8,8 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23141414'/%3E%3Ctext x='32' y='43' text-anchor='middle' font-family='Arial,sans-serif' font-size='23' font-weight='800' fill='%23F9020B'%3EC4V%3C/text%3E%3C/svg%3E" />
 <link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@700;800&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="css/styles.css?v=20260909a" />
-<link rel="stylesheet" href="css/legal.css?v=20260909a" />
+<link rel="stylesheet" href="css/styles.css?v=20260909g" />
+<link rel="stylesheet" href="css/legal.css?v=20260909g" />
 </head>
 <body>
 <header class="doc-top">
@@ -21,7 +21,7 @@
   <h1>Libro de Reclamaciones</h1>
   <p class="doc-meta">Hoja de reclamación virtual · <span data-emp="razon_social"></span> · RUC <span data-emp="ruc"></span> · <span data-emp="domicilio"></span></p>
 
-  <div class="doc-falta" id="faltaEmpresa" hidden></div>
+  <div data-otras-empresas></div>
 
   <div class="lr-aviso">
     <h2>Conforme a lo establecido en el Código de Protección y Defensa del Consumidor</h2>
@@ -43,15 +43,22 @@
         </button>
       </div>
 
-      <h2>2. Tus datos</h2>
+      <h2>2. ¿Con cuál de nuestras empresas contrataste?</h2>
+      <div class="field">
+        <label for="lrEmpresa">Empresa <span class="req">*</span></label>
+        <select id="lrEmpresa" name="empresa" required aria-required="true"></select>
+        <p class="hint">Está en tu boleta o factura. Si no estás seguro, elige la que aparezca ahí.</p>
+      </div>
+
+      <h2>3. Tus datos</h2>
       <div class="lr-row">
         <div class="field">
           <label for="lrNombre">Nombre completo <span class="req">*</span></label>
-          <input id="lrNombre" name="nombre" type="text" autocomplete="name" required />
+          <input id="lrNombre" name="nombre" type="text" autocomplete="name" required aria-required="true" />
         </div>
         <div class="field">
           <label for="lrDocumento">Número de documento <span class="req">*</span></label>
-          <input id="lrDocumento" name="documento" type="text" autocomplete="off" required />
+          <input id="lrDocumento" name="documento" type="text" autocomplete="off" required aria-required="true" />
         </div>
       </div>
       <div class="lr-row">
@@ -69,13 +76,13 @@
       </div>
       <div class="field">
         <label for="lrEmail">Correo electrónico <span class="req">*</span></label>
-        <input id="lrEmail" name="email" type="email" autocomplete="email" />
-        <p class="hint">Te enviaremos aquí una copia de tu hoja, como manda la norma. Si no tienes correo, escribe tu domicilio abajo.</p>
+        <input id="lrEmail" name="email" type="email" autocomplete="email" aria-describedby="lrEmailHint" />
+        <p class="hint" id="lrEmailHint">Te enviaremos aquí una copia de tu hoja, como manda la norma. Si no tienes correo, escribe tu domicilio abajo.</p>
       </div>
       <div class="field">
         <label for="lrDomicilio">Domicilio <span class="req">*</span></label>
-        <input id="lrDomicilio" name="domicilio" type="text" autocomplete="street-address" />
-        <p class="hint">La norma exige tu domicilio o tu correo electrónico: sin uno de los dos, tu hoja no puede darse por presentada.</p>
+        <input id="lrDomicilio" name="domicilio" type="text" autocomplete="street-address" aria-describedby="lrDomHint" />
+        <p class="hint" id="lrDomHint">La norma exige tu domicilio o tu correo electrónico: sin uno de los dos, tu hoja no puede darse por presentada.</p>
       </div>
       <label class="lr-check">
         <input type="checkbox" id="lrMenor" name="es_menor" />
@@ -86,7 +93,7 @@
         <input id="lrApoderado" name="apoderado" type="text" />
       </div>
 
-      <h2>3. Sobre lo contratado</h2>
+      <h2>4. Sobre lo contratado</h2>
       <div class="lr-row">
         <div class="field">
           <label for="lrBienTipo">¿Es un producto o un servicio?</label>
@@ -105,14 +112,14 @@
         <input id="lrBienDesc" name="bien_descripcion" type="text" placeholder="Ej: máquina láser 6040, pedido S101526" />
       </div>
 
-      <h2>4. Tu reclamación</h2>
+      <h2>5. Tu reclamación</h2>
       <div class="field">
         <label for="lrDetalle">Detalle de lo ocurrido <span class="req">*</span></label>
-        <textarea id="lrDetalle" name="detalle" required placeholder="Cuéntanos qué pasó, con fechas si las recuerdas."></textarea>
+        <textarea id="lrDetalle" name="detalle" required aria-required="true" placeholder="Cuéntanos qué pasó, con fechas si las recuerdas."></textarea>
       </div>
       <div class="field">
         <label for="lrPedido">¿Qué esperas que hagamos? <span class="req">*</span></label>
-        <textarea id="lrPedido" name="pedido" required style="min-height:90px" placeholder="Ej: que revisen mi máquina, que me devuelvan el monto, una explicación."></textarea>
+        <textarea id="lrPedido" name="pedido" required aria-required="true" style="min-height:90px" placeholder="Ej: que revisen mi máquina, que me devuelvan el monto, una explicación."></textarea>
       </div>
 
       <label class="lr-check">
@@ -133,7 +140,7 @@
   </section>
 
   <!-- ============ Constancia ============ -->
-  <section id="lrOkBox" hidden>
+  <section id="lrOkBox" hidden tabindex="-1" role="status" aria-live="polite">
     <div class="lr-ok">
       <h2>✅ Tu hoja quedó registrada</h2>
       <p>Guarda este número. Con él y tu documento puedes consultar el estado cuando quieras.</p>
@@ -169,14 +176,14 @@
       </div>
       <button class="btn ghost" type="submit">Consultar</button>
     </form>
-    <div id="lrcResultado" style="margin-top:16px"></div>
+    <div id="lrcResultado" aria-live="polite" style="margin-top:16px"></div>
   </section>
 
   <div class="doc-foot" data-doc-foot></div>
 </main>
 
-<script src="js/config.js?v=20260909a"></script>
-<script src="js/legal-page.js?v=20260909a"></script>
-<script src="js/libro-reclamaciones.js?v=20260909a"></script>
+<script src="js/config.js?v=20260909g"></script>
+<script src="js/legal-page.js?v=20260909g"></script>
+<script src="js/libro-reclamaciones.js?v=20260909g"></script>
 </body>
 </html>

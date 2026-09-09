@@ -102,16 +102,38 @@ window.C4V_CONFIG = {
      Mantén `true` mientras el endpoint NO esté hosteado y poblado. */
   mostrarNumerosDemo: false,
 
-  /* ---------- Datos del proveedor (obligatorio mostrarlos al consumidor) ------
-     El Código de Protección y Defensa del Consumidor exige que se sepa CON QUIÉN
-     se contrata. Se muestran en el pie del portal y en las páginas legales.
-     ⚠️ `domicilio` PENDIENTE: sin él, las páginas legales avisan en rojo.        */
-  empresa: {
-    razon_social: 'C4V LASER S.R.L.',
-    ruc: '20609326540',
-    domicilio: '',                        // ← FALTA: domicilio fiscal completo
-    email: 'sebastianjcv97@gmail.com',
-    email_datos: 'sebastianjcv97@gmail.com',  // canal para derechos sobre datos personales
+  /* ---------- Proveedores (obligatorio mostrarlos al consumidor) --------------
+     El Código de Protección y Defensa del Consumidor exige que el consumidor
+     sepa CON QUIÉN contrató. En C4V venden TRES empresas peruanas distintas
+     (dato verificado en Odoo: 150 · 92 · 46 pedidos), así que el portal muestra
+     la que le vendió a CADA cliente, no una genérica.
+     Los datos vienen de las fichas de empresa de Odoo (res.company).            */
+  empresas: {
+    'C4V INGENIERIA Y SERVICIOS SRL': {
+      razon_social: 'C4V INGENIERÍA Y SERVICIOS S.R.L.',
+      ruc: '20600582331',
+      domicilio: 'Av. Los Abedules 179, Urb. Camacho, La Molina, Lima, Perú'
+    },
+    'C4V LASER S.C.R.L.': {
+      razon_social: 'C4V LASER S.C.R.L.',
+      ruc: '20609326540',
+      domicilio: 'Av. Arequipa 2616, Local Comercial, Lince, Lima, Perú'
+    },
+    'KUY IMPORTACIONES S.A.C.': {
+      razon_social: 'KUY IMPORTACIONES S.A.C.',
+      ruc: '20613203878',
+      domicilio: 'Calle Las Hormigas 150, Urb. Santa Felicia, La Molina, Lima, Perú'
+    }
+  },
+
+  /* La que se muestra cuando no sabemos con cuál contrató (páginas públicas,
+     visitantes sin sesión). Es la que más máquinas ha vendido. */
+  empresaPorDefecto: 'C4V INGENIERIA Y SERVICIOS SRL',
+
+  /* Canales de atención, comunes a las tres. */
+  contacto: {
+    email: 'jcontreras@c4vlaser.com',
+    email_datos: 'jcontreras@c4vlaser.com',   // para ejercer derechos sobre datos personales
     telefono: '905474440',
     whatsapp_visible: '+51 924 662 205'
   },
