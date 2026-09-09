@@ -1347,7 +1347,7 @@ function ceviDesbloquearAudio() {
    Una burbuja que se mueve con la voz de verdad: mide la amplitud del micrófono
    mientras escuchas y la del altavoz mientras habla. Si el navegador no deja
    medir, se mueve con un latido sintético, para que nunca parezca congelada. */
-const orbe = { ctx: null, ana: null, datos: null, fuenteAudio: null, mic: null, raf: null, nivel: 0, nodos: [] };
+const orbe = { ctx: null, ana: null, datos: null, fuenteAudio: null, mic: null, raf: null, nivel: 0, nodos: [], genMic: 0 };
 
 function orbeHTML(tam = 'grande') {
   return `<div class="orbe orbe-${tam}" data-orbe>
@@ -1378,30 +1378,29 @@ function orbeAnalizador(ctx) {
   return orbe.ana;
 }
 
-/* Enchufa el altavoz al medidor. Se hace UNA vez por elemento: crear dos
-   MediaElementSource del mismo <audio> deja el audio mudo para siempre. */
-function orbeEscucharAltavoz() {
-  if (orbe.fuenteAudio) return true;
-  const ctx = orbeCtx(); const a = cevi.reproductor;
-  if (!ctx || !a) return false;
-  /* Solo si el contexto ya está corriendo. Enchufar el <audio> a un contexto
-     suspendido lo deja mudo, y oír a CeVi importa más que verla moverse. */
-  if (ctx.state !== 'running') return false;
-  try {
-    const src = ctx.createMediaElementSource(a);
-    src.connect(ctx.destination);          // primero el camino al altavoz
-    src.connect(orbeAnalizador(ctx));      // y en paralelo, el medidor
-    orbe.fuenteAudio = src;
-    return true;
-  } catch { return false; }
-}
+/* Antes se enchufaba el <audio> de CeVi a Web Audio para que el orbe se moviera
+   con la forma de onda real. Se quitó: en cuanto el micrófono está abierto, la
+   cancelación de eco de Chrome puede dejar mudo lo que sale por ese grafo, y
+   entonces CeVi transcribe pero no se oye. Animar un círculo no vale quedarse
+   sin voz; mientras habla, el orbe se mueve con un envolvente sintético.
+   El medidor del micrófono sí se conserva: ese no toca la reproducción. */
+function orbeEscucharAltavoz() { return false; }
 
+/* `getUserMedia` tarda en resolver. Si la escucha termina antes, el micrófono
+   se quedaba abierto para siempre: el indicador del sistema seguía encendido y
+   la cancelación de eco de Chrome seguía activa mientras CeVi intentaba hablar.
+   El contador de generación descarta cualquier stream que llegue tarde. */
 async function orbeEscucharMicro() {
   if (orbe.mic) return true;
   const ctx = orbeCtx();
   if (!ctx || !navigator.mediaDevices?.getUserMedia) return false;
+  const gen = ++orbe.genMic;
   try {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    if (gen !== orbe.genMic) {          // ya nos pidieron soltarlo: se cierra ya
+      stream.getTracks().forEach(t => t.stop());
+      return false;
+    }
     const src = ctx.createMediaStreamSource(stream);
     src.connect(orbeAnalizador(ctx));
     orbe.mic = { stream, src };
@@ -1410,6 +1409,7 @@ async function orbeEscucharMicro() {
 }
 
 function orbeSoltarMicro() {
+  orbe.genMic++;                        // invalida cualquier permiso en vuelo
   if (!orbe.mic) return;
   try { orbe.mic.src.disconnect(); } catch {}
   try { orbe.mic.stream.getTracks().forEach(t => t.stop()); } catch {}
@@ -1560,23 +1560,29 @@ function ceviReproducirTrozo(url) {
   return new Promise((listo) => {
     const audio = ceviReproductor();
     cevi.hablando = audio;
+    try { audio.pause(); } catch {}      // puede venir sonando la muletilla
     audio.src = url;
     audio.volume = 1;
+    audio.muted = false;
+    cevi.ultimoFalloVoz = null;
     let acabado = false, sonó = false;
     const fin = (ok) => {
       if (acabado) return;
       acabado = true;
-      audio.onended = audio.onerror = null;
+      audio.onended = audio.onerror = audio.ontimeupdate = null;
       listo(ok !== false && sonó);
     };
+    // Por evento y no por temporizador: si el navegador tarda en arrancar, un
+    // setTimeout de 400 ms daba "no se oyó nada" aunque sí estuviera sonando.
+    audio.ontimeupdate = () => { if (audio.currentTime > 0) sonó = true; };
     audio.onended = () => fin(true);
-    audio.onerror = () => fin(false);
+    audio.onerror = () => {
+      cevi.ultimoFalloVoz = audio.error ? `media ${audio.error.code}` : 'media';
+      fin(false);
+    };
     setTimeout(() => fin(sonó), 120000);
-    audio.play().then(() => {
-      cevi.audioListo = true;
-      orbeEscucharAltavoz();
-      setTimeout(() => { if (audio.currentTime > 0) sonó = true; }, 400);
-    }).catch(() => fin(false));
+    audio.play().then(() => { cevi.audioListo = true; })
+      .catch((e) => { cevi.ultimoFalloVoz = e && e.name ? e.name : 'play'; fin(false); });
   });
 }
 
@@ -1623,12 +1629,31 @@ async function ceviHablar(texto) {
    y se deja un botón que reproduce con el toque de la persona. */
 function ceviSinSonido(texto) {
   cevi.textoPendiente = texto;
-  ceviAviso('No se oyó nada. Revisa que el teléfono no esté en silencio y sube el volumen.', 'Escuchar la respuesta');
+  const causa = cevi.ultimoFalloVoz;
+  /* Deja rastro en la consola: si vuelve a fallar, esto dice exactamente por
+     qué, en vez de tener que adivinar desde el otro lado. */
+  const a = cevi.reproductor;
+  console.warn('[CeVi] sin sonido', {
+    causa: causa || 'sin error, el audio no avanzó',
+    codigoMedia: a && a.error ? a.error.code : null,
+    listo: a ? a.readyState : null,
+    silenciado: a ? a.muted : null,
+    volumen: a ? a.volume : null,
+    audioDesbloqueado: cevi.audioListo,
+    contextoAudio: orbe.ctx ? orbe.ctx.state : 'sin crear'
+  });
+  const detalle = causa === 'NotAllowedError'
+    ? 'Tu navegador bloqueó el sonido hasta que toques la pantalla.'
+    : causa
+      ? 'No pude reproducir el audio.'
+      : 'No se oyó nada. Revisa que el volumen esté arriba y que el equipo no esté en silencio.';
+  ceviAviso(detalle, 'Escuchar la respuesta');
 }
 
 // Corta lo que esté sonando. Se usa al interrumpir, al cerrar y antes de escuchar.
 function ceviParaVoz() {
   cevi.turnoVoz++;                 // invalida la cadena de trozos que venía sonando
+  orbeSoltarMicro();               // nada de hablar con el micrófono abierto
   const a = cevi.reproductor;
   if (a) { try { a.pause(); } catch {} }
   cevi.hablando = null;
