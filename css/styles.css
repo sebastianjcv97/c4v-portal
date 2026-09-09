@@ -1017,3 +1017,66 @@ body{background:var(--mesa)}
 @media print{.ai-btn{display:none!important}.pie-legal{padding-bottom:0}}
 /* Los avisos suben por encima del botón flotante: antes se tapaban entre sí. */
 .toast{bottom:calc(76px + env(safe-area-inset-bottom));max-width:calc(100vw - 32px)}
+
+/* ════════════════════════════════════════════════════════════════════════
+   CeVi COMO ASISTENTE DE VOZ
+   El micrófono deja de ser un botón al lado del cuadro de escribir y pasa a
+   ser el control principal: quien abre el panel habla, no teclea. El chat
+   escrito sigue a un toque, para talleres ruidosos o navegadores sin dictado.
+   ════════════════════════════════════════════════════════════════════════ */
+.cevi-voz-zona{display:flex;flex-direction:column;align-items:center;gap:10px;
+  padding:16px 14px 18px;background:var(--papel);border-top:1px solid var(--regla);flex-shrink:0}
+.ai-panel[data-modo="texto"] .cevi-voz-zona{display:none}
+.ai-panel[data-modo="voz"] .cevi-form{display:none}
+
+.cevi-dictado{margin:0;min-height:20px;font-size:var(--t-sm);line-height:1.4;
+  color:var(--grafito);text-align:center;max-width:34ch}
+
+/* El botón: 72px, muy por encima del mínimo táctil, para usarlo con guantes. */
+.cevi-voz-btn{position:relative;width:72px;height:72px;border-radius:50%;
+  border:none;cursor:pointer;background:var(--tinta);color:#fff;
+  display:flex;align-items:center;justify-content:center;
+  transition:background .18s,transform .12s}
+.cevi-voz-btn:active{transform:scale(.96)}
+.cevi-voz-btn:focus-visible{outline:3px solid var(--rojo);outline-offset:4px}
+.cevi-voz-ic{display:flex}
+.cevi-voz-ic svg{width:30px;height:30px}
+.cevi-voz-txt{font-size:var(--t-sm);font-weight:700;color:var(--tinta)}
+
+/* Escuchando: rojo y con un anillo que late, para que se vea desde lejos. */
+.ai-panel[data-estado="escuchando"] .cevi-voz-btn{background:var(--rojo-tinta)}
+.ai-panel[data-estado="escuchando"] .cevi-voz-btn::after{content:"";position:absolute;
+  inset:-8px;border-radius:50%;border:3px solid var(--rojo-tinta);
+  animation:ceviAnillo 1.4s ease-out infinite}
+@keyframes ceviAnillo{0%{transform:scale(.9);opacity:.9}100%{transform:scale(1.25);opacity:0}}
+
+/* Pensando: apagado y quieto, para que se note que el turno no es tuyo. */
+.ai-panel[data-estado="pensando"] .cevi-voz-btn{background:var(--grafito);cursor:default}
+
+/* Hablando: el micrófono se cambia por tres ondas. Tocar interrumpe. */
+.cevi-onda{display:none;align-items:flex-end;gap:4px;height:28px}
+.cevi-onda i{display:block;width:5px;border-radius:3px;background:#fff;height:9px;
+  animation:ceviOnda .9s ease-in-out infinite}
+.cevi-onda i:nth-child(2){animation-delay:.15s}
+.cevi-onda i:nth-child(3){animation-delay:.3s}
+@keyframes ceviOnda{0%,100%{height:9px}50%{height:26px}}
+.ai-panel[data-estado="hablando"] .cevi-voz-btn{background:var(--rojo-tinta)}
+.ai-panel[data-estado="hablando"] .cevi-onda{display:flex}
+.ai-panel[data-estado="hablando"] .cevi-voz-ic{display:none}
+
+/* Cambiar de voz a texto y al revés: un enlace, no otro botón que compita. */
+.cevi-cambiar{background:none;border:none;padding:8px 4px;min-height:var(--tap);
+  font-family:var(--sans);font-size:var(--t-sm);color:var(--grafito);
+  text-decoration:underline;cursor:pointer}
+.cevi-cambiar:hover{color:var(--tinta)}
+.cevi-form .cevi-cambiar{flex-basis:100%;text-align:center;order:3}
+.cevi-form{flex-wrap:wrap}
+
+@media (prefers-reduced-motion:reduce){
+  .cevi-voz-btn::after{animation:none;opacity:.55}
+  .cevi-onda i{animation:none;height:18px}
+}
+/* El aviso de voz se ve en los dos modos: antes vivía dentro de la zona que
+   se ocultaba justo al mostrarlo, así que nadie leía por qué no podía hablar. */
+.cevi-aviso{margin:0;padding:12px 14px;background:var(--mesa);border-top:1px solid var(--regla);
+  font-size:var(--t-sm);line-height:1.45;color:var(--tinta);flex-shrink:0}

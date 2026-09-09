@@ -1218,7 +1218,25 @@ function initGate() {
    Se le pasa el contexto REAL del cliente (nombre, ciudad, país, serie y su id de
    partner en Odoo) para que no pregunte lo que ya sabemos y para que la conversación
    quede registrada en la ficha correcta del ERP, sin crear contactos duplicados. */
-const cevi = { abierto: false, historial: [], hablando: null, escuchando: null, partnerId: null };
+/* CeVi es, ante todo, un asistente de VOZ: se abre escuchando y contesta hablando.
+   El chat escrito sigue ahí para quien no puede hablar o está en un taller ruidoso.
+   estado: 'reposo' | 'escuchando' | 'pensando' | 'hablando'   */
+const cevi = {
+  abierto: false, historial: [], hablando: null, escuchando: null, partnerId: null,
+  modo: 'voz', estado: 'reposo', manosLibres: true, audioListo: false, cerrando: false
+};
+
+const HAY_DICTADO = !!(window.SpeechRecognition || window.webkitSpeechRecognition);
+
+/* Safari e iOS solo dejan sonar audio si viene de un gesto de la persona. El
+   primer toque en el botón flotante desbloquea el altavoz para toda la sesión. */
+function ceviDesbloquearAudio() {
+  if (cevi.audioListo) return;
+  try {
+    const a = new Audio('data:audio/mp3;base64,//uQxAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAACcQCA');
+    a.volume = 0; a.play().then(() => { cevi.audioListo = true; }).catch(() => {});
+  } catch {}
+}
 
 const CEVI_ICONOS = {
   mic: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0"/><path d="M12 18v3"/></svg>',
@@ -1256,20 +1274,43 @@ function ceviPintar() {
   box.scrollTop = box.scrollHeight;
 }
 
-// Voz: reproduce la respuesta con la voz mexicana del backend (gratis, sin API key).
+/* Voz: reproduce la respuesta con la voz del backend. Devuelve una promesa que
+   se resuelve cuando termina de hablar, porque el ciclo manos libres necesita
+   saber cuándo puede volver a escuchar sin oírse a sí mismo. */
 async function ceviHablar(texto) {
   if (!CFG.ceviVoz || !ceviVozActiva()) return;
+  ceviParaVoz();
+  ceviEstado('hablando');
+  let url = null;
   try {
-    if (cevi.hablando) { cevi.hablando.pause(); cevi.hablando = null; }
     const r = await fetch(`${CFG.ceviApi}/tts`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text: texto })
     });
-    if (!r.ok) return;
-    const audio = new Audio(URL.createObjectURL(await r.blob()));
+    if (!r.ok) throw new Error('tts ' + r.status);
+    url = URL.createObjectURL(await r.blob());
+    const audio = new Audio(url);
     cevi.hablando = audio;
-    audio.play().catch(() => {});   // si el navegador bloquea el autoplay, no pasa nada
+    await new Promise((listo) => {
+      let acabado = false;
+      const fin = () => { if (acabado) return; acabado = true; listo(); };
+      audio.onended = fin;
+      audio.onerror = fin;
+      // Red de seguridad: si el audio se queda colgado, el ciclo no se congela.
+      setTimeout(fin, 90000);
+      audio.play().catch(fin);   // navegador que bloquea el autoplay: seguimos sin voz
+    });
   } catch { /* sin voz, el texto ya está en pantalla */ }
+  finally {
+    if (url) URL.revokeObjectURL(url);
+    cevi.hablando = null;
+    if (cevi.estado === 'hablando') ceviEstado('reposo');
+  }
+}
+
+// Corta lo que esté sonando. Se usa al interrumpir, al cerrar y antes de escuchar.
+function ceviParaVoz() {
+  if (cevi.hablando) { try { cevi.hablando.pause(); } catch {} cevi.hablando = null; }
 }
 
 const ceviVozActiva = () => { try { return localStorage.getItem('c4v_cevi_voz') !== '0'; } catch { return true; } };
@@ -1281,6 +1322,8 @@ async function ceviEnviar(texto) {
   document.getElementById('ceviSug')?.remove();   // ya no hacen falta
   ceviPintar();
   const input = $('#ceviInput'); if (input) { input.value = ''; input.disabled = true; }
+  ceviTranscripcion('');
+  ceviEstado('pensando');
   $('#ceviMsgs').insertAdjacentHTML('beforeend', '<div class="cevi-msg cevi pensando" aria-hidden="true"><div class="cevi-avatar">🐂</div><div class="cevi-txt"><span></span><span></span><span></span></div></div>');
   $('#ceviMsgs').scrollTop = $('#ceviMsgs').scrollHeight;
 
@@ -1295,35 +1338,139 @@ async function ceviEnviar(texto) {
     const respuesta = j.response || 'Disculpa, no te entendí. ¿Lo repites?';
     cevi.historial.push({ role: 'assistant', content: respuesta, ticket: j.ticket?.ref || null });
     ceviPintar();
-    ceviHablar(respuesta);
+    if (input) input.disabled = false;
+    await ceviHablar(respuesta);
+    // Manos libres: en cuanto CeVi termina de hablar, vuelve a escuchar sola.
+    if (cevi.abierto && cevi.modo === 'voz' && cevi.manosLibres && !cevi.cerrando) ceviEscuchar();
   } catch {
-    cevi.historial.push({
-      role: 'assistant',
-      content: 'No pude conectarme en este momento. Escríbenos por WhatsApp y te responde una persona del equipo.'
-    });
+    const caida = 'No pude conectarme en este momento. Escríbenos por WhatsApp y te responde una persona del equipo.';
+    cevi.historial.push({ role: 'assistant', content: caida });
     ceviPintar();
+    if (input) input.disabled = false;
+    await ceviHablar(caida);
   } finally {
-    if (input) { input.disabled = false; input.focus(); }
+    if (input) { input.disabled = false; if (cevi.modo === 'texto') input.focus(); }
+    if (cevi.estado === 'pensando') ceviEstado('reposo');
   }
 }
 
-// Dictado por voz con el reconocimiento nativo del navegador (sin costo).
-function ceviEscuchar(boton) {
+/* ---------- El ciclo de voz ----------
+   Escuchar, responder hablando y volver a escuchar, sin que la persona toque
+   nada. Usa el reconocimiento nativo del navegador, que no cuesta nada. */
+function ceviEscuchar(desdeToque = false) {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SR) { toast('Tu navegador no permite dictar. Escribe tu pregunta.'); return; }
-  if (cevi.escuchando) { cevi.escuchando.stop(); cevi.escuchando = null; return; }
+  if (!SR) { ceviModoTexto('Tu navegador no puede escuchar. Escríbeme tu pregunta.'); return; }
+  if (cevi.escuchando) return;              // ya está escuchando
+  ceviParaVoz();                            // no puede oírse a sí mismo
+
   const rec = new SR();
   rec.lang = 'es-PE'; rec.interimResults = true; rec.continuous = false;
+  rec.maxAlternatives = 1;
   cevi.escuchando = rec;
-  boton.classList.add('grabando'); boton.setAttribute('aria-label', 'Detener dictado');
+
+  let dicho = '';
   rec.onresult = (e) => {
-    const txt = Array.from(e.results).map(x => x[0].transcript).join('');
-    const input = $('#ceviInput'); if (input) input.value = txt;
-    if (e.results[e.results.length - 1].isFinal) { rec.stop(); ceviEnviar(txt); }
+    dicho = Array.from(e.results).map(x => x[0].transcript).join('').trim();
+    ceviTranscripcion(dicho);
+    const input = $('#ceviInput'); if (input) input.value = dicho;
   };
-  rec.onerror = () => toast('No te escuché bien. Intenta de nuevo o escribe.');
-  rec.onend = () => { cevi.escuchando = null; boton.classList.remove('grabando'); boton.setAttribute('aria-label', 'Dictar por voz'); };
-  rec.start();
+  rec.onerror = (e) => {
+    cevi.escuchando = null;
+    // 'no-speech' y 'aborted' son normales: la persona se quedó callada o cortó.
+    if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+      cevi.manosLibres = false;
+      if (desdeToque) {
+        // La persona tocó el micrófono y aun así no se pudo: es permiso negado.
+        ceviModoTexto('Necesito permiso del micrófono para escucharte. Puedes activarlo en tu navegador, o escribirme aquí.');
+      } else {
+        // Reencendido automático rechazado (típico de iPhone): pide un toque.
+        ceviAviso('Toca el micrófono para seguir hablando: tu navegador pide un toque en cada turno.');
+        ceviEstado('reposo');
+      }
+      return;
+    }
+    if (e.error !== 'no-speech' && e.error !== 'aborted') {
+      ceviTranscripcion('No te escuché bien. Toca el micrófono e inténtalo otra vez.');
+    }
+    ceviEstado('reposo');
+  };
+  rec.onend = () => {
+    cevi.escuchando = null;
+    if (cevi.cerrando) return;
+    if (dicho) { ceviEnviar(dicho); return; }
+    if (cevi.estado === 'escuchando') ceviEstado('reposo');
+  };
+
+  try { rec.start(); ceviEstado('escuchando'); ceviTranscripcion(''); }
+  catch {
+    cevi.escuchando = null;
+    if (!desdeToque) ceviAviso('Toca el micrófono para seguir hablando: tu navegador pide un toque en cada turno.');
+    ceviEstado('reposo');
+  }
+}
+
+// Corta la escucha. Si `enviar` es falso, descarta lo dicho.
+function ceviCallar() {
+  if (!cevi.escuchando) return;
+  try { cevi.escuchando.stop(); } catch {}
+}
+
+/* Un solo sitio decide qué se ve: así el botón grande, el texto de ayuda y el
+   aria-live nunca se contradicen entre sí. */
+function ceviEstado(nuevo) {
+  cevi.estado = nuevo;
+  const panel = $('#aiPanel');
+  if (!panel) return;
+  panel.dataset.estado = nuevo;
+  const b = $('#ceviVozBtn');
+  if (b) {
+    const etiquetas = {
+      reposo: ['Toca para hablar', 'Hablar con CeVi'],
+      escuchando: ['Te escucho…', 'Dejar de escuchar'],
+      pensando: ['Pensando…', 'CeVi está pensando'],
+      hablando: ['CeVi está hablando', 'Interrumpir a CeVi']
+    };
+    const [texto, aria] = etiquetas[nuevo] || etiquetas.reposo;
+    const t = $('#ceviVozTxt'); if (t) t.textContent = texto;
+    b.setAttribute('aria-label', aria);
+  }
+}
+
+// Lo que se va oyendo, en pantalla, mientras la persona habla.
+function ceviTranscripcion(txt) {
+  const el = $('#ceviDictado');
+  if (el) el.textContent = txt;
+}
+
+// El botón grande hace lo que toca según el estado. Un solo control, sin modos ocultos.
+function ceviVozToque() {
+  ceviDesbloquearAudio();
+  if (cevi.estado === 'escuchando') { cevi.manosLibres = false; ceviCallar(); return; }
+  if (cevi.estado === 'hablando') { ceviParaVoz(); ceviEstado('reposo'); return; }
+  if (cevi.estado === 'pensando') return;
+  cevi.manosLibres = true;
+  ceviAviso('');
+  ceviEscuchar(true);
+}
+
+// Pasa al chat escrito y dice por qué, en vez de dejar un micrófono que no responde.
+function ceviModoTexto(motivo) {
+  cevi.modo = 'texto';
+  cevi.manosLibres = false;
+  const panel = $('#aiPanel');
+  if (panel) panel.dataset.modo = 'texto';
+  ceviEstado('reposo');
+  ceviTranscripcion('');
+  ceviAviso(motivo);
+  setTimeout(() => $('#ceviInput')?.focus(), 80);
+}
+
+// Aviso que se ve en los dos modos: por qué no se puede hablar, o qué pasó.
+function ceviAviso(texto) {
+  const el = $('#ceviAviso');
+  if (!el) return;
+  el.textContent = texto || '';
+  el.hidden = !texto;
 }
 
 function ceviPanelHTML() {
@@ -1335,69 +1482,113 @@ function ceviPanelHTML() {
       <div class="cevi-avatar grande" aria-hidden="true">🐂</div>
       <div class="cevi-head-txt">
         <strong>${esc(ag.nombre || 'CeVi')}</strong>
-        <span>Tu asistente C4V, responde al instante</span>
+        <span>Háblale, te contesta en voz alta</span>
       </div>
       <button type="button" class="cevi-voz" id="ceviVoz" aria-pressed="${ceviVozActiva()}" aria-label="Leer respuestas en voz alta">${ceviVozActiva() ? CEVI_ICONOS.audioOn : CEVI_ICONOS.audioOff}</button>
       <button type="button" class="cevi-close" id="ceviClose" aria-label="Cerrar">×</button>
     </div>
+
     <div class="cevi-msgs" id="ceviMsgs" role="log" aria-live="polite" aria-label="Conversación con CeVi"></div>
+
+    <p class="cevi-aviso" id="ceviAviso" role="status" hidden></p>
+
+    <!-- El micrófono es el control principal: ocupa el sitio que antes tenía el
+         cuadro de escribir, porque hablar es lo que la mayoría va a hacer. -->
+    <div class="cevi-voz-zona">
+      <p class="cevi-dictado" id="ceviDictado" aria-live="polite"></p>
+      <button type="button" class="cevi-voz-btn" id="ceviVozBtn" aria-label="Hablar con CeVi">
+        <span class="cevi-onda" aria-hidden="true"><i></i><i></i><i></i></span>
+        <span class="cevi-voz-ic" aria-hidden="true">${CEVI_ICONOS.mic}</span>
+      </button>
+      <span class="cevi-voz-txt" id="ceviVozTxt">Toca para hablar</span>
+      <button type="button" class="cevi-cambiar" id="ceviEscribir">Prefiero escribir</button>
+    </div>
+
     <div class="cevi-sug" id="ceviSug">
       ${['¿Con qué potencia corto MDF de 3 mm?', '¿Cada cuánto cambio el agua del chiller?', 'Mi láser dejó de cortar bien']
         .map(q => `<button type="button" class="chip" data-q="${esc(q)}">${esc(q)}</button>`).join('')}
     </div>
+
     <form class="cevi-form" id="ceviForm">
-      <button type="button" class="cevi-mic" id="ceviMic" aria-label="Dictar por voz">${CEVI_ICONOS.mic}</button>
-      <input id="ceviInput" type="text" autocomplete="off" placeholder="${nombre ? `Pregúntame lo que sea, ${esc(nombre)}` : 'Escribe tu pregunta'}" aria-label="Tu pregunta para CeVi">
+      <input id="ceviInput" type="text" autocomplete="off" placeholder="${nombre ? `Escríbeme, ${esc(nombre)}` : 'Escribe tu pregunta'}" aria-label="Tu pregunta para CeVi">
       <button type="submit" class="cevi-send" aria-label="Enviar">${CEVI_ICONOS.enviar}</button>
+      <button type="button" class="cevi-cambiar" id="ceviHablarBtn">Prefiero hablar</button>
     </form>
+
     <p class="cevi-pie">CeVi responde solo, con inteligencia artificial. Si el tema es serio, te pasamos con una persona del equipo.</p>`;
 }
 
 function ceviAbrir() {
   const panel = $('#aiPanel'), btn = $('#aiBtn');
   if (!panel) return;
+  ceviDesbloquearAudio();                        // el toque que abre también libera el altavoz
   cevi.origen = document.activeElement;          // para devolver el foco al cerrar
+  cevi.cerrando = false;
+  cevi.modo = HAY_DICTADO ? 'voz' : 'texto';
+  cevi.manosLibres = cevi.modo === 'voz';
   panel.innerHTML = ceviPanelHTML();
+  panel.dataset.modo = cevi.modo;
   panel.hidden = false; cevi.abierto = true;
   panel.setAttribute('role', 'dialog');
   panel.setAttribute('aria-modal', 'true');
-  panel.setAttribute('aria-label', 'Chat con CeVi, tu asistente');
+  panel.setAttribute('aria-label', 'Hablar con CeVi, tu asistente');
   btn?.setAttribute('aria-expanded', 'true');
+  ceviEstado('reposo');
 
-  if (!cevi.historial.length) {
-    const cli = currentClient();
-    const maq = cli ? state.db.maquinas.find(m => m.cliente_id === cli.id) : null;
+  const cli = currentClient();
+  const maq = cli ? state.db.maquinas.find(m => m.cliente_id === cli.id) : null;
+  const primera = !cevi.historial.length;
+  if (primera) {
     cevi.historial.push({
       role: 'assistant',
-      content: `Hola${cli ? ' ' + primerNombre(cli.nombre) : ''}. Soy CeVi.${maq?.modelo ? ` Veo que tienes tu ${maq.modelo}.` : ''} Pregúntame sobre parámetros, mantenimiento o cualquier problema con tu máquina.`
+      content: `Hola${cli ? ' ' + primerNombre(cli.nombre) : ''}. Soy CeVi.${maq?.modelo ? ` Veo que tienes tu ${maq.modelo}.` : ''} Háblame: pregúntame sobre parámetros, mantenimiento o cualquier problema con tu máquina.`
     });
   }
   ceviPintar();
 
   $('#ceviClose').onclick = ceviCerrar;
   $('#ceviForm').onsubmit = (e) => { e.preventDefault(); ceviEnviar($('#ceviInput').value); };
-  $('#ceviMic').onclick = (e) => ceviEscuchar(e.currentTarget);
+  $('#ceviVozBtn').onclick = ceviVozToque;
+  $('#ceviEscribir').onclick = () => ceviModoTexto('');
+  $('#ceviHablarBtn').onclick = () => {
+    if (!HAY_DICTADO) { ceviAviso('Tu navegador no puede escuchar. Escríbeme tu pregunta.'); return; }
+    cevi.modo = 'voz'; panel.dataset.modo = 'voz';
+    ceviAviso(''); ceviTranscripcion(''); ceviVozToque();
+  };
   $('#ceviVoz').onclick = (e) => {
     const activa = !ceviVozActiva();
     try { localStorage.setItem('c4v_cevi_voz', activa ? '1' : '0'); } catch {}
     e.currentTarget.setAttribute('aria-pressed', activa);
     e.currentTarget.innerHTML = activa ? CEVI_ICONOS.audioOn : CEVI_ICONOS.audioOff;
-    if (!activa && cevi.hablando) { cevi.hablando.pause(); cevi.hablando = null; }
+    if (!activa) { ceviParaVoz(); if (cevi.estado === 'hablando') ceviEstado('reposo'); }
   };
   panel.querySelectorAll('#ceviSug .chip').forEach(b => b.onclick = () => ceviEnviar(b.dataset.q));
-  setTimeout(() => $('#ceviInput')?.focus(), 60);
+
+  if (cevi.modo === 'voz') {
+    // Saluda en voz alta y se queda escuchando: no hay que tocar nada más.
+    (async () => {
+      if (primera) await ceviHablar(cevi.historial[0].content);
+      if (cevi.abierto && !cevi.cerrando && cevi.manosLibres) ceviEscuchar();
+    })();
+  } else {
+    if (!HAY_DICTADO) ceviAviso('Tu navegador no puede escuchar. Escríbeme tu pregunta aquí abajo.');
+    setTimeout(() => $('#ceviInput')?.focus(), 60);
+  }
 }
 
 function ceviCerrar() {
+  cevi.cerrando = true;
   const panel = $('#aiPanel');
-  if (panel) { panel.hidden = true; panel.innerHTML = ''; }
+  if (panel) { panel.hidden = true; panel.innerHTML = ''; delete panel.dataset.estado; }
   cevi.abierto = false;
+  cevi.manosLibres = false;
+  cevi.estado = 'reposo';
   const btn = $('#aiBtn');
   btn?.setAttribute('aria-expanded', 'false');
   // Sin esto el foco caía al principio del documento al cerrar con Escape.
   (cevi.origen && document.contains(cevi.origen) ? cevi.origen : btn)?.focus();
-  if (cevi.hablando) { cevi.hablando.pause(); cevi.hablando = null; }
-  if (cevi.escuchando) { try { cevi.escuchando.stop(); } catch {} cevi.escuchando = null; }
+  ceviParaVoz();
+  if (cevi.escuchando) { try { cevi.escuchando.abort(); } catch {} cevi.escuchando = null; }
 }
 
 function initAgente() {
