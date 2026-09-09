@@ -1196,3 +1196,11 @@ body{background:var(--mesa)}
 @media (prefers-reduced-motion:reduce){ .ai-orbe-halo{animation:none} }
 /* La salida a una persona siempre a la vista, y distinta de las pistas. */
 .chip-persona{border-color:var(--tinta);color:var(--tinta);font-weight:700;text-decoration:none}
+.cevi-wa{display:inline-block;margin-top:10px;background:#128C4A;color:#fff;border-radius:var(--r-full);
+  padding:9px 16px;font-size:var(--t-sm);font-weight:700;text-decoration:none;min-height:var(--tap);
+  display:inline-flex;align-items:center}
+.cevi-wa:hover{background:#0e7a40}
+.cevi-wa{margin-top:10px;background:#128C4A;color:#fff;border-radius:var(--r-full);
+  padding:9px 16px;font-size:var(--t-sm);font-weight:700;text-decoration:none;
+  min-height:var(--tap);display:inline-flex;align-items:center}
+.cevi-wa:hover{background:#0e7a40}

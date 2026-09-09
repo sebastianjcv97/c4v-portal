@@ -1452,8 +1452,13 @@ function ceviBurbuja(quien, texto, extra = '') {
 function ceviPintar() {
   const box = $('#ceviMsgs');
   if (!box) return;
-  box.innerHTML = cevi.historial.map(m => ceviBurbuja(m.role === 'user' ? 'yo' : 'cevi', m.content, m.ticket
-    ? `<div class="cevi-ticket">✅ Ya le avisé a una persona del equipo. Te escriben por WhatsApp.</div>` : '')).join('');
+  box.innerHTML = cevi.historial.map(m => {
+    let extra = '';
+    if (m.ticket) extra = `<div class="cevi-ticket">Ya le avisé a una persona del equipo. Te escriben por WhatsApp.</div>`;
+    // Si CeVi se cayó, la persona no debería tener que buscar el número.
+    if (m.wa) extra = `<a class="cevi-wa" href="${esc(m.wa)}" target="_blank" rel="noopener">Escribir por WhatsApp ahora</a>`;
+    return ceviBurbuja(m.role === 'user' ? 'yo' : 'cevi', m.content, extra);
+  }).join('');
   box.scrollTop = box.scrollHeight;
 }
 
@@ -1596,6 +1601,94 @@ function ceviParaVoz() {
 
 const ceviVozActiva = () => { try { return localStorage.getItem('c4v_cevi_voz') !== '0'; } catch { return true; } };
 
+/* Pide la respuesta por streaming: cada frase llega en cuanto Claude la
+   escribe, y se manda a voz sin esperar al resto. Antes se esperaban los 2,5 s
+   completos antes de poder sintetizar la primera palabra.
+   Devuelve el texto completo, o null si el backend no sabe hacer streaming (y
+   entonces quien llama usa el /chat de siempre). */
+async function ceviChatStream(msg, alLlegarFrase) {
+  let r;
+  try {
+    r = await fetch(`${CFG.ceviApi}/chat/stream`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: msg, history: cevi.historial.slice(0, -1).slice(-8), ...ceviContexto() })
+    });
+  } catch { return null; }
+  if (!r.ok || !r.body || !/text\/event-stream/.test(r.headers.get('content-type') || '')) return null;
+
+  const lector = r.body.getReader();
+  const dec = new TextDecoder();
+  let resto = '', evento = '', completo = '';
+
+  while (true) {
+    const { done, value } = await lector.read();
+    if (done) break;
+    resto += dec.decode(value, { stream: true });
+    const bloques = resto.split('\n\n');
+    resto = bloques.pop() || '';
+    for (const bloque of bloques) {
+      for (const linea of bloque.split('\n')) {
+        if (linea.startsWith('event:')) evento = linea.slice(6).trim();
+        else if (linea.startsWith('data:')) {
+          let d; try { d = JSON.parse(linea.slice(5).trim()); } catch { continue; }
+          if (evento === 'frase' && d.texto) alLlegarFrase(d.texto);
+          else if (evento === 'fin') completo = d.texto || completo;
+          else if (evento === 'error') throw new Error(d.error || 'stream');
+        }
+      }
+    }
+  }
+  return completo || null;
+}
+
+/* Cola de voz: las frases llegan del streaming una a una, así que la síntesis
+   de la siguiente arranca mientras suena la actual. Es lo mismo que hacía
+   ceviHablar por dentro, pero alimentado en vivo. */
+const colaVoz = { pendientes: [], corriendo: false, cerrada: true, avisar: null };
+
+function ceviEncolarVoz(frase) {
+  if (!CFG.ceviVoz) return;
+  if (cevi.modo !== 'voz' && !ceviVozActiva()) return;
+  colaVoz.pendientes.push(ceviPedirTts(frase).catch(() => null));
+  if (colaVoz.avisar) { colaVoz.avisar(); colaVoz.avisar = null; }
+  if (!colaVoz.corriendo) colaVoz.fin = ceviCorrerCola();
+}
+
+async function ceviCorrerCola() {
+  colaVoz.corriendo = true;
+  const turno = cevi.turnoVoz;
+  ceviEstado('hablando');
+  let sonóAlgo = false;
+  while (turno === cevi.turnoVoz) {
+    if (!colaVoz.pendientes.length) {
+      if (colaVoz.cerrada) break;
+      await new Promise(r => { colaVoz.avisar = r; setTimeout(r, 4000); });
+      continue;
+    }
+    const url = await colaVoz.pendientes.shift();
+    if (turno !== cevi.turnoVoz) break;
+    if (!url) continue;
+    const ok = await ceviReproducirTrozo(url);
+    if (turno !== cevi.turnoVoz) break;
+    if (ok) { sonóAlgo = true; ceviAviso(''); }
+    else if (!sonóAlgo) { ceviSinSonido(cevi.ultimaRespuesta || ''); break; }
+  }
+  colaVoz.corriendo = false;
+  if (turno === cevi.turnoVoz) {
+    cevi.hablando = null;
+    if (cevi.estado === 'hablando') ceviEstado('reposo');
+  }
+}
+
+function ceviAbrirCola() {
+  ceviParaVoz();                       // corta lo que sonaba y sube el turno
+  colaVoz.pendientes = []; colaVoz.cerrada = false; colaVoz.fin = null;
+}
+function ceviCerrarCola() {
+  colaVoz.cerrada = true;
+  if (colaVoz.avisar) { colaVoz.avisar(); colaVoz.avisar = null; }
+}
+
 async function ceviEnviar(texto) {
   const msg = String(texto || '').trim();
   if (!msg || $('#ceviInput')?.disabled) return;
@@ -1604,34 +1697,66 @@ async function ceviEnviar(texto) {
   const input = $('#ceviInput'); if (input) { input.value = ''; input.disabled = true; }
   ceviTranscripcion('');
   ceviEstado('pensando');
-  ceviRelleno();                   // llena el silencio mientras piensa el modelo
+  ceviArmarRelleno();              // solo suena si la espera pasa de 800 ms
   $('#ceviMsgs').insertAdjacentHTML('beforeend', '<div class="cevi-msg cevi pensando" aria-hidden="true"><div class="cevi-avatar">' + TORO + '</div><div class="cevi-txt"><span></span><span></span><span></span></div></div>');
   $('#ceviMsgs').scrollTop = $('#ceviMsgs').scrollHeight;
 
+  const cerrarTurno = async () => {
+    if (input) { input.disabled = false; if (cevi.modo === 'texto') input.focus(); }
+    if (cevi.estado === 'pensando') ceviEstado('reposo');
+    // Manos libres: en cuanto CeVi termina de hablar, vuelve a escuchar sola.
+    if (cevi.abierto && cevi.modo === 'voz' && cevi.manosLibres && !cevi.cerrando) ceviEscuchar();
+  };
+
   try {
+    // Camino rápido: cada frase se oye en cuanto Claude la escribe.
+    let primeraFrase = true;
+    ceviAbrirCola();
+    const completo = await ceviChatStream(msg, (frase) => {
+      if (primeraFrase) { primeraFrase = false; ceviCancelarRelleno(); }
+      ceviEncolarVoz(frase);
+    });
+    ceviCerrarCola();
+
+    if (completo) {
+      cevi.ultimaRespuesta = completo;
+      cevi.historial.push({ role: 'assistant', content: completo });
+      ceviPintar();
+      if (input) input.disabled = false;
+      ceviPintarPistas();
+      await colaVoz.fin;
+      await cerrarTurno();
+      return;
+    }
+
+    /* El backend todavía no sabe hacer streaming (o falló): se usa el /chat de
+       siempre, que además puede crear el ticket en Odoo. */
+    ceviParaVoz();
     const r = await fetch(`${CFG.ceviApi}/chat`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ message: msg, history: cevi.historial.slice(0, -1).slice(-8), ...ceviContexto() })
     });
     if (!r.ok) throw new Error('http ' + r.status);
     const j = await r.json();
+    ceviCancelarRelleno();
     if (j.partner_id) cevi.partnerId = j.partner_id;
     const respuesta = j.response || 'Disculpa, no te entendí. ¿Lo repites?';
+    cevi.ultimaRespuesta = respuesta;
     cevi.historial.push({ role: 'assistant', content: respuesta, ticket: j.ticket?.ref || null });
     ceviPintar();
     if (input) input.disabled = false;
-    ceviPintarPistas();              // qué se puede preguntar ahora
+    ceviPintarPistas();
     await ceviHablar(respuesta);
-    // Manos libres: en cuanto CeVi termina de hablar, vuelve a escuchar sola.
-    if (cevi.abierto && cevi.modo === 'voz' && cevi.manosLibres && !cevi.cerrando) ceviEscuchar();
+    await cerrarTurno();
   } catch {
+    ceviCerrarCola();
+    ceviCancelarRelleno();
     const caida = 'No pude conectarme en este momento. Escríbenos por WhatsApp y te responde una persona del equipo.';
-    cevi.historial.push({ role: 'assistant', content: caida });
+    cevi.historial.push({ role: 'assistant', content: caida, wa: waLink(`Hola equipo C4V. ${msg}`) });
     ceviPintar();
     if (input) input.disabled = false;
     await ceviHablar(caida);
-  } finally {
-    if (input) { input.disabled = false; if (cevi.modo === 'texto') input.focus(); }
+    if (input) input.disabled = false;
     if (cevi.estado === 'pensando') ceviEstado('reposo');
   }
 }
@@ -1645,17 +1770,27 @@ function ceviEscuchar(desdeToque = false) {
   if (cevi.escuchando) return;              // ya está escuchando
   ceviParaVoz();                            // no puede oírse a sí mismo
 
-  const rec = new SR();
-  rec.lang = 'es-PE'; rec.interimResults = true; rec.continuous = false;
-  rec.maxAlternatives = 1;
+  /* Una sola instancia para toda la sesión: crear un reconocedor nuevo en cada
+     turno hace sonar el pitido del sistema en iPhone una y otra vez. */
+  if (!cevi.rec) {
+    cevi.rec = new SR();
+    cevi.rec.lang = 'es-PE'; cevi.rec.interimResults = true;
+    cevi.rec.continuous = false; cevi.rec.maxAlternatives = 1;
+  }
+  const rec = cevi.rec;
   cevi.escuchando = rec;
 
   let dicho = '';
   let temporizador = null;
+  /* 850 ms es lo que usa la industria. Pero si la frase quedó colgando de un
+     conector ("y", "porque", "o sea"), la persona sigue pensando y se le da más
+     aire; si terminó en pregunta, se corta antes. */
+  const COLGANDO = /\b(y|o|pero|porque|que|si|cuando|para|con|de|en|un|una|o sea|entonces|este|eh|em|mmm|a ver|es que|lo que)\s*$/i;
+  const esperaSegun = (t) => COLGANDO.test(t) ? 1600 : (/[?¿]\s*$/.test(t) ? 600 : 850);
   const cortarPorSilencio = () => {
     clearTimeout(temporizador);
     if (!dicho) return;
-    temporizador = setTimeout(() => { try { rec.stop(); } catch {} }, 1200);
+    temporizador = setTimeout(() => { try { rec.stop(); } catch {} }, esperaSegun(dicho));
   };
   rec.onresult = (e) => {
     dicho = Array.from(e.results).map(x => x[0].transcript).join('').trim();
@@ -1689,6 +1824,13 @@ function ceviEscuchar(desdeToque = false) {
     cevi.escuchando = null;
     orbeSoltarMicro();
     if (cevi.cerrando) return;
+    /* Un "eh" o un ruido no es una pregunta: mandarlo hace que CeVi conteste
+       cualquier cosa y la conversación se vuelve absurda. */
+    if (dicho && dicho.replace(/[^a-záéíóúñ]/gi, '').length < 4) {
+      ceviTranscripcion('No te entendí. ¿Me lo repites?');
+      if (cevi.manosLibres) { setTimeout(() => ceviEscuchar(), 400); return; }
+      ceviEstado('reposo'); return;
+    }
     if (dicho) { cevi.silencios = 0; ceviEnviar(dicho); return; }
     if (cevi.estado === 'escuchando') {
       ceviEstado('reposo');
@@ -1698,6 +1840,7 @@ function ceviEscuchar(desdeToque = false) {
 
   try {
     rec.start(); ceviEstado('escuchando'); ceviTranscripcion('');
+    ceviPitido('escucho');               // "te toca", para quien no mira la pantalla
     orbeEscucharMicro();                 // el orbe se mueve con tu voz
   }
   catch {
@@ -1906,6 +2049,29 @@ function ceviPaginaIniciar() {
   })();
 }
 
+/* Pitidos de cambio de turno. Quien está hablando no mira la pantalla, así que
+   el orbe no le sirve: necesita oír cuándo le toca. Se generan con WebAudio,
+   sin descargar ningún archivo. */
+function ceviPitido(tipo) {
+  const ctx = orbeCtx();
+  if (!ctx || ctx.state !== 'running') return;
+  const notas = { escucho: [660, 990], listo: [880, 587], falla: [400, 300] }[tipo];
+  if (!notas) return;
+  try {
+    const t = ctx.currentTime;
+    notas.forEach((hz, i) => {
+      const osc = ctx.createOscillator(), gan = ctx.createGain();
+      osc.type = 'sine'; osc.frequency.value = hz;
+      const t0 = t + i * 0.085;
+      gan.gain.setValueAtTime(0, t0);
+      gan.gain.linearRampToValueAtTime(0.075, t0 + 0.012);
+      gan.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.13);
+      osc.connect(gan); gan.connect(ctx.destination);
+      osc.start(t0); osc.stop(t0 + 0.15);
+    });
+  } catch {}
+}
+
 /* ---------- Guiar la conversación ----------
    Un asistente de voz sin pistas deja a la gente muda: no sabe qué se le puede
    pedir. Después de cada respuesta se ofrecen dos o tres caminos concretos, y
@@ -1966,7 +2132,7 @@ function ceviSinRespuesta() {
    así que se precargan unas muletillas cortas y se suelta una al instante,
    igual que hace una persona cuando está pensando la respuesta. */
 const MULETILLAS = ['Déjame ver.', 'Un momento.', 'Ya te digo.', 'A ver.'];
-const relleno = { audios: [], cargando: false };
+const relleno = { audios: [], cargando: false, timer: null, ultima: null };
 
 async function ceviPrecargarRelleno() {
   if (relleno.audios.length || relleno.cargando || !CFG.ceviApi || !CFG.ceviVoz) return;
@@ -1978,15 +2144,26 @@ async function ceviPrecargarRelleno() {
   relleno.cargando = false;
 }
 
-// Suelta una muletilla si de verdad estamos esperando. No espera a que acabe.
-function ceviRelleno() {
-  if (cevi.modo !== 'voz' || !CFG.ceviVoz || !relleno.audios.length) return;
-  const url = relleno.audios[Math.floor(Math.random() * relleno.audios.length)];
-  try {
-    const a = ceviReproductor();
-    a.src = url;
-    a.play().catch(() => {});
-  } catch {}
+/* Arma la muletilla, no la suelta: solo suena si a los 800 ms la respuesta
+   todavía no llegó. Soltarla siempre hacía que en las respuestas rápidas se
+   oyera "Un momento" pegado a la respuesta, y sonaba a tartamudeo. */
+function ceviArmarRelleno() {
+  clearTimeout(relleno.timer);
+  if (cevi.modo !== 'voz' || !CFG.ceviVoz) return;
+  relleno.timer = setTimeout(() => {
+    if (cevi.estado !== 'pensando' || !relleno.audios.length) return;
+    let url;
+    do { url = relleno.audios[Math.floor(Math.random() * relleno.audios.length)]; }
+    while (relleno.audios.length > 1 && url === relleno.ultima);
+    relleno.ultima = url;
+    try { const a = ceviReproductor(); a.src = url; a.play().catch(() => {}); } catch {}
+  }, 800);
+}
+
+function ceviCancelarRelleno() {
+  clearTimeout(relleno.timer);
+  const a = cevi.reproductor;
+  if (a && relleno.audios.includes(a.src)) { try { a.pause(); } catch {} }
 }
 
 /* Railway duerme el servicio: el primer turno pagaba el arranque en frío. Al
