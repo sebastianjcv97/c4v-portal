@@ -51,14 +51,12 @@ button{font-family:var(--sans)}
 .skip:focus{left:0}
 
 /* Banda de demostración (honestidad) */
-.demo-band{background:var(--amber);color:var(--black);font-size:14px;font-weight:700;text-align:center;padding:8px 16px}
 
 /* [hidden] debe ganar SIEMPRE: .gate/.app usan display:flex y taparían el hidden del navegador */
 [hidden]{display:none !important}
 
 /* ---------- Acceso por teléfono (gate) ---------- */
 .gate{position:fixed;inset:0;z-index:50;background:var(--black);color:var(--on-black);display:flex;flex-direction:column;align-items:center;padding:24px;overflow-y:auto}
-.gate-band{position:absolute;top:0;left:0;right:0;background:var(--amber);color:var(--black);font-size:13px;font-weight:700;text-align:center;padding:6px 16px}
 .gate-box{width:100%;max-width:420px;text-align:center;margin:auto;padding-top:36px}
 .gate-logo{height:34px;width:auto;margin-bottom:32px}
 .gate-wa-ic{width:56px;height:56px;margin:0 auto 16px;color:#25D366}
@@ -98,10 +96,6 @@ button{font-family:var(--sans)}
 .ai-panel .ai-inner{max-width:1020px;display:flex;gap:16px;align-items:flex-start}
 .ai-panel h3{font-family:var(--slab);font-size:17px;font-weight:700;margin-bottom:4px}
 .ai-panel p{color:var(--muted);font-size:14px;line-height:1.55;margin-bottom:12px}
-.ai-avatar{flex-shrink:0;width:44px;height:44px;border-radius:50%;background:var(--black);color:var(--red);display:flex;align-items:center;justify-content:center}
-.ai-avatar svg{width:22px;height:22px}
-.ai-soon{display:inline-block;background:var(--warn-50);color:var(--warn);border-radius:100px;padding:3px 10px;font-size:12px;font-weight:700;margin-bottom:8px}
-.ai-close{margin-left:auto;background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:4px 8px;line-height:1}
 
 /* ---------- Pantalla única: saludo + máquina + 4 botones grandes ---------- */
 .saludo{font-family:var(--slab);font-size:28px;font-weight:800;margin:0 0 20px}
@@ -142,9 +136,6 @@ button{font-family:var(--sans)}
 .wa-txt span{font-size:14px;opacity:.95}
 
 /* Vía secundaria: dejar un mensaje escrito */
-.msg-box{margin-top:28px;border:1px solid var(--line);border-radius:var(--r-lg);padding:0 16px}
-.msg-box summary{min-height:48px;display:flex;align-items:center;cursor:pointer;font-weight:700;color:var(--red-cta);font-size:15px}
-.msg-box[open]{padding-bottom:16px}
 .msg-box .form{margin-top:8px}
 
 /* ---------- Identidad del usuario (pie) ---------- */
@@ -182,19 +173,11 @@ button{font-family:var(--sans)}
 
 /* Tarjetas de navegación */
 .actions{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
-.action-card{display:flex;align-items:center;gap:16px;background:var(--bg);border:1px solid var(--line);border-radius:var(--r-lg);padding:24px;box-shadow:var(--sh);transition:border-color .16s,transform .16s}
-.action-card:hover{transform:translateY(-2px);border-color:var(--red)}
-.action-card .ac-ico{width:48px;height:48px;border-radius:var(--r);background:var(--black);display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .action-card .ac-ico .ic{width:22px;height:22px;color:var(--red)}
-.action-card h3{font-family:var(--slab);font-size:18px;margin-bottom:2px;font-weight:700}
-.action-card p{margin:0;color:var(--muted);font-size:14px;line-height:1.45}
-.action-card .ac-arrow{margin-left:auto;color:var(--red-cta);font-size:22px;font-weight:700}
 
 /* Mini card (máquina + certificado) */
 .card.mini{display:flex;gap:24px;align-items:center;flex-wrap:wrap}
 .card.mini>div{min-width:200px}
-.seal-sm{width:96px;flex-shrink:0}
-.seal-sm svg{width:100%;height:auto;display:block}
 
 .ulist{margin:8px 0 0;padding-left:18px;color:var(--muted);font-size:14px;line-height:1.8}
 
@@ -261,15 +244,6 @@ button{font-family:var(--sans)}
 .bar{height:8px;background:var(--alt);border-radius:999px;overflow:hidden;margin-top:8px}
 .bar>i{display:block;height:100%;background:var(--red);border-radius:999px;transition:width .3s}
 
-.onb-item{display:flex;align-items:center;gap:16px;padding:12px 0;border-bottom:1px solid var(--line)}
-.onb-item:last-child{border-bottom:none}
-.onb-item input{width:24px;height:24px;accent-color:var(--red-cta);flex-shrink:0;cursor:pointer}
-.onb-body{flex:1;display:flex;flex-direction:column;min-width:0}
-.onb-body strong{font-size:16px;font-weight:700}
-.onb-body span{font-size:14px;color:var(--muted)}
-.onb-item input:checked + .onb-body strong{color:var(--muted);text-decoration:line-through}
-.onb-go{font-size:14px;font-weight:700;color:var(--red-cta);white-space:nowrap;padding:12px 8px}
-.onb-go:hover{color:var(--red-dark)}
 
 /* ---------- Toolbar / chips ---------- */
 .toolbar{display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap}
@@ -285,7 +259,6 @@ button{font-family:var(--sans)}
 .tpl-thumb{height:120px;border-radius:var(--r);background:var(--alt);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;margin-bottom:16px;overflow:hidden}
 .tpl-thumb svg{width:70%;height:70%}
 .guia{display:flex;flex-direction:column}
-.guia-thumb{height:120px;border-radius:var(--r);background:var(--alt);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;margin-bottom:16px;overflow:hidden}
 .diag{width:84%;height:84%;color:var(--red-cta)}
 
 /* ---------- Cursos ---------- */
@@ -320,7 +293,6 @@ tr:last-child td{border-bottom:none}
 .cert-img{width:100%;height:auto;border-radius:var(--r);display:block}
 
 .empty{padding:32px;text-align:center;color:var(--muted);background:var(--alt);border:1px dashed var(--line);border-radius:var(--r-lg)}
-.mini-select{padding:10px 12px;border:1px solid var(--line);border-radius:var(--r);font-family:var(--sans);font-size:14px;background:var(--bg);color:var(--ink);min-height:44px}
 
 /* ---------- Toast ---------- */
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(16px);background:var(--black);color:#fff;padding:12px 24px;border-radius:var(--r);font-size:14px;font-weight:500;opacity:0;transition:.22s;z-index:50;box-shadow:0 6px 24px rgba(20,20,20,.25)}
@@ -411,46 +383,24 @@ tr:last-child td{border-bottom:none}
 .big.lock{cursor:pointer;background:var(--alt);border-style:dashed;width:100%;text-align:left;font-family:var(--sans);font-size:inherit}
 .big.lock .big-ico{background:#ececec;color:var(--muted)}
 .big.lock:hover{border-color:var(--line);background:var(--alt)}
-.prep-aviso{background:var(--red-50);border:1px solid #f3c2c2;border-radius:var(--r-lg);padding:14px 16px;margin-bottom:16px;font-size:14px;line-height:1.5}
-.prep-aviso strong{display:block;font-family:var(--slab);font-size:16px;margin-bottom:4px}
-.prep-aviso p{margin:0;color:var(--ink)}
 .prep-ok{background:var(--ok-50);border:1px solid #bfe0c8;border-radius:var(--r-lg);padding:14px 16px;margin-bottom:16px;font-size:14px;line-height:1.5}
 .prep-ok strong{display:block;font-family:var(--slab);font-size:16px;margin-bottom:4px}
 .prep-ok p{margin:0 0 10px;color:var(--ink)}
 
 /* ---------- Preparación: fotos reales + acceso + kit ---------- */
-.onb-photo{flex-shrink:0;width:88px;height:64px;object-fit:cover;border-radius:var(--r);border:1px solid var(--line);background:var(--alt)}
 .acceso{display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap}
-.acceso-diag{flex:0 0 200px;text-align:center;color:var(--red-cta)}
-.acceso-diag svg{width:100%;max-width:200px}
-.acceso-diag span{display:block;font-size:12px;color:var(--muted);margin-top:4px}
 .acceso .grow{flex:1;min-width:240px}
 .acceso-pasos{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:8px;font-size:15px}
 .acceso-pasos li::marker{color:var(--red-cta);font-weight:700}
 
 /* ---------- Checklist paso a paso (numerado, con foto de referencia) ---------- */
-.prep-list-intro{margin:0 0 14px;font-size:14.5px;color:var(--muted);line-height:1.55}
-.prep-steps{list-style:none;margin:0;padding:0}
-.prep-step{position:relative;padding:16px 0;border-bottom:1px solid var(--line)}
-.prep-step:first-child{padding-top:0}
-.prep-step:last-child{border-bottom:none;padding-bottom:0}
-.prep-step-main{display:flex;align-items:center;gap:14px;cursor:pointer;min-height:44px}
-.prep-step-num{flex-shrink:0;width:30px;height:30px;border-radius:50%;background:var(--alt);border:1.5px solid var(--line);color:var(--muted);font-family:var(--slab);font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center}
-.prep-step-main input{width:24px;height:24px;accent-color:var(--red-cta);flex-shrink:0;cursor:pointer}
-.prep-step-txt{flex:1;min-width:0;font-size:16px;font-weight:700;line-height:1.35}
-.prep-step-check{flex-shrink:0;width:26px;height:26px;border-radius:50%;background:var(--ok);color:#fff;display:none;align-items:center;justify-content:center;font-size:15px;font-weight:800}
 /* Foto de referencia, alineada bajo el texto del paso */
 /* Estado completado */
 .prep-step.done .prep-step-num{background:var(--ok-50);border-color:var(--ok);color:var(--ok)}
 .prep-step.done .prep-step-txt,
-.prep-step-main input:checked ~ .prep-step-txt{color:var(--muted);text-decoration:line-through}
 .prep-step.done .prep-step-check,
-.prep-step-main input:checked ~ .prep-step-check{display:flex}
 .prep-step.done .prep-step-fig img{opacity:.85}
 @media (max-width:560px){
-  .prep-step-fig{margin-left:0}
-  .prep-step-num{width:26px;height:26px;font-size:13px}
-  .prep-step-txt{font-size:15px}
 }
 
 /* Lista de compras destacada (imposible de ignorar) */
@@ -469,9 +419,6 @@ tr:last-child td{border-bottom:none}
 .pdf-dl{font-size:13px;font-weight:700;color:var(--red-cta)}
 
 /* ---------- Botón WhatsApp (verde real de la marca WhatsApp) ---------- */
-.btn-wa{display:inline-flex;align-items:center;justify-content:center;gap:9px;background:var(--wa);color:#fff;font-family:var(--sans);font-weight:700;font-size:15px;padding:12px 20px;border-radius:var(--r);min-height:44px;text-decoration:none}
-.btn-wa:hover{background:#1eb457}
-.btn-wa svg{width:20px;height:20px;flex-shrink:0}
 
 /* Estado "verificando…" del botón de acceso */
 .gate-btn[aria-busy="true"]{opacity:.75;cursor:progress}
@@ -655,7 +602,6 @@ button.big{width:100%;text-align:left;font-family:inherit;cursor:pointer}
 .pie-legal nav a:hover{color:var(--ink)}
 .pie-lr{display:inline-flex;align-items:center;gap:8px;border:2px solid var(--ink);border-radius:var(--r);padding:8px 12px;font-weight:700;color:var(--ink) !important;text-decoration:none !important;background:var(--bg);min-height:44px}
 .pie-lr:hover{background:var(--black);color:var(--on-black) !important;border-color:var(--black)}
-.pie-falta{background:var(--red-50);border:1px solid var(--red);color:var(--red-dark);border-radius:var(--r);padding:8px 12px;margin:0 0 10px;font-weight:700}
 @media(max-width:560px){.pie-legal{padding:20px 16px 28px}.otp-form{flex-direction:column}.otp-form button{width:100%}}
 .cert-serie.sin-serie{background:var(--alt);border-style:dashed}
 .cert-serie.sin-serie code{background:var(--bg);padding:2px 6px;border-radius:4px;font-size:13px}
@@ -675,15 +621,8 @@ button.big{width:100%;text-align:left;font-family:inherit;cursor:pointer}
 .card.vacio p{color:var(--muted);margin:0 0 16px;max-width:46ch;margin-left:auto;margin-right:auto}
 
 /* ---------- Llevarse la guía al correo ---------- */
-.correo-caja{display:flex;gap:14px;align-items:flex-start;background:var(--alt);border:2px solid var(--line);border-radius:var(--r-lg);padding:18px;margin-bottom:24px}
 .correo-caja.lista{background:var(--ok-50);border-color:var(--ok)}
-.correo-ic{font-size:24px;line-height:1;flex-shrink:0;margin-top:2px}
-.correo-caja strong{display:block;font-family:var(--slab);font-size:17px;margin-bottom:5px}
-.correo-caja p{margin:0 0 12px;font-size:14.5px;color:var(--muted);line-height:1.55;max-width:56ch}
 .correo-caja.lista p{margin-bottom:0}
-.correo-form{display:flex;gap:8px;flex-wrap:wrap}
-.correo-form input{flex:1;min-width:200px;padding:13px 14px;border:2px solid var(--line);border-radius:var(--r);font-family:var(--sans);font-size:16px;background:var(--bg);color:var(--ink)}
-.correo-form input:focus{outline:none;border-color:var(--red)}
 .correo-msg{margin-top:10px;font-size:14px}
 .correo-msg.mal{color:var(--red-dark)}
 @media(max-width:560px){.correo-caja{flex-direction:column;gap:10px}.correo-form button{width:100%}}
@@ -719,23 +658,13 @@ button.big{width:100%;text-align:left;font-family:inherit;cursor:pointer}
 
 /* ---------- Lo que puede lastimarte, arriba y en rojo ---------- */
 .card.peligro{border:2px solid var(--red);background:var(--red-50)}
-.lista-peligro{margin:0;padding-left:20px}
-.lista-peligro li{margin-bottom:10px;font-size:var(--t-md);line-height:var(--lh-base)}
-.lista-peligro li:last-child{margin-bottom:0}
 
 /* ---------- Paso 0: pedir la ficha del modelo ---------- */
 .card.paso0{border:2px solid var(--ink)}
-.paso0-tag{display:inline-block;background:var(--ink);color:var(--on-black);font-size:var(--t-xs);font-weight:700;letter-spacing:.05em;padding:5px 10px;border-radius:var(--r-sm)}
 .card.paso0 .btn{margin-top:6px}
 
 /* ---------- Checklist: tiempos, opcionales y "¿cómo lo hago?" ---------- */
-.prep-tiempo{display:block;margin-top:5px;font-size:var(--t-sm);font-weight:600;color:var(--grafito)}
-.prep-opcional{display:block;margin-top:5px;font-size:var(--t-sm);color:var(--muted);font-weight:400}
-.prep-como{padding:0 0 0 44px}
-.prep-como-btn{background:none;border:none;color:var(--grafito);font-family:var(--sans);font-size:var(--t-sm);font-weight:700;cursor:pointer;padding:8px 0;min-height:var(--tap);text-decoration:underline}
-.prep-como-txt{background:var(--alt);border-radius:var(--r);padding:14px 16px;margin:4px 0 10px}
 .prep-como-txt .ulist{margin:0}
-.prep-como-txt li{font-size:var(--t-sm);line-height:var(--lh-base);margin-bottom:8px}
 
 /* ---------- El día que llega ---------- */
 .dia-entrega .acceso-pasos li.destacado{font-weight:700;color:var(--red-dark)}
@@ -807,40 +736,19 @@ button.big{width:100%;text-align:left;font-family:inherit;cursor:pointer}
 
 /* El aviso de la ficha: dos frases, no un párrafo */
 .card.ficha-modelo{border:2px solid var(--ink);margin-bottom:var(--s-4);padding:var(--s-4)}
-.ficha-modelo strong{display:block;font-family:var(--slab);font-size:var(--t-md);margin-bottom:4px}
-.ficha-modelo p{margin:0 0 var(--s-3);font-size:var(--t-sm);max-width:var(--medida)}
 
 @media(max-width:560px){
   .compras{grid-template-columns:1fr}
   .compra{padding:var(--s-3)}
-  .compra-img{width:88px}
 }
 
 /* ---------- Dibujo de cada paso ----------
    Sin marco ni fondo: el dibujo ya es blanco. Más chico que antes: siete pasos
    con una imagen de 400px cada uno hacían una página larguísima. */
-.prep-step-fig{margin:8px 0 4px 44px;max-width:300px}
-.prep-step-fig img{width:100%;height:auto;display:block;mix-blend-mode:multiply}
 @media(max-width:560px){.prep-step-fig{margin-left:0;max-width:240px}}
 
 
 /* ---------- Hoja resumen: lo que el cliente se lleva ---------- */
-.hoja{border:2px solid var(--ink);border-radius:var(--r-lg);padding:var(--s-5);margin-top:var(--s-6);background:var(--bg)}
-.hoja-cab{display:flex;gap:var(--s-4);align-items:flex-start;justify-content:space-between;flex-wrap:wrap;margin-bottom:var(--s-4)}
-.hoja-cab h2{font-family:var(--slab);font-size:var(--t-xl);margin:0 0 4px;line-height:var(--lh-snug)}
-.hoja-cab p{margin:0;font-size:var(--t-sm);color:var(--muted)}
-.hoja-marca{display:none}
-.hoja-cols{display:grid;grid-template-columns:1fr 1fr;gap:var(--s-5)}
-.hoja-col h3{font-family:var(--slab);font-size:var(--t-md);margin:0 0 var(--s-3);padding-bottom:6px;border-bottom:2px solid var(--line)}
-.hoja-col ul{list-style:none;margin:0;padding:0}
-.hoja-col li{display:flex;gap:10px;align-items:flex-start;padding:7px 0;font-size:var(--t-sm);line-height:var(--lh-snug);border-bottom:1px solid var(--line)}
-.hoja-col li:last-child{border-bottom:none}
-.hoja-col em{font-style:normal;color:var(--red-cta);font-weight:700}
-.hoja-box{flex-shrink:0;width:16px;height:16px;border:2px solid var(--ink);border-radius:3px;margin-top:2px}
-.hoja-ficha{margin-top:var(--s-4);padding-top:var(--s-4);border-top:2px solid var(--line)}
-.hoja-ficha h3{font-family:var(--slab);font-size:var(--t-md);margin:0 0 6px}
-.hoja-ficha p{margin:0;font-size:var(--t-sm);line-height:var(--lh-base)}
-.hoja-pie{margin:var(--s-4) 0 0;font-size:var(--t-sm);color:var(--muted)}
 @media(max-width:620px){.hoja-cols{grid-template-columns:1fr;gap:var(--s-4)}.hoja{padding:var(--s-4)}}
 
 /* La hoja imprimible se retiró: la guía es corta y se lee en pantalla. */
@@ -853,7 +761,6 @@ button.big{width:100%;text-align:left;font-family:inherit;cursor:pointer}
 .card.desvio{border:2px solid var(--red);background:var(--red-50);margin-bottom:var(--s-4)}
 .card.desvio strong{display:block;font-family:var(--slab);font-size:var(--t-lg);margin-bottom:5px}
 .card.desvio p{margin:0;font-size:var(--t-sm)}
-.hoja-ayuda{margin:var(--s-3) 0 0;font-size:var(--t-sm);color:var(--muted)}
 
 /* ════════════════════════════════════════════════════════════════════════
    LA HOJA SOBRE LA MESA
@@ -897,38 +804,20 @@ body{background:var(--mesa)}
 }
 
 /* ── El checklist, con el mismo tratamiento de fila con regla ── */
-.avance{margin:0 0 var(--s-2)}
 .avance .bar{height:6px;border-radius:var(--r-full);background:var(--regla);overflow:hidden}
 .avance .bar i{display:block;height:100%;background:var(--rojo-tinta);transition:width .3s}
-.lista-pasos .prep-steps{list-style:none;margin:0;padding:0}
 .lista-pasos .prep-step{display:grid;grid-template-columns:2.2rem 1fr auto;
   grid-template-areas:"num main fig" "como como fig";gap:var(--s-2) var(--s-3);align-items:start;
   border-bottom:1px solid var(--regla);padding:var(--s-4) 0}
-.lista-pasos .prep-step:last-child{border-bottom:none}
-.lista-pasos .prep-step-num{grid-area:num}
 .lista-pasos .prep-step-main{grid-area:main;display:flex;gap:var(--s-3);align-items:flex-start;
   cursor:pointer;min-height:var(--tap);padding:0}
 .lista-pasos .prep-step-num{font-family:var(--slab);font-weight:800;font-size:var(--t-xl);line-height:1;
   color:var(--tinta);font-variant-numeric:tabular-nums;width:auto;height:auto;background:none;border:none;display:block}
 .lista-pasos .prep-step.done .prep-step-num{color:var(--regla)}
-.lista-pasos .prep-step-txt{font-size:var(--t-md);line-height:var(--lh-snug);font-weight:500}
 .lista-pasos .prep-step.done .prep-step-txt{color:var(--grafito);text-decoration:line-through}
-.lista-pasos .prep-step-main input{width:30px;height:30px;accent-color:var(--rojo-tinta);cursor:pointer;margin:0;flex-shrink:0}
-.lista-pasos .prep-step-check{display:none}
-.lista-pasos .prep-step-fig{grid-area:fig;margin:0;width:116px;height:116px;display:grid;place-items:center}
-.lista-pasos .prep-step-fig img{max-width:116px;max-height:116px;width:auto;height:auto}
-.lista-pasos .prep-como{grid-area:como;padding-left:calc(2.2rem + var(--s-3))}
 @media(max-width:620px){
-  .lista-pasos .prep-step{grid-template-columns:1.5rem 1fr auto;gap:var(--s-2) var(--s-3);padding:var(--s-3) 0}
-  .lista-pasos .prep-step-num{font-size:var(--t-lg)}
-  .lista-pasos .prep-step-fig{width:92px;height:92px}
-  .lista-pasos .prep-step-fig img{max-width:92px;max-height:92px}
-  .lista-pasos .prep-como{padding-left:calc(1.5rem + var(--s-3))}
 }
-.prep-urgente{display:block;margin-top:5px;font-size:var(--t-sm);font-weight:700;color:var(--rojo-tinta)}
 
-.hoja-ficha ul{list-style:none;margin:0;padding:0}
-.hoja-ficha li{font-size:var(--t-sm);line-height:var(--lh-base);padding:3px 0}
 .hoja-col em.urg{display:block}
 
 /* Las preguntas frecuentes son un indice, no doce tarjetas: fila con regla,
@@ -1411,3 +1300,10 @@ body{background:var(--mesa)}
 .cevi-avatar{background:transparent}
 .cevi-avatar .toro-cara{max-width:100%;max-height:100%}
 .big-ico .toro-cara{max-width:30px;max-height:30px}
+/* CeVi saluda en el inicio y felicita al terminar. Medidas fijas en el HTML
+   para que el navegador reserve el hueco y la página no dé un salto al cargar. */
+.saludo-fila{display:flex;align-items:center;gap:var(--s-3);margin-bottom:var(--s-4)}
+.saludo-toro{width:auto;height:64px;flex-shrink:0}
+.saludo-fila .saludo{margin:0}
+.fin-toro{width:auto;height:120px;margin-bottom:var(--s-2)}
+@media(max-width:620px){ .saludo-toro{height:56px} .fin-toro{height:104px} }

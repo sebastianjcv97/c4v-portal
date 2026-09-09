@@ -252,7 +252,10 @@ const views = {
         <div class="big-arrow" aria-hidden="true">›</div></a>`;
 
     return `
-      <h1 class="saludo">${cli ? `Hola, ${esc(primerNombre(cli.nombre))}` : 'Hola'}</h1>
+      <div class="saludo-fila">
+        <img class="saludo-toro" src="assets/cevi/saluda.png" width="182" height="234" alt="" aria-hidden="true" decoding="async">
+        <h1 class="saludo">${cli ? `Hola, ${esc(primerNombre(cli.nombre))}` : 'Hola'}</h1>
+      </div>
 
       ${maq ? `<a class="maq" href="#/certificado">
         <div class="maq-seal">${SEAL}</div>
@@ -339,6 +342,7 @@ const views = {
     if (hechos === total) {
       return `
         <div class="paso-fin">
+          <img class="fin-toro" src="assets/cevi/gracias.png" width="230" height="214" alt="" aria-hidden="true" decoding="async">
           <h2>Tu espacio está listo</h2>
           <p>Ya puedes recibir tu máquina con confianza.</p>
           <a class="btn primary" href="#/academia">Aprender a usarla</a>
@@ -488,11 +492,16 @@ const views = {
       </div>
 
       ${faqs.length ? `
+      <!-- Las 32 preguntas dejaban la pantalla con 40 botones. Ahora van
+           detrás de uno solo: quien las necesita las abre. -->
       <h2 class="section-h">Preguntas frecuentes</h2>
-      ${faqs.map(f => `<div class="faq-item">
-        <button type="button" class="faq-q" aria-expanded="false"><span>${esc(f.pregunta)}</span><span class="chev" aria-hidden="true">+</span></button>
-        <div class="faq-a">${esc(f.respuesta)}</div>
-      </div>`).join('')}` : ''}
+      <button type="button" class="btn ghost" id="verFaqs" aria-expanded="false" aria-controls="faqTodas">Ver las ${faqs.length} preguntas</button>
+      <div id="faqTodas" hidden>
+        ${faqs.map(f => `<div class="faq-item">
+          <button type="button" class="faq-q" aria-expanded="false"><span>${esc(f.pregunta)}</span><span class="chev" aria-hidden="true">+</span></button>
+          <div class="faq-a">${esc(f.respuesta)}</div>
+        </div>`).join('')}
+      </div>` : ''}
 `;
   },
 
@@ -702,7 +711,16 @@ function bind(route) {
       } catch { toast('No se pudo copiar — cópialo manualmente'); }
     });
   }
-  if (route === 'soporte') bindAccordions('.faq-item');
+  if (route === 'soporte') {
+    bindAccordions('.faq-item');
+    const ver = $('#verFaqs'), todas = $('#faqTodas');
+    if (ver && todas) ver.onclick = () => {
+      const abierto = todas.hidden;
+      todas.hidden = !abierto;
+      ver.setAttribute('aria-expanded', abierto);
+      ver.textContent = abierto ? 'Ocultar las preguntas' : `Ver las ${(state.db.faqs || []).length} preguntas`;
+    };
+  }
   if (route === 'bolsa') {
     let filtro = 'todos';
     const apply = () => {
