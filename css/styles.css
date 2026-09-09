@@ -989,3 +989,31 @@ body{background:var(--mesa)}
 .lv-btn{background:transparent;border:none;border-bottom:1px solid var(--regla);border-radius:0}
 .lv-btn:hover{background:transparent;color:var(--rojo-tinta)}
 .cert-hero-t{font-family:var(--slab);font-size:var(--t-xl);line-height:var(--lh-snug);margin:0 0 4px}
+
+/* ────────────────────────────────────────────────────────────────────────
+   BOTÓN FLOTANTE DE CeVi
+   Vivía dentro de la barra superior, donde competía con el logo y se leía
+   como un anuncio. Ahora flota abajo a la derecha, presente en toda la
+   pantalla y en todas las vistas, que es donde la gente ya busca un chat.
+   Va en negro y no en rojo: el rojo se guarda para la acción de cada página.
+   ──────────────────────────────────────────────────────────────────────── */
+.ai-btn{position:fixed;right:16px;bottom:16px;bottom:calc(16px + env(safe-area-inset-bottom));
+        left:auto;margin:0;z-index:35;
+        background:var(--tinta);color:#fff;border:1px solid var(--tinta);
+        border-radius:var(--r-full);padding:12px 18px;gap:10px;
+        font-size:var(--t-sm);font-weight:700;
+        box-shadow:0 6px 20px rgba(20,20,20,.28)}
+.ai-btn:hover{background:var(--black-2);border-color:var(--black-2)}
+.ai-btn .ai-ic{color:var(--rojo);width:20px;height:20px}
+.ai-btn:focus-visible{outline:3px solid var(--rojo);outline-offset:3px}
+/* Con el panel abierto sobra: el panel trae su propia X. */
+.ai-btn[aria-expanded="true"]{display:none}
+/* Que el botón no tape lo último de la página, incluido el pie. */
+.pie-legal{padding-bottom:calc(96px + env(safe-area-inset-bottom))}
+@media(max-width:620px){
+  .ai-btn{right:12px;bottom:calc(12px + env(safe-area-inset-bottom));padding:11px 16px}
+}
+/* Al imprimir no hay botón que esquivar. */
+@media print{.ai-btn{display:none!important}.pie-legal{padding-bottom:0}}
+/* Los avisos suben por encima del botón flotante: antes se tapaban entre sí. */
+.toast{bottom:calc(76px + env(safe-area-inset-bottom));max-width:calc(100vw - 32px)}
