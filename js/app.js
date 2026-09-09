@@ -10,6 +10,21 @@ const $ = (s, r = document) => r.querySelector(s);
 const view = $('#view');
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const today = () => new Date().toISOString().slice(0, 10);
+/* Odoo guarda casi todos los nombres EN MAYÚSCULAS. Mostrarlos así se lee como
+   un grito y delata el volcado de datos, así que se capitalizan para la pantalla
+   (el dato original no se toca). Respeta partículas y siglas cortas. */
+const MINUS = new Set(['de', 'del', 'la', 'las', 'los', 'y', 'e', 'da', 'do', 'dos', 'van', 'von']);
+function nombrePropio(s) {
+  const t = String(s ?? '').trim();
+  if (!t) return '';
+  if (t !== t.toUpperCase()) return t;            // ya viene bien escrito
+  return t.toLowerCase().split(/\s+/).map((p, i) => {
+    if (i > 0 && MINUS.has(p)) return p;
+    if (/^(s\.?a\.?c?\.?|s\.?r\.?l\.?|e\.?i\.?r\.?l\.?|ruc|dni)$/i.test(p)) return p.toUpperCase();
+    return p.replace(/^(\p{L})/u, (c) => c.toUpperCase());
+  }).join(' ');
+}
+const primerNombre = (s) => nombrePropio(s).split(' ')[0];
 const PAISES = { PE: '🇵🇪 Perú', EC: '🇪🇨 Ecuador', BO: '🇧🇴 Bolivia', CL: '🇨🇱 Chile', CO: '🇨🇴 Colombia' };
 const ESTADO_TICKET = { nuevo: 'Recibido', asignado: 'Asignado', en_proceso: 'En atención', resuelto: 'Resuelto', cerrado: 'Cerrado' };
 
@@ -111,6 +126,7 @@ const ICONS = {
   bolsa: '<rect x="3" y="7.5" width="18" height="12" rx="2"/><path d="M8.5 7.5v-2A1.5 1.5 0 0 1 10 4h4a1.5 1.5 0 0 1 1.5 1.5v2"/>',
   disenos: '<rect x="4" y="4" width="6.5" height="6.5" rx="1.2"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.2"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.2"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.2"/>',
   prep: '<path d="M9 3v4M15 3v4M7 7h10v5a5 5 0 0 1-10 0z"/><path d="M12 17v4"/>',
+  cevi: '<path d="M4 5.5A1.5 1.5 0 0 1 5.5 4h13A1.5 1.5 0 0 1 20 5.5v7A1.5 1.5 0 0 1 18.5 14H9l-4.5 3.5z"/><path d="M9 8.5h6M9 11h3.5"/>',
   help: '<circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.4 2.4 0 1 1 3.1 2.3c-.7.3-1.1.8-1.1 1.6"/><path d="M12 16.4h.01"/>'
 };
 const icon = (n) => `<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${ICONS[n] || ''}</svg>`;
@@ -135,6 +151,9 @@ const views = {
     const maq = cli ? d.maquinas.find(m => m.cliente_id === cli.id) : null;
     const lista = maq ? d.maquinas.filter(m => m.cliente_id === cli.id) : [];
     const certificada = maq?.certificado?.estado === 'certificada';
+    // 'desconocido' = el dato no está en Odoo. No es lo mismo que "en calibración":
+    // afirmarlo sería prometerle al cliente algo que no podemos comprobar.
+    const enRevision = ['en_revision', 'en_proceso'].includes(maq?.certificado?.estado);
 
     const bigBtn = (href, ic, t, desc, ext) => `<a class="big" href="${href}"${ext ? ' target="_blank" rel="noopener"' : ''}>
         <div class="big-ico">${icon(ic)}</div>
@@ -148,7 +167,7 @@ const views = {
       </button>`;
 
     return `
-      <h1 class="saludo">${cli ? `Hola, ${esc(cli.nombre.split(' ')[0])}` : 'Hola'}</h1>
+      <h1 class="saludo">${cli ? `Hola, ${esc(primerNombre(cli.nombre))}` : 'Hola'}</h1>
 
       ${maq ? `<a class="maq" href="#/certificado">
         <div class="maq-seal">${SEAL}</div>
@@ -156,7 +175,9 @@ const views = {
           <strong>Tu láser ${esc(maq.modelo)}</strong>
           <span>${certificada
             ? 'Certificada ✓ · Ver tu Certificado de Calidad'
-            : 'La estamos probando y calibrando · Ver qué significa'}</span>
+            : enRevision
+              ? 'La estamos probando y calibrando · Ver qué significa'
+              : 'Ver tu Certificado de Calidad'}</span>
           ${lista.length > 1 ? `<span class="muted">y ${lista.length - 1} máquina${lista.length > 2 ? 's' : ''} más</span>` : ''}
         </div>
         <div class="big-arrow" aria-hidden="true">→</div></a>` : ''}
@@ -185,6 +206,11 @@ const views = {
           ? bigBtn('#/plantillas', 'disenos', 'Banco de Diseños', 'Plantillas listas para cortar (SVG / DXF)')
           : lockBtn('disenos', 'Banco de Diseños')}
         ${bigBtn('#/soporte', 'soporte', 'Necesito ayuda', 'Habla con nosotros por WhatsApp')}
+        <button type="button" class="big" data-cevi="1">
+          <div class="big-ico">${icon('cevi')}</div>
+          <div class="big-txt"><strong>Pregúntale a CeVi</strong><span>Tu asistente: parámetros, mantenimiento y fallas — al instante</span></div>
+          <div class="big-arrow" aria-hidden="true">→</div>
+        </button>
       </div>`;
   },
 
@@ -414,7 +440,10 @@ const views = {
     const maq = cli ? d.maquinas.find(x => x.cliente_id === cli.id) : null;
     const wa = (svg) => `<svg class="wa-ic" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.5 14.4c-.3-.2-1.7-.9-2-1-.3-.1-.5-.1-.6.2-.2.3-.7.9-.9 1.1-.2.2-.3.2-.6.1-.3-.2-1.2-.5-2.3-1.4-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.5.1-.6l.5-.5c.1-.2.2-.3.3-.5v-.5c-.1-.2-.6-1.6-.9-2.2-.2-.5-.4-.4-.6-.5h-.5c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.4s1.1 2.8 1.2 3c.2.2 2.1 3.2 5.1 4.4 1.9.8 2.6.9 3.5.7.6-.1 1.7-.7 1.9-1.4.2-.7.2-1.2.2-1.4-.1-.1-.3-.2-.6-.3z"/><path d="M12 2C6.5 2 2 6.5 2 12c0 1.8.5 3.4 1.3 4.9L2 22l5.3-1.4c1.4.8 3 1.2 4.7 1.2 5.5 0 10-4.5 10-10S17.5 2 12 2zm0 18.2c-1.6 0-3.1-.4-4.4-1.2l-.3-.2-3.1.8.8-3-.2-.3c-.9-1.4-1.3-3-1.3-4.6C3.5 7.3 7.3 3.5 12 3.5S20.5 7.3 20.5 12 16.7 20.2 12 20.2z"/></svg>`;
     // Deep link de WhatsApp con mensaje pre-redactado (identifica al cliente y su máquina).
-    const contexto = [cli ? `Soy ${cli.nombre}` : null, maq ? `máquina ${maq.serie}` : null].filter(Boolean).join(', ');
+    // Identifica al cliente y su máquina SOLO con lo que existe: hoy Odoo no
+    // guarda el Nº de serie, así que si no hay, se nombra el modelo o nada.
+    const refMaq = maq?.serie || (maq?.modelo ? `modelo ${maq.modelo}` : '');
+    const contexto = [cli ? `Soy ${nombrePropio(cli.nombre)}` : null, refMaq ? `máquina ${refMaq}` : null].filter(Boolean).join(', ');
     const waSoporte = (motivo) => waLink(`Hola equipo C4V${contexto ? `. ${contexto}` : ''}. ${motivo}`);
 
     /* INTEGRACIÓN ODOO HELPDESK (pendiente de backend):
@@ -431,7 +460,7 @@ const views = {
         ${wa()}
         <div class="wa-txt"><strong>Escríbenos por WhatsApp</strong><span>${esc(sop.whatsapp)} · ${esc(sop.horario)}</span></div>
       </a>
-      ${maq ? `<p class="wa-ctx muted">Tu mensaje ya llevará tu Nº de serie (<strong>${esc(maq.serie)}</strong>) para atenderte más rápido.</p>` : ''}
+      ${refMaq ? `<p class="wa-ctx muted">Tu mensaje ya llevará los datos de tu máquina (<strong>${esc(refMaq)}</strong>) para atenderte más rápido.</p>` : ''}
 
       ${(sop.lives || sop.redes) ? `
       <div class="card redes">
@@ -443,6 +472,13 @@ const views = {
           ${sop.fijo ? `<span>Fijo ${esc(sop.fijo)}</span>` : ''}
         </p>` : ''}
       </div>` : ''}
+
+      <div class="help-card cevi-card">
+        <div class="big-ico" aria-hidden="true">${icon('cevi')}</div>
+        <div class="grow"><h3>¿Prefieres una respuesta ahora mismo?</h3>
+          <p>CeVi, tu asistente, conoce tu máquina y responde al instante sobre parámetros, mantenimiento y fallas. Si no puede, abre tu caso con una persona.</p></div>
+        <button type="button" class="btn primary sm" data-cevi="1">Hablar con CeVi</button>
+      </div>
 
       <h2 class="section-title">O mira si es algo común</h2>
       <div id="guiaList">
@@ -505,26 +541,41 @@ const views = {
     const certMaq = (m) => {
       const cert = m.certificado || {};
       const ok = cert.estado === 'certificada';
-      const meta = ok && cert.fecha
-        ? `<p class="cert-maq-meta">Certificada el ${esc(cert.fecha)}${cert.tecnico ? ` · por ${esc(cert.tecnico)}` : ''}</p>`
-        : (ok ? '' : '<p class="cert-maq-meta">La estamos probando y calibrando antes de entregártela.</p>');
+      // 'desconocido' NO es lo mismo que "en revisión": significa que el dato aún
+      // no vive en Odoo. Decir "la estamos calibrando" sería inventar un estado.
+      const enRevision = cert.estado === 'en_revision' || cert.estado === 'en_proceso';
+      const insignia = ok ? '<span class="badge ok">Certificada ✓</span>'
+        : enRevision ? '<span class="badge warn">En revisión y calibración</span>'
+        : '<span class="badge grey">Estado por confirmar</span>';
+      const meta = ok
+        ? (cert.fecha ? `<p class="cert-maq-meta">Certificada el ${esc(cert.fecha)}${cert.tecnico ? ` · por ${esc(nombrePropio(cert.tecnico))}` : ''}</p>` : '')
+        : enRevision ? '<p class="cert-maq-meta">La estamos probando y calibrando antes de entregártela.</p>'
+        : `<p class="cert-maq-meta">Todavía no tenemos cargado el estado del certificado de esta máquina. <a href="${waLink(`Hola, quiero saber el estado del Certificado de Calidad de mi máquina${m.modelo ? ' ' + m.modelo : ''}${m.pedido ? ' (pedido ' + m.pedido + ')' : ''}.`)}" target="_blank" rel="noopener">Pregúntanos por WhatsApp</a> y te lo confirmamos.</p>`;
       const publico = cert.url
-        ? `<a class="cert-verif-link" href="${esc(cert.url)}" target="_blank" rel="noopener">Ver certificado público ↗</a>`
-        : '';
+        ? `<a class="cert-verif-link" href="${esc(cert.url)}" target="_blank" rel="noopener">Ver certificado público ↗</a>` : '';
+      // La serie es la llave del certificado. Hoy Odoo no la guarda para la
+      // mayoría: en vez de una caja vacía con un botón que no copia nada, se
+      // muestra la referencia que SÍ existe (el número de pedido).
+      const bloqueSerie = m.serie
+        ? `<div class="cert-serie">
+             <span class="cert-serie-lbl">Nº de serie (tu llave de verificación)</span>
+             <div class="cert-serie-row">
+               <code class="cert-serie-num">${esc(m.serie)}</code>
+               <button type="button" class="cert-copy btn ghost sm" data-copy="${esc(m.serie)}" aria-label="Copiar Nº de serie">Copiar</button>
+             </div>
+           </div>`
+        : `<div class="cert-serie sin-serie">
+             <span class="cert-serie-lbl">Nº de serie</span>
+             <p class="muted" style="margin:4px 0 0;font-size:14px">Aún no está registrado en tu ficha.${m.pedido ? ` Mientras tanto, tu referencia es el pedido <code>${esc(m.pedido)}</code>.` : ''}</p>
+           </div>`;
       return `<div class="card cert-maq">
         <div class="cert-maq-top">
-          <h3>Láser ${esc(m.modelo)}</h3>
-          ${ok ? '<span class="badge ok">Certificada ✓</span>' : '<span class="badge warn">En revisión y calibración</span>'}
+          <h3>Láser ${esc(m.modelo || 'C4V')}</h3>
+          ${insignia}
         </div>
-        <div class="cert-serie">
-          <span class="cert-serie-lbl">Nº de serie (tu llave de verificación)</span>
-          <div class="cert-serie-row">
-            <code class="cert-serie-num">${esc(m.serie)}</code>
-            <button type="button" class="cert-copy btn ghost sm" data-copy="${esc(m.serie)}" aria-label="Copiar Nº de serie">Copiar</button>
-          </div>
-        </div>
+        ${bloqueSerie}
         ${meta}
-        ${publico || (ok ? '<p class="cert-verif-note muted">Verifica tu máquina con este Nº de serie ante nuestro equipo por WhatsApp cuando lo necesites.</p>' : '')}
+        ${publico || (ok && m.serie ? '<p class="cert-verif-note muted">Verifica tu máquina con este Nº de serie ante nuestro equipo por WhatsApp cuando lo necesites.</p>' : '')}
       </div>`;
     };
 
@@ -597,6 +648,7 @@ function bindTake() {
 // ---------- interacciones ----------
 function bindAccordions(sel) { view.querySelectorAll(sel).forEach(it => { const q = it.querySelector('.faq-q, .course-head'); if (q) q.onclick = () => { const open = it.classList.toggle('open'); q.setAttribute('aria-expanded', open); }; }); }
 function bind(route) {
+  view.querySelectorAll('[data-cevi]').forEach(b => b.onclick = () => ceviAbrir());
   if (route === 'inicio') {
     // Secciones bloqueadas hasta completar la preparación
     view.querySelectorAll('[data-lock]').forEach(b => b.onclick = () => {
@@ -831,20 +883,42 @@ async function verificarCliente({ pais, doc }) {
   let j;
   try { j = await r.json(); } catch { return { estado: 'error' }; }
   if (!j || !j.existe) return { estado: 'no_encontrado' };
+  if (j.requiere_otp) return { estado: 'otp' };   // hace falta el código de WhatsApp
   return { estado: 'ok', cliente: inyectarCliente(j.cliente, j.maquinas) };
 }
 
-function guardarSesion(doc, pais) {
-  try { localStorage.setItem('c4v_sesion', JSON.stringify({ doc, pais: pais || null, exp: Date.now() + SESION_DIAS * 864e5 })); } catch {}
+/* ---------- Sesión ----------
+   Tras verificar el código se guarda un TOKEN firmado por el servidor, no el
+   documento: si alguien lee el almacenamiento del navegador no obtiene el DNI, y
+   el token vence solo. Se conserva `pais` únicamente para la ayuda en pantalla. */
+function guardarSesion({ token, pais }) {
+  try { localStorage.setItem('c4v_sesion', JSON.stringify({ t: token, pais: pais || null, exp: Date.now() + SESION_DIAS * 864e5 })); } catch {}
 }
 function leerSesion() {
   try {
     const s = JSON.parse(localStorage.getItem('c4v_sesion') || 'null');
-    if (s && s.exp > Date.now()) return s;   // { doc, pais }
+    if (s && s.exp > Date.now() && s.t) return s;
     localStorage.removeItem('c4v_sesion');
   } catch {}
   return null;
 }
+function borrarSesion() { try { localStorage.removeItem('c4v_sesion'); } catch {} }
+
+// Entra con un token ya emitido (visitas siguientes: sin volver a pedir código).
+async function entrarConToken(token) {
+  const base = VERIF.apiBase || '', ep = VERIF.endpoint || '/api/cliente';
+  try {
+    const r = await fetch(`${base}${ep}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token })
+    });
+    if (!r.ok) { if (r.status === 401) borrarSesion(); return { estado: 'error' }; }
+    const j = await r.json();
+    if (!j || !j.existe) { borrarSesion(); return { estado: 'no_encontrado' }; }
+    return { estado: 'ok', cliente: inyectarCliente(j.cliente, j.maquinas) };
+  } catch { return { estado: 'error' }; }
+}
+
 const waLink = (texto) => `https://wa.me/${CFG.whatsapp?.numero || ''}?text=${encodeURIComponent(texto || '')}`;
 const docInfo = (paisCode, tipo) => {
   const p = (CFG.paises || []).find(x => x.code === paisCode) || (CFG.paises || [])[0];
@@ -855,7 +929,7 @@ function entrar(cliente) {
   state.ctx = cliente.id;
   $('#gate').hidden = true; $('#app').hidden = false;
   const info = docInfo(cliente.pais, cliente.tipo || 'persona');
-  $('#me').innerHTML = `<strong>${esc(cliente.nombre)}</strong>${esc(info.doc)} ${esc(cliente.documento)}`;
+  $('#me').innerHTML = `<strong>${esc(nombrePropio(cliente.nombre))}</strong>${esc(info.doc)} ${esc(cliente.documento)}`;
   // Mientras la preparación NO esté completa, SIEMPRE se entra por ahí.
   // La idea: que quede clarísimo qué debe tener comprado y listo antes de instalar.
   let primeraVez = false;
@@ -868,7 +942,7 @@ function entrar(cliente) {
     // sin importar el enlace/hash con el que haya entrado. No hay forma de saltarse la introducción.
     if (location.hash !== '#/preparacion') location.hash = '#/preparacion';
     setTimeout(() => toast(primeraVez
-      ? '👋 ¡Bienvenido! Empieza aquí: deja tu espacio listo antes de continuar'
+      ? `👋 ¡Bienvenido${cliente.nombre ? ', ' + primerNombre(cliente.nombre) : ''}! Empieza aquí: deja tu espacio listo antes de continuar`
       : `📋 Sigues en ${pe.n} de ${pe.total} — completa tu preparación para desbloquear tu portal`), 500);
     render('preparacion');
     return;
@@ -876,24 +950,89 @@ function entrar(cliente) {
   render(currentRoute());
 }
 
+/* ---------- Acceso en dos pasos ----------
+   Paso A: documento + país + consentimiento.
+   Paso B: el cliente nos escribe por WhatsApp (así demuestra que el número es
+   suyo) y el bot le responde un código de 6 dígitos que teclea aquí.
+   Si el servidor no exige código (OTP apagado), el paso A entra directo. */
+const otpEstado = { solicitud: null, pais: null, sondeo: null };
+
+async function apiPost(ruta, cuerpo) {
+  const base = VERIF.apiBase || '';
+  const r = await fetch(`${base}${ruta}`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(cuerpo)
+  });
+  let j = null;
+  try { j = await r.json(); } catch {}
+  return { ok: r.ok, status: r.status, json: j || {} };
+}
+
+function mostrarPaso(cual) {
+  $('#gatePasoDoc').hidden = cual !== 'doc';
+  $('#gatePasoOtp').hidden = cual !== 'otp';
+  if (cual === 'otp') setTimeout(() => $('#otpCodigo')?.focus(), 80);
+}
+
+function detenerSondeo() {
+  if (otpEstado.sondeo) { clearInterval(otpEstado.sondeo); otpEstado.sondeo = null; }
+}
+
+// Pregunta al servidor si el bot ya respondió con el código (para guiar al cliente).
+function sondearEstado() {
+  detenerSondeo();
+  const base = VERIF.apiBase || '';
+  let intentos = 0;
+  otpEstado.sondeo = setInterval(async () => {
+    intentos++;
+    if (!otpEstado.solicitud || intentos > 60) return detenerSondeo();   // ~3 minutos
+    try {
+      const r = await fetch(`${base}/api/otp/estado?solicitud=${encodeURIComponent(otpEstado.solicitud)}`);
+      const j = await r.json();
+      const el = $('#otpEstado');
+      if (!el) return detenerSondeo();
+      if (j.estado === 'enviado') {
+        el.textContent = '✅ Ya te enviamos el código por WhatsApp. Escríbelo aquí.';
+        el.classList.add('ok');
+        detenerSondeo();
+      } else if (j.estado === 'vencida') {
+        el.textContent = '⌛ Pasó mucho tiempo. Vuelve a empezar para pedir otro código.';
+        detenerSondeo();
+      }
+    } catch { /* reintenta en el siguiente tic */ }
+  }, 3000);
+}
+
+function pintarPasoOtp(datos, pais) {
+  otpEstado.solicitud = datos.solicitud;
+  otpEstado.pais = pais;
+  $('#otpPista').textContent = datos.telefono_pista || '';
+  $('#otpWa').href = datos.wa_link;
+  $('#otpTextoManual').textContent = datos.texto || '';
+  $('#otpNumero').textContent = CFG.whatsapp?.visible || '';
+  $('#otpCodigo').value = '';
+  $('#otpError').hidden = true;
+  const est = $('#otpEstado');
+  est.textContent = 'Esperando tu mensaje…'; est.classList.remove('ok');
+  mostrarPaso('otp');
+  sondearEstado();
+}
+
 function initGate() {
   const gate = $('#gate'), form = $('#gateForm'), inp = $('#gateDoc'), err = $('#gateError');
   const tiposBox = $('#gateTipos'), paisesBox = $('#gatePaises'), docLabel = $('#gateDocLabel');
+  const acepta = $('#gateAcepta'), marketing = $('#gateMarketing');
   const paises = CFG.paises || [];
   let tipo = 'persona', pais = paises[0]?.code || 'PE';
 
-  // Paso 1 · Persona o Empresa (2 botones grandes)
   tiposBox.innerHTML = `
     <button type="button" role="radio" aria-checked="true" data-tipo="persona"><span class="bandera" aria-hidden="true">👤</span>Persona</button>
     <button type="button" role="radio" aria-checked="false" data-tipo="empresa"><span class="bandera" aria-hidden="true">🏢</span>Empresa</button>`;
 
-  // Paso 2 · País (5 banderas)
   paisesBox.innerHTML = paises.map(p =>
     `<button type="button" role="radio" aria-checked="${p.code === pais}" data-pais="${p.code}">
        <span class="bandera" aria-hidden="true">${p.bandera}</span>${esc(p.nombre)}
      </button>`).join('');
 
-  // Paso 3 · La etiqueta del documento cambia según tipo + país
   const actualizar = (enfocar) => {
     const info = docInfo(pais, tipo);
     docLabel.textContent = info.doc;
@@ -902,12 +1041,28 @@ function initGate() {
     paisesBox.querySelectorAll('button').forEach(b => b.setAttribute('aria-checked', b.dataset.pais === pais));
     if (enfocar) inp.focus();
   };
-  tiposBox.querySelectorAll('button').forEach(b => b.onclick = () => { tipo = b.dataset.tipo; actualizar(false); });
-  paisesBox.querySelectorAll('button').forEach(b => b.onclick = () => { pais = b.dataset.pais; actualizar(true); });
+  // Navegación con flechas dentro de cada grupo (patrón ARIA de radiogroup).
+  const flechas = (caja, aplicar) => {
+    caja.querySelectorAll('button').forEach((b, i, todos) => {
+      b.tabIndex = b.getAttribute('aria-checked') === 'true' ? 0 : -1;
+      b.onkeydown = (e) => {
+        const dir = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key];
+        if (!dir) return;
+        e.preventDefault();
+        const sig = todos[(i + dir + todos.length) % todos.length];
+        aplicar(sig); sig.focus();
+      };
+    });
+  };
+  const aplicarTipo = (b) => { tipo = b.dataset.tipo; actualizar(false); flechas(tiposBox, aplicarTipo); flechas(paisesBox, aplicarPais); };
+  const aplicarPais = (b) => { pais = b.dataset.pais; actualizar(false); flechas(tiposBox, aplicarTipo); flechas(paisesBox, aplicarPais); };
+  tiposBox.querySelectorAll('button').forEach(b => b.onclick = () => aplicarTipo(b));
+  paisesBox.querySelectorAll('button').forEach(b => b.onclick = () => { aplicarPais(b); inp.focus(); });
   actualizar(false);
-  $('#gateWa').href = waLink('Hola, quiero acceder a mi Central de Postventa C4V pero mi documento no está registrado.');
+  flechas(tiposBox, aplicarTipo); flechas(paisesBox, aplicarPais);
 
-  // Documentos de ejemplo (solo demo — para poder entrar y probar)
+  $('#gateWa').href = waLink('Hola, quiero acceder a mi Central de Postventa C4V pero no puedo entrar.');
+
   if (CFG.mostrarNumerosDemo) {
     const box = $('#gateDemo'); box.hidden = false;
     box.innerHTML = '<h2>Documentos de ejemplo (demostración)</h2>' + state.db.clientes.map(c => {
@@ -916,39 +1071,67 @@ function initGate() {
     }).join('');
     box.querySelectorAll('button').forEach(b => b.onclick = () => {
       const cli = buscarClientePorDocumento(normalizarDoc(b.dataset.doc));
-      if (cli) { guardarSesion(normalizarDoc(cli.documento), cli.pais); entrar(cli); }
+      if (cli) entrar(cli);
     });
   }
 
   const btn = form.querySelector('.gate-btn');
   const btnLabel = btn ? btn.textContent : '';
-  const setCargando = (on) => {
+  const setCargando = (on, texto) => {
     if (!btn) return;
     btn.disabled = on;
-    btn.textContent = on ? 'Verificando…' : btnLabel;
+    btn.textContent = on ? (texto || 'Verificando…') : btnLabel;
     btn.setAttribute('aria-busy', on ? 'true' : 'false');
   };
 
+  // ---- Paso A: identificar ----
   form.onsubmit = async (e) => {
     e.preventDefault(); err.hidden = true;
     const doc = normalizarDoc(inp.value);
     const info = docInfo(pais, tipo);
-    if (doc.length < 5) {
-      err.hidden = false; err.innerHTML = `Parece que falta parte de tu ${esc(info.doc)}. Escríbelo completo, como en el ejemplo.`; inp.focus(); return;
+
+    if (!acepta.checked) {
+      err.hidden = false;
+      err.innerHTML = 'Para continuar tienes que aceptar los Términos de Uso y la Política de Privacidad. Marca la casilla de arriba.';
+      acepta.focus(); return;
     }
+    if (doc.length < 5) {
+      err.hidden = false;
+      err.innerHTML = `Parece que falta parte de tu ${esc(info.doc)}. Escríbelo completo, como en el ejemplo.`;
+      inp.focus(); return;
+    }
+
     setCargando(true);
     let res;
     try { res = await verificarCliente({ pais, doc }); }
     catch { res = { estado: 'error' }; }
-    setCargando(false);
 
-    if (res.estado === 'ok') { guardarSesion(doc, pais); entrar(res.cliente); return; }
+    // El servidor pide segundo factor: solicitamos el código.
+    if (res.estado === 'otp') {
+      const r = await apiPost('/api/otp/solicitar', { pais, doc });
+      setCargando(false);
+      if (r.status === 429) { err.hidden = false; err.innerHTML = 'Pediste demasiados códigos seguidos. Espera unos minutos e inténtalo otra vez.'; return; }
+      if (r.json.ok) {
+        // Deja constancia del consentimiento junto al acceso.
+        // Constancia del consentimiento: qué aceptó, cuándo y desde dónde.
+        apiPost('/api/consentimiento', { doc, pais, acepta_datos: true, acepta_marketing: marketing.checked }).catch(() => {});
+        pintarPasoOtp(r.json, pais);
+        return;
+      }
+      err.hidden = false;
+      err.innerHTML = r.json.motivo === 'sin_telefono'
+        ? `No tenemos tu WhatsApp registrado, así que no podemos enviarte el código. <a href="${waLink('Hola, quiero entrar a mi Central de Postventa C4V pero no tienen mi WhatsApp registrado. ¿Me ayudan?')}" target="_blank" rel="noopener">Escríbenos y lo actualizamos</a> en un minuto.`
+        : `No encontramos tu ${esc(info.doc)} <strong>${esc(inp.value.trim())}</strong> entre nuestros clientes. Revisa el número, el país y si compraste como persona o empresa, o <a href="${waLink('Hola, mi documento no aparece en la Central de Postventa C4V. ¿Me ayudan?')}" target="_blank" rel="noopener">escríbenos por WhatsApp</a>.`;
+      err.focus?.(); return;
+    }
+
+    setCargando(false);
+    if (res.estado === 'ok') { entrar(res.cliente); return; }
 
     err.hidden = false;
     if (res.estado === 'limite') {
       err.innerHTML = `Hiciste demasiados intentos seguidos. Espera unos minutos y vuelve a probar, o <a href="${waLink('Hola, no puedo entrar a mi Central de Postventa C4V. ¿Me ayudan?')}" target="_blank" rel="noopener">escríbenos por WhatsApp</a>.`;
     } else if (res.estado === 'error') {
-      // Falla de red / backend (503): no es culpa del documento.
       err.innerHTML = `No pudimos verificar tu documento en este momento. Revisa tu conexión e inténtalo de nuevo, o <a href="${waLink('Hola, no puedo entrar a mi Central de Postventa C4V (error al verificar). ¿Me ayudan?')}" target="_blank" rel="noopener">escríbenos por WhatsApp</a>.`;
     } else {
       err.innerHTML = `No encontramos tu ${esc(info.doc)} <strong>${esc(inp.value.trim())}</strong> entre nuestros clientes. Revisa el número, el país y si compraste como persona o empresa, o <a href="${waLink('Hola, mi documento no aparece en la Central de Postventa C4V. ¿Me ayudan?')}" target="_blank" rel="noopener">escríbenos por WhatsApp</a> y te ayudamos.`;
@@ -956,53 +1139,276 @@ function initGate() {
     err.focus?.();
   };
 
+  // ---- Paso B: validar el código ----
+  const otpForm = $('#otpForm'), otpErr = $('#otpError'), otpInp = $('#otpCodigo');
+  otpInp.oninput = () => { otpInp.value = otpInp.value.replace(/\D/g, '').slice(0, 6); };
+  otpForm.onsubmit = async (e) => {
+    e.preventDefault(); otpErr.hidden = true;
+    const codigo = otpInp.value.replace(/\D/g, '');
+    if (codigo.length !== 6) { otpErr.hidden = false; otpErr.textContent = 'El código tiene 6 dígitos.'; otpInp.focus(); return; }
+    const boton = otpForm.querySelector('button');
+    boton.disabled = true; boton.textContent = 'Entrando…';
+    const r = await apiPost('/api/otp/verificar', { solicitud: otpEstado.solicitud, codigo });
+    boton.disabled = false; boton.textContent = 'Entrar';
+
+    if (r.json.ok && r.json.token) {
+      detenerSondeo();
+      guardarSesion({ token: r.json.token, pais: otpEstado.pais });
+      entrar(inyectarCliente(r.json.cliente, r.json.maquinas));
+      return;
+    }
+    otpErr.hidden = false;
+    const motivos = {
+      incorrecto: `Ese código no es. ${r.json.intentos_restantes ? `Te quedan ${r.json.intentos_restantes} intentos.` : ''}`,
+      vencido: 'El código venció. Vuelve a empezar para pedir uno nuevo.',
+      usado: 'Ese código ya se usó. Pide uno nuevo.',
+      bloqueado: 'Demasiados intentos fallidos. Vuelve a empezar para pedir otro código.',
+      no_enviado: 'Todavía no nos llegó tu mensaje de WhatsApp. Envíalo y espera unos segundos.',
+      invalido: 'Revisa el código e inténtalo de nuevo.'
+    };
+    otpErr.textContent = motivos[r.json.motivo] || (r.status === 429
+      ? 'Demasiados intentos. Espera unos minutos.'
+      : 'No pudimos validar el código. Inténtalo de nuevo.');
+    otpErr.focus?.();
+  };
+
+  $('#otpVolver').onclick = () => { detenerSondeo(); otpEstado.solicitud = null; mostrarPaso('doc'); inp.focus(); };
+
+  mostrarPaso('doc');
   gate.hidden = false; $('#app').hidden = true;
 }
 
-// ---------- agente de IA (ElevenLabs · A4) ----------
-function initAgente() {
-  const btn = $('#aiBtn'), panel = $('#aiPanel'), ag = CFG.agente || {};
-  $('#aiName').textContent = ag.nombre || 'CeVi';
-  const mic = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0"/><path d="M12 18v3"/></svg>';
+// ---------- CeVi · asistente de la máquina (chat + voz) ----------
+/* Conecta con el backend propio (cevi-backend en Railway): Claude Haiku con el
+   cerebro de CeVi, voz es-MX Dalia y creación de tickets en Odoo.
+   Se le pasa el contexto REAL del cliente (nombre, ciudad, país, serie y su id de
+   partner en Odoo) para que no pregunte lo que ya sabemos y para que la conversación
+   quede registrada en la ficha correcta del ERP, sin crear contactos duplicados. */
+const cevi = { abierto: false, historial: [], hablando: null, escuchando: null, partnerId: null };
 
-  const waIcon = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.5 14.4c-.3-.2-1.7-.9-2-1-.3-.1-.5-.1-.6.2-.2.3-.7.9-.9 1.1-.2.2-.3.2-.6.1-.3-.2-1.2-.5-2.3-1.4-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.5.1-.6l.5-.5c.1-.2.2-.3.3-.5v-.5c-.1-.2-.6-1.6-.9-2.2-.2-.5-.4-.4-.6-.5h-.5c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.4s1.1 2.8 1.2 3c.2.2 2.1 3.2 5.1 4.4 1.9.8 2.6.9 3.5.7.6-.1 1.7-.7 1.9-1.4.2-.7.2-1.2.2-1.4-.1-.1-.3-.2-.6-.3z"/><path d="M12 2C6.5 2 2 6.5 2 12c0 1.8.5 3.4 1.3 4.9L2 22l5.3-1.4c1.4.8 3 1.2 4.7 1.2 5.5 0 10-4.5 10-10S17.5 2 12 2zm0 18.2c-1.6 0-3.1-.4-4.4-1.2l-.3-.2-3.1.8.8-3-.2-.3c-.9-1.4-1.3-3-1.3-4.6C3.5 7.3 7.3 3.5 12 3.5S20.5 7.3 20.5 12 16.7 20.2 12 20.2z"/></svg>';
-  const contenido = () => CFG.elevenlabsAgentId
-    ? `<elevenlabs-convai agent-id="${esc(CFG.elevenlabsAgentId)}"></elevenlabs-convai>`
-    : `<span class="ai-soon">Aún no disponible</span>
-       <h3>${esc(ag.nombre || 'CeVi')} está en camino</h3>
-       <p>Nuestro asistente por voz todavía no está activo. Pero no te quedas sin ayuda: escríbenos por WhatsApp y <strong>te responde una persona del equipo C4V</strong> — en español, los 365 días.</p>
-       <a class="btn-wa" href="${waLink('Hola, necesito ayuda con mi máquina C4V.')}" target="_blank" rel="noopener">${waIcon}<span>Escribir por WhatsApp</span></a>`;
+const CEVI_ICONOS = {
+  mic: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0"/><path d="M12 18v3"/></svg>',
+  enviar: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h15M13 6l6 6-6 6"/></svg>',
+  audioOn: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M17 9.5a3.5 3.5 0 0 1 0 5"/><path d="M19.5 7a7 7 0 0 1 0 10"/></svg>',
+  audioOff: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M17 10l4 4M21 10l-4 4"/></svg>'
+};
 
-  btn.onclick = () => {
-    const abrir = panel.hidden;
-    panel.hidden = !abrir; btn.setAttribute('aria-expanded', abrir);
-    if (!abrir) return;
-    panel.innerHTML = `<div class="ai-inner"><div class="ai-avatar">${mic}</div><div>${contenido()}</div>
-      <button class="ai-close" id="aiClose" aria-label="Cerrar">×</button></div>`;
-    $('#aiClose').onclick = () => { panel.hidden = true; btn.setAttribute('aria-expanded', false); };
-    // El widget de voz solo se carga si hay un agente configurado (nunca fingir que funciona).
-    if (CFG.elevenlabsAgentId && !document.getElementById('el-convai')) {
-      const s = document.createElement('script');
-      s.id = 'el-convai'; s.src = 'https://unpkg.com/@elevenlabs/convai-widget-embed'; s.async = true;
-      document.body.appendChild(s);
-    }
+// Contexto que viaja con cada mensaje: lo que CeVi ya sabe del cliente.
+function ceviContexto() {
+  const cli = currentClient();
+  const maq = cli ? state.db.maquinas.find(m => m.cliente_id === cli.id) : null;
+  const idOdoo = parseInt(String(cli?.id || '').replace(/\D/g, ''), 10);
+  return {
+    customer_name: primerNombre(cli?.nombre) || 'Cliente',
+    customer_city: cli?.ciudad || '',
+    customer_country: PAISES[cli?.pais]?.replace(/^\S+\s/, '') || cli?.pais || 'Perú',
+    machine_id: maq?.serie || (maq?.modelo ? `modelo ${maq.modelo} (sin serie registrada)` : 'sin registrar'),
+    customer_id: cevi.partnerId || (Number.isFinite(idOdoo) ? idOdoo : null)
   };
+}
+
+function ceviBurbuja(quien, texto, extra = '') {
+  const cuerpo = quien === 'cevi'
+    ? `<div class="cevi-avatar" aria-hidden="true">🐂</div><div class="cevi-txt">${esc(texto)}${extra}</div>`
+    : `<div class="cevi-txt">${esc(texto)}</div>`;
+  return `<div class="cevi-msg ${quien}">${cuerpo}</div>`;
+}
+
+function ceviPintar() {
+  const box = $('#ceviMsgs');
+  if (!box) return;
+  box.innerHTML = cevi.historial.map(m => ceviBurbuja(m.role === 'user' ? 'yo' : 'cevi', m.content, m.ticket
+    ? `<div class="cevi-ticket">✅ Abrí tu caso <strong>${esc(m.ticket)}</strong>. Un asesor te contactará.</div>` : '')).join('');
+  box.scrollTop = box.scrollHeight;
+}
+
+// Voz: reproduce la respuesta con la voz mexicana del backend (gratis, sin API key).
+async function ceviHablar(texto) {
+  if (!CFG.ceviVoz || !ceviVozActiva()) return;
+  try {
+    if (cevi.hablando) { cevi.hablando.pause(); cevi.hablando = null; }
+    const r = await fetch(`${CFG.ceviApi}/tts`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: texto })
+    });
+    if (!r.ok) return;
+    const audio = new Audio(URL.createObjectURL(await r.blob()));
+    cevi.hablando = audio;
+    audio.play().catch(() => {});   // si el navegador bloquea el autoplay, no pasa nada
+  } catch { /* sin voz, el texto ya está en pantalla */ }
+}
+
+const ceviVozActiva = () => { try { return localStorage.getItem('c4v_cevi_voz') !== '0'; } catch { return true; } };
+
+async function ceviEnviar(texto) {
+  const msg = String(texto || '').trim();
+  if (!msg || $('#ceviInput')?.disabled) return;
+  cevi.historial.push({ role: 'user', content: msg });
+  document.getElementById('ceviSug')?.remove();   // ya no hacen falta
+  ceviPintar();
+  const input = $('#ceviInput'); if (input) { input.value = ''; input.disabled = true; }
+  $('#ceviMsgs').insertAdjacentHTML('beforeend', '<div class="cevi-msg cevi pensando"><div class="cevi-avatar">🐂</div><div class="cevi-txt"><span></span><span></span><span></span></div></div>');
+  $('#ceviMsgs').scrollTop = $('#ceviMsgs').scrollHeight;
+
+  try {
+    const r = await fetch(`${CFG.ceviApi}/chat`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: msg, history: cevi.historial.slice(0, -1).slice(-8), ...ceviContexto() })
+    });
+    if (!r.ok) throw new Error('http ' + r.status);
+    const j = await r.json();
+    if (j.partner_id) cevi.partnerId = j.partner_id;
+    const respuesta = j.response || 'Disculpa, no te entendí. ¿Lo repites?';
+    cevi.historial.push({ role: 'assistant', content: respuesta, ticket: j.ticket?.ref || null });
+    ceviPintar();
+    ceviHablar(respuesta);
+  } catch {
+    cevi.historial.push({
+      role: 'assistant',
+      content: 'No pude conectarme en este momento. Escríbenos por WhatsApp y te responde una persona del equipo.'
+    });
+    ceviPintar();
+  } finally {
+    if (input) { input.disabled = false; input.focus(); }
+  }
+}
+
+// Dictado por voz con el reconocimiento nativo del navegador (sin costo).
+function ceviEscuchar(boton) {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { toast('Tu navegador no permite dictar. Escribe tu pregunta.'); return; }
+  if (cevi.escuchando) { cevi.escuchando.stop(); cevi.escuchando = null; return; }
+  const rec = new SR();
+  rec.lang = 'es-PE'; rec.interimResults = true; rec.continuous = false;
+  cevi.escuchando = rec;
+  boton.classList.add('grabando'); boton.setAttribute('aria-label', 'Detener dictado');
+  rec.onresult = (e) => {
+    const txt = Array.from(e.results).map(x => x[0].transcript).join('');
+    const input = $('#ceviInput'); if (input) input.value = txt;
+    if (e.results[e.results.length - 1].isFinal) { rec.stop(); ceviEnviar(txt); }
+  };
+  rec.onerror = () => toast('No te escuché bien. Intenta de nuevo o escribe.');
+  rec.onend = () => { cevi.escuchando = null; boton.classList.remove('grabando'); boton.setAttribute('aria-label', 'Dictar por voz'); };
+  rec.start();
+}
+
+function ceviPanelHTML() {
+  const ag = CFG.agente || {};
+  const cli = currentClient();
+  const nombre = primerNombre(cli?.nombre);
+  return `
+    <div class="cevi-head">
+      <div class="cevi-avatar grande" aria-hidden="true">🐂</div>
+      <div class="cevi-head-txt">
+        <strong>${esc(ag.nombre || 'CeVi')}</strong>
+        <span>Tu asistente C4V · responde al instante</span>
+      </div>
+      <button type="button" class="cevi-voz" id="ceviVoz" aria-pressed="${ceviVozActiva()}" aria-label="Leer respuestas en voz alta">${ceviVozActiva() ? CEVI_ICONOS.audioOn : CEVI_ICONOS.audioOff}</button>
+      <button type="button" class="cevi-close" id="ceviClose" aria-label="Cerrar">×</button>
+    </div>
+    <div class="cevi-msgs" id="ceviMsgs" role="log" aria-live="polite" aria-label="Conversación con CeVi"></div>
+    <div class="cevi-sug" id="ceviSug">
+      ${['¿Con qué potencia corto MDF de 3 mm?', '¿Cada cuánto cambio el agua del chiller?', 'Mi láser dejó de cortar bien']
+        .map(q => `<button type="button" class="chip" data-q="${esc(q)}">${esc(q)}</button>`).join('')}
+    </div>
+    <form class="cevi-form" id="ceviForm">
+      <button type="button" class="cevi-mic" id="ceviMic" aria-label="Dictar por voz">${CEVI_ICONOS.mic}</button>
+      <input id="ceviInput" type="text" autocomplete="off" placeholder="${nombre ? `Pregúntame lo que sea, ${esc(nombre)}` : 'Escribe tu pregunta'}" aria-label="Tu pregunta para CeVi">
+      <button type="submit" class="cevi-send" aria-label="Enviar">${CEVI_ICONOS.enviar}</button>
+    </form>
+    <p class="cevi-pie">CeVi es un asistente automático. Para casos delicados te pasamos con una persona.</p>`;
+}
+
+function ceviAbrir() {
+  const panel = $('#aiPanel'), btn = $('#aiBtn');
+  if (!panel) return;
+  panel.innerHTML = ceviPanelHTML();
+  panel.hidden = false; cevi.abierto = true;
+  btn?.setAttribute('aria-expanded', 'true');
+
+  if (!cevi.historial.length) {
+    const cli = currentClient();
+    const maq = cli ? state.db.maquinas.find(m => m.cliente_id === cli.id) : null;
+    cevi.historial.push({
+      role: 'assistant',
+      content: `Hola${cli ? ' ' + primerNombre(cli.nombre) : ''}. Soy CeVi.${maq?.modelo ? ` Veo que tienes tu ${maq.modelo}.` : ''} Pregúntame sobre parámetros, mantenimiento o cualquier problema con tu máquina.`
+    });
+  }
+  ceviPintar();
+
+  $('#ceviClose').onclick = ceviCerrar;
+  $('#ceviForm').onsubmit = (e) => { e.preventDefault(); ceviEnviar($('#ceviInput').value); };
+  $('#ceviMic').onclick = (e) => ceviEscuchar(e.currentTarget);
+  $('#ceviVoz').onclick = (e) => {
+    const activa = !ceviVozActiva();
+    try { localStorage.setItem('c4v_cevi_voz', activa ? '1' : '0'); } catch {}
+    e.currentTarget.setAttribute('aria-pressed', activa);
+    e.currentTarget.innerHTML = activa ? CEVI_ICONOS.audioOn : CEVI_ICONOS.audioOff;
+    if (!activa && cevi.hablando) { cevi.hablando.pause(); cevi.hablando = null; }
+  };
+  panel.querySelectorAll('#ceviSug .chip').forEach(b => b.onclick = () => ceviEnviar(b.dataset.q));
+  setTimeout(() => $('#ceviInput')?.focus(), 60);
+}
+
+function ceviCerrar() {
+  const panel = $('#aiPanel');
+  if (panel) { panel.hidden = true; panel.innerHTML = ''; }
+  cevi.abierto = false;
+  $('#aiBtn')?.setAttribute('aria-expanded', 'false');
+  if (cevi.hablando) { cevi.hablando.pause(); cevi.hablando = null; }
+  if (cevi.escuchando) { try { cevi.escuchando.stop(); } catch {} cevi.escuchando = null; }
+}
+
+function initAgente() {
+  const btn = $('#aiBtn');
+  const nombreEl = $('#aiName');
+  if (nombreEl) nombreEl.textContent = (CFG.agente || {}).nombre || 'CeVi';
+  if (!btn) return;
+  if (!CFG.ceviApi) { btn.hidden = true; return; }   // sin backend, no fingimos que existe
+  btn.onclick = () => (cevi.abierto ? ceviCerrar() : ceviAbrir());
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && cevi.abierto) ceviCerrar(); });
+}
+window.ceviAbrir = ceviAbrir;
+
+// ---------- pie legal (datos del proveedor + accesos obligatorios) ----------
+/* El consumidor debe poder ver CON QUIÉN contrata y llegar al Libro de
+   Reclamaciones desde cualquier página. Si falta un dato societario, se avisa
+   en rojo: es preferible verlo nosotros a publicar un pie incompleto. */
+function pintarPieLegal() {
+  const pie = $('#pieLegal');
+  if (!pie) return;
+  const e = CFG.empresa || {};
+  const faltan = ['razon_social', 'ruc', 'domicilio'].filter(k => !e[k]);
+  pie.innerHTML = `
+    ${faltan.length ? `<p class="pie-falta">⚠️ Faltan datos obligatorios del proveedor: ${faltan.join(', ').replace(/_/g, ' ')}. Complétalos en <code>js/config.js</code> antes de abrir el portal a clientes.</p>` : ''}
+    <p class="pie-empresa">
+      <strong>${esc(e.razon_social || '')}</strong>${e.ruc ? ` · RUC ${esc(e.ruc)}` : ''}${e.domicilio ? `<br>${esc(e.domicilio)}` : ''}
+      <br>Atención al cliente: WhatsApp ${esc(e.whatsapp_visible || CFG.whatsapp?.visible || '')}${e.telefono ? ` · Tel. ${esc(e.telefono)}` : ''}${e.email ? ` · ${esc(e.email)}` : ''}
+    </p>
+    <nav aria-label="Información legal">
+      <a href="libro-reclamaciones.html" class="pie-lr" target="_blank" rel="noopener">📕 Libro de Reclamaciones</a>
+      <a href="privacidad.html" target="_blank" rel="noopener">Política de Privacidad</a>
+      <a href="terminos.html" target="_blank" rel="noopener">Términos de Uso</a>
+      <a href="privacidad.html#derechos" target="_blank" rel="noopener">Ejercer mis derechos sobre mis datos</a>
+    </nav>`;
 }
 
 // ---------- init ----------
 async function init() {
   state.db = await loadDB();
-  $('#logoutBtn').onclick = () => { try { localStorage.removeItem('c4v_sesion'); } catch {} location.reload(); };
+  const cargando = document.getElementById('bootCargando');
+  if (cargando) cargando.remove();
+  $('#logoutBtn').onclick = () => { borrarSesion(); location.reload(); };
   initAgente();
+  pintarPieLegal();
   initGate();
 
-  // Sesión recordada: entra directo, sin volver a pedir el documento.
-  // En producción se re-verifica contra el endpoint (con el país guardado);
-  // si falla, se queda en el gate sin ruido. En demo valida contra data.js.
+  // Sesión recordada: entra directo con el token firmado, sin pedir código otra vez.
+  // Si el token venció o el servidor lo rechaza, se queda en el gate sin ruido.
   const ses = leerSesion();
-  if (ses && ses.doc) {
+  if (ses && ses.t) {
     try {
-      const res = await verificarCliente({ pais: ses.pais, doc: ses.doc });
+      const res = await entrarConToken(ses.t);
       if (res.estado === 'ok') entrar(res.cliente);
     } catch {}
   }

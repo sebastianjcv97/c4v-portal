@@ -18,50 +18,110 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@700;800&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/styles.css?v=20260908a" />
+  <link rel="stylesheet" href="css/styles.css?v=20260909b" />
 </head>
 <body>
   <a class="skip" href="#view">Saltar al contenido</a>
 
-  <!-- ============ Acceso: tu número de WhatsApp es tu llave ============ -->
+  <!-- Mientras arranca el portal: sin esto la pantalla queda en blanco unos segundos -->
+  <div class="boot" id="bootCargando" role="status" aria-live="polite">
+    <img src="assets/c4v-wordmark.png" alt="C4V Láser" />
+    <div class="boot-barra"><i></i></div>
+    <p>Abriendo tu Central de Postventa…</p>
+  </div>
+
+  <!-- ============ Acceso en dos pasos: documento + código por WhatsApp ============ -->
   <div class="gate" id="gate" hidden>
-    <div class="gate-band">Versión de demostración</div>
     <div class="gate-box">
       <img class="gate-logo" src="assets/c4v-wordmark.png" alt="C4V Láser" />
 
-      <div class="gate-wa-ic gate-id-ic" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><circle cx="8.4" cy="11" r="2.1"/><path d="M5.4 16.2c.5-1.6 1.6-2.4 3-2.4s2.5.8 3 2.4"/><path d="M14.5 9.5h4.5M14.5 12.5h4.5M14.5 15.5h2.8"/></svg>
-      </div>
-
-      <h1>Entra con tu documento</h1>
-      <p class="gate-sub">El mismo con el que compraste tu máquina.<br />Sin contraseñas.</p>
-
-      <form class="gate-form" id="gateForm" novalidate>
-        <p class="gate-paso"><strong>1.</strong> ¿Compraste como persona o como empresa?</p>
-        <div class="gate-tipos" id="gateTipos" role="radiogroup" aria-label="Persona o empresa"></div>
-
-        <p class="gate-paso"><strong>2.</strong> ¿De qué país eres?</p>
-        <div class="gate-paises" id="gatePaises" role="radiogroup" aria-label="Tu país"></div>
-
-        <p class="gate-paso"><strong>3.</strong> Escribe tu <strong id="gateDocLabel">DNI</strong></p>
-        <div class="gate-row">
-          <input id="gateDoc" type="text" inputmode="numeric" autocomplete="off"
-                 placeholder="45678123" aria-label="Tu documento" required />
+      <!-- ---------- Paso A · ¿Quién eres? ---------- -->
+      <section id="gatePasoDoc">
+        <div class="gate-wa-ic gate-id-ic" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><circle cx="8.4" cy="11" r="2.1"/><path d="M5.4 16.2c.5-1.6 1.6-2.4 3-2.4s2.5.8 3 2.4"/><path d="M14.5 9.5h4.5M14.5 12.5h4.5M14.5 15.5h2.8"/></svg>
         </div>
-        <button class="btn primary gate-btn" type="submit">Entrar a mi portal →</button>
-        <div class="gate-error" id="gateError" role="alert" tabindex="-1" hidden></div>
-      </form>
 
-      <div class="gate-demo" id="gateDemo" hidden></div>
+        <h1>Entra con tu documento</h1>
+        <p class="gate-sub">El mismo con el que compraste tu máquina.<br />Sin contraseñas.</p>
+
+        <form class="gate-form" id="gateForm" novalidate>
+          <p class="gate-paso"><strong>1.</strong> ¿Compraste como persona o como empresa?</p>
+          <div class="gate-tipos" id="gateTipos" role="radiogroup" aria-label="Persona o empresa"></div>
+
+          <p class="gate-paso"><strong>2.</strong> ¿De qué país eres?</p>
+          <div class="gate-paises" id="gatePaises" role="radiogroup" aria-label="Tu país"></div>
+
+          <p class="gate-paso"><strong>3.</strong> Escribe tu <strong id="gateDocLabel">DNI</strong></p>
+          <div class="gate-row">
+            <input id="gateDoc" type="text" inputmode="numeric" autocomplete="off"
+                   placeholder="45678123" aria-label="Tu documento" required />
+          </div>
+
+          <label class="gate-consent">
+            <input type="checkbox" id="gateAcepta" required />
+            <span>He leído y acepto los <a href="terminos.html" target="_blank" rel="noopener">Términos de Uso</a> y la <a href="privacidad.html" target="_blank" rel="noopener">Política de Privacidad</a>.</span>
+          </label>
+          <label class="gate-consent opcional">
+            <input type="checkbox" id="gateMarketing" />
+            <span>Además, quiero recibir novedades, cursos y promociones de C4V. <em>Es opcional: tu portal funciona igual si no lo marcas.</em></span>
+          </label>
+
+          <button class="btn primary gate-btn" type="submit">Continuar →</button>
+          <div class="gate-error" id="gateError" role="alert" tabindex="-1" hidden></div>
+        </form>
+
+        <div class="gate-demo" id="gateDemo" hidden></div>
+      </section>
+
+      <!-- ---------- Paso B · Confirma que eres tú ---------- -->
+      <section id="gatePasoOtp" hidden>
+        <div class="gate-wa-ic gate-otp-ic" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2.5" width="16" height="19" rx="3"/><path d="M10 5.5h4"/><path d="M8.5 12.5l2.5 2.5 4.5-4.5"/></svg>
+        </div>
+
+        <h1>Confirma que eres tú</h1>
+        <p class="gate-sub">Para proteger tus datos, necesitamos verificar tu WhatsApp <strong id="otpPista"></strong>.</p>
+
+        <ol class="otp-pasos">
+          <li>
+            <span class="otp-num">1</span>
+            <div>
+              <strong>Envíanos este mensaje por WhatsApp</strong>
+              <p>Se abre solo, con el texto ya escrito. Tú solo pulsa enviar.</p>
+              <a class="btn primary otp-wa" id="otpWa" href="#" target="_blank" rel="noopener">Abrir WhatsApp y enviar</a>
+              <p class="otp-codigo-manual">¿No se abrió? Escríbenos <strong id="otpTextoManual"></strong> al <span id="otpNumero"></span>.</p>
+            </div>
+          </li>
+          <li>
+            <span class="otp-num">2</span>
+            <div>
+              <strong>Escribe el código que te llegue</strong>
+              <p id="otpEstado" class="otp-estado">Esperando tu mensaje…</p>
+              <form id="otpForm" class="otp-form" novalidate>
+                <input id="otpCodigo" type="text" inputmode="numeric" autocomplete="one-time-code"
+                       maxlength="6" pattern="[0-9]{6}" placeholder="000000" aria-label="Código de 6 dígitos" />
+                <button class="btn primary" type="submit">Entrar</button>
+              </form>
+              <div class="gate-error" id="otpError" role="alert" tabindex="-1" hidden></div>
+            </div>
+          </li>
+        </ol>
+
+        <button type="button" class="gate-volver" id="otpVolver">← Usar otro documento</button>
+      </section>
 
       <p class="gate-foot">
         ¿No puedes entrar? Escríbenos por
         <a id="gateWa" href="#" target="_blank" rel="noopener">WhatsApp</a> y te ayudamos.
       </p>
     </div>
-  </div>
 
-  <div class="demo-band">Versión de demostración — los datos que ves son de ejemplo</div>
+    <nav class="gate-legal" aria-label="Información legal">
+      <a href="privacidad.html">Privacidad</a>
+      <a href="terminos.html">Términos</a>
+      <a href="libro-reclamaciones.html" class="lr-link">Libro de Reclamaciones</a>
+    </nav>
+  </div>
 
   <div class="app" id="app" hidden>
     <div class="content">
@@ -88,11 +148,14 @@
         <div class="me" id="me"></div>
         <button class="ctx-out" id="logoutBtn" type="button">Salir</button>
       </footer>
+
+      <!-- Datos del proveedor + accesos legales (los rellena app.js desde config.js) -->
+      <footer class="pie-legal" id="pieLegal"></footer>
     </div>
   </div>
 
-  <script src="js/config.js?v=20260908a"></script>
-  <script src="js/data.js?v=20260908a"></script>
-  <script src="js/app.js?v=20260908a"></script>
+  <script src="js/config.js?v=20260909b"></script>
+  <script src="js/data.js?v=20260909b"></script>
+  <script src="js/app.js?v=20260909b"></script>
 </body>
 </html>

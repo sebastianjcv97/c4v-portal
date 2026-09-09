@@ -3,13 +3,21 @@
 
 window.C4V_CONFIG = {
 
-  /* ---------- Agente de IA por voz (ElevenLabs Agents Platform) ----------
+  /* ---------- CeVi · asistente de la máquina (chat + voz) ----------
+     Backend propio en Railway (repo cevi-backend): Claude Haiku con el cerebro de
+     CeVi + voz es-MX Dalia (Edge TTS, gratis) + creación de tickets en Odoo.
+     Se eligió sobre ElevenLabs porque ya está en producción, la voz SÍ es
+     latinoamericana y no depende de un plan de pago. Vacío = botón oculto.      */
+  ceviApi: 'https://cevi-backend-general.up.railway.app',
+  ceviVoz: true,          // leer en voz alta las respuestas de CeVi
+
+  /* ---------- Agente de voz alternativo (ElevenLabs) — NO activo ----------
      Cuando el agente esté creado (actividad A4), pega aquí su Agent ID.
      Con el ID puesto, el portal carga el widget de voz automáticamente.
      Mientras esté vacío, el botón "Habla con CeVi" explica que aún no está
      disponible y ofrece WhatsApp (nunca finge que funciona).
      Se obtiene en: elevenlabs.io → Agents → tu agente → Widget / Embed.   */
-  elevenlabsAgentId: '',
+  elevenlabsAgentId: '',   // bloqueado: API key inválida y sin voz es-LATAM en plan gratis
 
   /* Nombre y descripción del agente (se muestran en el panel) */
   agente: {
@@ -74,14 +82,41 @@ window.C4V_CONFIG = {
      ⚠️ Antes de `activo:true` en un backend público, resuelve la protección PII
         (documento + OTP por WhatsApp). Ver INTEGRACION_ODOO.md §SEGURIDAD. */
   verificacion: {
-    endpoint: '/api/cliente',   // ruta del backend de verificación
-    apiBase: '',                // '' = mismo origen; en GitHub Pages, la URL pública del backend hosteado (sin barra final)
-    activo: false               // true cuando el endpoint esté hosteado y la tabla poblada
+    endpoint: '/api/cliente',   // ruta del backend de verificación (POST)
+    // En local (npm start) el mismo servidor sirve portal y API; en producción, Railway.
+    apiBase: /^(localhost|127\.0\.0\.1)$/.test(location.hostname)
+      ? '' : 'https://portal-api-general.up.railway.app',
+    /* ⚠️ INTERRUPTOR DE SALIDA A PRODUCCIÓN — hoy en false A PROPÓSITO.
+       El backend, el código por WhatsApp y la base (232 contactos de Odoo) están
+       listos y probados. Falta UN paso que solo se hace en el panel de ManyChat:
+       que el bot responda el código cuando el cliente escribe "C4V PORTAL xxxxx"
+       (instrucciones exactas en ../../ACTIVAR_ACCESO.md).
+       Si se pone `true` ANTES de ese paso, los clientes verán la pantalla del
+       código y NUNCA lo recibirán: nadie podría entrar. Por eso queda en false. */
+    activo: false
   },
 
   /* En demo mostramos los documentos de ejemplo para poder entrar (validación
      local contra los `clientes` de data.js).
      En producción: false → el login verifica contra el endpoint (`verificacion`).
      Mantén `true` mientras el endpoint NO esté hosteado y poblado. */
-  mostrarNumerosDemo: true
+  mostrarNumerosDemo: false,
+
+  /* ---------- Datos del proveedor (obligatorio mostrarlos al consumidor) ------
+     El Código de Protección y Defensa del Consumidor exige que se sepa CON QUIÉN
+     se contrata. Se muestran en el pie del portal y en las páginas legales.
+     ⚠️ `domicilio` PENDIENTE: sin él, las páginas legales avisan en rojo.        */
+  empresa: {
+    razon_social: 'C4V LASER S.R.L.',
+    ruc: '20609326540',
+    domicilio: '',                        // ← FALTA: domicilio fiscal completo
+    email: 'sebastianjcv97@gmail.com',
+    email_datos: 'sebastianjcv97@gmail.com',  // canal para derechos sobre datos personales
+    telefono: '905474440',
+    whatsapp_visible: '+51 924 662 205'
+  },
+
+  /* Versión de los documentos legales. Súbela cuando cambie el texto: obliga a
+     volver a pedir la aceptación al cliente. */
+  versionLegal: '2026-09-1'
 };

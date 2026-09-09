@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Libro de Reclamaciones · C4V Láser</title>
+<meta name="description" content="Libro de Reclamaciones virtual de C4V Láser. Registra tu reclamo o queja y recibe tu constancia al instante." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23141414'/%3E%3Ctext x='32' y='43' text-anchor='middle' font-family='Arial,sans-serif' font-size='23' font-weight='800' fill='%23F9020B'%3EC4V%3C/text%3E%3C/svg%3E" />
+<link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@700;800&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="css/styles.css?v=20260909a" />
+<link rel="stylesheet" href="css/legal.css?v=20260909a" />
+</head>
+<body>
+<header class="doc-top">
+  <img src="assets/c4v-wordmark.png" alt="C4V Láser" />
+  <a href="index.html">← Volver al portal</a>
+</header>
+
+<main class="doc">
+  <h1>Libro de Reclamaciones</h1>
+  <p class="doc-meta">Hoja de reclamación virtual · <span data-emp="razon_social"></span> · RUC <span data-emp="ruc"></span> · <span data-emp="domicilio"></span></p>
+
+  <div class="doc-falta" id="faltaEmpresa" hidden></div>
+
+  <div class="lr-aviso">
+    <h2>Conforme a lo establecido en el Código de Protección y Defensa del Consumidor</h2>
+    <p>Este establecimiento cuenta con un Libro de Reclamaciones a tu disposición. Déjanos tu hoja aquí y recibirás tu constancia al instante, con un número para hacerle seguimiento.</p>
+  </div>
+
+  <!-- ============ Formulario ============ -->
+  <section id="lrFormBox">
+    <p><strong>Antes de empezar:</strong> si tu problema es con tu máquina, escribirnos por WhatsApp al <span data-emp="whatsapp_visible"></span> suele resolverlo el mismo día. Este libro es tu derecho y está siempre disponible, lo uses o no ese canal.</p>
+
+    <form class="lr-form" id="lrForm" novalidate>
+      <h2>1. ¿Qué quieres presentar?</h2>
+      <div class="lr-tipos" id="lrTipos" role="radiogroup" aria-label="Tipo de reclamación">
+        <button type="button" class="lr-tipo" role="radio" aria-checked="true" data-tipo="reclamo">
+          <strong>Reclamo</strong><span>Disconformidad con el producto o el servicio que recibiste.</span>
+        </button>
+        <button type="button" class="lr-tipo" role="radio" aria-checked="false" data-tipo="queja">
+          <strong>Queja</strong><span>Malestar con la atención recibida, no con el producto.</span>
+        </button>
+      </div>
+
+      <h2>2. Tus datos</h2>
+      <div class="lr-row">
+        <div class="field">
+          <label for="lrNombre">Nombre completo <span class="req">*</span></label>
+          <input id="lrNombre" name="nombre" type="text" autocomplete="name" required />
+        </div>
+        <div class="field">
+          <label for="lrDocumento">Número de documento <span class="req">*</span></label>
+          <input id="lrDocumento" name="documento" type="text" autocomplete="off" required />
+        </div>
+      </div>
+      <div class="lr-row">
+        <div class="field">
+          <label for="lrDocTipo">Tipo de documento</label>
+          <select id="lrDocTipo" name="documento_tipo">
+            <option>DNI</option><option>RUC</option><option>Carné de extranjería</option>
+            <option>Pasaporte</option><option>Cédula</option><option>Otro</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="lrTelefono">Teléfono o WhatsApp</label>
+          <input id="lrTelefono" name="telefono" type="tel" autocomplete="tel" />
+        </div>
+      </div>
+      <div class="field">
+        <label for="lrEmail">Correo electrónico <span class="req">*</span></label>
+        <input id="lrEmail" name="email" type="email" autocomplete="email" />
+        <p class="hint">Te enviaremos aquí una copia de tu hoja, como manda la norma. Si no tienes correo, escribe tu domicilio abajo.</p>
+      </div>
+      <div class="field">
+        <label for="lrDomicilio">Domicilio <span class="req">*</span></label>
+        <input id="lrDomicilio" name="domicilio" type="text" autocomplete="street-address" />
+        <p class="hint">La norma exige tu domicilio o tu correo electrónico: sin uno de los dos, tu hoja no puede darse por presentada.</p>
+      </div>
+      <label class="lr-check">
+        <input type="checkbox" id="lrMenor" name="es_menor" />
+        <span>Soy menor de edad</span>
+      </label>
+      <div class="field" id="lrApoderadoBox" hidden>
+        <label for="lrApoderado">Nombre del padre, madre o apoderado <span class="req">*</span></label>
+        <input id="lrApoderado" name="apoderado" type="text" />
+      </div>
+
+      <h2>3. Sobre lo contratado</h2>
+      <div class="lr-row">
+        <div class="field">
+          <label for="lrBienTipo">¿Es un producto o un servicio?</label>
+          <select id="lrBienTipo" name="bien_tipo">
+            <option value="producto">Producto</option>
+            <option value="servicio">Servicio</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="lrMonto">Monto reclamado</label>
+          <input id="lrMonto" name="monto" type="text" placeholder="S/ 0.00" />
+        </div>
+      </div>
+      <div class="field">
+        <label for="lrBienDesc">Descripción</label>
+        <input id="lrBienDesc" name="bien_descripcion" type="text" placeholder="Ej: máquina láser 6040, pedido S101526" />
+      </div>
+
+      <h2>4. Tu reclamación</h2>
+      <div class="field">
+        <label for="lrDetalle">Detalle de lo ocurrido <span class="req">*</span></label>
+        <textarea id="lrDetalle" name="detalle" required placeholder="Cuéntanos qué pasó, con fechas si las recuerdas."></textarea>
+      </div>
+      <div class="field">
+        <label for="lrPedido">¿Qué esperas que hagamos? <span class="req">*</span></label>
+        <textarea id="lrPedido" name="pedido" required style="min-height:90px" placeholder="Ej: que revisen mi máquina, que me devuelvan el monto, una explicación."></textarea>
+      </div>
+
+      <label class="lr-check">
+        <input type="checkbox" id="lrAcepta" required />
+        <span>Declaro que la información es verdadera y acepto que traten mis datos para atender esta hoja, conforme a la <a href="privacidad.html" target="_blank" rel="noopener">Política de Privacidad</a>.</span>
+      </label>
+
+      <div class="lr-errores" id="lrErrores" hidden role="alert"></div>
+      <button class="btn primary" type="submit" id="lrEnviar" style="width:100%">Registrar mi hoja</button>
+
+      <div class="lr-pies">
+        <p><strong>RECLAMO:</strong> Disconformidad relacionada a los productos o servicios.</p>
+        <p><strong>QUEJA:</strong> Disconformidad no relacionada a los productos o servicios; o, malestar o descontento respecto a la atención al público.</p>
+        <p>La formulación del reclamo no impide acudir a otras vías de solución de controversias ni es requisito previo para interponer una denuncia ante el INDECOPI.</p>
+        <p>El proveedor debe dar respuesta al reclamo o queja en un plazo no mayor a quince (15) días hábiles, el cual es improrrogable.</p>
+      </div>
+    </form>
+  </section>
+
+  <!-- ============ Constancia ============ -->
+  <section id="lrOkBox" hidden>
+    <div class="lr-ok">
+      <h2>✅ Tu hoja quedó registrada</h2>
+      <p>Guarda este número. Con él y tu documento puedes consultar el estado cuando quieras.</p>
+      <div class="lr-codigo" id="lrCodigo"></div>
+      <p id="lrPlazoOk"></p>
+      <button class="btn ghost sm no-print" onclick="window.print()">🖨 Imprimir o guardar en PDF</button>
+    </div>
+    <div class="card" style="margin-top:20px">
+      <h3>Hoja de reclamación</h3>
+      <pre id="lrConstancia" style="white-space:pre-wrap;font-family:var(--sans);font-size:14px;line-height:1.6;margin:0"></pre>
+    </div>
+    <div class="lr-pies">
+      <p><strong>RECLAMO:</strong> Disconformidad relacionada a los productos o servicios.</p>
+      <p><strong>QUEJA:</strong> Disconformidad no relacionada a los productos o servicios; o, malestar o descontento respecto a la atención al público.</p>
+      <p>La formulación del reclamo no impide acudir a otras vías de solución de controversias ni es requisito previo para interponer una denuncia ante el INDECOPI.</p>
+      <p>El proveedor debe dar respuesta al reclamo o queja en un plazo no mayor a quince (15) días hábiles, el cual es improrrogable.</p>
+    </div>
+  </section>
+
+  <!-- ============ Consulta de estado ============ -->
+  <section class="lr-consulta no-print">
+    <h2 style="margin-top:0">Consultar una hoja ya presentada</h2>
+    <form class="lr-form" id="lrConsultaForm" novalidate>
+      <div class="lr-row">
+        <div class="field">
+          <label for="lrcCodigo">Número de hoja</label>
+          <input id="lrcCodigo" type="text" placeholder="LR-2026-000001" />
+        </div>
+        <div class="field">
+          <label for="lrcDoc">Tu número de documento</label>
+          <input id="lrcDoc" type="text" />
+        </div>
+      </div>
+      <button class="btn ghost" type="submit">Consultar</button>
+    </form>
+    <div id="lrcResultado" style="margin-top:16px"></div>
+  </section>
+
+  <div class="doc-foot" data-doc-foot></div>
+</main>
+
+<script src="js/config.js?v=20260909a"></script>
+<script src="js/legal-page.js?v=20260909a"></script>
+<script src="js/libro-reclamaciones.js?v=20260909a"></script>
+</body>
+</html>

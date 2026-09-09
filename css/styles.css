@@ -567,3 +567,97 @@ a.chip{text-decoration:none;color:var(--ink)}
 .redes p{margin:0 0 6px;font-size:14px}
 .redes-links{display:flex;flex-wrap:wrap;gap:6px 16px;color:var(--muted)}
 .redes-links a{color:var(--red-cta);font-weight:700}
+
+/* ---------- CeVi · panel de chat y voz ---------- */
+.ai-panel{position:fixed;right:16px;bottom:16px;top:auto;left:auto;width:min(420px,calc(100vw - 32px));max-height:min(640px,calc(100vh - 32px));display:flex;flex-direction:column;background:var(--bg);border:2px solid var(--black);border-radius:var(--r-lg);box-shadow:0 18px 50px rgba(20,20,20,.28);z-index:40;overflow:hidden}
+.cevi-head{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--black);color:var(--on-black);flex-shrink:0}
+.cevi-head-txt{display:flex;flex-direction:column;flex:1;min-width:0}
+.cevi-head-txt strong{font-family:var(--slab);font-size:16px}
+.cevi-head-txt span{font-size:12px;color:var(--on-black-dim)}
+.cevi-avatar{width:32px;height:32px;border-radius:50%;background:var(--red);display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.cevi-avatar.grande{width:38px;height:38px;font-size:20px}
+.cevi-voz,.cevi-close{background:none;border:none;color:var(--on-black);cursor:pointer;padding:8px;border-radius:var(--r);min-width:40px;min-height:40px;display:flex;align-items:center;justify-content:center}
+.cevi-voz svg{width:20px;height:20px}
+.cevi-voz:hover,.cevi-close:hover{background:var(--black-2)}
+.cevi-voz[aria-pressed="false"]{opacity:.5}
+.cevi-close{font-size:24px;line-height:1}
+.cevi-msgs{flex:1;overflow-y:auto;padding:16px 14px;display:flex;flex-direction:column;gap:12px;background:var(--alt)}
+.cevi-msg{display:flex;gap:8px;align-items:flex-start;max-width:92%}
+.cevi-msg.yo{align-self:flex-end}
+.cevi-msg .cevi-txt{background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:10px 13px;font-size:15px;line-height:1.5;white-space:pre-wrap}
+.cevi-msg.yo .cevi-txt{background:var(--black);color:var(--on-black);border-color:var(--black)}
+.cevi-ticket{margin-top:8px;padding-top:8px;border-top:1px solid var(--line);font-size:13px;color:var(--ok)}
+.cevi-msg.pensando .cevi-txt{display:flex;gap:5px;padding:14px 13px}
+.cevi-msg.pensando span{width:7px;height:7px;border-radius:50%;background:var(--muted);animation:ceviPulso 1.2s infinite}
+.cevi-msg.pensando span:nth-child(2){animation-delay:.2s}
+.cevi-msg.pensando span:nth-child(3){animation-delay:.4s}
+@keyframes ceviPulso{0%,60%,100%{opacity:.25;transform:translateY(0)}30%{opacity:1;transform:translateY(-3px)}}
+.cevi-sug{display:flex;gap:8px;flex-wrap:wrap;padding:10px 14px 0;background:var(--alt)}
+.cevi-sug .chip{font-size:13px;font-weight:500;padding:8px 11px;text-align:left}
+.cevi-form{display:flex;gap:8px;padding:12px 14px;border-top:1px solid var(--line);background:var(--bg);flex-shrink:0}
+.cevi-form input{flex:1;min-width:0;padding:12px 14px;border:2px solid var(--line);border-radius:24px;font-family:var(--sans);font-size:15px;background:var(--bg);color:var(--ink)}
+.cevi-form input:focus{outline:none;border-color:var(--red)}
+.cevi-mic,.cevi-send{flex-shrink:0;width:44px;height:44px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.cevi-mic{background:var(--alt);color:var(--ink);border:2px solid var(--line)}
+.cevi-mic:hover{border-color:var(--ink)}
+.cevi-mic.grabando{background:var(--red);color:#fff;border-color:var(--red);animation:ceviLatido 1.1s infinite}
+@keyframes ceviLatido{50%{box-shadow:0 0 0 7px rgba(249,2,11,.16)}}
+.cevi-send{background:var(--red);color:#fff}
+.cevi-send:hover{background:var(--red-dark)}
+.cevi-mic svg,.cevi-send svg{width:20px;height:20px}
+.cevi-pie{margin:0;padding:0 14px 12px;font-size:11.5px;color:var(--muted);background:var(--bg);text-align:center;flex-shrink:0}
+.cevi-card .big-ico{color:var(--red-cta)}
+button.big{width:100%;text-align:left;font-family:inherit;cursor:pointer}
+@media(max-width:560px){
+  .ai-panel{right:0;left:0;bottom:0;width:100%;max-height:88vh;border-radius:var(--r-lg) var(--r-lg) 0 0;border-width:2px 0 0}
+}
+
+/* ---------- Acceso: consentimiento, código y pie legal ---------- */
+.gate-consent{display:flex;gap:10px;align-items:flex-start;margin:18px 0 4px;text-align:left;font-size:13.5px;line-height:1.5;color:var(--muted);cursor:pointer}
+.gate-consent input{flex-shrink:0;width:20px;height:20px;margin-top:1px;accent-color:var(--red);cursor:pointer}
+.gate-consent a{color:var(--red-cta);font-weight:700;text-decoration:underline}
+.gate-otp-ic{color:var(--ok)}
+.otp-pasos{list-style:none;margin:20px 0 0;padding:0;text-align:left;display:flex;flex-direction:column;gap:20px}
+.otp-pasos li{display:flex;gap:12px;align-items:flex-start}
+.otp-num{flex-shrink:0;width:28px;height:28px;border-radius:50%;background:var(--black);color:var(--on-black);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px}
+.otp-pasos strong{display:block;font-family:var(--slab);font-size:16px;margin-bottom:4px}
+.otp-pasos p{margin:0 0 10px;font-size:13.5px;color:var(--muted);line-height:1.5}
+.otp-wa{display:inline-block;width:100%;text-align:center}
+.otp-codigo-manual{margin-top:10px !important;font-size:12.5px}
+.otp-estado{font-size:13.5px;color:var(--muted)}
+.otp-estado.ok{color:var(--ok);font-weight:700}
+.otp-form{display:flex;gap:8px;margin-top:4px}
+.otp-form input{flex:1;min-width:0;padding:14px;border:2px solid var(--line);border-radius:var(--r);font-family:var(--sans);font-size:24px;font-weight:800;letter-spacing:.28em;text-align:center;background:var(--bg);color:var(--ink)}
+.otp-form input:focus{outline:none;border-color:var(--red)}
+.otp-form button{white-space:nowrap}
+.gate-volver{margin-top:22px;background:none;border:none;color:var(--muted);font-family:var(--sans);font-size:14px;font-weight:600;cursor:pointer;padding:10px;min-height:44px}
+.gate-volver:hover{color:var(--ink)}
+.gate-legal{display:flex;gap:18px;flex-wrap:wrap;justify-content:center;margin-top:22px;font-size:13px}
+.gate-legal a{color:var(--muted);text-decoration:underline}
+.gate-legal a:hover{color:var(--ink)}
+.gate-legal .lr-link{font-weight:700;color:var(--ink)}
+
+/* ---------- Pie del portal: proveedor + legal ---------- */
+.pie-legal{border-top:1px solid var(--line);padding:22px 32px 32px;background:var(--alt);font-size:13px;color:var(--muted);line-height:1.6}
+.pie-legal .pie-empresa{margin:0 0 10px}
+.pie-legal .pie-empresa strong{color:var(--ink)}
+.pie-legal nav{display:flex;gap:16px;flex-wrap:wrap;align-items:center}
+.pie-legal nav a{color:var(--muted);text-decoration:underline}
+.pie-legal nav a:hover{color:var(--ink)}
+.pie-lr{display:inline-flex;align-items:center;gap:8px;border:2px solid var(--ink);border-radius:var(--r);padding:8px 12px;font-weight:700;color:var(--ink) !important;text-decoration:none !important;background:var(--bg);min-height:44px}
+.pie-lr:hover{background:var(--black);color:var(--on-black) !important;border-color:var(--black)}
+.pie-falta{background:var(--red-50);border:1px solid var(--red);color:var(--red-dark);border-radius:var(--r);padding:8px 12px;margin:0 0 10px;font-weight:700}
+@media(max-width:560px){.pie-legal{padding:20px 16px 28px}.otp-form{flex-direction:column}.otp-form button{width:100%}}
+.cert-serie.sin-serie{background:var(--alt);border-style:dashed}
+.cert-serie.sin-serie code{background:var(--bg);padding:2px 6px;border-radius:4px;font-size:13px}
+.gate-consent.opcional{margin-top:10px;padding-top:10px;border-top:1px dashed var(--line)}
+.gate-consent.opcional em{font-style:normal;color:var(--muted);opacity:.85}
+
+/* ---------- Pantalla de arranque (evita el blanco inicial) ---------- */
+.boot{position:fixed;inset:0;z-index:60;background:var(--black);color:var(--on-black);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;padding:24px}
+.boot img{width:150px;height:auto}
+.boot p{margin:0;font-size:14px;color:var(--on-black-dim)}
+.boot-barra{width:180px;height:4px;border-radius:2px;background:var(--black-3);overflow:hidden}
+.boot-barra i{display:block;width:40%;height:100%;background:var(--red);border-radius:2px;animation:bootCorre 1.1s ease-in-out infinite}
+@keyframes bootCorre{0%{transform:translateX(-110%)}100%{transform:translateX(320%)}}
+@media(prefers-reduced-motion:reduce){.boot-barra i{animation:none;width:100%}}

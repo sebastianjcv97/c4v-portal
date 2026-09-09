@@ -1,0 +1,60 @@
+/* Páginas legales y Libro de Reclamaciones — públicas, sin sesión. */
+.doc-top{background:var(--black);color:var(--on-black);padding:14px 24px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:5}
+.doc-top img{height:24px;width:auto}
+.doc-top a{color:var(--on-black-dim);font-size:14px;font-weight:600;margin-left:auto;min-height:44px;display:flex;align-items:center}
+.doc-top a:hover{color:var(--on-black)}
+.doc{max-width:760px;margin:0 auto;padding:40px 24px 72px}
+.doc h1{font-size:clamp(28px,5vw,38px);margin:0 0 6px}
+.doc .doc-meta{color:var(--muted);font-size:14px;margin:0 0 32px;padding-bottom:20px;border-bottom:2px solid var(--line)}
+.doc h2{font-family:var(--slab);font-size:21px;margin:36px 0 12px;scroll-margin-top:80px}
+.doc h3{font-family:var(--slab);font-size:16px;margin:22px 0 8px}
+.doc p,.doc li{font-size:16px;line-height:1.7;color:var(--ink)}
+.doc p{margin:0 0 14px}
+.doc ul,.doc ol{margin:0 0 16px;padding-left:22px}
+.doc li{margin-bottom:8px}
+.doc .card{margin:20px 0}
+.doc table{width:100%;border-collapse:collapse;margin:16px 0;font-size:14.5px}
+.doc th,.doc td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+.doc th{background:var(--alt);font-weight:700}
+.doc-toc{background:var(--alt);border-radius:var(--r-lg);padding:18px 22px;margin-bottom:32px}
+.doc-toc strong{display:block;margin-bottom:8px;font-family:var(--slab)}
+.doc-toc ol{margin:0;padding-left:20px;columns:2;column-gap:24px}
+.doc-toc li{margin-bottom:5px;font-size:14.5px}
+.doc-toc a{color:var(--red-cta);text-decoration:none}
+.doc-toc a:hover{text-decoration:underline}
+.doc-falta{background:var(--red-50);border:2px solid var(--red);color:var(--red-dark);border-radius:var(--r);padding:14px 16px;margin:0 0 24px;font-weight:700}
+.doc-dest{background:var(--alt);border-left:4px solid var(--red);border-radius:0 var(--r) var(--r) 0;padding:14px 18px;margin:20px 0}
+.doc-dest p:last-child{margin-bottom:0}
+.doc-foot{border-top:1px solid var(--line);margin-top:48px;padding-top:22px;font-size:13.5px;color:var(--muted)}
+.doc-foot nav{display:flex;gap:16px;flex-wrap:wrap;margin-top:10px}
+.doc-foot a{color:var(--muted);text-decoration:underline}
+/* Libro de Reclamaciones */
+.lr-aviso{background:var(--black);color:var(--on-black);border-radius:var(--r-lg);padding:22px;margin-bottom:28px}
+.lr-aviso h2{color:var(--on-black);margin:0 0 8px;font-size:19px}
+.lr-aviso p{color:var(--on-black-dim);margin:0;font-size:15px}
+.lr-tipos{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:8px}
+.lr-tipo{border:2px solid var(--line);border-radius:var(--r);padding:14px;cursor:pointer;background:var(--bg);text-align:left;min-height:44px}
+.lr-tipo[aria-checked="true"]{border-color:var(--red);background:var(--red-50)}
+.lr-tipo strong{display:block;font-family:var(--slab);font-size:16px;margin-bottom:4px}
+.lr-tipo span{font-size:13px;color:var(--muted);line-height:1.45}
+.lr-form .field{margin-bottom:16px}
+.lr-form label{display:block;font-weight:700;font-size:14.5px;margin-bottom:6px}
+.lr-form .req{color:var(--red)}
+.lr-form input,.lr-form textarea,.lr-form select{width:100%;padding:12px 14px;border:2px solid var(--line);border-radius:var(--r);font-family:var(--sans);font-size:16px;background:var(--bg);color:var(--ink)}
+.lr-form input:focus,.lr-form textarea:focus,.lr-form select:focus{outline:none;border-color:var(--red)}
+.lr-form textarea{min-height:120px;resize:vertical}
+.lr-form .hint{font-size:13px;color:var(--muted);margin:6px 0 0}
+.lr-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.lr-check{display:flex;gap:10px;align-items:flex-start;font-size:14px;color:var(--muted);line-height:1.5;cursor:pointer;margin:18px 0}
+.lr-check input{width:20px;height:20px;flex-shrink:0;margin-top:1px;accent-color:var(--red)}
+.lr-errores{background:var(--red-50);border:1px solid var(--red);color:var(--red-dark);border-radius:var(--r);padding:14px 16px;margin:16px 0}
+.lr-errores ul{margin:8px 0 0;padding-left:20px}
+.lr-ok{background:var(--ok-50);border:2px solid var(--ok);border-radius:var(--r-lg);padding:26px;text-align:center}
+.lr-ok h2{color:var(--ok);margin:0 0 8px}
+.lr-codigo{font-family:var(--slab);font-size:30px;font-weight:800;letter-spacing:.04em;margin:14px 0;color:var(--ink)}
+.lr-consulta{background:var(--alt);border-radius:var(--r-lg);padding:22px;margin-top:36px}
+@media(max-width:620px){.lr-row,.lr-tipos{grid-template-columns:1fr}.doc-toc ol{columns:1}.doc{padding:28px 18px 56px}}
+@media print{.doc-top,.doc-foot,.lr-consulta,.no-print{display:none!important}.doc{padding:0;max-width:100%}}
+.lr-pies{margin-top:22px;padding-top:16px;border-top:2px solid var(--line);font-size:12.5px;color:var(--muted);line-height:1.55}
+.lr-pies p{margin:0 0 7px;font-size:12.5px}
+.lr-pies strong{color:var(--ink)}
