@@ -2,32 +2,36 @@
    Identidad real de c4vlaser.com: NEGRO + ROJO + BLANCO, bold e industrial.
    Sistema: espaciado {4,8,12,16,24,32,48} · tipografía {12,14,16,18,22,28} · colores solo tokens. */
 :root{
+  /* ── El mundo de esta página es un manual de instalación sobre un banco de
+     trabajo. De ahí salen los colores: la tinta, la hoja y la mesa. ── */
+  --tinta:#141414;            /* negro de marca · el texto */
+  --papel:#ffffff;            /* la hoja */
+  --mesa:#edebe7;             /* la superficie donde se apoya la hoja */
+  --grafito:#5a5a5a;          /* lápiz · texto secundario · 7.0:1 sobre papel */
+  --regla:#d9d6d1;            /* las líneas del formulario */
+  --rojo:#F9020B;             /* marca · solo dentro de los dibujos y sobre negro */
+  --rojo-tinta:#C40309;       /* la única acción · blanco encima = 6.24:1 */
+  --rojo-hondo:#a30207;
+  --rojo-suave:#fdecec;
+
+  /* Compatibilidad con el resto de la hoja de estilos */
   --black:#141414; --black-2:#1e1e1e; --black-3:#2a2a2a;
-  --red:#F9020B;              /* acento de marca: sobre negro, badges, detalles */
-  --red-cta:#C40309;          /* botones sobre blanco (blanco/red-cta = 5.5:1 AA) */
-  --red-dark:#a30207; --red-50:#fdecec;
-  --bg:#ffffff; --alt:#f7f7f7;
-  --ink:#141414; --muted:#5f5f5f; --line:#e8e8e8;
-  --on-black:#ffffff; --on-black-dim:#b9b9b9;
-  --amber:#FFC400; /* banda demo (como la banda promo del sitio) */
-  /* Estados: todos pasan contraste AA sobre su fondo -50 */
-  --ok:#256640; --ok-50:#e9f3ec;        /* antes 2f7d51 daba 4.43:1 y no pasaba */
-  --warn:#8a5f10; --warn-50:#f6efe0;
-  --err:#b3261e; --err-50:#fdecea;      /* se usaba con fallback sin estar declarada */
-  --info:#2e5aac; --info-50:#eaeff8;
-  /* WhatsApp: el verde de marca con texto blanco da 1.98:1 y no se puede leer.
-     Fondo verde oscuro; el verde de marca queda solo para el ícono. */
+  --red:var(--rojo); --red-cta:var(--rojo-tinta); --red-dark:var(--rojo-hondo); --red-50:var(--rojo-suave);
+  --bg:var(--papel); --alt:#f6f5f3; --ink:var(--tinta); --muted:var(--grafito); --line:var(--regla);
+  --on-black:#ffffff; --on-black-dim:#b9b9b9; --amber:#FFC400;
+
+  --ok:#256640; --ok-50:#e9f3ec; --warn:#8a5f10; --warn-50:#f6efe0;
+  --err:#b3261e; --err-50:#fdecea; --info:#2e5aac; --info-50:#eaeff8;
   --wa:#117F44; --wa-hover:#0E6B39; --wa-brand:#25D366;
 
-  /* Una sola escala de espacio y tamaño. Si un valor no está aquí, no se usa. */
   --s-1:4px; --s-2:8px; --s-3:12px; --s-4:16px; --s-5:24px; --s-6:32px; --s-7:48px;
-  --t-xs:12px; --t-sm:14px; --t-md:16px; --t-lg:18px; --t-xl:22px; --t-2xl:28px; --t-3xl:34px;
-  --lh-tight:1.2; --lh-snug:1.4; --lh-base:1.6;
-  --medida:62ch;
-  --tap:44px;
-  --r-sm:6px; --r-full:999px;
-  --r:8px; --r-lg:12px;
-  --sh:0 1px 3px rgba(20,20,20,.07);
+  /* Seis tamaños. Antes había veintiuno. */
+  --t-xs:12px; --t-sm:14px; --t-md:16px; --t-lg:19px; --t-xl:24px; --t-2xl:32px; --t-3xl:32px;
+  --lh-tight:1.15; --lh-snug:1.35; --lh-base:1.6;
+  --medida:60ch; --tap:44px;
+  --r-sm:4px; --r:6px; --r-lg:10px; --r-full:999px;
+  /* Una sola sombra, y solo para lo que de verdad flota sobre la hoja */
+  --sh:none; --sh-flota:0 12px 40px rgba(20,20,20,.22);
   --sans:'Roboto',system-ui,-apple-system,'Segoe UI',Arial,sans-serif;
   --slab:'Roboto Slab','Roboto',Georgia,serif;
 }
@@ -106,15 +110,15 @@ button{font-family:var(--sans)}
 .pag-title{font-family:var(--slab);font-size:24px;font-weight:800;margin:0 0 20px}
 
 /* Tarjeta de la máquina (lleva al certificado) */
-.maq{display:flex;align-items:center;gap:14px;background:var(--black);color:var(--on-black);border-radius:var(--r-lg);padding:16px;margin-bottom:24px;transition:background .16s}
-.maq:hover{background:var(--black-2)}
-.maq:active{background:var(--black-3)}
+.maq{display:flex;align-items:center;gap:14px;background:var(--papel);color:var(--tinta);border:1px solid var(--regla);border-radius:var(--r-lg);padding:16px;margin-bottom:24px;transition:border-color .16s}
+.maq:hover{border-color:var(--tinta)}
+.maq:active{border-color:var(--tinta)}
 .maq-seal{flex-shrink:0;width:56px;height:56px}
 .maq-seal svg{width:100%;height:100%}
 .maq-txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
 .maq-txt strong{font-size:17px;font-weight:700}
-.maq-txt span{font-size:14px;color:var(--on-black-dim)}
-.maq-txt .muted{color:#8a8a8a;font-size:13px}
+.maq-txt span{font-size:var(--t-sm);color:var(--grafito)}
+.maq-txt .muted{color:var(--grafito);font-size:var(--t-xs)}
 
 /* Los 4 botones grandes */
 .bigs{display:flex;flex-direction:column;gap:12px}
@@ -167,7 +171,6 @@ button{font-family:var(--sans)}
 .page-head{margin-bottom:24px}
 .page-head h1{margin-bottom:8px}
 .page-head p{color:var(--muted);font-size:16px;max-width:66ch;margin:0}
-.section-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:32px 0 16px}
 
 /* ---------- Grid & cards ---------- */
 .grid{display:grid;gap:16px}
@@ -725,10 +728,10 @@ button.big{width:100%;text-align:left;font-family:inherit;cursor:pointer}
 .card.paso0 .btn{margin-top:6px}
 
 /* ---------- Checklist: tiempos, opcionales y "¿cómo lo hago?" ---------- */
-.prep-tiempo{display:block;margin-top:5px;font-size:var(--t-sm);font-weight:700;color:var(--red-cta)}
+.prep-tiempo{display:block;margin-top:5px;font-size:var(--t-sm);font-weight:600;color:var(--grafito)}
 .prep-opcional{display:block;margin-top:5px;font-size:var(--t-sm);color:var(--muted);font-weight:400}
 .prep-como{padding:0 0 0 44px}
-.prep-como-btn{background:none;border:none;color:var(--red-cta);font-family:var(--sans);font-size:var(--t-sm);font-weight:700;cursor:pointer;padding:8px 0;min-height:var(--tap);text-decoration:underline}
+.prep-como-btn{background:none;border:none;color:var(--grafito);font-family:var(--sans);font-size:var(--t-sm);font-weight:700;cursor:pointer;padding:8px 0;min-height:var(--tap);text-decoration:underline}
 .prep-como-txt{background:var(--alt);border-radius:var(--r);padding:14px 16px;margin:4px 0 10px}
 .prep-como-txt .ulist{margin:0}
 .prep-como-txt li{font-size:var(--t-sm);line-height:var(--lh-base);margin-bottom:8px}
@@ -843,10 +846,10 @@ button.big{width:100%;text-align:left;font-family:inherit;cursor:pointer}
 .card.paso0 .btn{margin-top:6px}
 
 /* ---------- Checklist: tiempos, opcionales y "¿cómo lo hago?" ---------- */
-.prep-tiempo{display:block;margin-top:5px;font-size:var(--t-sm);font-weight:700;color:var(--red-cta)}
+.prep-tiempo{display:block;margin-top:5px;font-size:var(--t-sm);font-weight:600;color:var(--grafito)}
 .prep-opcional{display:block;margin-top:5px;font-size:var(--t-sm);color:var(--muted);font-weight:400}
 .prep-como{padding:0 0 0 44px}
-.prep-como-btn{background:none;border:none;color:var(--red-cta);font-family:var(--sans);font-size:var(--t-sm);font-weight:700;cursor:pointer;padding:8px 0;min-height:var(--tap);text-decoration:underline}
+.prep-como-btn{background:none;border:none;color:var(--grafito);font-family:var(--sans);font-size:var(--t-sm);font-weight:700;cursor:pointer;padding:8px 0;min-height:var(--tap);text-decoration:underline}
 .prep-como-txt{background:var(--alt);border-radius:var(--r);padding:14px 16px;margin:4px 0 10px}
 .prep-como-txt .ulist{margin:0}
 .prep-como-txt li{font-size:var(--t-sm);line-height:var(--lh-base);margin-bottom:8px}
@@ -871,14 +874,14 @@ button.big{width:100%;text-align:left;font-family:inherit;cursor:pointer}
 .hoja-cab p{margin:0;font-size:var(--t-sm);color:var(--muted)}
 .hoja-marca{display:none}
 .hoja-cols{display:grid;grid-template-columns:1fr 1fr;gap:var(--s-5)}
-.hoja-col h3{font-family:var(--slab);font-size:var(--t-md);text-transform:uppercase;letter-spacing:.06em;margin:0 0 var(--s-3);padding-bottom:6px;border-bottom:2px solid var(--line)}
+.hoja-col h3{font-family:var(--slab);font-size:var(--t-md);margin:0 0 var(--s-3);padding-bottom:6px;border-bottom:2px solid var(--line)}
 .hoja-col ul{list-style:none;margin:0;padding:0}
 .hoja-col li{display:flex;gap:10px;align-items:flex-start;padding:7px 0;font-size:var(--t-sm);line-height:var(--lh-snug);border-bottom:1px solid var(--line)}
 .hoja-col li:last-child{border-bottom:none}
 .hoja-col em{font-style:normal;color:var(--red-cta);font-weight:700}
 .hoja-box{flex-shrink:0;width:16px;height:16px;border:2px solid var(--ink);border-radius:3px;margin-top:2px}
 .hoja-ficha{margin-top:var(--s-4);padding-top:var(--s-4);border-top:2px solid var(--line)}
-.hoja-ficha h3{font-family:var(--slab);font-size:var(--t-md);text-transform:uppercase;letter-spacing:.06em;margin:0 0 6px}
+.hoja-ficha h3{font-family:var(--slab);font-size:var(--t-md);margin:0 0 6px}
 .hoja-ficha p{margin:0;font-size:var(--t-sm);line-height:var(--lh-base)}
 .hoja-pie{margin:var(--s-4) 0 0;font-size:var(--t-sm);color:var(--muted)}
 @media(max-width:620px){.hoja-cols{grid-template-columns:1fr;gap:var(--s-4)}.hoja{padding:var(--s-4)}}
@@ -911,3 +914,74 @@ button.big{width:100%;text-align:left;font-family:inherit;cursor:pointer}
 .card.desvio strong{display:block;font-family:var(--slab);font-size:var(--t-lg);margin-bottom:5px}
 .card.desvio p{margin:0;font-size:var(--t-sm)}
 .hoja-ayuda{margin:var(--s-3) 0 0;font-size:var(--t-sm);color:var(--muted)}
+
+/* ════════════════════════════════════════════════════════════════════════
+   LA HOJA SOBRE LA MESA
+   El portal dejaba 24 tarjetas idénticas flotando sobre fondo blanco: mismo
+   radio, misma sombra, mismo borde, sin jerarquía. Ahora el contenido es una
+   hoja de papel apoyada en un banco de trabajo, y las listas son filas con
+   regla, como la lista de piezas de un manual.
+   ════════════════════════════════════════════════════════════════════════ */
+body{background:var(--mesa)}
+.app{background:var(--mesa)}
+.content{background:var(--mesa)}
+.view{background:var(--papel);border-radius:var(--r-lg);max-width:860px;margin:var(--s-4) auto var(--s-6);padding:var(--s-6);
+      box-shadow:0 1px 2px rgba(20,20,20,.05),0 8px 28px rgba(20,20,20,.06)}
+.foot{background:transparent;border-top:none;max-width:1020px;margin:0 auto;padding:0 var(--s-4) var(--s-4)}
+.pie-legal{background:transparent;border-top:1px solid var(--regla)}
+@media(max-width:620px){
+  .view{margin:0;border-radius:0;padding:var(--s-4) var(--s-4) var(--s-6);box-shadow:none}
+  body,.app,.content{background:var(--papel)}
+}
+
+/* ── Listas con regla: la lista de piezas de un manual ── */
+.lista{border-top:2px solid var(--tinta);margin:0 0 var(--s-6)}
+.lista-fila{display:grid;grid-template-columns:2.2rem 104px 1fr;gap:var(--s-3) var(--s-4);
+            align-items:start;padding:var(--s-4) 0;border-bottom:1px solid var(--regla)}
+.lista-num{font-family:var(--slab);font-weight:800;font-size:var(--t-xl);line-height:1;
+           color:var(--tinta);font-variant-numeric:tabular-nums;padding-top:2px}
+.lista-dibujo img{width:100%;height:auto;display:block;mix-blend-mode:multiply}
+.lista-txt h3{font-family:var(--slab);font-size:var(--t-lg);font-weight:700;line-height:var(--lh-snug);margin:0 0 4px}
+.lista-txt .para{margin:0 0 6px;font-size:var(--t-sm);color:var(--rojo-tinta);font-weight:700;line-height:var(--lh-snug)}
+.lista-txt .spec{margin:0 0 6px;font-size:var(--t-sm);line-height:var(--lh-base);max-width:var(--medida)}
+.lista-txt .donde{margin:0;font-size:var(--t-sm);color:var(--grafito)}
+.lista-txt .aviso{display:inline-block;margin-top:8px;font-size:var(--t-xs);font-weight:700;
+                  color:var(--rojo-tinta);border:1px solid var(--rojo-tinta);border-radius:var(--r-sm);padding:3px 7px}
+@media(max-width:620px){
+  .lista-fila{grid-template-columns:1.5rem 92px 1fr;gap:var(--s-3);padding:var(--s-3) 0}
+  .lista-num{font-size:var(--t-lg);padding-top:1px}
+  .lista-txt h3{font-size:var(--t-md)}
+}
+
+/* ── El checklist, con el mismo tratamiento de fila con regla ── */
+.avance{margin:0 0 var(--s-2)}
+.avance .bar{height:6px;border-radius:var(--r-full);background:var(--regla);overflow:hidden}
+.avance .bar i{display:block;height:100%;background:var(--rojo-tinta);transition:width .3s}
+.lista-pasos .prep-steps{list-style:none;margin:0;padding:0}
+.lista-pasos .prep-step{display:grid;grid-template-columns:2.2rem 1fr auto;
+  grid-template-areas:"num main fig" "como como fig";gap:var(--s-2) var(--s-3);align-items:start;
+  border-bottom:1px solid var(--regla);padding:var(--s-4) 0}
+.lista-pasos .prep-step:last-child{border-bottom:none}
+.lista-pasos .prep-step-num{grid-area:num}
+.lista-pasos .prep-step-main{grid-area:main;display:flex;gap:var(--s-3);align-items:flex-start;
+  cursor:pointer;min-height:var(--tap);padding:0}
+.lista-pasos .prep-step-num{font-family:var(--slab);font-weight:800;font-size:var(--t-xl);line-height:1;
+  color:var(--tinta);font-variant-numeric:tabular-nums;width:auto;height:auto;background:none;border:none;display:block}
+.lista-pasos .prep-step.done .prep-step-num{color:var(--regla)}
+.lista-pasos .prep-step-txt{font-size:var(--t-md);line-height:var(--lh-snug);font-weight:500}
+.lista-pasos .prep-step.done .prep-step-txt{color:var(--grafito);text-decoration:line-through}
+.lista-pasos .prep-step-main input{width:26px;height:26px;accent-color:var(--rojo-tinta);cursor:pointer;margin:0}
+.lista-pasos .prep-step-check{display:none}
+.lista-pasos .prep-step-fig{grid-area:fig;margin:0;width:116px}
+.lista-pasos .prep-como{grid-area:como;padding-left:calc(2.2rem + var(--s-3))}
+@media(max-width:620px){
+  .lista-pasos .prep-step{grid-template-columns:1.5rem 1fr auto;gap:var(--s-2) var(--s-3);padding:var(--s-3) 0}
+  .lista-pasos .prep-step-num{font-size:var(--t-lg)}
+  .lista-pasos .prep-step-fig{width:92px}
+  .lista-pasos .prep-como{padding-left:calc(1.5rem + var(--s-3))}
+}
+.prep-urgente{display:block;margin-top:5px;font-size:var(--t-sm);font-weight:700;color:var(--rojo-tinta)}
+
+.hoja-ficha ul{list-style:none;margin:0;padding:0}
+.hoja-ficha li{font-size:var(--t-sm);line-height:var(--lh-base);padding:3px 0}
+.hoja-col em.urg{display:block}

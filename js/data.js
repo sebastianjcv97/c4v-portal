@@ -368,7 +368,7 @@ window.__SEED__ = {
     checklist: [
       { id: "a1", t: "Mide las puertas y el camino hasta su lugar", img: "puerta.png", guia: "acceso", tiempo: "20 minutos" },
       { id: "e8", t: "Elige dónde va a vivir tu máquina", img: "espacio.png", guia: "espacio" },
-      { id: "e1", t: "Manda instalar el punto de 220V", img: "electrico.png", guia: "electrico", tiempo: "2 a 5 días · llama hoy al electricista" },
+      { id: "e1", t: "Manda instalar el punto de 220V", img: "electrico.png", guia: "electrico", tiempo: "2 a 5 días", urgente: "Llama hoy al electricista" },
       { id: "e2", t: "Haz que revisen tu pozo a tierra", img: "tierra.png", guia: "tierra", tiempo: "3 a 10 días si hay que construirlo" },
       { id: "e4", t: "Instala el extractor con salida a la calle", img: "extractor.png", guia: "extraccion", tiempo: "1 a 2 días" },
       { id: "e11", t: "Ten lista una computadora con Windows", img: "computadora.png", guia: "computadora" },
@@ -417,7 +417,7 @@ window.__SEED__ = {
       { item: "Extractor, manguera y abrazaderas", img: "extractor.png", para: "Para sacar el humo a la calle",
         spec: "Son tres cosas: el motor, la manguera flexible de aluminio (compra un metro de más) y dos abrazaderas. El diámetro depende de tu modelo.",
         donde: "Ferreterías y tiendas de ventilación", pedirFicha: true },
-      { item: "Agua destilada · 2 galones", img: "agua.png", para: "Para el enfriador (viene incluido con tu máquina)",
+      { item: "Agua destilada (2 galones)", img: "agua.png", para: "Para el enfriador (viene incluido con tu máquina)",
         spec: "En las tiendas se pide como «agua de batería». NO sirve la del caño, hervida ni mineral: los minerales arruinan el tubo, y eso no lo cubre la garantía.",
         donde: "Grifos, lubricentros y ferreterías" },
       { item: "Alcohol isopropílico al 99%, hisopos y paño de microfibra", img: "alcohol.png", para: "Para limpiar el lente y los espejos",
@@ -565,9 +565,9 @@ window.__SEED__ = {
   },
 
   onboarding: [
-    { id: "espacio", titulo: "Paso 1 · Prepara tu espacio", detalle: "Empieza aquí: sigue la guía de preinstalación (eléctrico, pozo a tierra, extracción y agua destilada). Al completarla se desbloquea el resto de tu portal.", href: "#/preparacion", img: "e8-espacio.jpg" },
-    { id: "cert", titulo: "Paso 2 · Conoce tu Certificado de Calidad", detalle: "Mira el estado de tu máquina y qué garantiza: probada, calibrada y lista antes de llegar a ti.", href: "#/certificado" },
-    { id: "curso", titulo: "Paso 3 · Haz el curso «Bienvenida: Tus Primeros Pasos»", detalle: "10 minutos para conocer tu plataforma y arrancar con el pie derecho.", href: "#/academia" },
-    { id: "soporte", titulo: "Paso 4 · Ten a mano tu soporte", detalle: "WhatsApp 924 662 205, en español los 365 días. Y descubre la Bolsa de Trabajos gratis para clientes.", href: "#/soporte" }
+    { id: "espacio", titulo: "Prepara tu espacio", detalle: "Empieza aquí: sigue la guía de preinstalación (eléctrico, pozo a tierra, extracción y agua destilada). Al completarla se desbloquea el resto de tu portal.", href: "#/preparacion", img: "e8-espacio.jpg" },
+    { id: "cert", titulo: "Conoce tu Certificado de Calidad", detalle: "Mira el estado de tu máquina y qué garantiza: probada, calibrada y lista antes de llegar a ti.", href: "#/certificado" },
+    { id: "curso", titulo: "Haz el curso «Bienvenida: tus primeros pasos»", detalle: "10 minutos para conocer tu plataforma y arrancar con el pie derecho.", href: "#/academia" },
+    { id: "soporte", titulo: "Ten a mano tu soporte", detalle: "WhatsApp 924 662 205, en español los 365 días. Y descubre la Bolsa de Trabajos gratis para clientes.", href: "#/soporte" }
   ]
 };
