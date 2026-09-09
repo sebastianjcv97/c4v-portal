@@ -254,7 +254,7 @@ const views = {
       const k = c.id + '-' + mi, mejor = mejorPuntaje(k);
       const logro = mejor ? `<span class="qz-logro${mejor.p >= 70 ? ' ok' : ''}">${mejor.p >= 70 ? '🏅' : '📝'} Tu mejor puntaje: ${mejor.b}/${mejor.n}</span>` : '';
       return `<div class="quiz-box" data-key="${k}" data-curso="${c.id}" data-mod="${mi}">
-          <button type="button" class="qz-start">📝 Ponte a prueba <span>(${preguntas.length} preguntas)</span></button>${logro}
+          <button type="button" class="qz-start">Ponte a prueba <span>(${preguntas.length} preguntas)</span></button>${logro}
           <div class="qz-area" hidden></div>
         </div>`;
     };
@@ -270,7 +270,7 @@ const views = {
           <span class="chev" aria-hidden="true">+</span></button>
         <div class="course-body">
           ${c.modulos.map((m, mi) => `<div class="module">
-            <h4><span class="num-mod">${mi + 1}</span> ${esc(m.titulo)} ${m.quizzes ? `<span class="badge red" style="margin-left:auto">${m.quizzes} preguntas</span>` : ''}</h4>
+            <h4><span class="num-mod">${mi + 1}</span> ${esc(m.titulo)}</h4>
             ${m.lecciones.length ? `<ul class="lessons">${m.lecciones.map(leccion).join('')}</ul>` : ''}
             ${quizBox(c, m, mi)}
           </div>`).join('')}
