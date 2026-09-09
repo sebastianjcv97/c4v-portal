@@ -1170,3 +1170,29 @@ body{background:var(--mesa)}
 .cevi-pag .cevi-aviso{border-radius:var(--r);border:1px solid var(--regla);border-top:1px solid var(--regla)}
 .cevi-pag .cevi-pie{text-align:center}
 @media(max-width:620px){.orbe-gigante{width:168px;height:168px}}
+
+/* ---------- El botón flotante, más grande y vivo ----------
+   Era una píldora de 44px que se leía como un enlace más. Ahora lleva el orbe
+   respirando y dice en dos líneas qué hace, para que se entienda de un vistazo
+   que ahí se habla, no se escribe. */
+.ai-btn{padding:10px 20px 10px 10px;gap:12px;align-items:center;text-align:left}
+.ai-txt{display:flex;flex-direction:column;line-height:1.25;white-space:nowrap}
+.ai-txt strong{font-weight:800;font-size:var(--t-md)}
+.ai-txt small{font-size:var(--t-xs);font-weight:400;color:#c9c9c9}
+.ai-orbe{position:relative;width:46px;height:46px;flex-shrink:0;display:grid;place-items:center}
+.ai-orbe > *{grid-area:1/1;border-radius:50%}
+.ai-orbe-halo{width:100%;height:100%;
+  background:radial-gradient(circle,rgba(249,2,11,.55) 0%,rgba(249,2,11,.18) 48%,rgba(249,2,11,0) 72%);
+  animation:aiRespira 2.8s ease-in-out infinite}
+.ai-orbe-disco{width:66%;height:66%;background:var(--rojo-tinta);display:grid;place-items:center}
+.ai-orbe-disco .toro{width:62%;height:62%;color:#fff}
+@keyframes aiRespira{0%,100%{transform:scale(.9);opacity:.75}50%{transform:scale(1.18);opacity:1}}
+@media(max-width:620px){
+  .ai-btn{padding:8px 18px 8px 8px;gap:10px}
+  .ai-orbe{width:44px;height:44px}
+  .ai-txt strong{font-size:var(--t-sm)}
+  .ai-txt small{font-size:11px}
+}
+@media (prefers-reduced-motion:reduce){ .ai-orbe-halo{animation:none} }
+/* La salida a una persona siempre a la vista, y distinta de las pistas. */
+.chip-persona{border-color:var(--tinta);color:var(--tinta);font-weight:700;text-decoration:none}

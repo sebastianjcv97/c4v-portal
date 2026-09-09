@@ -18,7 +18,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@700;800&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/styles.css?v=20260911j" />
+  <link rel="stylesheet" href="css/styles.css?v=20260911n" />
 </head>
 <body>
   <a class="skip" href="#view">Saltar al contenido</a>
@@ -136,8 +136,11 @@
       <!-- Agente de voz: botón flotante, presente en toda la pantalla y en todas
            las vistas. Antes vivía en la barra superior y se perdía entre el logo. -->
       <button class="ai-btn" id="aiBtn" type="button" aria-expanded="false" aria-controls="aiPanel">
-        <span class="ai-ic toro" aria-hidden="true"></span>
-        <span>Habla con <strong id="aiName">CeVi</strong></span>
+        <span class="ai-orbe" aria-hidden="true">
+          <span class="ai-orbe-halo"></span>
+          <span class="ai-orbe-disco"><span class="toro"></span></span>
+        </span>
+        <span class="ai-txt">Habla con <strong id="aiName">CeVi</strong><small>Pregúntale en voz alta</small></span>
       </button>
 
       <div class="ai-panel" id="aiPanel" hidden></div>
@@ -154,8 +157,8 @@
     </div>
   </div>
 
-  <script src="js/config.js?v=20260911j"></script>
-  <script src="js/data.js?v=20260911j"></script>
-  <script src="js/app.js?v=20260911j"></script>
+  <script src="js/config.js?v=20260911n"></script>
+  <script src="js/data.js?v=20260911n"></script>
+  <script src="js/app.js?v=20260911n"></script>
 </body>
 </html>

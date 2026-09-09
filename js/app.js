@@ -1579,7 +1579,6 @@ async function ceviEnviar(texto) {
   const msg = String(texto || '').trim();
   if (!msg || $('#ceviInput')?.disabled) return;
   cevi.historial.push({ role: 'user', content: msg });
-  document.getElementById('ceviSug')?.remove();   // ya no hacen falta
   ceviPintar();
   const input = $('#ceviInput'); if (input) { input.value = ''; input.disabled = true; }
   ceviTranscripcion('');
@@ -1600,6 +1599,7 @@ async function ceviEnviar(texto) {
     cevi.historial.push({ role: 'assistant', content: respuesta, ticket: j.ticket?.ref || null });
     ceviPintar();
     if (input) input.disabled = false;
+    ceviPintarPistas();              // qué se puede preguntar ahora
     await ceviHablar(respuesta);
     // Manos libres: en cuanto CeVi termina de hablar, vuelve a escuchar sola.
     if (cevi.abierto && cevi.modo === 'voz' && cevi.manosLibres && !cevi.cerrando) ceviEscuchar();
@@ -1668,8 +1668,11 @@ function ceviEscuchar(desdeToque = false) {
     cevi.escuchando = null;
     orbeSoltarMicro();
     if (cevi.cerrando) return;
-    if (dicho) { ceviEnviar(dicho); return; }
-    if (cevi.estado === 'escuchando') ceviEstado('reposo');
+    if (dicho) { cevi.silencios = 0; ceviEnviar(dicho); return; }
+    if (cevi.estado === 'escuchando') {
+      ceviEstado('reposo');
+      if (cevi.manosLibres && !ceviSinRespuesta()) ceviPintarPistas();
+    }
   };
 
   try {
@@ -1875,6 +1878,60 @@ function ceviPaginaIniciar() {
     if (primera) await ceviHablar(cevi.historial[0].content);
     if (currentRoute() === 'cevi' && cevi.manosLibres) ceviEscuchar();
   })();
+}
+
+/* ---------- Guiar la conversación ----------
+   Un asistente de voz sin pistas deja a la gente muda: no sabe qué se le puede
+   pedir. Después de cada respuesta se ofrecen dos o tres caminos concretos, y
+   siempre queda a la vista la salida a una persona de carne y hueso. */
+const PISTAS = {
+  inicio: ['¿Con qué potencia corto MDF de 3 mm?', '¿Cada cuánto cambio el agua del chiller?', 'Mi láser dejó de cortar bien'],
+  corte:  ['¿Y para acrílico de 3 mm?', '¿Cómo sé si la lente está sucia?', 'Se quema el material'],
+  falla:  ['Sigue igual', '¿Lo puede ver un técnico?', '¿Está en garantía?'],
+  limpieza: ['¿Qué necesito para limpiarla?', '¿Cada cuánto reviso los espejos?', '¿Y el pozo a tierra?'],
+  general: ['Cuéntame más', '¿Qué más debería revisar?', 'Quiero hablar con una persona']
+};
+
+// Elige el juego de pistas por lo que se acaba de decir. Sin adivinar de más.
+function ceviPistas() {
+  const ultimo = [...cevi.historial].reverse().find(m => m.role === 'user');
+  if (!ultimo) return PISTAS.inicio;
+  const t = ultimo.content.toLowerCase();
+  // La avería primero: "dejó de cortar bien" es una falla, no una pregunta de parámetros.
+  if (/(no corta|falla|error|alarma|se apag|se quema|humo|problema|dej[óo] de|ya no|se traba|raro)/.test(t)) return PISTAS.falla;
+  if (/(potencia|velocidad|corto|cortar|acr[íi]lico|mdf|grabar|material)/.test(t)) return PISTAS.corte;
+  if (/(limpi|lente|espejo|mantenimiento|agua|chiller|filtro)/.test(t)) return PISTAS.limpieza;
+  return PISTAS.general;
+}
+
+function ceviPintarPistas() {
+  const box = $('#ceviSug');
+  if (!box) return;
+  const pistas = ceviPistas();
+  box.innerHTML = pistas.map(q => `<button type="button" class="chip" data-q="${esc(q)}">${esc(q)}</button>`).join('')
+    + '<a class="chip chip-persona" href="#/soporte">Hablar con una persona</a>';
+  box.hidden = false;
+  box.querySelectorAll('.chip[data-q]').forEach(b => b.onclick = () => ceviEnviar(b.dataset.q));
+}
+
+/* Si nadie contesta, CeVi no se queda muda: vuelve a ofrecer, una sola vez, y
+   después se calla para no hostigar. Es lo que recomienda cualquier guía de
+   interfaces de voz para el "no-input". */
+const REPREGUNTAS = [
+  'Sigo aquí. Puedes preguntarme por potencias, por limpieza, o contarme qué falla tienes.',
+  '¿Te ayudo con algo más? Si prefieres, toca el toro y háblame cuando quieras.'
+];
+
+function ceviSinRespuesta() {
+  if (cevi.modo !== 'voz') return false;
+  cevi.silencios = (cevi.silencios || 0) + 1;
+  if (cevi.silencios > 2) { cevi.manosLibres = false; ceviPintarPistas(); return false; }
+  const texto = REPREGUNTAS[Math.min(cevi.silencios, REPREGUNTAS.length) - 1];
+  (async () => {
+    await ceviHablar(texto);
+    if (cevi.abierto && cevi.manosLibres && !cevi.cerrando) ceviEscuchar();
+  })();
+  return true;
 }
 
 /* ---------- Relleno de espera ----------
