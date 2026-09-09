@@ -424,12 +424,6 @@ tr:last-child td{border-bottom:none}
 .acceso .grow{flex:1;min-width:240px}
 .acceso-pasos{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:8px;font-size:15px}
 .acceso-pasos li::marker{color:var(--red-cta);font-weight:700}
-.kit-img{display:block;width:100%;max-width:460px;border-radius:var(--r-lg);border:1px solid var(--line);margin:0 0 14px}
-.kit-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
-.kit-item{background:var(--alt);border:1px solid var(--line);border-radius:var(--r);padding:10px;display:flex;flex-direction:column;gap:4px}
-.kit-item img{width:100%;height:92px;object-fit:cover;border-radius:6px;margin-bottom:4px}
-.kit-item strong{font-size:14px;line-height:1.3}
-.kit-item span{font-size:12.5px;color:var(--muted)}
 
 /* ---------- Checklist paso a paso (numerado, con foto de referencia) ---------- */
 .prep-list-intro{margin:0 0 14px;font-size:14.5px;color:var(--muted);line-height:1.55}
@@ -443,9 +437,6 @@ tr:last-child td{border-bottom:none}
 .prep-step-txt{flex:1;min-width:0;font-size:16px;font-weight:700;line-height:1.35}
 .prep-step-check{flex-shrink:0;width:26px;height:26px;border-radius:50%;background:var(--ok);color:#fff;display:none;align-items:center;justify-content:center;font-size:15px;font-weight:800}
 /* Foto de referencia, alineada bajo el texto del paso */
-.prep-step-fig{margin:12px 0 0 44px;max-width:420px}
-.prep-step-fig img{display:block;width:100%;border-radius:var(--r-lg);border:1px solid var(--line);background:var(--alt)}
-.prep-step-fig figcaption{margin-top:6px;font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:700}
 /* Estado completado */
 .prep-step.done .prep-step-num{background:var(--ok-50);border-color:var(--ok);color:var(--ok)}
 .prep-step.done .prep-step-txt,
@@ -460,8 +451,6 @@ tr:last-child td{border-bottom:none}
 }
 
 /* Lista de compras destacada (imposible de ignorar) */
-.compras-destacada{border:2px solid var(--red-cta);border-radius:var(--r-lg)}
-.compras-nota{margin:0 0 12px;font-size:15px;line-height:1.55;background:var(--red-50);border-radius:var(--r);padding:10px 12px}
 /* Parámetros por material + guías PDF */
 .tabla-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--line);border-radius:var(--r)}
 .tabla-params{width:100%;border-collapse:collapse;font-size:13.5px;min-width:560px}
@@ -804,7 +793,6 @@ button.big{width:100%;text-align:left;font-family:inherit;cursor:pointer}
 /* El subtexto del botón de WhatsApp perdía contraste por la opacidad. */
 .wa-txt span{opacity:1}
 
-}
 
 /* ---------- Lista de compras ----------
    Dos columnas en pantalla ancha: la lista tiene 8 cosas y en una sola columna
@@ -831,7 +819,7 @@ button.big{width:100%;text-align:left;font-family:inherit;cursor:pointer}
 @media(max-width:560px){
   .compras{grid-template-columns:1fr}
   .compra{padding:var(--s-3)}
-  .compra-img{width:78px}
+  .compra-img{width:88px}
 }
 
 /* ---------- Cuenta regresiva hasta la entrega ---------- */
@@ -867,87 +855,6 @@ button.big{width:100%;text-align:left;font-family:inherit;cursor:pointer}
 .dia-entrega .acceso-pasos li.destacado{font-weight:700;color:var(--red-dark)}
 @media(max-width:560px){.prep-como{padding-left:0}}
 
-/* ============================================================
-   Correcciones de accesibilidad (auditoría WCAG 2.2 AA)
-   Van al final a propósito: pisan por orden a las reglas previas,
-   sin tener que reescribir el archivo entero.
-   ============================================================ */
-
-/* El texto del consentimiento legal estaba en 2.89:1 sobre el fondo negro del
-   acceso: ilegible, y encima es el texto que hay que leer ANTES de aceptar. */
-.gate-consent,
-.gate-consent.opcional em,
-.otp-pasos p,
-.otp-estado,
-.gate-volver,
-.gate-legal a,
-.otp-codigo-manual{color:var(--on-black-dim);opacity:1}
-.gate-consent a{color:#FF6B70}                 /* 5.6:1 sobre negro */
-.gate-foot a,.gate-paso strong{color:#FF6B70}
-.gate-doc-ej{color:var(--on-black-dim);font-size:var(--t-sm);margin:8px 0 0}
-
-/* El botón del acceso se volvía ilegible justo al pulsarlo (3.87:1). */
-.gate-btn[aria-busy="true"]{opacity:1;background:var(--red-dark);cursor:progress}
-
-/* No se quita el indicador de foco: se reemplaza por uno más visible. */
-.cevi-form input:focus-visible,
-.otp-form input:focus-visible,
-.correo-form input:focus-visible,
-.lr-form input:focus-visible,
-.lr-form textarea:focus-visible,
-.lr-form select:focus-visible{outline:3px solid var(--red-cta);outline-offset:2px;border-color:var(--red-cta)}
-
-/* El borde de los campos no se distinguía del fondo (1.23:1). Ahora 4.5:1. */
-.field input,.field textarea,.field select,
-.otp-form input,.correo-form input,.cevi-form input{border-color:#767676}
-#gateDoc,.gate-tipos button,.gate-paises button{border-color:#5a5a5a}
-
-/* Elegido vs no elegido se distinguía solo por color. */
-.gate-paises button[aria-checked="true"],
-.gate-tipos button[aria-checked="true"]{box-shadow:inset 0 0 0 2px rgba(255,255,255,.22)}
-
-/* A 320px o con zoom al 200% los cinco países se desbordaban. */
-.gate-paises{grid-template-columns:repeat(auto-fit,minmax(64px,1fr))}
-@media(max-width:360px){.gate-paises{grid-template-columns:repeat(3,1fr)}}
-.cert-maq-grid{grid-template-columns:repeat(auto-fill,minmax(min(300px,100%),1fr))}
-
-/* El foco no debe quedar debajo de la barra superior fija. */
-.view :is(a,button,input,select,textarea,summary){scroll-margin-top:72px}
-
-/* «Saltar al contenido» apuntaba a #view, que está oculto mientras se accede. */
-.gate:not([hidden]) ~ .skip,body:has(.gate:not([hidden])) .skip{display:none}
-
-/* Texto solo para lectores de pantalla (avisos de "abre en otra pestaña"). */
-.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
-
-/* El subtexto del botón de WhatsApp perdía contraste por la opacidad. */
-.wa-txt span{opacity:1}
-
-}
-
-/* ---------- Lista de compras: lo primero de la guía ----------
-   Tarjetas con dibujo técnico en vez de una tabla: en el celular una tabla de
-   cuatro columnas era ilegible, y la imagen dice en un vistazo qué hay que
-   comprar (muchos clientes no conocen el nombre técnico del objeto). */
-.seccion-bajada{margin:0 0 var(--s-4);font-size:var(--t-md);max-width:var(--medida)}
-.compras{display:grid;gap:var(--s-3);margin-bottom:var(--s-6)}
-.compra{display:flex;gap:var(--s-4);align-items:flex-start;background:var(--bg);border:1px solid var(--line);border-radius:var(--r-lg);padding:var(--s-4);box-shadow:var(--sh)}
-.compra-img{flex-shrink:0;width:104px;height:104px;background:var(--alt);border-radius:var(--r);display:flex;align-items:center;justify-content:center;overflow:hidden}
-.compra-img img{width:100%;height:100%;object-fit:contain;mix-blend-mode:multiply}
-.compra-txt{flex:1;min-width:0}
-.compra-txt h3{font-family:var(--slab);font-size:var(--t-lg);margin:0 0 5px;line-height:var(--lh-snug)}
-.compra-para{margin:0 0 7px;font-size:var(--t-sm);color:var(--red-cta);font-weight:700}
-.compra-spec{margin:0 0 7px;font-size:var(--t-sm);line-height:var(--lh-base)}
-.compra-donde{margin:0 0 8px;font-size:var(--t-sm);color:var(--muted)}
-.card.ficha-modelo{border:2px solid var(--ink);margin-bottom:var(--s-4)}
-.ficha-modelo strong{display:block;font-family:var(--slab);font-size:var(--t-lg);margin-bottom:6px}
-.ficha-modelo p{margin:0 0 var(--s-3);max-width:var(--medida)}
-@media(max-width:560px){
-  .compra{gap:var(--s-3);padding:var(--s-3)}
-  .compra-img{width:76px;height:76px}
-  .compra-txt h3{font-size:var(--t-md)}
-}
-@media print{.compra-img{width:70px;height:70px}.compra{break-inside:avoid}}
 
 /* ---------- Dibujo de cada paso ----------
    Sin marco ni fondo: el dibujo ya es blanco. Más chico que antes: siete pasos
