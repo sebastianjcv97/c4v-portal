@@ -53,7 +53,7 @@ function prepEstado() {
    - la guía es corta (7 pasos, no 12),
    - el motivo se explica en la propia pantalla, no con un aviso que se desvanece,
    - y el canal de ayuda queda siempre a la vista. */
-const RUTAS_LIBRES = ['inicio', 'preparacion', 'soporte', 'certificado'];
+const RUTAS_LIBRES = ['inicio', 'preparacion', 'soporte', 'certificado', 'cevi'];
 
 // ---------- data layer ----------
 async function loadDB() {
@@ -217,11 +217,11 @@ const views = {
           ? bigBtn('#/academia', 'academia', 'Aprender a usar mi máquina', 'Videos, prácticas y las dudas más comunes')
           : btnCerrado('academia', 'Aprender a usar mi máquina', prep)}
         ${bigBtn('#/soporte', 'soporte', 'Necesito ayuda', 'Escríbenos por WhatsApp')}
-        <button type="button" class="big" data-cevi="1">
-          <div class="big-ico">${icon('cevi')}</div>
-          <div class="big-txt"><strong>Pregúntale a CeVi</strong><span>Te responde al toque: potencias, limpieza y fallas</span></div>
+        <a class="big" href="#/cevi">
+          <div class="big-ico"><span class="toro" aria-hidden="true"></span></div>
+          <div class="big-txt"><strong>Habla con CeVi</strong><span>Háblale y te contesta en voz alta: potencias, limpieza y fallas</span></div>
           <div class="big-arrow" aria-hidden="true">›</div>
-        </button>
+        </a>
         ${prep.completo
           ? bigBtn('#/bolsa', 'bolsa', 'Quiero más clientes', 'Trabajos de corte que te pasamos gratis')
           : btnCerrado('bolsa', 'Quiero más clientes', prep)}
@@ -453,6 +453,48 @@ const views = {
       </div>`;
   },
 
+  /* Página propia de CeVi. Es el mismo asistente que el botón flotante, con los
+     mismos ids, así que todo lo que ya funciona sirve tal cual. Aquí el orbe se
+     lleva la pantalla, que es lo que pidió el modo voz. */
+  cevi() {
+    const cli = currentClient();
+    const maq = cli ? state.db.maquinas.find(m => m.cliente_id === cli.id) : null;
+    const nombre = primerNombre(cli?.nombre);
+    return `
+      <section class="cevi-pag" id="ceviPagina" data-cevi-estado="reposo" data-cevi-modo="voz">
+        <p class="cevi-pag-intro">${nombre ? `Háblale, ${esc(nombre)}` : 'Háblale'}. Te contesta en voz alta sobre${maq?.modelo ? ` tu ${esc(maq.modelo)}` : ' tu máquina'}: potencias, mantenimiento y fallas.</p>
+
+        <div class="cevi-pag-orbe">
+          <button type="button" class="cevi-voz-btn" id="ceviVozBtn" aria-label="Hablar con CeVi">
+            ${orbeHTML('gigante')}
+          </button>
+          <span class="cevi-voz-txt" id="ceviVozTxt">Toca para hablar</span>
+          <p class="cevi-dictado" id="ceviDictado" aria-live="polite"></p>
+        </div>
+
+        <p class="cevi-aviso" id="ceviAviso" role="status" hidden></p>
+
+        <div class="cevi-msgs" id="ceviMsgs" role="log" aria-live="polite" aria-label="Conversación con CeVi"></div>
+
+        <div class="cevi-sug" id="ceviSug">
+          ${['¿Con qué potencia corto MDF de 3 mm?', '¿Cada cuánto cambio el agua del chiller?', 'Mi láser dejó de cortar bien']
+            .map(q => `<button type="button" class="chip" data-q="${esc(q)}">${esc(q)}</button>`).join('')}
+        </div>
+
+        <form class="cevi-form" id="ceviForm">
+          <input id="ceviInput" type="text" autocomplete="off" placeholder="${nombre ? `Escríbeme, ${esc(nombre)}` : 'Escribe tu pregunta'}" aria-label="Tu pregunta para CeVi">
+          <button type="submit" class="cevi-send" aria-label="Enviar">${CEVI_ICONOS.enviar}</button>
+        </form>
+
+        <div class="cevi-pag-pie">
+          <button type="button" class="cevi-cambiar" id="ceviEscribir">Prefiero escribir</button>
+          <button type="button" class="cevi-cambiar" id="ceviHablarBtn">Prefiero hablar</button>
+          <button type="button" class="cevi-cambiar" id="ceviLimpiar">Empezar de nuevo</button>
+        </div>
+        <p class="cevi-pie">CeVi responde solo, con inteligencia artificial. Si el tema es serio, te pasamos con una persona del equipo.</p>
+      </section>`;
+  },
+
   soporte() {
     const d = state.db, cli = currentClient(), sop = d.soporte;
     const maq = cli ? d.maquinas.find(x => x.cliente_id === cli.id) : null;
@@ -471,10 +513,10 @@ const views = {
       ${refMaq ? `<p class="wa-ctx muted">Tu mensaje ya lleva los datos de tu máquina (<strong>${esc(refMaq)}</strong>) para atenderte más rápido.</p>` : ''}
 
       <div class="help-card cevi-card">
-        <div class="big-ico" aria-hidden="true">${icon('cevi')}</div>
+        <div class="big-ico" aria-hidden="true"><span class="toro"></span></div>
         <div class="grow"><h3>¿Quieres una respuesta ahora mismo?</h3>
-          <p>CeVi conoce tu máquina y responde al instante sobre potencias, mantenimiento y fallas. Si no puede, te pasa con una persona.</p></div>
-        <button type="button" class="btn primary sm" data-cevi="1">Pregúntale a CeVi</button>
+          <p>Háblale a CeVi y te contesta en voz alta sobre potencias, mantenimiento y fallas. Si no puede, te pasa con una persona.</p></div>
+        <a class="btn primary sm" href="#/cevi">Habla con CeVi</a>
       </div>
 
       ${(sop.lives || sop.redes) ? `
@@ -655,6 +697,15 @@ function bindTake() {
 function bindAccordions(sel) { view.querySelectorAll(sel).forEach(it => { const q = it.querySelector('.faq-q, .course-head'); if (q) q.onclick = () => { const open = it.classList.toggle('open'); q.setAttribute('aria-expanded', open); }; }); }
 function bind(route) {
   view.querySelectorAll('[data-cevi]').forEach(b => b.onclick = () => ceviAbrir());
+  // En la página de CeVi el botón flotante sobra: la página ya es el asistente.
+  const flotante = $('#aiBtn');
+  if (flotante) flotante.classList.toggle('oculto', route === 'cevi');
+  if (route === 'cevi') { if (cevi.abierto && $('#aiPanel') && !$('#aiPanel').hidden) ceviCerrar(); ceviPaginaIniciar(); }
+  else if (!$('#aiPanel') || $('#aiPanel').hidden) {
+    // Al salir de la página, CeVi deja de escuchar y de hablar.
+    cevi.manosLibres = false; cevi.abierto = false;
+    ceviCallar(); ceviParaVoz(); orbeParar();
+  }
   if (route === 'academia') { bindAccordions('.faq-item'); bindAccordions('.course'); bindVideos(); bindQuizzes(); }
   if (route === 'preparacion') {
     view.querySelectorAll('#prepList input[type="checkbox"]').forEach(chk => chk.onchange = () => {
@@ -816,7 +867,7 @@ function bindQuizzes() {
 }
 
 // ---------- router ----------
-const TITLES = { inicio: 'Inicio', academia: 'Aprender a usar mi máquina', preparacion: 'Preparar mi espacio', soporte: 'Necesito ayuda', bolsa: 'Quiero más clientes', plantillas: 'Diseños listos para cortar', certificado: 'Tu Certificado de Calidad' };
+const TITLES = { inicio: 'Inicio', cevi: 'Habla con CeVi', academia: 'Aprender a usar mi máquina', preparacion: 'Preparar mi espacio', soporte: 'Necesito ayuda', bolsa: 'Quiero más clientes', plantillas: 'Diseños listos para cortar', certificado: 'Tu Certificado de Calidad' };
 // El aviso del candado ya no existe; la preparación se acompaña, no se bloquea.
 function render(route) {
   if (!views[route]) route = 'inicio';
@@ -1223,20 +1274,152 @@ function initGate() {
    estado: 'reposo' | 'escuchando' | 'pensando' | 'hablando'   */
 const cevi = {
   abierto: false, historial: [], hablando: null, escuchando: null, partnerId: null,
-  modo: 'voz', estado: 'reposo', manosLibres: true, audioListo: false, cerrando: false
+  modo: 'voz', estado: 'reposo', manosLibres: true, audioListo: false, cerrando: false,
+  turnoVoz: 0, reproductor: null, textoPendiente: null
 };
 
 const HAY_DICTADO = !!(window.SpeechRecognition || window.webkitSpeechRecognition);
 
-/* Safari e iOS solo dejan sonar audio si viene de un gesto de la persona. El
-   primer toque en el botón flotante desbloquea el altavoz para toda la sesión. */
+/* Safari e iOS solo dejan sonar audio si la reproducción arranca DENTRO de un
+   gesto de la persona, y el permiso queda pegado al elemento <audio>, no a la
+   página. Por eso hay un único reproductor para toda la sesión: se desbloquea
+   con un silencio en el primer toque y luego solo se le cambia el `src`.
+   Crear un `new Audio()` por respuesta era justamente lo que no sonaba. */
+const SILENCIO = 'data:audio/wav;base64,UklGRogAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YWQAAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA';
+
+function ceviReproductor() {
+  if (!cevi.reproductor) {
+    const a = new Audio();
+    a.preload = 'auto';
+    a.setAttribute('playsinline', '');
+    cevi.reproductor = a;
+  }
+  return cevi.reproductor;
+}
+
 function ceviDesbloquearAudio() {
   if (cevi.audioListo) return;
   try {
-    const a = new Audio('data:audio/mp3;base64,//uQxAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAACcQCA');
-    a.volume = 0; a.play().then(() => { cevi.audioListo = true; }).catch(() => {});
+    const a = ceviReproductor();
+    a.src = SILENCIO;
+    const p = a.play();
+    if (p && p.then) p.then(() => { cevi.audioListo = true; }).catch(() => {});
+    else cevi.audioListo = true;
   } catch {}
 }
+
+/* ---------- El orbe de CeVi ----------
+   Una burbuja que se mueve con la voz de verdad: mide la amplitud del micrófono
+   mientras escuchas y la del altavoz mientras habla. Si el navegador no deja
+   medir, se mueve con un latido sintético, para que nunca parezca congelada. */
+const orbe = { ctx: null, ana: null, datos: null, fuenteAudio: null, mic: null, raf: null, nivel: 0, nodos: [] };
+
+function orbeHTML(tam = 'grande') {
+  return `<div class="orbe orbe-${tam}" data-orbe>
+    <span class="orbe-halo"></span>
+    <span class="orbe-anillo"></span>
+    <span class="orbe-anillo dos"></span>
+    <span class="orbe-disco"><span class="toro" aria-hidden="true"></span></span>
+  </div>`;
+}
+
+function orbeCtx() {
+  if (!orbe.ctx) {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return null;
+    try { orbe.ctx = new AC(); } catch { return null; }
+  }
+  if (orbe.ctx.state === 'suspended') orbe.ctx.resume().catch(() => {});
+  return orbe.ctx;
+}
+
+function orbeAnalizador(ctx) {
+  if (!orbe.ana) {
+    orbe.ana = ctx.createAnalyser();
+    orbe.ana.fftSize = 256;
+    orbe.ana.smoothingTimeConstant = 0.75;
+    orbe.datos = new Uint8Array(orbe.ana.frequencyBinCount);
+  }
+  return orbe.ana;
+}
+
+/* Enchufa el altavoz al medidor. Se hace UNA vez por elemento: crear dos
+   MediaElementSource del mismo <audio> deja el audio mudo para siempre. */
+function orbeEscucharAltavoz() {
+  if (orbe.fuenteAudio) return true;
+  const ctx = orbeCtx(); const a = cevi.reproductor;
+  if (!ctx || !a) return false;
+  /* Solo si el contexto ya está corriendo. Enchufar el <audio> a un contexto
+     suspendido lo deja mudo, y oír a CeVi importa más que verla moverse. */
+  if (ctx.state !== 'running') return false;
+  try {
+    const src = ctx.createMediaElementSource(a);
+    src.connect(ctx.destination);          // primero el camino al altavoz
+    src.connect(orbeAnalizador(ctx));      // y en paralelo, el medidor
+    orbe.fuenteAudio = src;
+    return true;
+  } catch { return false; }
+}
+
+async function orbeEscucharMicro() {
+  if (orbe.mic) return true;
+  const ctx = orbeCtx();
+  if (!ctx || !navigator.mediaDevices?.getUserMedia) return false;
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const src = ctx.createMediaStreamSource(stream);
+    src.connect(orbeAnalizador(ctx));
+    orbe.mic = { stream, src };
+    return true;
+  } catch { return false; }
+}
+
+function orbeSoltarMicro() {
+  if (!orbe.mic) return;
+  try { orbe.mic.src.disconnect(); } catch {}
+  try { orbe.mic.stream.getTracks().forEach(t => t.stop()); } catch {}
+  orbe.mic = null;
+}
+
+// Amplitud real si la hay; si no, un latido que no engaña a nadie pero da vida.
+function orbeNivel(estado, t) {
+  if (orbe.ana && (estado === 'hablando' || estado === 'escuchando')) {
+    orbe.ana.getByteFrequencyData(orbe.datos);
+    let suma = 0;
+    for (let i = 0; i < orbe.datos.length; i++) suma += orbe.datos[i];
+    const medio = suma / orbe.datos.length / 255;
+    if (medio > 0.004) return Math.min(1, medio * 3.2);
+  }
+  if (estado === 'hablando') return 0.35 + Math.abs(Math.sin(t / 190)) * 0.45;
+  if (estado === 'escuchando') return 0.15 + Math.abs(Math.sin(t / 520)) * 0.2;
+  if (estado === 'pensando') return 0.1 + Math.abs(Math.sin(t / 700)) * 0.12;
+  return 0.05 + Math.abs(Math.sin(t / 1600)) * 0.05;      // respiración en reposo
+}
+
+function orbeArrancar() {
+  if (orbe.raf) return;
+  const paso = (t) => {
+    orbe.nodos = Array.from(document.querySelectorAll('[data-orbe]'));
+    if (!orbe.nodos.length) { orbe.raf = null; return; }
+    const estado = cevi.estado || 'reposo';
+    const objetivo = orbeNivel(estado, t);
+    orbe.nivel += (objetivo - orbe.nivel) * 0.22;          // suaviza el salto
+    const n = orbe.nivel.toFixed(3);
+    orbe.nodos.forEach(el => el.style.setProperty('--n', n));
+    orbe.raf = requestAnimationFrame(paso);
+  };
+  orbe.raf = requestAnimationFrame(paso);
+}
+
+function orbeParar() {
+  if (orbe.raf) cancelAnimationFrame(orbe.raf);
+  orbe.raf = null;
+  orbeSoltarMicro();
+}
+
+/* El toro de C4V. Va como máscara CSS para poder pintarlo del color que toque
+   en cada sitio (blanco sobre el disco negro, rojo sobre papel). */
+const TORO = '<span class="toro" aria-hidden="true"></span>';
 
 const CEVI_ICONOS = {
   mic: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0"/><path d="M12 18v3"/></svg>',
@@ -1261,7 +1444,7 @@ function ceviContexto() {
 
 function ceviBurbuja(quien, texto, extra = '') {
   const cuerpo = quien === 'cevi'
-    ? `<div class="cevi-avatar" aria-hidden="true">🐂</div><div class="cevi-txt">${esc(texto)}${extra}</div>`
+    ? `<div class="cevi-avatar" aria-hidden="true">${TORO}</div><div class="cevi-txt">${esc(texto)}${extra}</div>`
     : `<div class="cevi-txt">${esc(texto)}</div>`;
   return `<div class="cevi-msg ${quien}">${cuerpo}</div>`;
 }
@@ -1274,43 +1457,120 @@ function ceviPintar() {
   box.scrollTop = box.scrollHeight;
 }
 
-/* Voz: reproduce la respuesta con la voz del backend. Devuelve una promesa que
-   se resuelve cuando termina de hablar, porque el ciclo manos libres necesita
-   saber cuándo puede volver a escuchar sin oírse a sí mismo. */
+/* Parte la respuesta en trozos que se puedan sintetizar rápido. Se corta por
+   frases; si una frase es muy larga se parte por comas. Un trozo corto se
+   sintetiza en menos de un segundo, así CeVi empieza a hablar casi al instante. */
+function ceviTrozos(texto, max = 150) {
+  const frases = String(texto).match(/[^.!?…]+[.!?…]*\s*/g) || [String(texto)];
+  const salida = [];
+  let acc = '';
+  for (let f of frases) {
+    f = f.trim();
+    if (!f) continue;
+    while (f.length > max) {                       // frase larguísima: corta por coma
+      let corte = f.lastIndexOf(',', max);
+      if (corte < max * 0.4) corte = f.lastIndexOf(' ', max);
+      if (corte < max * 0.4) corte = max;
+      salida.push(f.slice(0, corte + 1).trim());
+      f = f.slice(corte + 1).trim();
+    }
+    if ((acc + ' ' + f).trim().length <= max) acc = (acc + ' ' + f).trim();
+    else { if (acc) salida.push(acc); acc = f; }
+  }
+  if (acc) salida.push(acc);
+  return salida.filter(Boolean);
+}
+
+async function ceviPedirTts(texto, señal) {
+  const r = await fetch(`${CFG.ceviApi}/tts`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text: texto }), signal: señal
+  });
+  if (!r.ok) throw new Error('tts ' + r.status);
+  const blob = await r.blob();
+  if (!blob.size) throw new Error('audio vacío');
+  return URL.createObjectURL(blob);
+}
+
+// Reproduce un trozo y espera a que termine. Devuelve false si no sonó nada.
+function ceviReproducirTrozo(url) {
+  return new Promise((listo) => {
+    const audio = ceviReproductor();
+    cevi.hablando = audio;
+    audio.src = url;
+    audio.volume = 1;
+    let acabado = false, sonó = false;
+    const fin = (ok) => {
+      if (acabado) return;
+      acabado = true;
+      audio.onended = audio.onerror = null;
+      listo(ok !== false && sonó);
+    };
+    audio.onended = () => fin(true);
+    audio.onerror = () => fin(false);
+    setTimeout(() => fin(sonó), 120000);
+    audio.play().then(() => {
+      cevi.audioListo = true;
+      orbeEscucharAltavoz();
+      setTimeout(() => { if (audio.currentTime > 0) sonó = true; }, 400);
+    }).catch(() => fin(false));
+  });
+}
+
+/* Voz: reproduce la respuesta con la voz del backend, en cadena. Mientras suena
+   un trozo ya se está sintetizando el siguiente, así que CeVi empieza a hablar
+   en cuanto está lista la primera frase, no la respuesta entera. */
 async function ceviHablar(texto) {
-  if (!CFG.ceviVoz || !ceviVozActiva()) return;
+  // En modo voz siempre habla: silenciarla sería vaciar el modo de sentido.
+  // El interruptor del altavoz solo manda cuando la conversación es escrita.
+  if (!CFG.ceviVoz) return;
+  if (cevi.modo !== 'voz' && !ceviVozActiva()) return;
+
   ceviParaVoz();
   ceviEstado('hablando');
-  let url = null;
+  const turno = ++cevi.turnoVoz;                  // si llega otro, este se abandona
+  const trozos = ceviTrozos(texto);
+  const urls = [];
+  let sonóAlgo = false;
+
   try {
-    const r = await fetch(`${CFG.ceviApi}/tts`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: texto })
-    });
-    if (!r.ok) throw new Error('tts ' + r.status);
-    url = URL.createObjectURL(await r.blob());
-    const audio = new Audio(url);
-    cevi.hablando = audio;
-    await new Promise((listo) => {
-      let acabado = false;
-      const fin = () => { if (acabado) return; acabado = true; listo(); };
-      audio.onended = fin;
-      audio.onerror = fin;
-      // Red de seguridad: si el audio se queda colgado, el ciclo no se congela.
-      setTimeout(fin, 90000);
-      audio.play().catch(fin);   // navegador que bloquea el autoplay: seguimos sin voz
-    });
+    let siguiente = ceviPedirTts(trozos[0]);
+    for (let i = 0; i < trozos.length; i++) {
+      const url = await siguiente;
+      if (turno !== cevi.turnoVoz) { URL.revokeObjectURL(url); return; }
+      urls.push(url);
+      // Pide el siguiente ANTES de reproducir este: se solapan y no hay pausa.
+      siguiente = trozos[i + 1] ? ceviPedirTts(trozos[i + 1]).catch(() => null) : null;
+      const ok = await ceviReproducirTrozo(url);
+      if (turno !== cevi.turnoVoz) return;
+      if (ok) { sonóAlgo = true; ceviAviso(''); }
+      else if (!sonóAlgo) { ceviSinSonido(texto); return; }
+      if (!siguiente) break;
+    }
   } catch { /* sin voz, el texto ya está en pantalla */ }
   finally {
-    if (url) URL.revokeObjectURL(url);
-    cevi.hablando = null;
-    if (cevi.estado === 'hablando') ceviEstado('reposo');
+    urls.forEach(u => setTimeout(() => URL.revokeObjectURL(u), 1500));
+    if (turno === cevi.turnoVoz) {
+      cevi.hablando = null;
+      if (cevi.estado === 'hablando') ceviEstado('reposo');
+    }
   }
+}
+
+/* No se oyó nada. Puede ser el interruptor de silencio del iPhone, el volumen
+   abajo o un navegador que no deja sonar sin un toque. Se dice cuál puede ser
+   y se deja un botón que reproduce con el toque de la persona. */
+function ceviSinSonido(texto) {
+  cevi.textoPendiente = texto;
+  ceviAviso('No se oyó nada. Revisa que el teléfono no esté en silencio y sube el volumen.', 'Escuchar la respuesta');
 }
 
 // Corta lo que esté sonando. Se usa al interrumpir, al cerrar y antes de escuchar.
 function ceviParaVoz() {
-  if (cevi.hablando) { try { cevi.hablando.pause(); } catch {} cevi.hablando = null; }
+  cevi.turnoVoz++;                 // invalida la cadena de trozos que venía sonando
+  const a = cevi.reproductor;
+  if (a) { try { a.pause(); } catch {} }
+  cevi.hablando = null;
 }
 
 const ceviVozActiva = () => { try { return localStorage.getItem('c4v_cevi_voz') !== '0'; } catch { return true; } };
@@ -1324,7 +1584,8 @@ async function ceviEnviar(texto) {
   const input = $('#ceviInput'); if (input) { input.value = ''; input.disabled = true; }
   ceviTranscripcion('');
   ceviEstado('pensando');
-  $('#ceviMsgs').insertAdjacentHTML('beforeend', '<div class="cevi-msg cevi pensando" aria-hidden="true"><div class="cevi-avatar">🐂</div><div class="cevi-txt"><span></span><span></span><span></span></div></div>');
+  ceviRelleno();                   // llena el silencio mientras piensa el modelo
+  $('#ceviMsgs').insertAdjacentHTML('beforeend', '<div class="cevi-msg cevi pensando" aria-hidden="true"><div class="cevi-avatar">' + TORO + '</div><div class="cevi-txt"><span></span><span></span><span></span></div></div>');
   $('#ceviMsgs').scrollTop = $('#ceviMsgs').scrollHeight;
 
   try {
@@ -1369,12 +1630,20 @@ function ceviEscuchar(desdeToque = false) {
   cevi.escuchando = rec;
 
   let dicho = '';
+  let temporizador = null;
+  const cortarPorSilencio = () => {
+    clearTimeout(temporizador);
+    if (!dicho) return;
+    temporizador = setTimeout(() => { try { rec.stop(); } catch {} }, 1200);
+  };
   rec.onresult = (e) => {
     dicho = Array.from(e.results).map(x => x[0].transcript).join('').trim();
     ceviTranscripcion(dicho);
     const input = $('#ceviInput'); if (input) input.value = dicho;
+    cortarPorSilencio();           // no esperamos al final del navegador
   };
   rec.onerror = (e) => {
+    clearTimeout(temporizador);
     cevi.escuchando = null;
     // 'no-speech' y 'aborted' son normales: la persona se quedó callada o cortó.
     if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
@@ -1395,13 +1664,18 @@ function ceviEscuchar(desdeToque = false) {
     ceviEstado('reposo');
   };
   rec.onend = () => {
+    clearTimeout(temporizador);
     cevi.escuchando = null;
+    orbeSoltarMicro();
     if (cevi.cerrando) return;
     if (dicho) { ceviEnviar(dicho); return; }
     if (cevi.estado === 'escuchando') ceviEstado('reposo');
   };
 
-  try { rec.start(); ceviEstado('escuchando'); ceviTranscripcion(''); }
+  try {
+    rec.start(); ceviEstado('escuchando'); ceviTranscripcion('');
+    orbeEscucharMicro();                 // el orbe se mueve con tu voz
+  }
   catch {
     cevi.escuchando = null;
     if (!desdeToque) ceviAviso('Toca el micrófono para seguir hablando: tu navegador pide un toque en cada turno.');
@@ -1420,8 +1694,10 @@ function ceviCallar() {
 function ceviEstado(nuevo) {
   cevi.estado = nuevo;
   const panel = $('#aiPanel');
-  if (!panel) return;
-  panel.dataset.estado = nuevo;
+  if (panel) panel.dataset.estado = nuevo;
+  const pagina = $('#ceviPagina');
+  if (pagina) pagina.dataset.ceviEstado = nuevo;
+  if (!panel && !pagina) return;
   const b = $('#ceviVozBtn');
   if (b) {
     const etiquetas = {
@@ -1459,17 +1735,31 @@ function ceviModoTexto(motivo) {
   cevi.manosLibres = false;
   const panel = $('#aiPanel');
   if (panel) panel.dataset.modo = 'texto';
+  const pagina = $('#ceviPagina');
+  if (pagina) pagina.dataset.ceviModo = 'texto';
   ceviEstado('reposo');
   ceviTranscripcion('');
   ceviAviso(motivo);
   setTimeout(() => $('#ceviInput')?.focus(), 80);
 }
 
-// Aviso que se ve en los dos modos: por qué no se puede hablar, o qué pasó.
-function ceviAviso(texto) {
+/* Aviso que se ve en los dos modos: por qué no se puede hablar, o qué pasó.
+   Si se le pasa una acción, sale además un botón, porque cuando el navegador
+   bloquea el sonido lo único que lo destraba es un toque de la persona. */
+function ceviAviso(texto, accion) {
   const el = $('#ceviAviso');
   if (!el) return;
   el.textContent = texto || '';
+  if (texto && accion) {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'cevi-aviso-btn'; b.textContent = accion;
+    b.onclick = () => {
+      ceviAviso('');
+      const t = cevi.textoPendiente;
+      if (t) { cevi.textoPendiente = null; ceviHablar(t); }
+    };
+    el.appendChild(b);
+  }
   el.hidden = !texto;
 }
 
@@ -1479,7 +1769,7 @@ function ceviPanelHTML() {
   const nombre = primerNombre(cli?.nombre);
   return `
     <div class="cevi-head">
-      <div class="cevi-avatar grande" aria-hidden="true">🐂</div>
+      <div class="cevi-avatar grande" aria-hidden="true">${TORO}</div>
       <div class="cevi-head-txt">
         <strong>${esc(ag.nombre || 'CeVi')}</strong>
         <span>Háblale, te contesta en voz alta</span>
@@ -1497,8 +1787,7 @@ function ceviPanelHTML() {
     <div class="cevi-voz-zona">
       <p class="cevi-dictado" id="ceviDictado" aria-live="polite"></p>
       <button type="button" class="cevi-voz-btn" id="ceviVozBtn" aria-label="Hablar con CeVi">
-        <span class="cevi-onda" aria-hidden="true"><i></i><i></i><i></i></span>
-        <span class="cevi-voz-ic" aria-hidden="true">${CEVI_ICONOS.mic}</span>
+        ${orbeHTML('grande')}
       </button>
       <span class="cevi-voz-txt" id="ceviVozTxt">Toca para hablar</span>
       <button type="button" class="cevi-cambiar" id="ceviEscribir">Prefiero escribir</button>
@@ -1518,6 +1807,115 @@ function ceviPanelHTML() {
     <p class="cevi-pie">CeVi responde solo, con inteligencia artificial. Si el tema es serio, te pasamos con una persona del equipo.</p>`;
 }
 
+/* Los controles son los mismos en el panel flotante y en la página, así que se
+   cablean en un solo sitio con los mismos ids. */
+function ceviCablear(raiz) {
+  const marca = (m) => {
+    cevi.modo = m;
+    const p = $('#aiPanel'); if (p) p.dataset.modo = m;
+    const g = $('#ceviPagina'); if (g) g.dataset.ceviModo = m;
+  };
+  const f = $('#ceviForm');
+  if (f) f.onsubmit = (e) => { e.preventDefault(); ceviEnviar($('#ceviInput').value); };
+  const vb = $('#ceviVozBtn'); if (vb) vb.onclick = ceviVozToque;
+  const esc2 = $('#ceviEscribir'); if (esc2) esc2.onclick = () => ceviModoTexto('');
+  const hab = $('#ceviHablarBtn');
+  if (hab) hab.onclick = () => {
+    if (!HAY_DICTADO) { ceviAviso('Tu navegador no puede escuchar. Escríbeme tu pregunta.'); return; }
+    marca('voz');
+    ceviAviso(''); ceviTranscripcion(''); ceviVozToque();
+  };
+  const lim = $('#ceviLimpiar');
+  if (lim) lim.onclick = () => {
+    ceviParaVoz(); ceviCallar();
+    cevi.historial = []; cevi.partnerId = null;
+    ceviPintar(); ceviAviso(''); ceviTranscripcion(''); ceviEstado('reposo');
+    const sug = $('#ceviSug'); if (sug) sug.hidden = false;
+  };
+  const alt = $('#ceviVoz');
+  if (alt) alt.onclick = (e) => {
+    const activa = !ceviVozActiva();
+    try { localStorage.setItem('c4v_cevi_voz', activa ? '1' : '0'); } catch {}
+    e.currentTarget.setAttribute('aria-pressed', activa);
+    e.currentTarget.innerHTML = activa ? CEVI_ICONOS.audioOn : CEVI_ICONOS.audioOff;
+    if (!activa) { ceviParaVoz(); if (cevi.estado === 'hablando') ceviEstado('reposo'); }
+  };
+  (raiz || document).querySelectorAll('#ceviSug .chip').forEach(b => b.onclick = () => ceviEnviar(b.dataset.q));
+}
+
+/* La página de CeVi arranca igual que el panel: saluda y se queda escuchando. */
+function ceviPaginaIniciar() {
+  const g = $('#ceviPagina');
+  if (!g) return;
+  cevi.cerrando = false;
+  cevi.abierto = true;
+  cevi.modo = HAY_DICTADO ? 'voz' : 'texto';
+  cevi.manosLibres = cevi.modo === 'voz';
+  g.dataset.ceviModo = cevi.modo;
+  ceviCablear(g);
+  ceviEstado('reposo');
+  orbeArrancar();
+  ceviDespertarBackend();
+  ceviPrecargarRelleno();
+
+  const cli = currentClient();
+  const maq = cli ? state.db.maquinas.find(m => m.cliente_id === cli.id) : null;
+  const primera = !cevi.historial.length;
+  if (primera) {
+    cevi.historial.push({
+      role: 'assistant',
+      content: `Hola${cli ? ' ' + primerNombre(cli.nombre) : ''}. Soy CeVi.${maq?.modelo ? ` Veo que tienes tu ${maq.modelo}.` : ''} Háblame: pregúntame sobre parámetros, mantenimiento o cualquier problema con tu máquina.`
+    });
+  }
+  ceviPintar();
+  if (!HAY_DICTADO) { ceviAviso('Tu navegador no puede escuchar. Escríbeme tu pregunta aquí abajo.'); return; }
+  /* El primer toque de la persona fue el enlace que trajo aquí, así que el
+     altavoz ya está desbloqueado y puede saludar sola. */
+  (async () => {
+    if (primera) await ceviHablar(cevi.historial[0].content);
+    if (currentRoute() === 'cevi' && cevi.manosLibres) ceviEscuchar();
+  })();
+}
+
+/* ---------- Relleno de espera ----------
+   Entre que dejas de hablar y CeVi contesta pasan unos dos segundos y medio: es
+   lo que tarda el modelo. Dos segundos y medio de silencio se sienten eternos,
+   así que se precargan unas muletillas cortas y se suelta una al instante,
+   igual que hace una persona cuando está pensando la respuesta. */
+const MULETILLAS = ['Déjame ver.', 'Un momento.', 'Ya te digo.', 'A ver.'];
+const relleno = { audios: [], cargando: false };
+
+async function ceviPrecargarRelleno() {
+  if (relleno.audios.length || relleno.cargando || !CFG.ceviApi || !CFG.ceviVoz) return;
+  relleno.cargando = true;
+  try {
+    const urls = await Promise.all(MULETILLAS.map(t => ceviPedirTts(t).catch(() => null)));
+    relleno.audios = urls.filter(Boolean);
+  } catch {}
+  relleno.cargando = false;
+}
+
+// Suelta una muletilla si de verdad estamos esperando. No espera a que acabe.
+function ceviRelleno() {
+  if (cevi.modo !== 'voz' || !CFG.ceviVoz || !relleno.audios.length) return;
+  const url = relleno.audios[Math.floor(Math.random() * relleno.audios.length)];
+  try {
+    const a = ceviReproductor();
+    a.src = url;
+    a.play().catch(() => {});
+  } catch {}
+}
+
+/* Railway duerme el servicio: el primer turno pagaba el arranque en frío. Al
+   abrir se le da un toque para que esté listo cuando llegue la pregunta. */
+let ceviDespertado = 0;
+function ceviDespertarBackend() {
+  const ahora = Date.now();
+  if (!CFG.ceviApi || ahora - ceviDespertado < 120000) return;
+  ceviDespertado = ahora;
+  fetch(`${CFG.ceviApi}/health`, { cache: 'no-store' }).catch(() => {});
+}
+
 function ceviAbrir() {
   const panel = $('#aiPanel'), btn = $('#aiBtn');
   if (!panel) return;
@@ -1534,6 +1932,9 @@ function ceviAbrir() {
   panel.setAttribute('aria-label', 'Hablar con CeVi, tu asistente');
   btn?.setAttribute('aria-expanded', 'true');
   ceviEstado('reposo');
+  orbeArrancar();
+  ceviDespertarBackend();
+  ceviPrecargarRelleno();
 
   const cli = currentClient();
   const maq = cli ? state.db.maquinas.find(m => m.cliente_id === cli.id) : null;
@@ -1546,23 +1947,8 @@ function ceviAbrir() {
   }
   ceviPintar();
 
+  ceviCablear(panel);
   $('#ceviClose').onclick = ceviCerrar;
-  $('#ceviForm').onsubmit = (e) => { e.preventDefault(); ceviEnviar($('#ceviInput').value); };
-  $('#ceviVozBtn').onclick = ceviVozToque;
-  $('#ceviEscribir').onclick = () => ceviModoTexto('');
-  $('#ceviHablarBtn').onclick = () => {
-    if (!HAY_DICTADO) { ceviAviso('Tu navegador no puede escuchar. Escríbeme tu pregunta.'); return; }
-    cevi.modo = 'voz'; panel.dataset.modo = 'voz';
-    ceviAviso(''); ceviTranscripcion(''); ceviVozToque();
-  };
-  $('#ceviVoz').onclick = (e) => {
-    const activa = !ceviVozActiva();
-    try { localStorage.setItem('c4v_cevi_voz', activa ? '1' : '0'); } catch {}
-    e.currentTarget.setAttribute('aria-pressed', activa);
-    e.currentTarget.innerHTML = activa ? CEVI_ICONOS.audioOn : CEVI_ICONOS.audioOff;
-    if (!activa) { ceviParaVoz(); if (cevi.estado === 'hablando') ceviEstado('reposo'); }
-  };
-  panel.querySelectorAll('#ceviSug .chip').forEach(b => b.onclick = () => ceviEnviar(b.dataset.q));
 
   if (cevi.modo === 'voz') {
     // Saluda en voz alta y se queda escuchando: no hay que tocar nada más.
@@ -1589,6 +1975,7 @@ function ceviCerrar() {
   (cevi.origen && document.contains(cevi.origen) ? cevi.origen : btn)?.focus();
   ceviParaVoz();
   if (cevi.escuchando) { try { cevi.escuchando.abort(); } catch {} cevi.escuchando = null; }
+  if (!document.querySelector('[data-orbe]')) orbeParar();
 }
 
 function initAgente() {

@@ -1080,3 +1080,93 @@ body{background:var(--mesa)}
    se ocultaba justo al mostrarlo, así que nadie leía por qué no podía hablar. */
 .cevi-aviso{margin:0;padding:12px 14px;background:var(--mesa);border-top:1px solid var(--regla);
   font-size:var(--t-sm);line-height:1.45;color:var(--tinta);flex-shrink:0}
+.cevi-aviso-btn{display:block;margin-top:8px;background:var(--tinta);color:#fff;border:none;
+  border-radius:var(--r-full);padding:9px 16px;min-height:var(--tap);
+  font-family:var(--sans);font-size:var(--t-sm);font-weight:700;cursor:pointer}
+.cevi-aviso-btn:hover{background:var(--black-2)}
+
+/* El toro de C4V como máscara: así se pinta del color que toque en cada sitio
+   en vez de arrastrar un PNG blanco que solo sirve sobre fondo oscuro. */
+.toro{display:block;background:currentColor;
+  -webkit-mask:url(../assets/c4v-toro.png?v=2) center/contain no-repeat;
+          mask:url(../assets/c4v-toro.png?v=2) center/contain no-repeat}
+.ai-btn .toro{width:26px;height:26px;color:var(--rojo)}
+.cevi-avatar .toro{width:20px;height:20px;color:#fff}
+.cevi-avatar.grande .toro{width:24px;height:24px}
+
+/* ════════════════════════════════════════════════════════════════════════
+   EL ORBE
+   La burbuja que se mueve con la voz. Todo cuelga de --n (0 a 1), que el
+   bucle de animación actualiza con la amplitud real del audio.
+   ════════════════════════════════════════════════════════════════════════ */
+.orbe{--n:0;position:relative;width:112px;height:112px;display:grid;place-items:center;
+      isolation:isolate}
+.orbe-chico{width:76px;height:76px}
+.orbe > *{grid-area:1/1;border-radius:50%}
+
+.orbe-halo{width:100%;height:100%;
+  background:radial-gradient(circle at 50% 50%, rgba(249,2,11,.42) 0%, rgba(249,2,11,.12) 45%, rgba(249,2,11,0) 70%);
+  transform:scale(calc(.86 + var(--n) * .5));
+  opacity:calc(.45 + var(--n) * .55);
+  transition:opacity .12s linear}
+
+.orbe-anillo{width:86%;height:86%;border:2px solid var(--rojo);opacity:calc(.16 + var(--n) * .5);
+  transform:scale(calc(.94 + var(--n) * .34))}
+.orbe-anillo.dos{width:96%;height:96%;border-width:1.5px;opacity:calc(.1 + var(--n) * .34);
+  transform:scale(calc(.97 + var(--n) * .5))}
+
+.orbe-disco{width:62%;height:62%;background:var(--tinta);display:grid;place-items:center;
+  transform:scale(calc(1 + var(--n) * .11));
+  box-shadow:0 6px 20px rgba(20,20,20,.3)}
+.orbe-disco .toro{width:58%;height:58%;color:#fff}
+
+/* Cada estado tiene su color, para saber de un vistazo de quién es el turno. */
+.ai-panel[data-estado="escuchando"] .orbe-disco,
+[data-cevi-estado="escuchando"] .orbe-disco{background:var(--rojo-tinta)}
+.ai-panel[data-estado="hablando"] .orbe-disco,
+[data-cevi-estado="hablando"] .orbe-disco{background:var(--rojo-tinta)}
+.ai-panel[data-estado="pensando"] .orbe-halo,
+[data-cevi-estado="pensando"] .orbe-halo{filter:grayscale(1)}
+.ai-panel[data-estado="pensando"] .orbe-disco,
+[data-cevi-estado="pensando"] .orbe-disco{background:var(--grafito)}
+
+/* El botón que envuelve al orbe deja de ser un círculo negro: el orbe ES el botón. */
+.cevi-voz-btn{width:auto;height:auto;background:none;border-radius:0;padding:0}
+.cevi-voz-btn:active{transform:scale(.97)}
+.ai-panel[data-estado="escuchando"] .cevi-voz-btn::after{display:none}
+.ai-panel[data-estado="pensando"] .cevi-voz-btn{background:none}
+.ai-panel[data-estado="hablando"] .cevi-voz-btn{background:none}
+
+@media (prefers-reduced-motion:reduce){
+  .orbe > *{transition:none}
+  .orbe-halo,.orbe-anillo,.orbe-disco{transform:none}
+}
+
+/* ---------- Página propia de CeVi ---------- */
+.ai-btn.oculto{display:none}
+.big-ico .toro{width:22px;height:22px;color:var(--rojo-tinta)}
+.cevi-pag{display:flex;flex-direction:column;gap:var(--s-4)}
+.cevi-pag-intro{margin:0;font-size:var(--t-md);color:var(--grafito);max-width:var(--medida)}
+.cevi-pag-orbe{display:flex;flex-direction:column;align-items:center;gap:12px;
+  padding:var(--s-5) 0 var(--s-4)}
+.orbe-gigante{width:190px;height:190px}
+.cevi-pag .cevi-voz-txt{font-size:var(--t-lg);font-family:var(--slab);font-weight:700}
+.cevi-pag .cevi-dictado{min-height:44px;font-size:var(--t-md);color:var(--tinta);max-width:30ch}
+.cevi-pag .cevi-msgs{background:var(--mesa);border-radius:var(--r-lg);max-height:44vh;
+  padding:var(--s-4);gap:var(--s-3)}
+.cevi-pag .cevi-msgs:empty{display:none}
+.cevi-pag .cevi-sug{background:transparent;padding:0}
+.cevi-pag .cevi-form{background:transparent;border-top:none;padding:0}
+.cevi-pag[data-cevi-modo="voz"] .cevi-form{display:none}
+.cevi-pag[data-cevi-modo="texto"] .cevi-pag-orbe{padding-bottom:0}
+.cevi-pag[data-cevi-modo="texto"] .cevi-voz-txt{font-size:var(--t-sm);font-family:var(--sans);color:var(--grafito)}
+.cevi-pag[data-cevi-modo="texto"] .orbe-gigante{width:96px;height:96px}
+.cevi-pag[data-cevi-modo="voz"] #ceviEscribir{display:inline-block}
+.cevi-pag[data-cevi-modo="voz"] #ceviHablarBtn{display:none}
+.cevi-pag[data-cevi-modo="texto"] #ceviEscribir{display:none}
+.cevi-pag[data-cevi-modo="texto"] #ceviHablarBtn{display:inline-block}
+.cevi-pag-pie{display:flex;gap:var(--s-4);justify-content:center;flex-wrap:wrap;
+  border-top:1px solid var(--regla);padding-top:var(--s-3)}
+.cevi-pag .cevi-aviso{border-radius:var(--r);border:1px solid var(--regla);border-top:1px solid var(--regla)}
+.cevi-pag .cevi-pie{text-align:center}
+@media(max-width:620px){.orbe-gigante{width:168px;height:168px}}
