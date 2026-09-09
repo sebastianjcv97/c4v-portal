@@ -1217,3 +1217,19 @@ body{background:var(--mesa)}
 .gate-foot a,.gate-paso strong{color:#FF8A8F}
 .lv-cargando{margin:0;padding:18px;text-align:center;color:var(--grafito);font-size:var(--t-sm)}
 .pdf-card{text-align:left;width:100%;font-family:var(--sans);cursor:pointer}
+
+/* ---------- Completar el teléfono ----------
+   Se lee como un solo número: prefijo fijo, lo que la persona escribe, y los
+   cuatro dígitos que ya conocemos. */
+.tel-caja{display:flex;align-items:center;gap:8px;background:var(--black-2);
+  border:2px solid #767676;border-radius:var(--r);padding:6px 12px}
+.tel-caja:focus-within{border-color:#FF8A8F}
+.tel-prefijo,.tel-cola{color:var(--on-black);font-size:19px;font-weight:700;
+  font-variant-numeric:tabular-nums;flex-shrink:0}
+.tel-cola{letter-spacing:.08em}
+.tel-caja input{flex:1;min-width:0;background:none;border:none;outline:none;
+  color:var(--on-black);font-family:var(--sans);font-size:19px;font-weight:700;
+  letter-spacing:.08em;padding:10px 0;min-height:var(--tap)}
+.tel-caja input::placeholder{color:#6a6a6a;letter-spacing:.14em}
+.gate-tel-ic{color:var(--rojo)}
+.otp-form-solo{margin:0 auto;max-width:320px}

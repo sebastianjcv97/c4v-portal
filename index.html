@@ -18,7 +18,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@700;800&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/styles.css?v=20260912i" />
+  <link rel="stylesheet" href="css/styles.css?v=20260912m" />
 </head>
 <body>
   <a class="skip" href="#view">Saltar al contenido</a>
@@ -44,7 +44,11 @@
         <h1>Entra con tu documento</h1>
         <p class="gate-sub">El mismo con el que compraste tu máquina.<br />Sin contraseñas.</p>
 
-        <form class="gate-form" id="gateForm" novalidate>
+        <!-- onsubmit inline: el manejador de verdad se engancha cuando app.js termina
+             de cargar los datos. Si alguien pulsa antes (conexión lenta), el navegador
+             enviaba el formulario de forma nativa y recargaba la página, perdiendo lo
+             que había escrito. Esto lo impide desde el primer instante. -->
+        <form class="gate-form" id="gateForm" novalidate onsubmit="return false">
           <p class="gate-paso" id="gatePasoTipo"><strong>1.</strong> ¿Compraste como persona o como empresa?</p>
           <div class="gate-tipos" id="gateTipos" role="radiogroup" aria-labelledby="gatePasoTipo"></div>
 
@@ -198,8 +202,8 @@
     </div>
   </div>
 
-  <script src="js/config.js?v=20260912i"></script>
-  <script src="js/data.js?v=20260912i"></script>
-  <script src="js/app.js?v=20260912i"></script>
+  <script src="js/config.js?v=20260912m"></script>
+  <script src="js/data.js?v=20260912m"></script>
+  <script src="js/app.js?v=20260912m"></script>
 </body>
 </html>

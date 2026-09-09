@@ -410,15 +410,9 @@ const views = {
       ${fechaEntrega(maq)}
       ${tarjetaCorreo()}
 
-      <h2 class="section-h">Primero: tu lista de compras</h2>
-      <p class="muted seccion-bajada">Cómprala completa antes de que llegue tu máquina: si falta algo, la instalación se detiene. Conseguir todo toma unas dos semanas, así que empieza hoy.</p>
+      <h2 class="section-h">Tu lista de compras</h2>
+      <p class="muted seccion-bajada">Cinco cosas que vas a usar desde el primer día.</p>
 
-      ${p.fichaModelo ? `
-      <div class="card ficha-modelo">
-        <strong>${((n) => n === 1 ? 'Una' : n === 2 ? 'Dos' : n === 3 ? 'Tres' : n)(p.compras.filter(c => c.pedirFicha).length)} ${esc(p.fichaModelo.titulo)}</strong>
-        <p>${esc(p.fichaModelo.intro)}</p>
-        <a class="btn primary" href="${waFicha}" target="_blank" rel="noopener">Pedir la ficha de mi máquina<span class="sr-only"> (se abre WhatsApp)</span></a>
-      </div>` : ''}
 
       <div class="lista">
         ${p.compras.map((c, i) => `
@@ -432,13 +426,11 @@ const views = {
               <p class="para">${esc(c.para)}</p>
               <p class="spec">${esc(c.spec)}</p>
               <p class="donde">Se consigue en ${esc((c.donde || '').toLowerCase() || 'ferreterías')}</p>
-              ${c.pedirFicha ? '<span class="aviso">Pide la medida a tu asesor</span>' : ''}
             </div>
           </article>`).join('')}
       </div>
 
-      <h2 class="section-h">Después: deja tu espacio listo <span class="contador" id="prepCount">${hechos} de ${total}</span></h2>
-      <p class="muted seccion-bajada">En este orden: primero lo que depende de otras personas y toma días.</p>
+      <h2 class="section-h">Tus cinco pasos <span class="contador" id="prepCount">${hechos} de ${total}</span></h2>
       <div class="avance"><div class="bar"><i id="prepBar" style="width:${total ? Math.round(hechos / total * 100) : 0}%"></i></div></div>
       <div class="lista lista-pasos">
         <ol id="prepList" class="prep-steps">${p.checklist.map((c, i) => {
@@ -448,9 +440,6 @@ const views = {
             <label class="prep-step-main">
               <input type="checkbox" ${done(c.id) ? 'checked' : ''} aria-label="${esc(c.t)}">
               <span class="prep-step-txt">${esc(c.t)}
-                ${c.tiempo ? `<span class="prep-tiempo">⏱ ${esc(c.tiempo)}</span>` : ''}
-                ${c.urgente ? `<span class="prep-urgente">${esc(c.urgente)}</span>` : ''}
-                ${c.opcional ? `<span class="prep-opcional">${esc(c.opcional)}</span>` : ''}
               </span>
               <span class="prep-step-check" aria-hidden="true">✓</span>
             </label>
@@ -1287,6 +1276,12 @@ function initGate() {
          canal de envío no está configurado, se cae al camino de siempre (que
          el cliente escriba primero por WhatsApp), que sí funciona hoy. */
       const d = await apiPost('/api/acceso/identificar', { pais, doc });
+      if (d.status === 429) {
+        setCargando(false);
+        err.hidden = false;
+        err.innerHTML = 'Probaste demasiadas veces seguidas. Espera cinco minutos y vuelve a intentar.';
+        marcarError(inp, err); return;
+      }
       if (d.json.ok && d.json.canal === 'whatsapp') {
         setCargando(false);
         apiPost('/api/consentimiento', { doc, pais, acepta_datos: true, acepta_marketing: marketing.checked }).catch(() => {});
@@ -1365,6 +1360,70 @@ function initGate() {
   };
 
   $('#otpVolver').onclick = () => { detenerSondeo(); otpEstado.solicitud = null; mostrarPaso('doc'); inp.focus(); };
+
+  // ---- Paso: completar el teléfono y pedir el código ----
+  const telForm = $('#telForm'), telInp = $('#telInput'), telErr = $('#telError'), telBtn = $('#telBtn');
+  telInp.oninput = () => { telInp.value = telInp.value.replace(/\D/g, ''); };
+  $('#telVolver').onclick = () => { otpEstado.solicitud = null; mostrarPaso('doc'); inp.focus(); };
+
+  const pedirCodigo = async () => {
+    limpiarError(telInp, telErr);
+    const faltan = otpEstado.faltan || 0;
+    const escrito = telInp.value.replace(/\D/g, '');
+    if (escrito.length < Math.max(3, faltan - 2)) {
+      telErr.hidden = false;
+      telErr.textContent = faltan
+        ? `Faltan dígitos. Escribe los ${faltan} que van antes de ${$('#telCola').textContent}.`
+        : 'Escribe tu número completo, sin los últimos cuatro.';
+      marcarError(telInp, telErr); return;
+    }
+    telBtn.disabled = true; telBtn.textContent = 'Enviando…';
+    const completo = escrito + ($('#telCola').textContent || '');
+    const r = await apiPost('/api/acceso/enviar', { solicitud: otpEstado.solicitud, telefono: completo });
+    telBtn.disabled = false; telBtn.textContent = 'Enviarme el código';
+
+    if (r.json.ok) { pintarPasoCodigo(r.json.pista || $('#telCola').textContent); return; }
+
+    telErr.hidden = false;
+    const motivos = {
+      telefono_no_coincide: `Ese número no coincide con el que tenemos. ${r.json.restantes ? `Te queda${r.json.restantes === 1 ? '' : 'n'} ${r.json.restantes} intento${r.json.restantes === 1 ? '' : 's'}.` : 'Se acabaron los intentos: vuelve a empezar.'}`,
+      demasiados_intentos: 'Se acabaron los intentos. Toca «Volver y cambiar mi documento» y empieza otra vez.',
+      solicitud_vencida: 'Pasó demasiado tiempo. Toca «Volver y cambiar mi documento» y empieza otra vez.',
+      no_configurado: 'Todavía no podemos enviarte el código por WhatsApp. Escríbenos y te ayudamos a entrar.',
+      fallo_envio: 'No pudimos enviarte el código en este momento. Prueba otra vez en un minuto.'
+    };
+    telErr.innerHTML = motivos[r.json.motivo]
+      || (r.status === 429 ? 'Probaste demasiadas veces. Espera unos minutos.' : 'No pudimos enviarte el código. Inténtalo de nuevo.');
+    marcarError(telInp, telErr);
+  };
+  telForm.onsubmit = (e) => { e.preventDefault(); pedirCodigo(); };
+
+  // ---- Paso: el código, cuando lo enviamos nosotros ----
+  const dirForm = $('#otpFormDirecto'), dirInp = $('#otpCodigoDirecto'), dirErr = $('#otpErrorDirecto');
+  dirInp.oninput = () => { dirInp.value = dirInp.value.replace(/\D/g, '').slice(0, 6); };
+  dirForm.onsubmit = async (e) => {
+    e.preventDefault(); limpiarError(dirInp, dirErr);
+    const codigo = dirInp.value.replace(/\D/g, '');
+    if (codigo.length !== 6) { dirErr.hidden = false; dirErr.textContent = 'Escribe los 6 números que te llegaron por WhatsApp.'; marcarError(dirInp, dirErr); return; }
+    const boton = dirForm.querySelector('button');
+    boton.disabled = true; boton.textContent = 'Entrando…';
+    const r = await apiPost('/api/otp/verificar', { solicitud: otpEstado.solicitud, codigo });
+    boton.disabled = false; boton.textContent = 'Entrar';
+    if (r.json.ok && r.json.token) {
+      guardarSesion({ token: r.json.token, pais: otpEstado.pais });
+      entrar(inyectarCliente(r.json.cliente, r.json.maquinas));
+      return;
+    }
+    dirErr.hidden = false;
+    dirErr.textContent = {
+      incorrecto: `Ese código no es el correcto.${r.json.intentos_restantes ? ` Te queda${r.json.intentos_restantes === 1 ? '' : 'n'} ${r.json.intentos_restantes}.` : ''}`,
+      vencido: 'Tu código venció. Pide uno nuevo.',
+      usado: 'Ese código ya se usó. Pide uno nuevo.',
+      bloqueado: 'Demasiados intentos. Vuelve a empezar.'
+    }[r.json.motivo] || 'No pudimos revisar tu código. Inténtalo otra vez.';
+    marcarError(dirInp, dirErr);
+  };
+  $('#otpReenviar').onclick = () => { mostrarPaso('tel'); };
 
   mostrarPaso('doc');
   gate.hidden = false; $('#app').hidden = true;
@@ -2420,28 +2479,17 @@ function resumenImprimible(p, cli, maq) {
       <div class="hoja-cols">
         <div class="hoja-col">
           <h3>Lo que compro</h3>
-          <ul>${p.compras.map(c => `<li>${casilla}<span>${esc(c.item)}${c.pedirFicha ? ' <em>(pide la medida)</em>' : ''}</span></li>`).join('')}</ul>
+          <ul>${p.compras.map(c => `<li>${casilla}<span>${esc(c.item)}</span></li>`).join('')}</ul>
         </div>
         <div class="hoja-col">
           <h3>Lo que hago</h3>
-          <ul>${p.checklist.map(c => `<li>${casilla}<span>${esc(c.t)}${c.tiempo ? ` <em>${esc(c.tiempo)}</em>` : ''}${c.urgente ? `<em class="urg">${esc(c.urgente)}</em>` : ''}</span></li>`).join('')}</ul>
+          <ul>${p.checklist.map(c => `<li>${casilla}<span>${esc(c.t)}</span></li>`).join('')}</ul>
         </div>
       </div>
 
-      ${p.fichaModelo ? `
-      <div class="hoja-ficha">
-        <h3>Lo que le pido a mi asesor</h3>
-        <ul>
-          <li>Capacidad del estabilizador</li>
-          <li>Diámetro del extractor</li>
-          <li>Peso de la máquina</li>
-          <li>Amperaje y grosor del cable</li>
-          <li>Medidas de la caja</li>
-        </ul>
-      </div>` : ''}
 
       <p class="hoja-ayuda no-print">Se abrirá el cuadro de impresión: elige <strong>«Guardar como PDF»</strong> o <strong>«PDF»</strong>.</p>
-      <p class="hoja-pie">¿Dudas? WhatsApp ${esc((CFG.contacto || {}).whatsapp_visible || '')} — te responde una persona, todos los días.</p>
+      <p class="hoja-pie">¿Dudas? Escríbenos al WhatsApp ${esc((CFG.contacto || {}).whatsapp_visible || '')}. Te responde una persona.</p>
     </section>`;
 }
 

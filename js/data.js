@@ -352,155 +352,89 @@ window.__SEED__ = {
 
   preparacion: {
     intro: "",
-    /* img: foto REAL (assets/prep/) extraída de las guías técnicas C4V.
-       `guia`: enlaza el paso con su explicación (clave de `guias`).
-       `tiempo`: lo que tarda en la vida real — es lo que hace que el cliente
-       llame al electricista hoy y no la próxima semana.
-       `opcional`: el paso puede no aplicar a su modelo. */
-    /* Tres de las ocho compras dependen del modelo exacto. En vez de una sección
-       aparte, el aviso vive DENTRO de la lista, que es donde el cliente lo necesita. */
-    fichaModelo: {
-      /* El número lo cuenta app.js sobre `pedirFicha`: escribirlo a mano hacía
-         que dijera "tres" después de quitar un ítem de la lista. */
-      titulo: "de estas compras dependen de tu modelo",
-      intro: "Pídenos la ficha de tu máquina antes de comprar. Te la pasamos el mismo día."
-    },
-    /* Solo ACCIONES. Lo que hay que comprar vive en `compras`: antes estaba en
-       las dos listas y el cliente leía lo mismo dos veces. */
-    checklist: [
-      { id: "a1", t: "Mide las puertas y el camino hasta su lugar", img: "puerta.png", guia: "acceso", tiempo: "20 minutos" },
-      { id: "e8", t: "Elige dónde va a vivir tu máquina", img: "espacio.png", guia: "espacio" },
-      { id: "e1", t: "Manda instalar el punto de 220V", img: "electrico.png", guia: "electrico", tiempo: "2 a 5 días", urgente: "Llama hoy al electricista" },
-      { id: "e2", t: "Haz que revisen tu pozo a tierra", img: "tierra.png", guia: "tierra", tiempo: "3 a 10 días si hay que construirlo" },
-      { id: "e4", t: "Instala el extractor con salida a la calle", img: "extractor.png", guia: "extraccion", tiempo: "1 a 2 días" },
-      { id: "e11", t: "Ten lista una computadora con Windows", img: "computadora.png", guia: "computadora" },
-      { id: "e6", t: "Consigue la compresora de aire", img: "compresora.png", guia: "aire", opcional: "Solo si tu ficha dice que tu modelo la lleva." }
-    ],
-    /* Cada guía es el «¿Cómo lo hago?» de su paso. Tres o cuatro líneas: si hace
-       falta más, es que el paso está mal partido. */
-    guias: [
-      { key: "acceso", titulo: "Cómo medir el acceso", pasos: [
-        "Mide el ancho y el alto de todas las puertas del camino, los pasillos y los giros de escalera.",
-        "Compara con las medidas de tu caja: te las pasa tu asesor.",
-        "Si falta poco, el marco de la puerta se puede retirar.",
-        "¿Dudas? Mándanos fotos y medidas por WhatsApp antes del despacho." ] },
-      { key: "espacio", titulo: "Cómo elegir el lugar", pasos: [
-        "Piso firme y nivelado: si está desparejo, el corte sale disparejo.",
-        "Deja espacio libre alrededor para abrir la tapa y cargar material.",
-        "Seco, sin sol directo y sin mucho polvo: el polvo ensucia el lente.",
-        "Necesitas una pared exterior o ventana cerca para sacar el humo." ] },
-      { key: "electrico", titulo: "Qué pedirle al electricista", pasos: [
-        "Un tomacorriente de 220V solo para la máquina, con su propia llave en el tablero.",
-        "Que no comparta el cable con ningún otro enchufe: si lo comparte, se cae el voltaje y falla el corte.",
-        "El amperaje y el grosor del cable están en la ficha de tu máquina. Dásela.",
-        "Va con línea de tierra conectada al pozo." ] },
-      { key: "tierra", titulo: "Qué es y por qué es obligatorio", pasos: [
-        "Es una varilla de cobre enterrada que desvía al suelo la electricidad que se escapa.",
-        "El tercer agujero del enchufe no basta: casi nunca está conectado a nada.",
-        "Pide que un electricista lo mida y te dé el papel con el resultado. Guárdalo.",
-        "Si no lo tienes, hay que construirlo y toma días. Empieza por aquí." ] },
-      { key: "extraccion", titulo: "Cómo instalar el extractor", pasos: [
-        "El humo del corte es tóxico: sin extractor no se opera.",
-        "Tiene que salir a la calle, un patio abierto o el techo. Nunca a otro ambiente ni a la ventana del vecino.",
-        "El diámetro del tubo está en la ficha de tu máquina." ] },
-      { key: "computadora", titulo: "Qué computadora necesitas", pasos: [
-        "Una laptop o PC con Windows: desde ahí diseñas y mandas los cortes.",
-        "Se conecta a la máquina por cable de red o USB.",
-        "No necesita ser potente. Déjala al lado de la máquina." ] },
-      { key: "aire", titulo: "Cuándo hace falta la compresora", pasos: [
-        "Algunos modelos soplan aire en la punta del láser: apaga la llamita y el borde no sale quemado.",
-        "Si tu ficha dice que tu modelo la lleva, necesitas una compresora chica, de las de pintar o inflar llantas.",
-        "Hace ruido y prende sola cada rato: si instalas en casa, ponla lejos." ] }
-    ],
+
+    /* Guía deliberadamente CORTA. Antes tenía ocho compras, siete pasos, tiempos
+       estimados y avisos de urgencia. Todo eso se leía como una lista de
+       impedimentos antes de poder usar la máquina. Ahora: compra lo que se usa a
+       diario, y cinco pasos. Lo que depende del modelo (estabilizador, extractor)
+       vive dentro del paso que le toca, con los datos ya puestos, para que nadie
+       tenga que pedir una ficha antes de empezar. */
+
     compras: [
-      { item: "Estabilizador de voltaje", img: "estabilizador.png", para: "Para que los bajones de luz no quemen la electrónica",
-        spec: "La capacidad depende de tu modelo. No es lo mismo que una zapatilla con protector de picos.",
-        donde: "Tiendas de electricidad", pedirFicha: true },
-      { item: "Extractor, manguera y abrazaderas", img: "extractor.png", para: "Para sacar el humo a la calle",
-        spec: "Son tres cosas: el motor, la manguera flexible de aluminio (compra un metro de más) y dos abrazaderas. El diámetro depende de tu modelo.",
-        donde: "Ferreterías y tiendas de ventilación", pedirFicha: true },
-      { item: "Agua destilada (2 galones)", img: "agua.png", para: "Para el enfriador (viene incluido con tu máquina)",
-        spec: "En las tiendas se pide como «agua de batería». NO sirve la del caño, hervida ni mineral: los minerales arruinan el tubo, y eso no lo cubre la garantía.",
+      { item: "Agua destilada", img: "agua.png", para: "Para el enfriador",
+        spec: "Dos galones. En las tiendas se pide como «agua de batería». No uses agua del caño ni hervida.",
         donde: "Grifos, lubricentros y ferreterías" },
-      { item: "Alcohol isopropílico al 99%, hisopos y paño de microfibra", img: "alcohol.png", para: "Para limpiar el lente y los espejos",
-        spec: "Al 99%, no el alcohol de farmacia al 70%: ese tiene agua y mancha el lente. Los hisopos baratos sueltan pelusa.",
+      { item: "Alcohol isopropílico, hisopos y paño de microfibra", img: "alcohol.png", para: "Para limpiar el lente y los espejos",
+        spec: "Alcohol al 99%. El de farmacia tiene agua y mancha el lente.",
         donde: "Tiendas de electrónica" },
-      { item: "Aceite 3-EN-1", img: "aceite.png", para: "Para lubricar los rieles",
-        spec: "Marca 3-EN-UNO. No sirve el WD-40 ni el aceite de motor o de cocina.",
+      { item: "Aceite 3-EN-1", img: "aceite.png", para: "Para los rieles",
+        spec: "Marca 3-EN-UNO. No sirve el WD-40.",
         donde: "Ferreterías" },
       { item: "Extintor", img: "extintor.png", para: "Por seguridad",
-        spec: "De polvo químico seco tipo ABC. Cuélgalo a la vista, cerca de la máquina.",
+        spec: "De polvo químico seco, tipo ABC. Cuélgalo cerca de la máquina.",
         donde: "Tiendas de seguridad industrial" },
-      { item: "Material para tus primeras pruebas", img: "material.png", para: "Para tus primeros cortes",
-        spec: "MDF o acrílico de 3 mm. Nunca PVC.",
+      { item: "Material para practicar", img: "material.png", para: "Para tus primeros cortes",
+        spec: "Madera, MDF, acrílico, cartón, cuero, tela o papel, de 3 mm. Nunca PVC.",
         donde: "Madereras y tiendas de acrílico" }
     ],
-    /* Según el modelo: solo se muestra el grupo del cliente. Los modelos son los
-       que están realmente en catálogo (no existen 13100 ni 18120). */
-    porModelo: {
-      grupos: [
-        { key: "compacta", nombre: "Compactas", modelos: ["4040", "6040", "6090", "9060"],
-          instalacion: "Remota: un ingeniero te acompaña por videollamada hasta tu primer corte",
-          foco: "Enfócate en el punto de 220V, el pozo a tierra y el agua destilada",
-          nota: "Viene casi lista para conectar." },
-        { key: "grande", nombre: "Grandes", modelos: ["1390", "1610"],
-          instalacion: "Presencial e incluida: el ingeniero va a tu taller a instalarla",
-          foco: "Necesitas más espacio y más capacidad eléctrica que una compacta",
-          nota: "Pregúntale a tu asesor si tu modelo necesita conexión industrial de tres cables (trifásica)." }
+
+    /* Cinco pasos, en el orden en que se hacen. Sin tiempos: cada taller es
+       distinto y poner plazos solo asustaba. */
+    checklist: [
+      /* Sin dibujo: la lista de arriba ya es la ilustración de este paso. */
+      { id: "p1", t: "Compra lo de la lista", guia: "compras" },
+      { id: "p2", t: "Mide las puertas y el camino", img: "puerta.png", guia: "acceso" },
+      { id: "p3", t: "Deja lista la electricidad", img: "electrico.png", guia: "electrico" },
+      { id: "p4", t: "Prepara tu zona de trabajo", img: "extractor.png", guia: "zona" },
+      { id: "p5", t: "Ten lista tu computadora", img: "computadora.png", guia: "computadora" }
+    ],
+
+    /* Cada guía es el «¿Cómo lo hago?» de su paso: tres líneas, en el orden en
+       que se hacen las cosas. Si hace falta más, es que el paso está mal partido. */
+    guias: [
+      { key: "compras", titulo: "Cómo comprar la lista", pasos: [
+        "Compra los cinco de arriba antes de que llegue tu máquina.",
+        "Se consiguen en ferreterías, grifos y tiendas de electrónica.",
+        "Si no encuentras alguno, escríbenos y te decimos dónde."
+      ] },
+      { key: "acceso", titulo: "Cómo medir el camino", pasos: [
+        "Mide el ancho y el alto de las puertas, los pasillos y los giros de escalera.",
+        "Escríbenos y te pasamos las medidas de la caja de tu máquina.",
+        "Si algo no pasa, avísanos antes de la entrega y lo resolvemos juntos."
+      ] },
+      { key: "electrico", titulo: "Cómo dejar lista la electricidad", pasos: [
+        "Llama a un electricista y pídele un punto de 220V solo para la máquina, con cable de cobre número 12.",
+        "En tu tablero: un térmico de 20 amperios y un diferencial de 30 A / 30 mA.",
+        "Pozo a tierra con varilla de cobre enterrada. Si ya lo tienes, pide que lo midan.",
+        "Compra un estabilizador de voltaje de 3000VA como mínimo, tipo servomotor. Una zapatilla con protector de picos no sirve."
+      ] },
+      { key: "zona", titulo: "Cómo preparar la zona", pasos: [
+        "Elige un lugar firme y parejo, con espacio para abrir la tapa y pasar alrededor.",
+        "Compra un extractor con su manguera de aluminio y dos abrazaderas, y ponlo con salida a la calle.",
+        "Deja libre la salida del humo: no la conectes a un ducto compartido."
+      ] },
+      { key: "computadora", titulo: "Cómo dejar lista la computadora", pasos: [
+        "Cualquier computadora con Windows sirve. Windows 11 de preferencia.",
+        "Déjala cerca de la máquina, con su cable USB a la mano.",
+        "El programa de corte lo instalamos contigo el día de la entrega."
+      ] }
+    ],
+
+    /* Lo que se lleva el cliente el día de la entrega. Sin plazos ni avisos. */
+    diaEntrega: {
+      titulo: "El día que llega tu máquina",
+      intro: "Estaremos contigo hasta tu primer corte.",
+      pasos: [
+        { t: "Revisa que la caja llegue sin golpes antes de firmar." },
+        { t: "Un ingeniero te acompaña por videollamada, o va a tu taller si tu modelo lo incluye." },
+        { t: "Enciende primero el estabilizador, después el enfriador y al final la máquina.", destacado: true },
+        { t: "Hacemos juntos tu primer corte." }
       ]
     },
 
-    /* El día de la entrega es otra lista: son cosas que solo se pueden hacer
-       CON la máquina delante. Mezclarlas con la preparación hacía que el cliente
-       marcara como hecho algo que no había hecho. */
-    diaEntrega: {
-      titulo: "El día que llega tu máquina",
-      intro: "Estos pasos son para el día de la entrega, no antes. Tu ingeniero C4V te acompaña hasta tu primer corte.",
-      pasos: [
-        { t: "Ten a dos personas para bajarla y moverla, y el camino despejado." },
-        { t: "Antes de firmar, revisa la caja por fuera. Si llegó golpeada, anótalo en la guía de remisión y tómale fotos: después ya no se puede reclamar.", destacado: true },
-        { t: "Ubícala en su sitio y nivélala." },
-        { t: "Conecta: enchufe → estabilizador → máquina. La manguera del humo al extractor. Las dos mangueras de agua al enfriador." },
-        { t: "Llena el enfriador con agua destilada hasta la marca. La pantalla debe indicar entre 15 y 25 °C.", destacado: true },
-        { t: "Enciende en este orden, siempre: primero el estabilizador, después el enfriador, y al final la máquina." },
-        { t: "Revisa que la pantalla de control encienda sin alarmas. Si hay alguna, apaga todo y llámanos." },
-        { t: "Tu primer corte, acompañado por tu ingeniero." }
-      ]
-    },
-    /* Según el modelo: solo se muestra el grupo del cliente. Los modelos son los
-       que están realmente en catálogo (no existen 13100 ni 18120). */
-    porModelo: {
-      grupos: [
-        { key: "compacta", nombre: "Compactas", modelos: ["4040", "6040", "6090", "9060"],
-          instalacion: "Remota: un ingeniero te acompaña por videollamada hasta tu primer corte",
-          foco: "Enfócate en el punto de 220V, el pozo a tierra y el agua destilada",
-          nota: "Viene casi lista para conectar." },
-        { key: "grande", nombre: "Grandes", modelos: ["1390", "1610"],
-          instalacion: "Presencial e incluida: el ingeniero va a tu taller a instalarla",
-          foco: "Necesitas más espacio y más capacidad eléctrica que una compacta",
-          nota: "Pregúntale a tu asesor si tu modelo necesita conexión industrial de tres cables (trifásica)." }
-      ]
-    },
-
-    /* El día de la entrega es otra lista: son cosas que solo se pueden hacer
-       CON la máquina delante. Mezclarlas con la preparación hacía que el cliente
-       marcara como hecho algo que no había hecho. */
-    diaEntrega: {
-      titulo: "El día que llega tu máquina",
-      intro: "Esto es para el día de la entrega, no antes. Tu ingeniero te acompaña hasta el primer corte.",
-      pasos: [
-        { t: "Ten dos personas para bajarla y el camino despejado." },
-        { t: "Antes de firmar, revisa la caja por fuera. Si llegó golpeada, anótalo en la guía de remisión y tómale fotos: después ya no se puede reclamar.", destacado: true },
-        { t: "Ubícala en su sitio y nivélala." },
-        { t: "Conecta: enchufe → estabilizador → máquina. El humo al extractor. El agua al enfriador." },
-        { t: "Llena el enfriador con agua destilada hasta la marca. La pantalla debe indicar entre 15 y 25 °C.", destacado: true },
-        { t: "Enciende en este orden, siempre: primero el estabilizador, después el enfriador, y al final la máquina." },
-        { t: "Si la pantalla muestra una alarma, apaga todo y llámanos." },
-        { t: "Tu primer corte, acompañado por tu ingeniero." }
-      ]
-    },
     modelos: "Las máquinas compactas (4040, 6040, 6090 y 9060) se instalan de forma remota: un ingeniero te acompaña por videollamada hasta tu primer corte. Las grandes (1390 y 1610) llevan instalación presencial incluida y necesitan más espacio y más capacidad eléctrica."
   },
+
 
   faqs: [
     { categoria: "Instalación", pregunta: "¿Qué voltaje y conexión eléctrica necesita la máquina?", respuesta: "220 V en circuito independiente con cable de tierra. No la conectes en zapatillas con otros equipos. El estabilizador de voltaje es obligatorio." },
