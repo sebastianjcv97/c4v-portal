@@ -42,15 +42,15 @@
     document.querySelectorAll('[data-otras-empresas]').forEach((el) => {
       if (!otras.length) return;
       el.innerHTML = `<p class="doc-otras">¿Compraste con otra de nuestras empresas? ` +
-        otras.map(([, v]) => `<a href="?empresa=${esc(v.ruc)}">${esc(v.razon_social)}</a>`).join(' · ') +
+        otras.map(([, v]) => `<a href="?empresa=${esc(v.ruc)}">${esc(v.razon_social)}</a>`).join(' o ') +
         `<br><span class="muted">Mira tu boleta o factura: ahí figura con cuál contrataste.</span></p>`;
     });
 
     // Pie común
     document.querySelectorAll('[data-doc-foot]').forEach(el => {
       el.innerHTML = `
-        <p><strong>${esc(E.razon_social || '')}</strong>${E.ruc ? ` · RUC ${esc(E.ruc)}` : ''}${E.domicilio ? `<br>${esc(E.domicilio)}` : ''}
-        <br>WhatsApp ${esc(E.whatsapp_visible || '')}${E.telefono ? ` · Tel. ${esc(E.telefono)}` : ''}${E.email ? ` · ${esc(E.email)}` : ''}</p>
+        <p><strong>${esc(E.razon_social || '')}</strong>${E.ruc ? `, RUC ${esc(E.ruc)}` : ''}${E.domicilio ? `<br>${esc(E.domicilio)}` : ''}
+        <br>WhatsApp ${esc(E.whatsapp_visible || '')}${E.telefono ? `<br>Teléfono ${esc(E.telefono)}` : ''}${E.email ? `<br>${esc(E.email)}` : ''}</p>
         <nav>
           <a href="index.html">Volver al portal</a>
           <a href="privacidad.html">Privacidad</a>

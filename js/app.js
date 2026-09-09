@@ -1335,7 +1335,7 @@ function ceviPanelHTML() {
       <div class="cevi-avatar grande" aria-hidden="true">🐂</div>
       <div class="cevi-head-txt">
         <strong>${esc(ag.nombre || 'CeVi')}</strong>
-        <span>Tu asistente C4V · responde al instante</span>
+        <span>Tu asistente C4V, responde al instante</span>
       </div>
       <button type="button" class="cevi-voz" id="ceviVoz" aria-pressed="${ceviVozActiva()}" aria-label="Leer respuestas en voz alta">${ceviVozActiva() ? CEVI_ICONOS.audioOn : CEVI_ICONOS.audioOff}</button>
       <button type="button" class="cevi-close" id="ceviClose" aria-label="Cerrar">×</button>
@@ -1616,8 +1616,8 @@ function pintarPieLegal() {
   if (faltan.length) console.warn('[C4V] Faltan datos del proveedor en config.js:', faltan.join(', '));
   pie.innerHTML = `
     <p class="pie-empresa">
-      <strong>${esc(e.razon_social || '')}</strong>${e.ruc ? ` · RUC ${esc(e.ruc)}` : ''}${e.domicilio ? `<br>${esc(e.domicilio)}` : ''}
-      <br>Atención al cliente: WhatsApp ${esc(e.whatsapp_visible || CFG.whatsapp?.visible || '')}${e.telefono ? ` · Tel. ${esc(e.telefono)}` : ''}${e.email ? ` · ${esc(e.email)}` : ''}
+      <strong>${esc(e.razon_social || '')}</strong>${e.ruc ? `, RUC ${esc(e.ruc)}` : ''}${e.domicilio ? `<br>${esc(e.domicilio)}` : ''}
+      <br>Atención al cliente: WhatsApp ${esc(e.whatsapp_visible || CFG.whatsapp?.visible || '')}${e.telefono ? `<br>Teléfono ${esc(e.telefono)}` : ''}${e.email ? `<br>${esc(e.email)}` : ''}
     </p>
     <nav aria-label="Información legal">
       <a href="libro-reclamaciones.html" class="pie-lr" target="_blank" rel="noopener">📕 Libro de Reclamaciones</a>

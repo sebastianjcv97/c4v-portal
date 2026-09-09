@@ -14,7 +14,7 @@
   if (sel) {
     sel.innerHTML = '<option value="">Elige una…</option>' +
       Object.entries(registro).map(([k, v]) =>
-        `<option value="${L.esc(k)}" ${v.ruc === L.empresa.ruc ? 'selected' : ''}>${L.esc(v.razon_social)} — RUC ${L.esc(v.ruc)}</option>`).join('');
+        `<option value="${L.esc(k)}" ${v.ruc === L.empresa.ruc ? 'selected' : ''}>${L.esc(v.razon_social)}, RUC ${L.esc(v.ruc)}</option>`).join('');
   }
 
   // Tipo: reclamo o queja (la distinción es obligatoria)

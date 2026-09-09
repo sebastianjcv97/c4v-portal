@@ -6,26 +6,26 @@
 .doc{max-width:760px;margin:0 auto;padding:40px 24px 72px}
 .doc h1{font-size:clamp(28px,5vw,38px);margin:0 0 6px}
 .doc .doc-meta{color:var(--muted);font-size:14px;margin:0 0 32px;padding-bottom:20px;border-bottom:2px solid var(--line)}
-.doc h2{font-family:var(--slab);font-size:21px;margin:36px 0 12px;scroll-margin-top:80px}
-.doc h3{font-family:var(--slab);font-size:16px;margin:22px 0 8px}
-.doc p,.doc li{font-size:16px;line-height:1.7;color:var(--ink)}
+.doc h2{font-family:var(--slab);font-size:var(--t-xl);margin:36px 0 12px;scroll-margin-top:80px}
+.doc h3{font-family:var(--slab);font-size:var(--t-md);margin:22px 0 8px}
+.doc p,.doc li{font-size:var(--t-md);line-height:1.7;color:var(--tinta)}
 .doc p{margin:0 0 14px}
 .doc ul,.doc ol{margin:0 0 16px;padding-left:22px}
 .doc li{margin-bottom:8px}
 .doc .card{margin:20px 0}
-.doc table{width:100%;border-collapse:collapse;margin:16px 0;font-size:14.5px}
+.doc table{width:100%;border-collapse:collapse;margin:16px 0;font-size:var(--t-sm)}
 .doc th,.doc td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
 .doc th{background:var(--alt);font-weight:700}
 .doc-toc{background:var(--alt);border-radius:var(--r-lg);padding:18px 22px;margin-bottom:32px}
 .doc-toc strong{display:block;margin-bottom:8px;font-family:var(--slab)}
 .doc-toc ol{margin:0;padding-left:20px;columns:2;column-gap:24px}
-.doc-toc li{margin-bottom:5px;font-size:14.5px}
+.doc-toc li{margin-bottom:5px;font-size:var(--t-sm)}
 .doc-toc a{color:var(--red-cta);text-decoration:none}
 .doc-toc a:hover{text-decoration:underline}
 .doc-falta{background:var(--red-50);border:2px solid var(--red);color:var(--red-dark);border-radius:var(--r);padding:14px 16px;margin:0 0 24px;font-weight:700}
 .doc-dest{background:var(--alt);border-left:4px solid var(--red);border-radius:0 var(--r) var(--r) 0;padding:14px 18px;margin:20px 0}
 .doc-dest p:last-child{margin-bottom:0}
-.doc-foot{border-top:1px solid var(--line);margin-top:48px;padding-top:22px;font-size:13.5px;color:var(--muted)}
+.doc-foot{border-top:1px solid var(--regla);margin-top:48px;padding-top:22px;font-size:var(--t-sm);color:var(--grafito)}
 .doc-foot nav{display:flex;gap:16px;flex-wrap:wrap;margin-top:10px}
 .doc-foot a{color:var(--muted);text-decoration:underline}
 /* Libro de Reclamaciones */
@@ -39,7 +39,7 @@
 .lr-tipo span{font-size:13px;color:var(--muted);line-height:1.45}
 .lr-form .field{margin-bottom:16px}
 .lr-form label{display:block;font-weight:700;font-size:14.5px;margin-bottom:6px}
-.lr-form .req{color:var(--red)}
+.lr-form .req{color:var(--rojo-tinta)}
 .lr-form input,.lr-form textarea,.lr-form select{width:100%;padding:12px 14px;border:2px solid var(--line);border-radius:var(--r);font-family:var(--sans);font-size:16px;background:var(--bg);color:var(--ink)}
 .lr-form input:focus,.lr-form textarea:focus,.lr-form select:focus{outline:none;border-color:var(--red)}
 .lr-form textarea{min-height:120px;resize:vertical}
@@ -71,21 +71,15 @@
      border-radius:var(--r-lg);margin:var(--s-4) auto var(--s-6);
      box-shadow:0 1px 2px rgba(20,20,20,.05),0 8px 28px rgba(20,20,20,.06)}
 .doc .doc-meta{color:var(--grafito);border-bottom-color:var(--regla)}
-.doc h2{font-size:var(--t-xl)}
-.doc h3{font-size:var(--t-md)}
-.doc p,.doc li{font-size:var(--t-md);color:var(--tinta)}
-.doc table{font-size:var(--t-sm)}
 .doc th,.doc td{border-bottom-color:var(--regla)}
 .doc th{background:transparent;border-bottom:2px solid var(--tinta)}
 /* El índice y los destacados pasan de "gris sobre gris" a regla sobre papel. */
 .doc-toc{background:transparent;border:1px solid var(--regla);padding:var(--s-4) var(--s-5)}
-.doc-toc li{font-size:var(--t-sm)}
 .doc-toc a{color:var(--rojo-tinta)}
 .doc-dest{background:transparent;border-left:3px solid var(--rojo-tinta);border-radius:0}
 .doc-otras{background:transparent;border:1px solid var(--regla)}
 .lr-consulta{background:transparent;border:1px solid var(--regla)}
 .lr-tipo,.lr-form input,.lr-form textarea,.lr-form select{background:var(--papel)}
-.doc-foot{border-top-color:var(--regla);color:var(--grafito);font-size:var(--t-sm)}
 .doc-foot a{color:var(--grafito)}
 @media(max-width:620px){
   .doc{margin:0;border-radius:0;box-shadow:none;padding:var(--s-5) var(--s-4) 56px}
