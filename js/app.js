@@ -79,6 +79,15 @@ async function loadDB() {
   try {
     const db = await apiGet(`${VERIF.apiBase || ''}/api/bootstrap`);
     state.offline = false;
+    /* Mientras la verificación real sigue apagada, el portal está en modo
+       demostración. El backend no devuelve clientes de ejemplo, y hace bien,
+       así que aquí se añaden SOLO esos para poder entrar y probar.
+       Los trabajos y los tickets NO se tocan: se quedan como los da el backend,
+       vacíos, para que nadie vea un encargo inventado como si fuera real. */
+    if (!VERIF.activo && !(db.clientes || []).length && window.__SEED__) {
+      db.clientes = JSON.parse(JSON.stringify(window.__SEED__.clientes || []));
+      db.maquinas = JSON.parse(JSON.stringify(window.__SEED__.maquinas || []));
+    }
     return db;
   } catch { state.offline = true; return JSON.parse(JSON.stringify(window.__SEED__)); }
 }
