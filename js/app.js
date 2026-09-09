@@ -1005,10 +1005,10 @@ async function entrar(cliente) {
    Si el servidor no exige código (OTP apagado), el paso A entra directo. */
 const otpEstado = { solicitud: null, pais: null, sondeo: null, directo: false, faltan: 0 };
 
-/* En modo demostración no hay backend ni WhatsApp, pero el recorrido tiene que
-   verse igual que el de verdad: documento, teléfono, código. El código se
-   muestra en pantalla y se dice claramente que es una prueba. */
-const demoAcceso = { cliente: null, codigo: null };
+/* Estado del acceso, que ahora ocurre entero en una sola pantalla.
+   En modo demostración no hay backend ni WhatsApp, pero el recorrido se ve
+   igual; el código sale en pantalla y se dice que es una prueba. */
+const acceso = { fase: 'doc', solicitud: null, pais: null, cliente: null, codigo: null };
 
 const PISTA_DIGITOS = 3;
 const PREFIJOS_PAIS = { PE: '51', EC: '593', BO: '591', CL: '56', CO: '57' };
@@ -1053,6 +1053,8 @@ function faseAcceso(fase) {
   $('#gateTel').disabled = fase !== 'tel';
   $('#gateTipos').classList.toggle('bloqueado', fase !== 'doc');
   $('#gatePaises').classList.toggle('bloqueado', fase !== 'doc');
+  // Ya aceptó: las casillas dejan de ocupar sitio en las pantallas siguientes.
+  $('#gateConsentimiento').hidden = fase !== 'doc';
 
   btn.textContent = { doc: 'Ingresar', tel: 'Enviarme el código', cod: 'Entrar' }[fase];
   const foco = { tel: '#gateTel', cod: '#gateCod' }[fase];
@@ -1136,8 +1138,7 @@ function initGate() {
     const info = docInfo(pais, tipo);
     docLabel.textContent = info.doc;
     inp.placeholder = info.ej;
-    const ej = $('#gateDocEjTxt'); if (ej) ej.textContent = info.ej;
-    tiposBox.querySelectorAll('button').forEach(b => b.setAttribute('aria-checked', b.dataset.tipo === tipo));
+      tiposBox.querySelectorAll('button').forEach(b => b.setAttribute('aria-checked', b.dataset.tipo === tipo));
     paisesBox.querySelectorAll('button').forEach(b => b.setAttribute('aria-checked', b.dataset.pais === pais));
     if (enfocar) inp.focus();
   };
@@ -1184,102 +1185,138 @@ function initGate() {
     btn.setAttribute('aria-busy', on ? 'true' : 'false');
   };
 
-  // ---- Paso A: identificar ----
-  form.onsubmit = async (e) => {
-    e.preventDefault(); limpiarError(inp, err);
+  /* ── Un solo formulario, tres momentos ──────────────────────────────────
+     doc → identificamos y pedimos el WhatsApp completo
+     tel → lo comparamos con Odoo y sale el código
+     cod → lo validamos y entra
+     Todo en la misma pantalla; el botón dice en cada momento lo que hace. */
+  const telInp = $('#gateTel'), codInp = $('#gateCod');
+  telInp.oninput = () => { telInp.value = telInp.value.replace(/[^\d+ ]/g, ''); };
+  codInp.oninput = () => { codInp.value = codInp.value.replace(/\D/g, '').slice(0, 6); };
+
+  const fallo = (campo, html) => {
+    setCargando(false);
+    err.hidden = false; err.innerHTML = html;
+    marcarError(campo, err);
+  };
+
+  async function pasoDocumento() {
     const doc = normalizarDoc(inp.value);
     const info = docInfo(pais, tipo);
-
-    if (!acepta.checked) {
-      err.hidden = false;
-      err.innerHTML = 'Marca la casilla para aceptar los Términos y la Política de Privacidad.';
-      marcarError(acepta, err); return;
-    }
-    if (doc.length < 5) {
-      err.hidden = false;
-      err.innerHTML = `Ese ${esc(info.doc)} está incompleto. Escríbelo completo, así: ${esc(info.ej)}.`;
-      marcarError(inp, err); return;
-    }
+    if (!acepta.checked) return fallo(acepta, 'Marca la casilla para aceptar los Términos y la Política de Privacidad.');
+    if (doc.length < 5) return fallo(inp, `Ese ${esc(info.doc)} está incompleto. Escríbelo completo, así: ${esc(info.ej)}.`);
 
     setCargando(true);
     let res;
     try { res = await verificarCliente({ pais, doc }); }
     catch { res = { estado: 'error' }; }
 
-    // El servidor pide segundo factor: solicitamos el código.
+    const noAparece = `Ese ${esc(info.doc)} no nos aparece. Revisa que sea el mismo con el que compraste tu máquina. Si está bien, <a href="${waLink('Hola, mi documento no aparece en la Central de Postventa C4V. ¿Me ayudan?')}" target="_blank" rel="noopener">escríbenos por WhatsApp</a>.`;
+    const sinTelefono = `No tenemos tu WhatsApp registrado, así que no podemos enviarte el código. <a href="${waLink('Hola, quiero entrar a mi Central de Postventa C4V pero no tienen mi WhatsApp registrado. ¿Me ayudan?')}" target="_blank" rel="noopener">Escríbenos y lo actualizamos</a> en un minuto.`;
+
+    // Demostración: el mismo recorrido, sin backend ni WhatsApp.
+    if (res.estado === 'ok' && modoDemo() && res.cliente?.telefono) {
+      acceso.cliente = res.cliente; acceso.codigo = null; acceso.solicitud = 'DEMO'; acceso.pais = pais;
+      $('#gateTelCola').textContent = numeroNacional(res.cliente.telefono, pais).slice(-PISTA_DIGITOS);
+      setCargando(false); faseAcceso('tel');
+      apiPost('/api/consentimiento', { doc, pais, acepta_datos: true, acepta_marketing: marketing.checked }).catch(() => {});
+      return;
+    }
+    if (res.estado === 'ok') { setCargando(false); entrar(res.cliente); return; }
+
     if (res.estado === 'otp') {
-      /* Primero el camino directo: le pedimos la pista de su teléfono. Si el
-         canal de envío no está configurado, se cae al camino de siempre (que
-         el cliente escriba primero por WhatsApp), que sí funciona hoy. */
       const d = await apiPost('/api/acceso/identificar', { pais, doc });
-      if (d.status === 429) {
-        setCargando(false);
-        err.hidden = false;
-        err.innerHTML = 'Probaste demasiadas veces seguidas. Espera cinco minutos y vuelve a intentar.';
-        marcarError(inp, err); return;
-      }
+      if (d.status === 429) return fallo(inp, 'Probaste demasiadas veces seguidas. Espera cinco minutos y vuelve a intentar.');
       if (d.json.ok && d.json.canal === 'whatsapp') {
-        setCargando(false);
+        acceso.solicitud = d.json.solicitud; acceso.pais = pais; acceso.cliente = null; acceso.codigo = null;
+        $('#gateTelCola').textContent = d.json.pista || '';
+        setCargando(false); faseAcceso('tel');
         apiPost('/api/consentimiento', { doc, pais, acepta_datos: true, acepta_marketing: marketing.checked }).catch(() => {});
-        pintarPasoTel(d.json, pais);
         return;
       }
-      if (d.json.ok === false && d.json.motivo === 'sin_telefono') {
-        setCargando(false);
-        err.hidden = false;
-        err.innerHTML = `No tenemos tu WhatsApp registrado, así que no podemos enviarte el código. <a href="${waLink('Hola, quiero entrar a mi Central de Postventa C4V pero no tienen mi WhatsApp registrado. ¿Me ayudan?')}" target="_blank" rel="noopener">Escríbenos y lo actualizamos</a> en un minuto.`;
-        marcarError(inp, err); return;
-      }
+      if (d.json.ok === false && d.json.motivo === 'sin_telefono') return fallo(inp, sinTelefono);
 
+      // El canal de envío no está listo: se usa el camino de siempre.
       const r = await apiPost('/api/otp/solicitar', { pais, doc });
       setCargando(false);
-      if (r.status === 429) { err.hidden = false; err.innerHTML = 'Pediste muchos códigos seguidos. Espera 5 minutos y vuelve a intentar.'; return; }
+      if (r.status === 429) return fallo(inp, 'Pediste muchos códigos seguidos. Espera 5 minutos y vuelve a intentar.');
       if (r.json.ok) {
-        // Deja constancia del consentimiento junto al acceso.
-        // Constancia del consentimiento: qué aceptó, cuándo y desde dónde.
         apiPost('/api/consentimiento', { doc, pais, acepta_datos: true, acepta_marketing: marketing.checked }).catch(() => {});
         pintarPasoOtp(r.json, pais);
         return;
       }
-      err.hidden = false;
-      err.innerHTML = r.json.motivo === 'sin_telefono'
-        ? `No tenemos tu WhatsApp registrado, así que no podemos enviarte el código. <a href="${waLink('Hola, quiero entrar a mi Central de Postventa C4V pero no tienen mi WhatsApp registrado. ¿Me ayudan?')}" target="_blank" rel="noopener">Escríbenos y lo actualizamos</a> en un minuto.`
-        : `Ese ${esc(info.doc)} no nos aparece. Revisa que sea el mismo con el que compraste tu máquina. Si está bien, <a href="${waLink('Hola, mi documento no aparece en la Central de Postventa C4V. ¿Me ayudan?')}" target="_blank" rel="noopener">escríbenos por WhatsApp</a>.`;
-      marcarError(inp, err); return;
+      return fallo(inp, r.json.motivo === 'sin_telefono' ? sinTelefono : noAparece);
     }
 
+    if (res.estado === 'limite') return fallo(inp, `Demasiados intentos. Espera 5 minutos y vuelve a probar, o <a href="${waLink('Hola, no puedo entrar a mi Central de Postventa C4V. ¿Me ayudan?')}" target="_blank" rel="noopener">escríbenos por WhatsApp</a>.`);
+    if (res.estado === 'error') return fallo(inp, `No pudimos conectarnos. Revisa tu internet y vuelve a intentar. Si sigue igual, <a href="${waLink('Hola, no puedo entrar a mi Central de Postventa C4V (error al verificar). ¿Me ayudan?')}" target="_blank" rel="noopener">escríbenos por WhatsApp</a>.`);
+    return fallo(inp, noAparece);
+  }
+
+  async function pasoTelefono() {
+    const escrito = digitosDe(telInp.value);
+    if (escrito.length < 7) return fallo(telInp, 'Escribe tu número de WhatsApp completo.');
+
+    // Demostración: se compara aquí mismo y el código sale en pantalla.
+    if (acceso.solicitud === 'DEMO') {
+      const suyo = numeroNacional(acceso.cliente?.telefono, acceso.pais);
+      if (escrito.slice(-8) !== suyo.slice(-8)) return fallo(telInp, 'Ese número no coincide con el que tenemos.');
+      acceso.codigo = String(Math.floor(100000 + Math.random() * 900000));
+      $('#gateCodAviso').innerHTML = `<strong>Modo de prueba:</strong> todavía no enviamos WhatsApp, así que tu código es <strong class="codigo-prueba">${esc(acceso.codigo)}</strong>.`;
+      faseAcceso('cod'); return;
+    }
+
+    setCargando(true, 'Enviando…');
+    const r = await apiPost('/api/acceso/enviar', { solicitud: acceso.solicitud, telefono: escrito });
     setCargando(false);
-    if (res.estado === 'ok') {
-      /* En demostración también se recorre el segundo factor, para poder verlo
-         y probarlo. Con verificación real esto lo decide el servidor. */
-      if (modoDemo() && res.cliente?.telefono) {
-        apiPost('/api/consentimiento', { doc, pais, acepta_datos: true, acepta_marketing: marketing.checked }).catch(() => {});
-        demoAcceso.cliente = res.cliente;
-        demoAcceso.codigo = null;
-        const nac = numeroNacional(res.cliente.telefono, pais);
-        pintarPasoTel({
-          solicitud: 'DEMO',
-          pista: nac.slice(-PISTA_DIGITOS),
-          largo: nac.length,
-          faltan: Math.max(0, nac.length - PISTA_DIGITOS)
-        }, pais);
-        return;
-      }
-      entrar(res.cliente); return;
+    if (r.json.ok) {
+      $('#gateCodAviso').textContent = `Te lo mandamos por WhatsApp al número que termina en ${r.json.pista || ''}. Llega en unos segundos.`;
+      faseAcceso('cod'); return;
+    }
+    const motivos = {
+      telefono_no_coincide: `Ese número no coincide con el que tenemos.${r.json.restantes ? ` Te queda${r.json.restantes === 1 ? '' : 'n'} ${r.json.restantes} intento${r.json.restantes === 1 ? '' : 's'}.` : ''}`,
+      demasiados_intentos: 'Se acabaron los intentos. Recarga la página y empieza otra vez.',
+      solicitud_vencida: 'Pasó demasiado tiempo. Recarga la página y empieza otra vez.',
+      no_configurado: 'Todavía no podemos enviarte el código por WhatsApp. Escríbenos y te ayudamos a entrar.',
+      fallo_envio: 'No pudimos enviarte el código ahora. Prueba otra vez en un minuto.'
+    };
+    return fallo(telInp, motivos[r.json.motivo] || (r.status === 429 ? 'Probaste demasiadas veces. Espera unos minutos.' : 'No pudimos enviarte el código. Inténtalo de nuevo.'));
+  }
+
+  async function pasoCodigo() {
+    const codigo = codInp.value.replace(/\D/g, '');
+    if (codigo.length !== 6) return fallo(codInp, 'Escribe los 6 números que te llegaron.');
+
+    if (acceso.solicitud === 'DEMO') {
+      if (codigo === acceso.codigo) { entrar(acceso.cliente); return; }
+      return fallo(codInp, 'Ese código no es el correcto.');
     }
 
-    err.hidden = false;
-    if (res.estado === 'limite') {
-      err.innerHTML = `Demasiados intentos. Espera 5 minutos y vuelve a probar, o <a href="${waLink('Hola, no puedo entrar a mi Central de Postventa C4V. ¿Me ayudan?')}" target="_blank" rel="noopener">escríbenos por WhatsApp</a>.`;
-    } else if (res.estado === 'error') {
-      err.innerHTML = `No pudimos conectarnos. Revisa tu internet y vuelve a intentar. Si sigue igual, o <a href="${waLink('Hola, no puedo entrar a mi Central de Postventa C4V (error al verificar). ¿Me ayudan?')}" target="_blank" rel="noopener">escríbenos por WhatsApp</a>.`;
-    } else {
-      err.innerHTML = `Ese ${esc(info.doc)} no nos aparece. Revisa que sea el mismo con el que compraste tu máquina. Si está bien, <a href="${waLink('Hola, mi documento no aparece en la Central de Postventa C4V. ¿Me ayudan?')}" target="_blank" rel="noopener">escríbenos por WhatsApp</a> y te ayudamos.`;
+    setCargando(true, 'Entrando…');
+    const r = await apiPost('/api/otp/verificar', { solicitud: acceso.solicitud, codigo });
+    setCargando(false);
+    if (r.json.ok && r.json.token) {
+      guardarSesion({ token: r.json.token, pais: acceso.pais });
+      entrar(inyectarCliente(r.json.cliente, r.json.maquinas));
+      return;
     }
-    marcarError(inp, err);
+    const motivos = {
+      incorrecto: `Ese código no es el correcto.${r.json.intentos_restantes ? ` Te queda${r.json.intentos_restantes === 1 ? '' : 'n'} ${r.json.intentos_restantes}.` : ''}`,
+      vencido: 'Tu código venció. Recarga la página y pide uno nuevo.',
+      usado: 'Ese código ya se usó. Recarga la página y pide uno nuevo.',
+      bloqueado: 'Demasiados intentos. Recarga la página y empieza otra vez.'
+    };
+    return fallo(codInp, motivos[r.json.motivo] || 'No pudimos revisar tu código. Inténtalo otra vez.');
+  }
+
+  form.onsubmit = (e) => {
+    e.preventDefault(); limpiarError(inp, err); limpiarError(telInp, err); limpiarError(codInp, err);
+    if (acceso.fase === 'tel') return pasoTelefono();
+    if (acceso.fase === 'cod') return pasoCodigo();
+    return pasoDocumento();
   };
 
-  // ---- Paso B: validar el código ----
+  // ---- Camino de siempre (el cliente escribe primero por WhatsApp) ----
   const otpForm = $('#otpForm'), otpErr = $('#otpError'), otpInp = $('#otpCodigo');
   otpInp.oninput = () => { otpInp.value = otpInp.value.replace(/\D/g, '').slice(0, 6); };
   otpForm.onsubmit = async (e) => {
@@ -1290,7 +1327,6 @@ function initGate() {
     boton.disabled = true; boton.textContent = 'Entrando…';
     const r = await apiPost('/api/otp/verificar', { solicitud: otpEstado.solicitud, codigo });
     boton.disabled = false; boton.textContent = 'Entrar';
-
     if (r.json.ok && r.json.token) {
       detenerSondeo();
       guardarSesion({ token: r.json.token, pais: otpEstado.pais });
@@ -1298,107 +1334,18 @@ function initGate() {
       return;
     }
     otpErr.hidden = false;
-    const motivos = {
-      incorrecto: `Ese código no es el correcto.${r.json.intentos_restantes ? ` Te queda${r.json.intentos_restantes === 1 ? '' : 'n'} ${r.json.intentos_restantes} intento${r.json.intentos_restantes === 1 ? '' : 's'}.` : ''} Revisa el último mensaje de WhatsApp.`,
-      vencido: 'Tu código venció. Toca «Volver y cambiar mi documento» y pide uno nuevo.',
+    otpErr.textContent = {
+      incorrecto: `Ese código no es el correcto.${r.json.intentos_restantes ? ` Te queda${r.json.intentos_restantes === 1 ? '' : 'n'} ${r.json.intentos_restantes}.` : ''}`,
+      vencido: 'Tu código venció. Vuelve y pide uno nuevo.',
       usado: 'Ese código ya se usó. Pide uno nuevo.',
-      bloqueado: 'Demasiados intentos. Toca «Volver y cambiar mi documento» y pide otro código.',
-      no_enviado: 'Todavía no nos llegó tu mensaje de WhatsApp. Envíalo y espera unos segundos.',
-      invalido: 'Revisa el código e inténtalo de nuevo.'
-    };
-    otpErr.textContent = motivos[r.json.motivo] || (r.status === 429
-      ? 'Demasiados intentos. Espera unos minutos.'
-      : 'No pudimos revisar tu código. Vuelve a intentarlo en unos segundos.');
+      bloqueado: 'Demasiados intentos. Vuelve y pide otro código.',
+      no_enviado: 'Todavía no nos llegó tu mensaje de WhatsApp. Envíalo y espera unos segundos.'
+    }[r.json.motivo] || 'No pudimos revisar tu código. Vuelve a intentarlo.';
     marcarError(otpInp, otpErr);
   };
-
   $('#otpVolver').onclick = () => { detenerSondeo(); otpEstado.solicitud = null; mostrarPaso('doc'); inp.focus(); };
 
-  // ---- Paso: completar el teléfono y pedir el código ----
-  const telForm = $('#telForm'), telInp = $('#telInput'), telErr = $('#telError'), telBtn = $('#telBtn');
-  telInp.oninput = () => { telInp.value = telInp.value.replace(/\D/g, ''); };
-  $('#telVolver').onclick = () => { otpEstado.solicitud = null; mostrarPaso('doc'); inp.focus(); };
-
-  const pedirCodigo = async () => {
-    limpiarError(telInp, telErr);
-    const faltan = otpEstado.faltan || 0;
-    const escrito = telInp.value.replace(/\D/g, '');
-    if (escrito.length < Math.max(3, faltan - 2)) {
-      telErr.hidden = false;
-      telErr.textContent = faltan
-        ? `Faltan dígitos. Escribe los ${faltan} que van antes de ${$('#telCola').textContent}.`
-        : 'Escribe tu número completo, sin los últimos cuatro.';
-      marcarError(telInp, telErr); return;
-    }
-    telBtn.disabled = true; telBtn.textContent = 'Enviando…';
-    const completo = escrito + ($('#telCola').textContent || '');
-
-    if (otpEstado.solicitud === 'DEMO') {
-      // Demostración: se compara aquí mismo, sin servidor ni WhatsApp.
-      const suyo = numeroNacional(demoAcceso.cliente?.telefono, otpEstado.pais);
-      telBtn.disabled = false; telBtn.textContent = 'Enviarme el código';
-      if (digitosDe(completo).slice(-8) !== suyo.slice(-8)) {
-        telErr.hidden = false;
-        telErr.textContent = 'Ese número no coincide con el que tenemos.';
-        marcarError(telInp, telErr); return;
-      }
-      demoAcceso.codigo = String(Math.floor(100000 + Math.random() * 900000));
-      pintarPasoCodigo(suyo.slice(-PISTA_DIGITOS), demoAcceso.codigo);
-      return;
-    }
-
-    const r = await apiPost('/api/acceso/enviar', { solicitud: otpEstado.solicitud, telefono: completo });
-    telBtn.disabled = false; telBtn.textContent = 'Enviarme el código';
-
-    if (r.json.ok) { pintarPasoCodigo(r.json.pista || $('#telCola').textContent); return; }
-
-    telErr.hidden = false;
-    const motivos = {
-      telefono_no_coincide: `Ese número no coincide con el que tenemos. ${r.json.restantes ? `Te queda${r.json.restantes === 1 ? '' : 'n'} ${r.json.restantes} intento${r.json.restantes === 1 ? '' : 's'}.` : 'Se acabaron los intentos: vuelve a empezar.'}`,
-      demasiados_intentos: 'Se acabaron los intentos. Toca «Volver y cambiar mi documento» y empieza otra vez.',
-      solicitud_vencida: 'Pasó demasiado tiempo. Toca «Volver y cambiar mi documento» y empieza otra vez.',
-      no_configurado: 'Todavía no podemos enviarte el código por WhatsApp. Escríbenos y te ayudamos a entrar.',
-      fallo_envio: 'No pudimos enviarte el código en este momento. Prueba otra vez en un minuto.'
-    };
-    telErr.innerHTML = motivos[r.json.motivo]
-      || (r.status === 429 ? 'Probaste demasiadas veces. Espera unos minutos.' : 'No pudimos enviarte el código. Inténtalo de nuevo.');
-    marcarError(telInp, telErr);
-  };
-  telForm.onsubmit = (e) => { e.preventDefault(); pedirCodigo(); };
-
-  // ---- Paso: el código, cuando lo enviamos nosotros ----
-  const dirForm = $('#otpFormDirecto'), dirInp = $('#otpCodigoDirecto'), dirErr = $('#otpErrorDirecto');
-  dirInp.oninput = () => { dirInp.value = dirInp.value.replace(/\D/g, '').slice(0, 6); };
-  dirForm.onsubmit = async (e) => {
-    e.preventDefault(); limpiarError(dirInp, dirErr);
-    const codigo = dirInp.value.replace(/\D/g, '');
-    if (codigo.length !== 6) { dirErr.hidden = false; dirErr.textContent = 'Escribe los 6 números que te llegaron por WhatsApp.'; marcarError(dirInp, dirErr); return; }
-    const boton = dirForm.querySelector('button');
-    boton.disabled = true; boton.textContent = 'Entrando…';
-    if (otpEstado.solicitud === 'DEMO') {
-      boton.disabled = false; boton.textContent = 'Entrar';
-      if (codigo === demoAcceso.codigo) { entrar(demoAcceso.cliente); return; }
-      dirErr.hidden = false; dirErr.textContent = 'Ese código no es el correcto.';
-      marcarError(dirInp, dirErr); return;
-    }
-    const r = await apiPost('/api/otp/verificar', { solicitud: otpEstado.solicitud, codigo });
-    boton.disabled = false; boton.textContent = 'Entrar';
-    if (r.json.ok && r.json.token) {
-      guardarSesion({ token: r.json.token, pais: otpEstado.pais });
-      entrar(inyectarCliente(r.json.cliente, r.json.maquinas));
-      return;
-    }
-    dirErr.hidden = false;
-    dirErr.textContent = {
-      incorrecto: `Ese código no es el correcto.${r.json.intentos_restantes ? ` Te queda${r.json.intentos_restantes === 1 ? '' : 'n'} ${r.json.intentos_restantes}.` : ''}`,
-      vencido: 'Tu código venció. Pide uno nuevo.',
-      usado: 'Ese código ya se usó. Pide uno nuevo.',
-      bloqueado: 'Demasiados intentos. Vuelve a empezar.'
-    }[r.json.motivo] || 'No pudimos revisar tu código. Inténtalo otra vez.';
-    marcarError(dirInp, dirErr);
-  };
-  $('#otpReenviar').onclick = () => { mostrarPaso('tel'); };
-
+  faseAcceso('doc');
   mostrarPaso('doc');
   gate.hidden = false; $('#app').hidden = true;
 }

@@ -368,9 +368,9 @@ tr:last-child td{border-bottom:none}
 .gate-paises{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
 .gate-paises button{font-size:11.5px;padding:8px 2px;min-height:58px}
 .gate-paises button .bandera{font-size:20px}
-#gateDoc{flex:1;min-width:0;background:var(--black-2);color:var(--on-black);border:1px solid var(--black-3);border-radius:var(--r);padding:16px;font-size:22px;font-weight:700;letter-spacing:1px;font-family:var(--sans)}
-#gateDoc:focus{outline:2px solid var(--red);outline-offset:1px;border-color:var(--red)}
-#gateDoc::placeholder{color:#6a6a6a;font-weight:400;letter-spacing:0}
+#gateDoc,#gateTel,#gateCod{flex:1;min-width:0;background:var(--black-2);color:var(--on-black);border:1px solid var(--black-3);border-radius:var(--r);padding:16px;font-size:22px;font-weight:700;letter-spacing:1px;font-family:var(--sans)}
+#gateDoc:focus,#gateTel:focus,#gateCod:focus{outline:2px solid var(--red);outline-offset:1px;border-color:var(--red)}
+#gateDoc::placeholder,#gateTel::placeholder,#gateCod::placeholder{color:#6a6a6a;font-weight:400;letter-spacing:0}
 .gate-paso strong#gateDocLabel{color:#FF8A8F}
 
 /* ---------- Quizzes interactivos (Academia) ---------- */
@@ -774,7 +774,7 @@ button.big{width:100%;text-align:left;font-family:inherit;cursor:pointer}
 /* El borde de los campos no se distinguía del fondo (1.23:1). Ahora 4.5:1. */
 .field input,.field textarea,.field select,
 .otp-form input,.correo-form input,.cevi-form input{border-color:#767676}
-#gateDoc,.gate-tipos button,.gate-paises button{border-color:#5a5a5a}
+#gateDoc,#gateTel,#gateCod,.gate-tipos button,.gate-paises button{border-color:#5a5a5a}
 
 /* Elegido vs no elegido se distinguía solo por color. */
 .gate-paises button[aria-checked="true"],
@@ -1264,3 +1264,11 @@ body{background:var(--mesa)}
   .paso-pie{flex-direction:row-reverse;justify-content:flex-end;align-items:center;gap:var(--s-4)}
   .paso-pie .btn{width:auto;min-width:240px}
 }
+
+/* ---------- Acceso: un solo formulario que crece ----------
+   Lo ya respondido se queda a la vista, apagado, para que la persona vea dónde
+   está sin cambiar de pantalla. */
+#gateTelBloque,#gateCodBloque{margin-top:22px;padding-top:20px;border-top:1px solid var(--black-3)}
+.gate-tipos.bloqueado,.gate-paises.bloqueado{opacity:.45;pointer-events:none}
+#gateDoc:disabled,#gateTel:disabled{opacity:.5;cursor:default}
+.codigo-prueba{font-size:20px;letter-spacing:.14em;color:#FF8A8F;display:inline-block;margin-top:4px}
