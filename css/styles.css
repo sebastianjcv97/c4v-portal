@@ -1230,9 +1230,6 @@ body{background:var(--mesa)}
   .menu a{flex:1;justify-content:center;padding:6px 8px;font-size:var(--t-xs)}
 }
 /* El código de prueba se ve distinto para que nadie lo confunda con el real. */
-.otp-estado.es-prueba{background:var(--black-2);border:1px dashed #767676;border-radius:var(--r);
-  padding:12px 14px;margin-top:12px;color:var(--on-black)}
-.codigo-prueba{font-size:22px;letter-spacing:.14em;color:#FF8A8F;display:inline-block;margin-top:4px}
 
 /* ════════════════════════════════════════════════════════════════════════
    LA GUÍA, UNA PANTALLA POR PASO
@@ -1271,7 +1268,6 @@ body{background:var(--mesa)}
 #gateTelBloque,#gateCodBloque{margin-top:22px;padding-top:20px;border-top:1px solid var(--black-3)}
 .gate-tipos.bloqueado,.gate-paises.bloqueado{opacity:.45;pointer-events:none}
 #gateDoc:disabled,#gateTel:disabled{opacity:.5;cursor:default}
-.codigo-prueba{font-size:20px;letter-spacing:.14em;color:#FF8A8F;display:inline-block;margin-top:4px}
 /* El teléfono lleva un icono a la izquierda y la pista como marca de agua. */
 .gate-row-tel{display:flex;align-items:center;gap:10px;background:var(--black-2);
   border:1px solid #5a5a5a;border-radius:var(--r);padding:0 14px}
@@ -1343,4 +1339,20 @@ body{background:var(--mesa)}
   .topbar{padding:8px 16px 6px;gap:4px}
   .menu a{flex-direction:column;gap:2px;padding:4px;line-height:1.1;min-height:46px}
   .menu-ic .ic{width:20px;height:20px}
+}
+
+/* ---------- La barra del paso, siempre a la vista ----------
+   Estaba al final de la página: en el paso 1, la lista de compras la empujaba
+   457px por debajo de lo que se ve, así que había que recorrer todo para
+   encontrar cómo avanzar. Ahora se pega abajo y acompaña el scroll. */
+.paso-nav{position:sticky;bottom:0;z-index:6;margin-top:28px;
+  padding:12px 0 calc(12px + env(safe-area-inset-bottom));
+  background:var(--papel);border-top:1px solid var(--regla)}
+/* Hueco para que la barra no tape la última línea del paso. */
+.paso .lista:last-of-type,.paso-cuerpo{margin-bottom:0}
+/* Con la barra abajo, el botón de CeVi se sube para no pisarla. */
+.app[data-ruta="preparacion"] .ai-btn{bottom:calc(84px + env(safe-area-inset-bottom))}
+@media(max-width:620px){
+  .paso-nav{padding:10px 0 calc(10px + env(safe-area-inset-bottom))}
+  .app[data-ruta="preparacion"] .ai-btn{bottom:calc(78px + env(safe-area-inset-bottom))}
 }

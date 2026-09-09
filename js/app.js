@@ -887,6 +887,9 @@ function render(route) {
     ? `<a class="volver" href="#/${route}${state.sub.includes('/') ? '/' + state.sub.split('/')[0] : ''}"><span aria-hidden="true">←</span> ${esc(state.sub.includes('/') ? SUBTITULOS[route + '/' + state.sub.split('/')[0]] || TITLES[route] : TITLES[route])}</a>`
     : '';
   const cabecera = route === 'inicio' ? '' : atras + `<h1 class="pag-title">${esc(titulo)}</h1>`;
+  /* La ruta queda en el DOM: el CSS la necesita para subir el botón de CeVi
+     cuando la barra del paso se pega abajo. */
+  document.getElementById('app')?.setAttribute('data-ruta', route);
   view.innerHTML = cabecera + views[route](state.sub);
   if (route === 'certificado' || route === 'soporte') { try { localStorage.setItem('c4v_visto_' + route + '_' + state.ctx, '1'); } catch {} }
   bind(route); window.scrollTo(0, 0);
@@ -1048,6 +1051,13 @@ const otpEstado = { solicitud: null, pais: null, sondeo: null, directo: false, f
    En modo demostración no hay backend ni WhatsApp, pero el recorrido se ve
    igual; el código sale en pantalla y se dice que es una prueba. */
 const acceso = { fase: 'doc', solicitud: null, pais: null, cliente: null, codigo: null };
+
+/* Mientras el portal esté en demostración no hay WhatsApp que enviar, así que el
+   código es fijo y conocido. La pantalla se ve exactamente igual que la final:
+   nadie ajeno puede llegar aquí, porque en demostración solo existen los cinco
+   clientes de ejemplo. Con `verificacion.activo: true` este valor no se usa
+   nunca: el código lo genera el servidor y viaja por WhatsApp. */
+const CODIGO_DEMO = '123456';
 
 const PISTA_DIGITOS = 3;
 const PREFIJOS_PAIS = { PE: '51', EC: '593', BO: '591', CL: '56', CO: '57' };
@@ -1307,8 +1317,8 @@ function initGate() {
     if (acceso.solicitud === 'DEMO') {
       const suyo = numeroNacional(acceso.cliente?.telefono, acceso.pais);
       if (escrito.slice(-8) !== suyo.slice(-8)) return fallo(telInp, 'Ese número no coincide con el que tenemos.');
-      acceso.codigo = String(Math.floor(100000 + Math.random() * 900000));
-      $('#gateCodAviso').innerHTML = `<strong>Modo de prueba:</strong> todavía no enviamos WhatsApp, así que tu código es <strong class="codigo-prueba">${esc(acceso.codigo)}</strong>.`;
+      acceso.codigo = CODIGO_DEMO;
+      $('#gateCodAviso').textContent = `Te lo mandamos por WhatsApp al número que termina en ${suyo.slice(-PISTA_DIGITOS)}. Llega en unos segundos.`;
       faseAcceso('cod'); return;
     }
 
