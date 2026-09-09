@@ -102,7 +102,7 @@ window.__SEED__ = {
     { id: "lead-1004", titulo: "Personalización de polos con vinil", descripcion: "Corte de vinil textil para 80 polos personalizados.", material: "Vinil textil", cantidad: "80 polos", pais: "BO", ciudad: "Santa Cruz", contacto: "Pao Estampados", telefono: "+591 7 555 6677", estado: "tomado", tomado_por: "cli-003", fecha: "2026-06-25" }
   ],
   tickets: [
-    { id: "TK-2001", tipo: "soporte", serie: "C4V-6040-PE-00123", pais: "PE", asunto: "El láser corta más débil de un lado", descripcion: "El corte no es parejo, del lado derecho queda sin cortar.", estado: "en_proceso", prioridad: "alta", asignado_a: "Josafat", cliente_id: "cli-001", fecha: "2026-06-27" },
+    { id: "TK-2001", tipo: "soporte", serie: "C4V-6040-PE-00123", pais: "PE", asunto: "El láser corta más débil de un lado", descripcion: "El corte no sale parejo: de un lado queda sin cortar.", estado: "en_proceso", prioridad: "alta", asignado_a: "Josafat", cliente_id: "cli-001", fecha: "2026-06-27" },
     { id: "TK-2002", tipo: "comercial", serie: "C4V-9060-EC-00210", pais: "EC", asunto: "Cotización de tubo láser de repuesto", descripcion: "Quiero cotizar un tubo de repuesto y filtros.", estado: "nuevo", prioridad: "media", asignado_a: "Equipo Comercial C4V Ecuador", cliente_id: "cli-002", fecha: "2026-06-29" }
   ],
 
@@ -340,70 +340,120 @@ window.__SEED__ = {
   },
 
   preparacion: {
-    intro: "Prepara tu espacio ANTES de que llegue tu máquina y podrás cortar el mismo día. Estas 5 cosas marcan la diferencia: electricidad 220V dedicada, pozo a tierra, extracción de humos, agua destilada y un espacio adecuado.",
-    /* img: foto REAL (assets/prep/) extraída de las guías técnicas C4V */
+    intro: "Prepara tu espacio antes de que llegue tu máquina y podrás cortar el mismo día. Aquí está todo: qué pedirle a tu asesor, qué comprar y qué dejar listo.",
+    /* img: foto REAL (assets/prep/) extraída de las guías técnicas C4V.
+       `guia`: enlaza el paso con su explicación (clave de `guias`).
+       `tiempo`: lo que tarda en la vida real — es lo que hace que el cliente
+       llame al electricista hoy y no la próxima semana.
+       `opcional`: el paso puede no aplicar a su modelo. */
+    paso0: {
+      titulo: "Antes de comprar nada, pide estos datos",
+      intro: "Cinco datos dependen del modelo exacto que compraste. Sin ellos no puedes comprar el estabilizador ni el extractor, ni medir bien la puerta. Pídelos ahora: te los pasamos el mismo día.",
+      datos: [
+        "Amperaje y grosor del cable que necesita tu máquina",
+        "Qué capacidad de estabilizador comprar",
+        "Diámetro del tubo del extractor",
+        "Si tu modelo usa compresor de aire",
+        "Cuánto mide y pesa la caja en la que llega"
+      ]
+    },
     checklist: [
-      { id: "a1", t: "Paso 1 · Mide las puertas y el recorrido: ¿pasa la máquina embalada hasta su lugar?" },
-      { id: "a2", t: "Paso 2 · Ten un plan B de acceso: quitar el marco de la puerta o una ruta alterna" },
-      { id: "e8", t: "Paso 3 · Elige el espacio: piso nivelado, limpio y bien ventilado", img: "e8-espacio.jpg" },
-      { id: "e1", t: "Paso 4 · Instala 220V en circuito independiente, con su propia llave termomagnética", img: "e1-electrico.jpg" },
-      { id: "e2", t: "Paso 5 · Verifica el pozo a tierra con un electricista (obligatorio)", img: "e2-tierra.jpg" },
-      { id: "e3", t: "Paso 6 · Coloca el estabilizador de voltaje entre el enchufe y la máquina", img: "e3-estabilizador.jpg" },
-      { id: "e4", t: "Paso 7 · Conecta el extractor de humos con salida al exterior", img: "e4-extractor.jpg" },
-      { id: "e6", t: "Paso 8 · Prepara el compresor / aire (si tu modelo lo usa)", img: "e6-aire.jpg" },
-      { id: "e5", t: "Paso 9 · Llena el enfriador (chiller) con agua destilada (15–25 °C)", img: "e5-chiller.jpg" },
-      { id: "e7", t: "Paso 10 · Deja un extintor a la mano" },
-      { id: "e9", t: "Paso 11 · Ten los consumibles: agua destilada, aceite 3-EN-1, alcohol isopropílico y microfibra", img: "e9-consumibles.jpg" },
-      { id: "e10", t: "Paso 12 · Consigue material de prueba: MDF o acrílico (NUNCA PVC)", img: "e10-material.jpg" }
+      { id: "a1", t: "Mide las puertas y el camino: ¿pasa la máquina embalada hasta su lugar?", guia: "acceso", tiempo: "20 minutos" },
+      { id: "a2", t: "Ten un plan B de acceso: quitar el marco de la puerta o una ruta alterna", guia: "acceso" },
+      { id: "e8", t: "Elige el lugar: piso firme y nivelado, limpio y ventilado, con espacio para trabajar alrededor", img: "e8-espacio.jpg", guia: "espacio" },
+      { id: "e1", t: "Instala el punto de 220V solo para la máquina, con su propia llave en el tablero", img: "e1-electrico.jpg", guia: "electrico", tiempo: "2 a 5 días · llama hoy al electricista" },
+      { id: "e2", t: "Haz que un electricista verifique el pozo a tierra (es obligatorio)", img: "e2-tierra.jpg", guia: "tierra", tiempo: "3 a 10 días si hay que construirlo" },
+      { id: "e3", t: "Compra el estabilizador con la capacidad que te dio tu asesor", img: "e3-estabilizador.jpg", guia: "electrico" },
+      { id: "e4", t: "Conecta el extractor de humo con salida a la calle", img: "e4-extractor.jpg", guia: "extraccion", tiempo: "1 a 2 días" },
+      { id: "e6", t: "Consigue la compresora de aire", img: "e6-aire.jpg", guia: "aire", opcional: "Solo si tu ficha dice que tu modelo la lleva. Si dice que no, salta este paso." },
+      { id: "e11", t: "Ten lista una computadora con Windows para el programa de diseño C4VTech", guia: "computadora" },
+      { id: "e7", t: "Deja un extintor a la mano" },
+      { id: "e9", t: "Compra los consumibles: agua destilada, aceite 3-EN-1, alcohol isopropílico y paño de microfibra", img: "e9-consumibles.jpg" },
+      { id: "e10", t: "Consigue material para tus primeras pruebas: MDF o acrílico (nunca PVC)", img: "e10-material.jpg" }
     ],
     acceso: {
       titulo: "¿Por dónde va a entrar tu máquina?",
-      intro: "La máquina llega embalada en una caja grande. Antes de que llegue, asegúrate de que PUEDA entrar hasta su lugar — es el detalle que más entregas complica y el más fácil de prevenir.",
+      intro: "Llega embalada en una caja grande. Antes de que salga de nuestro almacén, asegúrate de que PUEDA entrar hasta su lugar. Es lo que más complica las entregas y lo más fácil de prevenir.",
       pasos: [
-        "Mide el ANCHO y ALTO de todas las puertas del recorrido: entrada, pasillos y la puerta del ambiente final.",
-        "¿Sube por escalera o ascensor? Mide el tramo más angosto y los giros (descansos de escalera).",
-        "Compara con las medidas de tu máquina embalada — tu asesor te las confirma según tu modelo.",
+        "Mide el ancho y el alto de todas las puertas del camino: la entrada, los pasillos y la puerta del ambiente final.",
+        "¿Sube por escalera o ascensor? Mide el tramo más angosto y los giros (los descansos de la escalera).",
+        "Compara con las medidas de tu caja — pídeselas a tu asesor (es uno de los cinco datos de arriba).",
         "¿Falta poco? El marco de la puerta se puede retirar y ganas varios centímetros.",
         "¿Dudas? Mándanos fotos y medidas por WhatsApp y lo revisamos contigo antes del despacho."
       ]
     },
     kit: {
       titulo: "Kit de mantenimiento — lo esencial",
-      nota: "Tenlo listo desde el día 1. Es lo que tu máquina necesita para vivir muchos años:",
+      nota: "Tenlo listo desde el primer día. Es lo que tu máquina necesita para durar años:",
       items: [
-        { t: "Galón de agua para baterías (2)", d: "Desionizada/destilada, p. ej. Vistony — para el chiller" },
-        { t: "Botella de alcohol isopropílico", d: "Limpieza de lente y espejos", img: "kit-espejo.jpg" },
-        { t: "Aceite 3-EN-1", d: "Lubricación de rieles" },
-        { t: "Trapo de microfibra o algodón", d: "Que no suelte pelusa", img: "kit-pano.jpg" },
-        { t: "Hisopos de alta calidad", d: "Marca reconocida — para la lente", img: "e9-consumibles.jpg" }
+        { t: "2 galones de agua destilada", d: "También la venden como «agua desionizada» o «agua para baterías». Es para el enfriador." },
+        { t: "Alcohol isopropílico", d: "Para limpiar el lente y los espejos", img: "kit-espejo.jpg" },
+        { t: "Aceite 3-EN-1", d: "Para lubricar los rieles" },
+        { t: "Paño de microfibra o algodón", d: "Que no suelte pelusa", img: "kit-pano.jpg" },
+        { t: "Hisopos de buena calidad", d: "De marca conocida — para el lente", img: "e9-consumibles.jpg" }
       ]
     },
     guias: [
-      { key: "electrico", titulo: "Instalación eléctrica (220V dedicado)", pasos: ["Voltaje: 220V.", "Circuito independiente: su propia llave termomagnética, sin compartir con otros equipos.", "Estabilizador entre el tomacorriente y la máquina.", "Amperaje y calibre de cable según tu modelo — tu asesor te confirma."] },
-      { key: "tierra", titulo: "Pozo a tierra (obligatorio)", pasos: ["No es opcional: te protege a ti, a la electrónica y a la calidad del corte.", "Cable de tierra real conectado a un pozo (no basta el tercer agujero del enchufe).", "Que un electricista lo verifique y mida antes de la llegada. Es la causa #1 de retrasos."] },
-      { key: "extraccion", titulo: "Extracción de humos", pasos: ["El corte genera humo y gases: el extractor es obligatorio.", "Conectado y dirigido al EXTERIOR.", "Nunca operes sin extractor. Mantén el ambiente ventilado."] },
-      { key: "chiller", titulo: "Agua del enfriador (chiller)", pasos: ["SOLO agua destilada, nunca del grifo (los minerales dañan el tubo).", "Temperatura ideal: 15–25 °C.", "Nunca enciendas el láser sin el chiller: el tubo se quema.", "Cambia el agua cada 2–4 semanas."] },
-      { key: "secuencia", titulo: "Secuencia de encendido", pasos: ["Siempre en orden: 1) Estabilizador → 2) Chiller → 3) Máquina.", "El chiller arranca antes que el láser, siempre.", "Si el panel muestra alarma, apaga todo y revisa conexiones."] },
-      { key: "seguridad", titulo: "Seguridad", pasos: ["Extintor cercano y accesible.", "Nunca cortes PVC ni clorados: liberan gas tóxico.", "Opera con la puerta cerrada (tiene protección UV).", "No dejes la máquina operando sin supervisión."] }
+      { key: "electrico", titulo: "El punto de 220V", pasos: ["Voltaje: 220V.", "Solo para la máquina: tiene que tener su propia llave en el tablero (llave térmica), sin compartirla con otros equipos. Si la comparte, se cae la corriente y falla el corte.", "El estabilizador va entre el enchufe y la máquina.", "El amperaje y el grosor del cable dependen de tu modelo: es uno de los cinco datos que te pasa tu asesor."] },
+      { key: "tierra", titulo: "El pozo a tierra", pasos: ["Es un cable enterrado que desvía la electricidad que se escapa. Protege tres cosas: a ti, a la electrónica de la máquina y a la calidad del corte.", "No basta el tercer agujero del enchufe: tiene que haber un pozo de verdad conectado.", "Que un electricista lo revise y lo mida antes de que llegue la máquina.", "Si no lo tienes, hay que construirlo y toma días. Es lo que más retrasa las instalaciones: empieza por aquí."] },
+      { key: "extraccion", titulo: "El extractor de humo", pasos: ["Al cortar sale humo y gases: el extractor es obligatorio.", "Tiene que estar conectado y sacar el humo hacia la calle, no a otro ambiente.", "Nunca cortes sin el extractor prendido.", "El diámetro del tubo depende de tu modelo: te lo pasa tu asesor."] },
+      { key: "chiller", titulo: "El agua del enfriador", pasos: ["El enfriador (o chiller) mantiene frío el tubo del láser. VIENE INCLUIDO con tu máquina: no tienes que comprarlo. Lo único que compras es el agua.", "SOLO agua destilada, nunca del caño: los minerales tapan y arruinan el tubo.", "La temperatura ideal está entre 15 y 25 °C.", "Nunca enciendas el láser sin el enfriador prendido: el tubo se quema en segundos.", "Cambia el agua cada 2 a 4 semanas."] },
+      { key: "espacio", titulo: "El lugar donde va", pasos: ["Piso firme y nivelado: si el piso está desparejo, el corte sale disparejo.", "Deja espacio libre alrededor para abrir la tapa, cargar el material y hacer mantenimiento.", "Ambiente limpio, seco y sin mucho polvo: el polvo ensucia el lente y los rieles.", "Que no le llegue lluvia, humedad fuerte ni sol directo.", "La medida exacta que ocupa tu modelo te la pasa tu asesor."] },
+      { key: "aire", titulo: "La compresora de aire", pasos: ["Algunos modelos soplan aire en la punta del láser mientras cortan: apaga la llamita, saca el humo y evita que el borde salga quemado (se llama «air assist»).", "¿Tu modelo la lleva? Está en la ficha que te pasa tu asesor.", "Si la lleva, necesitas una compresora chica, del tipo que se usa para pintar o inflar llantas.", "Ten en cuenta que hace ruido: prende y apaga sola cada pocos minutos. Si vas a instalar en casa, ponla lejos o dentro de un mueble."] },
+      { key: "computadora", titulo: "La computadora", pasos: ["Necesitas una computadora o laptop con Windows para usar C4VTech, el programa con el que diseñas y envías los cortes.", "Se conecta a la máquina por cable de red o por USB.", "No necesita ser potente, pero sí tener Windows y un puerto libre.", "El curso de C4VTech en tu Academia te muestra la instalación paso a paso."] },
+      { key: "acceso", titulo: "El día que llega", pasos: ["Ten a alguien que ayude a bajarla y moverla: pesa bastante y viene en una caja grande.", "Deja libre el camino desde la puerta hasta su lugar.", "Antes de encenderla revisa: extractor conectado, enfriador con agua destilada, corriente y tierra listas.", "Enciende siempre en este orden: 1) estabilizador, 2) enfriador, 3) máquina.", "Tu ingeniero C4V te acompaña hasta tu primer corte."] }
     ],
+    seguridad: {
+      titulo: "Tres cosas que no puedes saltarte",
+      puntos: [
+        { t: "Nunca cortes PVC", d: "Suelta gas cloro: te hace daño a ti y corroe la máquina por dentro." },
+        { t: "Nunca enciendas el láser sin el enfriador", d: "El tubo se sobrecalienta y se quema. Es la falla más cara y la más fácil de evitar." },
+        { t: "Nunca la dejes cortando sola", d: "Quédate cerca mientras trabaja. Ten el extintor a la mano." }
+      ]
+    },
     compras: [
-      { item: "Agua destilada", para: "Refrigeración del tubo (chiller)", spec: "Destilada (ej. Vistony), 1–2 galones" },
-      { item: "Aceite 3-EN-1", para: "Lubricación de rieles", spec: "Marca 3-EN-UNO (no WD-40 ni de motor)" },
-      { item: "Alcohol isopropílico + microfibra", para: "Limpieza de lente y espejos", spec: "Isopropílico; microfibra sin pelusa" },
-      { item: "Estabilizador de voltaje", para: "Proteger la electrónica", spec: "Capacidad según modelo — C4V confirma" },
-      { item: "Extractor + ducto", para: "Sacar humo al exterior", spec: "Diámetro según la boca de la máquina" },
-      { item: "Extintor", para: "Seguridad", spec: "Polvo químico seco o CO₂" }
+      { item: "Agua destilada (2 galones)", para: "Para el enfriador que viene con tu máquina", spec: "En las tiendas se pide como «agua de batería». Sirve destilada o desmineralizada. NO sirve la del caño, hervida, mineral ni de mesa: los minerales arruinan el tubo y eso no lo cubre la garantía", donde: "Grifos, lubricentros y ferreterías" },
+      { item: "Aceite 3-EN-1", para: "Para lubricar los rieles", spec: "Marca 3-EN-UNO. No sirve el WD-40 ni el aceite de motor o de cocina", donde: "Ferreterías" },
+      { item: "Alcohol isopropílico al 99%", para: "Para limpiar el lente y los espejos", spec: "Al 99%, NO el alcohol medicinal de farmacia al 70%: ese tiene agua y mancha el lente. Súmale hisopos de buena marca (los baratos sueltan pelusa) y un paño de microfibra", donde: "Tiendas de electrónica" },
+      { item: "Estabilizador de voltaje", para: "Para que los cortes de luz no dañen la electrónica", spec: "⚠️ La capacidad depende de tu modelo — pídesela a tu asesor antes de comprarlo", donde: "Tiendas de electricidad" },
+      { item: "Extractor, manguera y abrazaderas", para: "Para sacar el humo a la calle", spec: "Son tres cosas: el motor extractor, la manguera flexible de aluminio (compra un metro de más) y dos abrazaderas para sujetarla. ⚠️ El diámetro depende de tu modelo: pídeselo a tu asesor", donde: "Ferreterías y tiendas de ventilación" },
+      { item: "Extintor", para: "Por seguridad", spec: "De polvo químico seco tipo ABC. Cuélgalo a la vista, cerca de la máquina", donde: "Tiendas de seguridad industrial" },
+      { item: "Mesa o base firme", para: "Para apoyar la máquina", spec: "Solo si el piso no está parejo o quieres trabajarla a otra altura. Tiene que aguantar el peso de tu modelo (pídeselo a tu asesor)", donde: "Carpinterías o tiendas de muebles" },
+      { item: "Material de prueba", para: "Para tus primeros cortes", spec: "MDF o acrílico de 3 mm. Nunca PVC", donde: "Madereras y tiendas de acrílico" }
     ],
-    modelos: "6040 / 9060 (compactas): instalación remota con acompañamiento hasta tu primer corte. 13100–18120 (grandes): instalación presencial incluida; requieren más espacio y mayor capacidad eléctrica. Tu asesor confirma los específicos de tu modelo.",
-    /* Según tu modelo — fuente: P2/GUIA_PREINSTALACION.md §9. Solo datos confirmados;
-       lo que depende del equipo exacto va en `confirma` y lo cierra el asesor. */
+    /* Según el modelo: solo se muestra el grupo del cliente. Los modelos son los
+       que están realmente en catálogo (no existen 13100 ni 18120). */
     porModelo: {
       grupos: [
-        { key: "compacta", nombre: "Compactas", modelos: ["4040", "6040", "6090", "9060"], instalacion: "Remota, con acompañamiento del ingeniero hasta tu primer corte", foco: "Eléctrico 220V dedicado · pozo a tierra · chiller con agua destilada", nota: "Viene casi lista para conectar." },
-        { key: "grande", nombre: "Grandes / industriales", modelos: ["1390", "1610", "13100", "18120"], instalacion: "Presencial, incluida (el ingeniero la instala)", foco: "Más espacio · mayor capacidad eléctrica y de extracción", nota: "Tu asesor confirma si requiere alimentación trifásica." }
-      ],
-      confirma: ["Amperaje y calibre del cable", "Capacidad del estabilizador", "Diámetro del ducto de extracción", "Si usa compresor (air assist)", "Medidas y peso de la máquina embalada"]
-    }
+        { key: "compacta", nombre: "Compactas", modelos: ["4040", "6040", "6090", "9060"],
+          instalacion: "Remota: un ingeniero te acompaña por videollamada hasta tu primer corte",
+          foco: "Enfócate en el punto de 220V, el pozo a tierra y el agua destilada",
+          nota: "Viene casi lista para conectar." },
+        { key: "grande", nombre: "Grandes", modelos: ["1390", "1610"],
+          instalacion: "Presencial e incluida: el ingeniero va a tu taller a instalarla",
+          foco: "Necesitas más espacio y más capacidad eléctrica que una compacta",
+          nota: "Pregúntale a tu asesor si tu modelo necesita conexión industrial de tres cables (trifásica)." }
+      ]
+    },
+
+    /* El día de la entrega es otra lista: son cosas que solo se pueden hacer
+       CON la máquina delante. Mezclarlas con la preparación hacía que el cliente
+       marcara como hecho algo que no había hecho. */
+    diaEntrega: {
+      titulo: "El día que llega tu máquina",
+      intro: "Estos pasos son para el día de la entrega, no antes. Tu ingeniero C4V te acompaña hasta tu primer corte.",
+      pasos: [
+        { t: "Ten a dos personas para bajarla y moverla, y el camino despejado." },
+        { t: "Antes de firmar, revisa la caja por fuera. Si llegó golpeada, anótalo en la guía de remisión y tómale fotos: después ya no se puede reclamar.", destacado: true },
+        { t: "Ubícala en su sitio y nivélala." },
+        { t: "Conecta: enchufe → estabilizador → máquina. La manguera del humo al extractor. Las dos mangueras de agua al enfriador." },
+        { t: "Llena el enfriador con agua destilada hasta la marca. La pantalla debe indicar entre 15 y 25 °C.", destacado: true },
+        { t: "Enciende en este orden, siempre: primero el estabilizador, después el enfriador, y al final la máquina." },
+        { t: "Revisa que la pantalla de control encienda sin alarmas. Si hay alguna, apaga todo y llámanos." },
+        { t: "Tu primer corte, acompañado por tu ingeniero." }
+      ]
+    },
+    modelos: "Las máquinas compactas (4040, 6040, 6090 y 9060) se instalan de forma remota: un ingeniero te acompaña por videollamada hasta tu primer corte. Las grandes (1390 y 1610) llevan instalación presencial incluida y necesitan más espacio y más capacidad eléctrica."
   },
 
   faqs: [
@@ -442,11 +492,11 @@ window.__SEED__ = {
   ],
 
   soporte_guia: [
-    { titulo: "El láser perdió fuerza / no corta como antes", sintoma: "No atraviesa el material o el corte salió débil.", causas: "Lente sucia (los residuos absorben energía) o tubo agotado.", accion: "Limpia la lente con alcohol isopropílico y haz un corte de prueba. Si sigue débil, abre un ticket: puede ser el tubo." },
-    { titulo: "Encendí la máquina sin el chiller", sintoma: "El láser operó sin enfriamiento.", causas: "El tubo se sobrecalienta y puede quemarse.", accion: "Apaga de inmediato. Si estuvo activo >10 s sin enfriamiento, NO la uses y abre ticket URGENTE." },
-    { titulo: "El panel Ruida muestra una alarma", sintoma: "Alarma, pitido o código en el panel.", causas: "Conexión eléctrica, chiller o conexiones de agua.", accion: "Apaga; revisa conexiones, chiller y agua; reinicia. Si persiste, abre ticket con el código exacto." },
-    { titulo: "El chiller se sobrecalienta (>25 °C)", sintoma: "La temperatura sube del rango 15-25 °C.", causas: "Nivel de agua bajo, agua del grifo o uso prolongado.", accion: "Apaga y deja enfriar; verifica nivel y que sea agua destilada; cámbiala si toca. Si persiste, abre ticket." },
-    { titulo: "Se intentó cortar PVC u otro material no permitido", sintoma: "Olor fuerte, humo anormal o residuos.", causas: "El PVC genera gas cloro tóxico que daña la máquina.", accion: "Detén, ventila y limpia residuos. Usa solo materiales permitidos. Si hay fallas posteriores, abre ticket indicando el material." }
+    { titulo: "El láser perdió fuerza / no corta como antes", sintoma: "No atraviesa el material o el corte salió débil.", causas: "Lente sucia (los residuos absorben energía) o tubo agotado.", accion: "Limpia el lente con alcohol isopropílico y haz un corte de prueba. Si sigue débil, escríbenos por WhatsApp: puede ser el tubo." },
+    { titulo: "Encendí la máquina sin el chiller", sintoma: "El láser operó sin enfriamiento.", causas: "El tubo se sobrecalienta y puede quemarse.", accion: "Apaga de inmediato. Si estuvo prendido más de 10 segundos sin enfriamiento, NO la uses y escríbenos por WhatsApp ahora mismo." },
+    { titulo: "El panel Ruida muestra una alarma", sintoma: "Alarma, pitido o código en el panel.", causas: "Conexión eléctrica, chiller o conexiones de agua.", accion: "Apaga, revisa las conexiones, el enfriador y el agua, y vuelve a encender. Si sigue igual, escríbenos por WhatsApp con el código que ves en la pantalla." },
+    { titulo: "El chiller se sobrecalienta (>25 °C)", sintoma: "La temperatura sube del rango 15-25 °C.", causas: "Nivel de agua bajo, agua del grifo o uso prolongado.", accion: "Apaga y deja que enfríe. Revisa el nivel y que sea agua destilada, y cámbiala si toca. Si sigue igual, escríbenos por WhatsApp." },
+    { titulo: "Se intentó cortar PVC u otro material no permitido", sintoma: "Olor fuerte, humo anormal o residuos.", causas: "El PVC genera gas cloro tóxico que daña la máquina.", accion: "Detén el corte, ventila el ambiente y limpia los residuos. Usa solo materiales permitidos. Si después falla algo, escríbenos por WhatsApp y dinos qué material era." }
   ],
 
   plantillas: {

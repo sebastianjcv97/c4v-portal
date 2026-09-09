@@ -1,7 +1,7 @@
 /* Central de Postventa C4V — SPA (vanilla JS). Sin login (modo local).
    Funciona con servidor (npm start) o en modo DEMO con datos embebidos (data.js). */
 
-const state = { db: null, ctx: null, offline: false, telefono: null };
+const state = { db: null, ctx: null, offline: false, telefono: null, guiaPorCorreo: null };
 const CFG = window.C4V_CONFIG || {};
 const SESION_DIAS = 90; // A5: sesión recordada 90 días en el dispositivo
 
@@ -26,13 +26,13 @@ function nombrePropio(s) {
 }
 const primerNombre = (s) => nombrePropio(s).split(' ')[0];
 const PAISES = { PE: '🇵🇪 Perú', EC: '🇪🇨 Ecuador', BO: '🇧🇴 Bolivia', CL: '🇨🇱 Chile', CO: '🇨🇴 Colombia' };
-const ESTADO_TICKET = { nuevo: 'Recibido', asignado: 'Asignado', en_proceso: 'En atención', resuelto: 'Resuelto', cerrado: 'Cerrado' };
 
 function toast(msg) {
   let t = $('#toast');
   if (!t) { t = document.createElement('div'); t.id = 'toast'; t.className = 'toast'; t.setAttribute('role', 'status'); t.setAttribute('aria-live', 'polite'); document.body.appendChild(t); }
   t.textContent = msg; t.classList.add('show');
-  clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('show'), 2600);
+  // El tiempo crece con el largo: 2,6 s no alcanzan para leer quince palabras.
+  clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('show'), Math.max(4000, msg.length * 80));
 }
 async function apiGet(url) { const r = await fetch(url); if (!r.ok) throw new Error('http'); return r.json(); }
 function currentClient() { return state.db.clientes.find(c => c.id === state.ctx) || null; }
@@ -45,11 +45,15 @@ function prepEstado() {
   try { n = lista.filter(c => localStorage.getItem('c4v_prep_' + state.ctx + '_' + c.id) === '1').length; } catch {}
   return { n, total: lista.length, completo: lista.length > 0 && n === lista.length };
 }
-/* Introducción OBLIGATORIA para clientes nuevos.
-   Mientras el checklist de preparación NO esté completo, SOLO estas rutas son accesibles.
-   Es una lista blanca (default-deny): cualquier otra sección — actual o futura —
-   queda bloqueada y redirige a #/preparacion. Así la guía no se puede saltar. */
-const RUTAS_LIBRES = ['inicio', 'preparacion', 'soporte', 'certificado'];
+/* La preparación es lo primero que ve un cliente nuevo (ver `entrar`), y su avance
+   manda en la pantalla de inicio. Pero YA NO BLOQUEA el resto del portal:
+   - El curso «Bienvenida» y las preguntas frecuentes explican justamente cómo
+     prepararse, y estaban detrás del candado que exigía estar preparado.
+   - Preparar el espacio depende de un electricista y toma una o dos semanas.
+     Apagar el portal durante ese tiempo dejaba solo al cliente justo cuando más
+     dudas tiene.
+   - Marcar 12 casillas no prueba nada: quien tiene prisa las marca en 8 segundos.
+   Se acompaña, no se castiga. */
 
 // ---------- data layer ----------
 async function loadDB() {
@@ -75,10 +79,6 @@ async function cargarDatosVivos() {
     if (r.ok) { const j = await r.json(); if (Array.isArray(j)) { state.db.leads = j; state.leadsCargados = true; } }
   } catch { /* sin conexión: la Bolsa se muestra vacía y lo explica */ }
 }
-function assignTicket(db, tipo, pais) {
-  if (tipo === 'soporte') { const t = db.tecnicos.find(x => x.pais === pais && !x.nombre.includes('Por asignar')); return t ? t.nombre : `Soporte ${pais}`; }
-  const c = db.comercial.find(x => x.pais === pais); return c ? c.nombre : `Comercial ${pais}`;
-}
 async function mutate(onlineCall, offlineFn) {
   if (!state.offline) { await onlineCall(); state.db = await loadDB(); } else { offlineFn(state.db); }
 }
@@ -86,10 +86,6 @@ const post = (url, body) => fetch(url, { method: 'POST', headers: { 'Content-Typ
 // Id = max existente + 1 (length+1 repetiría ids si se borra un registro).
 const nextId = (prefix, list, base) => prefix + '-' + (list.reduce((m, x) => { const n = parseInt(String(x.id || '').replace(/^\D+/, ''), 10); return n > m ? n : m; }, base) + 1);
 const actions = {
-  crearTicket: (p) => mutate(() => post('/api/tickets', p),
-    (db) => db.tickets.unshift({ id: nextId('TK', db.tickets, 2000), tipo: p.tipo, serie: p.serie || '', pais: p.pais || 'PE', asunto: p.asunto, descripcion: p.descripcion || '', estado: 'nuevo', prioridad: p.prioridad || 'media', asignado_a: assignTicket(db, p.tipo, p.pais || 'PE'), cliente_id: p.cliente_id || null, fecha: today() })),
-  estadoTicket: (id, estado) => mutate(() => post(`/api/tickets/${id}/estado`, { estado }),
-    (db) => { const t = db.tickets.find(x => x.id === id); if (t) t.estado = estado; }),
   crearLead: (p) => mutate(() => post('/api/leads', p),
     (db) => db.leads.unshift({ id: nextId('lead', db.leads, 1000), titulo: p.titulo, descripcion: p.descripcion || '', material: p.material || '', cantidad: p.cantidad || '', pais: p.pais || 'PE', ciudad: p.ciudad || '', contacto: p.contacto, telefono: p.telefono || '', estado: 'nuevo', tomado_por: null, fecha: today() })),
   tomarLead: (id, cliente_id) => mutate(() => post(`/api/leads/${id}/tomar`, { cliente_id }),
@@ -101,8 +97,12 @@ const actions = {
 // visitado, quiz del curso de bienvenida aprobado (≥70%), soporte visitado.
 // Cuando los 4 están hechos, la ruta desaparece: el inicio queda limpio.
 function rutaInicio(d, cli, prep, certificada) {
-  const pasos = d.onboarding || [];
+  let pasos = d.onboarding || [];
   if (!pasos.length || !cli) return '';
+  // Mientras la preparación está pendiente, la tarjeta negra de arriba ya lo dice
+  // todo: repetirlo aquí era el mismo "Paso 1" dos veces con dos diseños.
+  if (!prep.completo) pasos = pasos.filter(x => x.id !== 'espacio');
+  if (!pasos.length) return '';
   const ls = (k) => { try { return localStorage.getItem(k); } catch { return null; } };
   const quizC0 = () => { try { return Object.keys(localStorage).some(k => k.startsWith('c4v_quiz_' + state.ctx + '_c0-') && (JSON.parse(localStorage.getItem(k) || '{}').p || 0) >= 70); } catch { return false; } };
   const hecho = { espacio: prep.completo, cert: !!ls('c4v_visto_certificado_' + state.ctx), curso: quizC0(), soporte: !!ls('c4v_visto_soporte_' + state.ctx) };
@@ -110,8 +110,8 @@ function rutaInicio(d, cli, prep, certificada) {
   if (n === pasos.length) return '';
   const bloqueado = (p) => p.id !== 'espacio' && p.id !== 'cert' && p.id !== 'soporte' && !prep.completo;
   return `
-      <section class="ruta-inicio" aria-label="Tu ruta de inicio">
-        <div class="ruta-head"><strong>Tu ruta de inicio</strong><span>${n} de ${pasos.length}</span></div>
+      <section class="ruta-inicio" aria-label="Tus primeros pasos">
+        <div class="ruta-head"><strong>Tus primeros pasos</strong><span>${n} de ${pasos.length}</span></div>
         ${!certificada && d.bienvenida?.mensaje ? `<p class="ruta-msg">${esc(d.bienvenida.mensaje)}</p>` : ''}
         <ol class="ruta-pasos">${pasos.map(p => `<li class="${hecho[p.id] ? 'done' : bloqueado(p) ? 'lock' : ''}">
           <a href="${bloqueado(p) ? '#/preparacion' : esc(p.href)}">
@@ -131,7 +131,7 @@ const THUMBS = {
   arquitectura: '<path d="M70 58 L100 40 L130 58"/><rect x="76" y="58" width="48" height="30"/><line x1="94" y1="58" x2="94" y2="88"/><line x1="112" y1="58" x2="112" y2="88"/>',
   regalos: '<rect x="64" y="46" width="72" height="44" rx="4"/><line x1="100" y1="46" x2="100" y2="90"/><path d="M100 46 c-10 -14 -24 -2 0 0 c10 -14 24 -2 0 0"/>'
 };
-const thumb = (key) => `<svg viewBox="0 0 200 120" fill="none" stroke="#F9020B" stroke-width="3" stroke-linejoin="round" stroke-linecap="round">${THUMBS[key] || '<rect x="60" y="40" width="80" height="40" rx="6"/>'}</svg>`;
+const thumb = (key) => `<svg aria-hidden="true" viewBox="0 0 200 120" fill="none" stroke="#F9020B" stroke-width="3" stroke-linejoin="round" stroke-linecap="round">${THUMBS[key] || '<rect x="60" y="40" width="80" height="40" rx="6"/>'}</svg>`;
 
 // Sello del Certificado de Calidad C4V (de P2/COMUNICACION.md)
 const SEAL = `<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Certificado de Calidad C4V"><circle cx="100" cy="100" r="96" fill="#fdeeee" stroke="#F9020B" stroke-width="5"/><circle cx="100" cy="100" r="84" fill="none" stroke="#F9020B" stroke-width="1.5" stroke-dasharray="2 4"/><text x="100" y="54" text-anchor="middle" font-family="'Roboto Slab', serif" font-size="12" font-weight="700" letter-spacing="2" fill="#c40309">CERTIFICADO</text><text x="100" y="70" text-anchor="middle" font-family="'Roboto Slab', serif" font-size="10" letter-spacing="4" fill="#141414">DE CALIDAD</text><text x="100" y="121" text-anchor="middle" font-family="'Roboto Slab', serif" font-size="38" font-weight="800" fill="#F9020B">C4V</text><text x="100" y="150" text-anchor="middle" font-family="'Roboto', sans-serif" font-size="8.5" font-weight="700" letter-spacing="1.5" fill="#141414">PROBADA · CALIBRADA · LISTA</text></svg>`;
@@ -146,7 +146,7 @@ const ICONS = {
   cevi: '<path d="M4 5.5A1.5 1.5 0 0 1 5.5 4h13A1.5 1.5 0 0 1 20 5.5v7A1.5 1.5 0 0 1 18.5 14H9l-4.5 3.5z"/><path d="M9 8.5h6M9 11h3.5"/>',
   help: '<circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.4 2.4 0 1 1 3.1 2.3c-.7.3-1.1.8-1.1 1.6"/><path d="M12 16.4h.01"/>'
 };
-const icon = (n) => `<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${ICONS[n] || ''}</svg>`;
+const icon = (n) => `<svg class="ic" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${ICONS[n] || ''}</svg>`;
 
 // Diagramas simples para la guía de preparación (accentos en currentColor = rojo de marca)
 const DIAG = {
@@ -157,7 +157,7 @@ const DIAG = {
   secuencia: '<g font-family="sans-serif"><rect x="4" y="38" width="58" height="42" rx="6" fill="#fff" stroke="#333" stroke-width="2.5"/><text x="33" y="57" text-anchor="middle" font-size="13" font-weight="800" fill="#333">1</text><text x="33" y="71" text-anchor="middle" font-size="8" fill="#333">Estabiliz.</text><path d="M66 59 h14" stroke="currentColor" stroke-width="3"/><path d="M80 59 l-7 -4 v8 z" fill="currentColor"/><rect x="84" y="38" width="52" height="42" rx="6" fill="#fff" stroke="#333" stroke-width="2.5"/><text x="110" y="57" text-anchor="middle" font-size="13" font-weight="800" fill="#333">2</text><text x="110" y="71" text-anchor="middle" font-size="8" fill="#333">Chiller</text><path d="M140 59 h14" stroke="currentColor" stroke-width="3"/><path d="M154 59 l-7 -4 v8 z" fill="currentColor"/><rect x="158" y="38" width="58" height="42" rx="6" fill="#fff" stroke="#333" stroke-width="2.5"/><text x="187" y="57" text-anchor="middle" font-size="13" font-weight="800" fill="#333">3</text><text x="187" y="71" text-anchor="middle" font-size="8" fill="#333">Máquina</text></g>',
   seguridad: '<path d="M110 28 L152 92 H68 Z" fill="#fff" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/><line x1="110" y1="50" x2="110" y2="72" stroke="currentColor" stroke-width="4"/><circle cx="110" cy="82" r="2.8" fill="currentColor"/><text x="110" y="110" text-anchor="middle" font-family="sans-serif" font-size="12.5" font-weight="700" fill="currentColor">Nunca cortes PVC</text>'
 };
-const diag = (k) => `<svg class="diag" viewBox="0 0 220 120" fill="none">${DIAG[k] || ''}</svg>`;
+const diag = (k) => `<svg class="diag" aria-hidden="true" viewBox="0 0 220 120" fill="none">${DIAG[k] || ''}</svg>`;
 
 // ---------- vistas ----------
 const views = {
@@ -178,10 +178,6 @@ const views = {
         <div class="big-arrow" aria-hidden="true">→</div></a>`;
 
     const prep = prepEstado();
-    const lockBtn = (ic, t) => `<button type="button" class="big lock" data-lock="1">
-        <div class="big-ico">${icon(ic)}</div>
-        <div class="big-txt"><strong>🔒 ${t}</strong><span>Se desbloquea al completar tu preparación</span></div>
-      </button>`;
 
     return `
       <h1 class="saludo">${cli ? `Hola, ${esc(primerNombre(cli.nombre))}` : 'Hola'}</h1>
@@ -201,7 +197,7 @@ const views = {
 
       ${prep.completo ? '' : `
       <a class="prep-cta" href="#/preparacion">
-        <div class="prep-cta-top"><strong>Paso 1 · Deja tu espacio listo</strong><span>${prep.n} de ${prep.total}</span></div>
+        <div class="prep-cta-top"><strong>Deja tu espacio listo</strong><span>${prep.n} de ${prep.total}</span></div>
         <div class="bar"><i style="width:${prep.total ? Math.round(prep.n / prep.total * 100) : 0}%"></i></div>
         <p>Antes de usar tu máquina, completa la guía: eléctrico, pozo a tierra, extracción y agua destilada. Así tu instalación sale bien a la primera.</p>
         <span class="prep-cta-btn">Continuar mi preparación →</span>
@@ -210,24 +206,15 @@ const views = {
       ${rutaInicio(d, cli, prep, certificada)}
 
       <div class="bigs">
-        ${prep.completo
-          ? bigBtn('#/preparacion', 'prep', 'Preparar mi espacio', 'Tu checklist quedó completo ✓')
-          : ''}
-        ${prep.completo
-          ? bigBtn('#/academia', 'academia', 'Aprender a usar mi máquina', 'Cursos en video, quizzes y preguntas frecuentes')
-          : lockBtn('academia', 'Aprender a usar mi máquina')}
-        ${prep.completo
-          ? bigBtn('#/bolsa', 'bolsa', 'Quiero más clientes', 'Trabajos de corte que te pasamos gratis')
-          : lockBtn('bolsa', 'Quiero más clientes')}
-        ${prep.completo
-          ? bigBtn('#/plantillas', 'disenos', 'Banco de Diseños', 'Plantillas listas para cortar (SVG / DXF)')
-          : lockBtn('disenos', 'Banco de Diseños')}
-        ${bigBtn('#/soporte', 'soporte', 'Necesito ayuda', 'Habla con nosotros por WhatsApp')}
+        ${prep.completo ? bigBtn('#/preparacion', 'prep', 'Preparar mi espacio', 'Ya terminaste tu lista ✓') : ''}
+        ${bigBtn('#/academia', 'academia', 'Aprender a usar mi máquina', 'Videos, prácticas y las dudas más comunes')}
+        ${bigBtn('#/soporte', 'soporte', 'Necesito ayuda', 'Escríbenos por WhatsApp')}
         <button type="button" class="big" data-cevi="1">
           <div class="big-ico">${icon('cevi')}</div>
-          <div class="big-txt"><strong>Pregúntale a CeVi</strong><span>Tu asistente: parámetros, mantenimiento y fallas — al instante</span></div>
+          <div class="big-txt"><strong>Pregúntale a CeVi</strong><span>Te responde al toque: potencias, limpieza y fallas</span></div>
           <div class="big-arrow" aria-hidden="true">→</div>
         </button>
+        ${bigBtn('#/bolsa', 'bolsa', 'Quiero más clientes', 'Trabajos de corte que te pasamos gratis')}
       </div>`;
   },
 
@@ -269,7 +256,7 @@ const views = {
           <div class="course-ico">${i + 1}</div>
           <div style="flex:1"><h3>${esc(c.titulo)} ${estado} ${esVideo ? '<span class="badge red">🎬 en video</span>' : ''}</h3>
             <div class="sub">${esc(c.nivel)} · ${c.modulos.length} módulos · ${nLes} lecciones — ${esc(c.descripcion)}</div></div>
-          <span class="chev">＋</span></button>
+          <span class="chev" aria-hidden="true">＋</span></button>
         <div class="course-body">
           ${c.modulos.map((m, mi) => `<div class="module">
             <h4><span class="num-mod">${mi + 1}</span> ${esc(m.titulo)} ${m.quizzes ? `<span class="badge red" style="margin-left:auto">${m.quizzes} preguntas</span>` : ''}</h4>
@@ -346,38 +333,95 @@ const views = {
 
       <h2 class="section-title">Preguntas frecuentes</h2>
       ${faqCats.map(cat => `<h4 style="font-size:14px;margin:16px 0 8px">${esc(cat)}</h4>
-        ${faqs.filter(f => f.categoria === cat).map(f => `<div class="faq-item"><button type="button" class="faq-q" aria-expanded="false"><span>${esc(f.pregunta)}</span><span class="chev">＋</span></button><div class="faq-a">${esc(f.respuesta)}</div></div>`).join('')}`).join('')}`;
+        ${faqs.filter(f => f.categoria === cat).map(f => `<div class="faq-item"><button type="button" class="faq-q" aria-expanded="false"><span>${esc(f.pregunta)}</span><span class="chev" aria-hidden="true">＋</span></button><div class="faq-a">${esc(f.respuesta)}</div></div>`).join('')}`).join('')}`;
   },
 
   preparacion() {
     const p = state.db.preparacion;
+    const cli = currentClient();
+    const maq = cli ? state.db.maquinas.find(x => x.cliente_id === cli.id && x.modelo) : null;
     const done = (id) => { try { return localStorage.getItem('c4v_prep_' + state.ctx + '_' + id) === '1'; } catch { return false; } };
     const hechos = p.checklist.filter(c => done(c.id)).length, total = p.checklist.length;
     const completo = total > 0 && hechos === total;
+    const guiaDe = (k) => (p.guias || []).find(g => g.key === k);
+
+    // Mensaje para pedirle al asesor la ficha del modelo. Es el paso que
+    // desbloquea todo lo demás, así que el texto va ya escrito.
+    const waFicha = waLink(`Hola, soy ${cli ? nombrePropio(cli.nombre) : 'cliente C4V'}${maq ? ` y compré una ${maq.modelo}` : ''}${maq?.pedido ? ` (pedido ${maq.pedido})` : ''}. Estoy preparando mi espacio y necesito la ficha de mi máquina: medidas y peso de la caja, amperaje y grosor del cable, capacidad del estabilizador, diámetro de la salida de humo y si lleva compresora de aire.`);
+
     return `
       ${completo
-        ? `<div class="prep-ok"><strong>🎉 ¡Tu espacio está listo!</strong>
-             <p>Completaste toda la guía. Ya puedes instalar con confianza y explorar todo tu portal.</p>
+        ? `<div class="prep-ok"><strong>🎉 Tu espacio está listo</strong>
+             <p>Completaste toda la guía. Ya puedes recibir tu máquina con confianza.</p>
              <a class="btn primary sm" href="#/academia">Ir a la Academia →</a></div>`
-        : `<div class="prep-aviso"><strong>Empieza por aquí 👇</strong>
-             <p>Antes de que llegue tu máquina necesitas <strong>tener TODO comprado y listo</strong>: revisa la lista de compras, mide el acceso y marca cada punto del checklist. Cuando completes todo, se desbloquea el resto de tu portal — así tu instalación sale bien a la primera y produces desde el día 1.</p></div>`}
-      <div class="page-head" style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap">
-        <div><p style="margin:0;max-width:64ch">${esc(p.intro)}</p></div>
-        <button class="btn ghost sm" id="printPrep">🖨 Imprimir</button>
+        : `<div class="prep-aviso"><strong>Ten esto listo antes de que llegue tu máquina</strong>
+             <p>Si preparas tu espacio a tiempo, puedes cortar el mismo día que la recibes. Si no, se queda esperando. Toma unos 15 días, así que empieza hoy.</p></div>`}
+
+      ${fechaEntrega(maq)}
+      ${tarjetaCorreo()}
+
+      ${p.seguridad ? `
+      <div class="card peligro">
+        <h2 class="section-h" style="margin-top:0">⚠️ ${esc(p.seguridad.titulo)}</h2>
+        <ul class="lista-peligro">
+          ${p.seguridad.puntos.map(x => `<li><strong>${esc(x.t)}.</strong> ${esc(x.d)}</li>`).join('')}
+        </ul>
+      </div>` : ''}
+
+      ${p.paso0 ? `
+      <div class="card paso0">
+        <span class="paso0-tag">Empieza por aquí · te toma 1 minuto</span>
+        <h2 class="section-h" style="margin-top:8px">${esc(p.paso0.titulo)}</h2>
+        <p>${esc(p.paso0.intro)}</p>
+        <ul class="ulist">${p.paso0.datos.map(d => `<li>${esc(d)}</li>`).join('')}</ul>
+        <a class="btn primary" href="${waFicha}" target="_blank" rel="noopener">Pedir la ficha de mi máquina por WhatsApp</a>
+        <p class="muted" style="font-size:14px;margin:12px 0 0">Guarda la respuesta: la vas a usar cinco veces en esta guía y se la vas a mostrar a tu electricista.</p>
+      </div>` : ''}
+
+      <h2 class="section-h">Tu checklist <span class="contador" id="prepCount">${hechos} de ${total}</span></h2>
+      <div class="card">
+        <p class="prep-list-intro">Están en el orden en que conviene hacerlos: primero lo que depende de otras personas y toma días. Toca «¿Cómo lo hago?» si no sabes por dónde empezar.</p>
+        <div class="bar" style="margin:0 0 20px"><i id="prepBar" style="width:${total ? Math.round(hechos / total * 100) : 0}%"></i></div>
+        <div class="prep-imprimir"><button class="btn ghost sm" id="printPrep">🖨 Imprimir mi checklist</button></div>
+        <ol id="prepList" class="prep-steps">${p.checklist.map((c, i) => {
+          const g = c.guia ? guiaDe(c.guia) : null;
+          return `<li class="prep-step${done(c.id) ? ' done' : ''}" data-prep="${c.id}">
+            <label class="prep-step-main">
+              <span class="prep-step-num" aria-hidden="true">${i + 1}</span>
+              <input type="checkbox" ${done(c.id) ? 'checked' : ''} aria-label="${esc(c.t)}">
+              <span class="prep-step-txt">${esc(c.t)}
+                ${c.tiempo ? `<span class="prep-tiempo">⏱ ${esc(c.tiempo)}</span>` : ''}
+                ${c.opcional ? `<span class="prep-opcional">${esc(c.opcional)}</span>` : ''}
+              </span>
+              <span class="prep-step-check" aria-hidden="true">✓</span>
+            </label>
+            ${g ? `<div class="prep-como">
+              <button type="button" class="prep-como-btn" aria-expanded="false">¿Cómo lo hago?</button>
+              <div class="prep-como-txt" hidden><ul class="ulist">${g.pasos.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>
+            </div>` : ''}
+            ${c.img ? `<figure class="prep-step-fig"><img src="assets/prep/${esc(c.img)}" alt="Así se ve: ${esc(c.t)}" loading="lazy" onerror="this.closest('.prep-step-fig').remove()"><figcaption>Referencia</figcaption></figure>` : ''}
+          </li>`;
+        }).join('')}</ol>
+      </div>
+
+      <h2 class="section-h">Tu lista de compras</h2>
+      <p class="muted" style="margin:0 0 12px;font-size:15px">Cómprala completa antes de que llegue. Si falta algo, la instalación se detiene.</p>
+      <div class="card tabla-scroll" style="padding:0">
+        <table class="tabla-params"><thead><tr><th>Qué</th><th>Para qué</th><th>Cuál exactamente</th><th>Dónde</th></tr></thead>
+        <tbody>${p.compras.map(c => `<tr>
+          <td><strong>${esc(c.item)}</strong></td><td>${esc(c.para)}</td><td>${esc(c.spec)}</td><td class="muted">${esc(c.donde || '—')}</td>
+        </tr>`).join('')}</tbody></table>
       </div>
 
       ${p.acceso ? `
-      <h2 class="section-title">${esc(p.acceso.titulo)}</h2>
+      <h2 class="section-h">${esc(p.acceso.titulo)}</h2>
       <div class="card acceso">
         <div class="acceso-diag" aria-hidden="true">
           <svg viewBox="0 0 220 150" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="18" y="14" width="76" height="122" rx="2"/>
-            <rect x="26" y="22" width="60" height="114"/>
+            <rect x="18" y="14" width="76" height="122" rx="2"/><rect x="26" y="22" width="60" height="114"/>
             <path d="M120 75h30" stroke-dasharray="4 5"/><path d="M144 68l8 7-8 7"/>
             <rect x="158" y="38" width="48" height="74" rx="2"/>
             <path d="M158 52h48M158 66h48M158 80h48M158 94h48" opacity=".35"/>
-            <path d="M10 14v122" opacity=".5"/><path d="M6 30l4-6 4 6M6 120l4 6 4-6" opacity=".5"/>
-            <path d="M26 146h60" opacity=".5"/><path d="M36 142l-6 4 6 4M76 142l6 4-6 4" opacity=".5"/>
           </svg>
           <span>Puerta vs. máquina embalada</span>
         </div>
@@ -387,54 +431,10 @@ const views = {
         </div>
       </div>` : ''}
 
-      ${p.porModelo ? (() => {
-        const cli = currentClient();
-        const maq = cli ? state.db.maquinas.find(x => x.cliente_id === cli.id) : null;
-        const modelo = String(maq?.modelo || '').replace(/\D/g, '');
-        const grupos = p.porModelo.grupos || [];
-        const mio = grupos.find(g => g.modelos.includes(modelo));
-        return `
-      <h2 class="section-title">Según tu modelo${maq ? ` · ${esc(maq.modelo)}` : ''}</h2>
-      <div class="grid cols-2">
-        ${grupos.map(g => `<div class="card modelo-card${mio && mio.key === g.key ? ' mio' : ''}">
-          <h3>${esc(g.nombre)} <span class="muted">${g.modelos.join(' · ')}</span>${mio && mio.key === g.key ? '<span class="badge red">Tu máquina</span>' : ''}</h3>
-          <p><strong>Instalación:</strong> ${esc(g.instalacion)}</p>
-          <p><strong>Prioridad:</strong> ${esc(g.foco)}</p>
-          <p class="muted">${esc(g.nota)}</p>
-        </div>`).join('')}
-      </div>
-      <div class="card confirma">
-        <p><strong>Datos que dependen de tu equipo exacto</strong> — te los confirma tu asesor C4V (no los adivines):</p>
-        <ul class="ulist">${(p.porModelo.confirma || []).map(x => `<li>${esc(x)}</li>`).join('')}</ul>
-        <a class="wa-inline" href="${waLink(`Hola, estoy preparando mi espacio${maq ? ` para mi ${maq.modelo}` : ''}. ¿Me confirman amperaje, estabilizador, ducto, compresor y medidas embaladas?`)}" target="_blank" rel="noopener">Pedir los datos de mi modelo por WhatsApp →</a>
-      </div>`;
-      })() : ''}
-
-      <h2 class="section-title">🛒 Lista de compras — cómprala COMPLETA antes de que llegue</h2>
-      <div class="card compras-destacada">
-        <p class="compras-nota">Esto es <strong>súper importante</strong>: tu máquina no se puede instalar si falta algo de esta lista. Cómpralo todo con anticipación y tenlo esperándola — así produces desde el primer día.</p>
-        <table><thead><tr><th>Ítem</th><th>Para qué</th><th>Especificación</th></tr></thead>
-        <tbody>${p.compras.map(c => `<tr><td><strong>${esc(c.item)}</strong></td><td>${esc(c.para)}</td><td>${esc(c.spec)}</td></tr>`).join('')}</tbody></table>
-      </div>
-
-      <h2 class="section-title">Checklist paso a paso <span id="prepCount" style="text-transform:none;letter-spacing:0;color:var(--muted);font-weight:600">${hechos}/${total}</span></h2>
-      <div class="card">
-        <p class="prep-list-intro">Ve marcando cada punto cuando lo tengas listo. Sigue el orden: cada paso te acerca a cortar desde el primer día. La foto es una referencia de cómo debe verse.</p>
-        <div class="bar" style="margin:0 0 20px"><i id="prepBar" style="width:${total ? Math.round(hechos / total * 100) : 0}%"></i></div>
-        <ol id="prepList" class="prep-steps">${p.checklist.map((c, i) => `<li class="prep-step${done(c.id) ? ' done' : ''}" data-prep="${c.id}">
-            <label class="prep-step-main">
-              <span class="prep-step-num" aria-hidden="true">${i + 1}</span>
-              <input type="checkbox" ${done(c.id) ? 'checked' : ''} aria-label="${esc(c.t)}">
-              <span class="prep-step-txt">${esc(c.t)}</span>
-              <span class="prep-step-check" aria-hidden="true">✓</span>
-            </label>
-            ${c.img ? `<figure class="prep-step-fig"><img src="assets/prep/${esc(c.img)}" alt="Referencia: ${esc(c.t)}" loading="lazy" onerror="this.closest('.prep-step-fig').remove()"><figcaption>Referencia · paso ${i + 1}</figcaption></figure>` : ''}
-          </li>`).join('')}</ol>
-      </div>
+      ${bloqueModelo(p, maq, waFicha)}
 
       ${p.kit ? `
-      <h2 class="section-title">${esc(p.kit.titulo)}</h2>
-      ${p.kit.img ? `<img class="kit-img" src="assets/prep/${esc(p.kit.img)}" alt="${esc(p.kit.titulo)}" loading="lazy" onerror="this.remove()">` : ''}
+      <h2 class="section-h">${esc(p.kit.titulo)}</h2>
       <div class="card">
         <p style="margin:0 0 12px">${esc(p.kit.nota)}</p>
         <div class="kit-grid">${p.kit.items.map(k => `<div class="kit-item">
@@ -443,72 +443,61 @@ const views = {
           </div>`).join('')}</div>
       </div>` : ''}
 
-      <h2 class="section-title">Guías paso a paso</h2>
-      <div class="grid cols-2">
-        ${p.guias.map(g => `<div class="card guia"><div class="guia-thumb">${diag(g.key)}</div><h3>${esc(g.titulo)}</h3><ul class="ulist">${g.pasos.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>`).join('')}
-      </div>
+      ${p.diaEntrega ? `
+      <h2 class="section-h">${esc(p.diaEntrega.titulo)}</h2>
+      <div class="card dia-entrega">
+        <p>${esc(p.diaEntrega.intro)}</p>
+        <ol class="acceso-pasos">${p.diaEntrega.pasos.map(x => `<li${x.destacado ? ' class="destacado"' : ''}>${esc(x.t)}</li>`).join('')}</ol>
+      </div>` : ''}
 
-      <p class="muted" style="margin-top:20px;font-size:14px">${esc(p.modelos)}</p>`;
+      <p class="muted" style="margin-top:24px;font-size:14px">${esc(p.modelos)}</p>`;
   },
 
   soporte() {
     const d = state.db, cli = currentClient(), sop = d.soporte;
-    // Nº de serie de la máquina del cliente → da contexto al agente de soporte.
     const maq = cli ? d.maquinas.find(x => x.cliente_id === cli.id) : null;
-    const wa = (svg) => `<svg class="wa-ic" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.5 14.4c-.3-.2-1.7-.9-2-1-.3-.1-.5-.1-.6.2-.2.3-.7.9-.9 1.1-.2.2-.3.2-.6.1-.3-.2-1.2-.5-2.3-1.4-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.5.1-.6l.5-.5c.1-.2.2-.3.3-.5v-.5c-.1-.2-.6-1.6-.9-2.2-.2-.5-.4-.4-.6-.5h-.5c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.4s1.1 2.8 1.2 3c.2.2 2.1 3.2 5.1 4.4 1.9.8 2.6.9 3.5.7.6-.1 1.7-.7 1.9-1.4.2-.7.2-1.2.2-1.4-.1-.1-.3-.2-.6-.3z"/><path d="M12 2C6.5 2 2 6.5 2 12c0 1.8.5 3.4 1.3 4.9L2 22l5.3-1.4c1.4.8 3 1.2 4.7 1.2 5.5 0 10-4.5 10-10S17.5 2 12 2zm0 18.2c-1.6 0-3.1-.4-4.4-1.2l-.3-.2-3.1.8.8-3-.2-.3c-.9-1.4-1.3-3-1.3-4.6C3.5 7.3 7.3 3.5 12 3.5S20.5 7.3 20.5 12 16.7 20.2 12 20.2z"/></svg>`;
-    // Deep link de WhatsApp con mensaje pre-redactado (identifica al cliente y su máquina).
-    // Identifica al cliente y su máquina SOLO con lo que existe: hoy Odoo no
-    // guarda el Nº de serie, así que si no hay, se nombra el modelo o nada.
+    const wa = () => `<svg class="wa-ic" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.5 14.4c-.3-.2-1.7-.9-2-1-.3-.1-.5-.1-.6.2-.2.3-.7.9-.9 1.1-.2.2-.3.2-.6.1-.3-.2-1.2-.5-2.3-1.4-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.5.1-.6l.5-.5c.1-.2.2-.3.3-.5v-.5c-.1-.2-.6-1.6-.9-2.2-.2-.5-.4-.4-.6-.5h-.5c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.4s1.1 2.8 1.2 3c.2.2 2.1 3.2 5.1 4.4 1.9.8 2.6.9 3.5.7.6-.1 1.7-.7 1.9-1.4.2-.7.2-1.2.2-1.4-.1-.1-.3-.2-.6-.3z"/><path d="M12 2C6.5 2 2 6.5 2 12c0 1.8.5 3.4 1.3 4.9L2 22l5.3-1.4c1.4.8 3 1.2 4.7 1.2 5.5 0 10-4.5 10-10S17.5 2 12 2zm0 18.2c-1.6 0-3.1-.4-4.4-1.2l-.3-.2-3.1.8.8-3-.2-.3c-.9-1.4-1.3-3-1.3-4.6C3.5 7.3 7.3 3.5 12 3.5S20.5 7.3 20.5 12 16.7 20.2 12 20.2z"/></svg>`;
+    // Identifica al cliente y su máquina con lo que EXISTE (hoy Odoo no guarda la serie).
     const refMaq = maq?.serie || (maq?.modelo ? `modelo ${maq.modelo}` : '');
     const contexto = [cli ? `Soy ${nombrePropio(cli.nombre)}` : null, refMaq ? `máquina ${refMaq}` : null].filter(Boolean).join(', ');
     const waSoporte = (motivo) => waLink(`Hola equipo C4V${contexto ? `. ${contexto}` : ''}. ${motivo}`);
 
-    /* INTEGRACIÓN ODOO HELPDESK (pendiente de backend):
-       Hoy el soporte se canaliza 100% por WhatsApp (deep links de abajo). Cuando el
-       backend esté hosteado (ver INTEGRACION_ODOO.md), aquí entraría la creación de
-       ticket en Odoo Helpdesk: POST {apiBase}/api/tickets → helpdesk.ticket con
-       { cliente_id, serie, asunto, descripcion, canal:'portal' }. Existe ya
-       actions.crearTicket() (usa /api/tickets en modo online); faltaría el endpoint
-       en server.js mapeando a helpdesk.ticket y decidir si se abre ticket además de
-       (o en vez de) WhatsApp. Mientras tanto NO se finge: solo WhatsApp real. */
     return `
-      <!-- Lo primero y más grande: hablar con una persona por WhatsApp, con contexto -->
+      <!-- Una sola puerta, bien grande: hablar con una persona por WhatsApp -->
       <a class="wa-big" href="${waSoporte('Necesito ayuda con mi máquina.')}" target="_blank" rel="noopener">
         ${wa()}
         <div class="wa-txt"><strong>Escríbenos por WhatsApp</strong><span>${esc(sop.whatsapp)} · ${esc(sop.horario)}</span></div>
       </a>
-      ${refMaq ? `<p class="wa-ctx muted">Tu mensaje ya llevará los datos de tu máquina (<strong>${esc(refMaq)}</strong>) para atenderte más rápido.</p>` : ''}
+      ${refMaq ? `<p class="wa-ctx muted">Tu mensaje ya lleva los datos de tu máquina (<strong>${esc(refMaq)}</strong>) para atenderte más rápido.</p>` : ''}
+
+      <div class="help-card cevi-card">
+        <div class="big-ico" aria-hidden="true">${icon('cevi')}</div>
+        <div class="grow"><h3>¿Quieres una respuesta ahora mismo?</h3>
+          <p>CeVi conoce tu máquina y responde al instante sobre potencias, mantenimiento y fallas. Si no puede, te pasa con una persona.</p></div>
+        <button type="button" class="btn primary sm" data-cevi="1">Pregúntale a CeVi</button>
+      </div>
 
       ${(sop.lives || sop.redes) ? `
+      <h2 class="section-title">Otras formas de encontrarnos</h2>
       <div class="card redes">
-        ${sop.lives ? `<p><strong>📺 Lives de soporte en vivo:</strong> ${esc(sop.lives)}</p>` : ''}
+        ${sop.lives ? `<p><strong>Clases en vivo:</strong> ${esc(sop.lives)}</p>` : ''}
         ${sop.redes ? `<p class="redes-links">
           ${sop.redes.tiktok ? `<a href="${esc(sop.redes.tiktok_url || '#')}" target="_blank" rel="noopener">TikTok ${esc(sop.redes.tiktok)}</a>` : ''}
           ${sop.redes.instagram ? `<span>Instagram ${esc(sop.redes.instagram)}</span>` : ''}
           ${sop.redes.facebook ? `<span>Facebook ${esc(sop.redes.facebook)}</span>` : ''}
-          ${sop.fijo ? `<span>Fijo ${esc(sop.fijo)}</span>` : ''}
+          ${sop.fijo ? `<span>Teléfono fijo ${esc(sop.fijo)}</span>` : ''}
         </p>` : ''}
       </div>` : ''}
 
-      <div class="help-card cevi-card">
-        <div class="big-ico" aria-hidden="true">${icon('cevi')}</div>
-        <div class="grow"><h3>¿Prefieres una respuesta ahora mismo?</h3>
-          <p>CeVi, tu asistente, conoce tu máquina y responde al instante sobre parámetros, mantenimiento y fallas. Si no puede, abre tu caso con una persona.</p></div>
-        <button type="button" class="btn primary sm" data-cevi="1">Hablar con CeVi</button>
-      </div>
-
-      <h2 class="section-title">O mira si es algo común</h2>
+      <h2 class="section-title">Antes de escribir, mira si es algo común</h2>
+      <p class="muted" style="margin:0 0 14px;font-size:15px">Estos son los problemas que más nos consultan. Muchos se resuelven en un minuto.</p>
       <div id="guiaList">
-        ${d.soporte_guia.map(g => `<div class="faq-item guia"><button type="button" class="faq-q" aria-expanded="false"><span>${esc(g.titulo)}</span><span class="chev">＋</span></button>
-          <div class="faq-a"><p style="margin:0 0 6px"><strong>Síntoma:</strong> ${esc(g.sintoma)}</p>
-          <p style="margin:0 0 6px"><strong>Posibles causas:</strong> ${esc(g.causas)}</p>
+        ${d.soporte_guia.map(g => `<div class="faq-item guia"><button type="button" class="faq-q" aria-expanded="false"><span>${esc(g.titulo)}</span><span class="chev" aria-hidden="true">＋</span></button>
+          <div class="faq-a"><p style="margin:0 0 6px"><strong>Qué pasa:</strong> ${esc(g.sintoma)}</p>
+          <p style="margin:0 0 6px"><strong>Por qué:</strong> ${esc(g.causas)}</p>
           <p style="margin:0 0 12px"><strong>Qué hacer:</strong> ${esc(g.accion)}</p>
-          <a class="wa-inline" href="${waSoporte(`Sigo con este problema: «${g.titulo}».`)}" target="_blank" rel="noopener">${wa()}<span>Sigo con este problema — escribir por WhatsApp</span></a></div></div>`).join('')}
-      </div>
-
-      ${(cli ? d.tickets.filter(t => t.cliente_id === cli.id) : []).length ? `
-        <h2 class="section-title">Tus casos</h2>
-        <div class="list" id="ticketList">${ticketRows(d.tickets.filter(t => t.cliente_id === cli.id), false)}</div>` : ''}`;
+          <a class="wa-inline" href="${waSoporte(`Sigo con este problema: «${g.titulo}».`)}" target="_blank" rel="noopener">${wa()}<span>Sigo igual — escribir por WhatsApp</span></a></div></div>`).join('')}
+      </div>`;
   },
 
   bolsa() {
@@ -551,7 +540,7 @@ const views = {
           <h3>${esc(c.categoria)}</h3>
           <p>${esc(c.descripcion)}</p>
           <div class="chips-row" style="margin:10px 0 12px">${c.ejemplos.map(e => `<span class="badge grey">${esc(e)}</span>`).join('')}<span class="badge info">${esc(c.formato)}</span></div>
-          <span class="badge warn">Disponible próximamente</span>
+          <span class="badge warn">Muy pronto</span>
         </div>`).join('')}
       </div>`;
   },
@@ -575,7 +564,7 @@ const views = {
       const meta = ok
         ? (cert.fecha ? `<p class="cert-maq-meta">Certificada el ${esc(cert.fecha)}${cert.tecnico ? ` · por ${esc(nombrePropio(cert.tecnico))}` : ''}</p>` : '')
         : enRevision ? '<p class="cert-maq-meta">La estamos probando y calibrando antes de entregártela.</p>'
-        : `<p class="cert-maq-meta">Todavía no tenemos cargado el estado del certificado de esta máquina. <a href="${waLink(`Hola, quiero saber el estado del Certificado de Calidad de mi máquina${m.modelo ? ' ' + m.modelo : ''}${m.pedido ? ' (pedido ' + m.pedido + ')' : ''}.`)}" target="_blank" rel="noopener">Pregúntanos por WhatsApp</a> y te lo confirmamos.</p>`;
+        : `<p class="cert-maq-meta">Todavía no tenemos el estado de esta máquina. <a href="${waLink(`Hola, quiero saber el estado del Certificado de Calidad de mi máquina${m.modelo ? ' ' + m.modelo : ''}${m.pedido ? ' (pedido ' + m.pedido + ')' : ''}.`)}" target="_blank" rel="noopener">Pregúntanos por WhatsApp</a> y te lo confirmamos.</p>`;
       const publico = cert.url
         ? `<a class="cert-verif-link" href="${esc(cert.url)}" target="_blank" rel="noopener">Ver certificado público ↗</a>` : '';
       // La serie es la llave del certificado. Hoy Odoo no la guarda para la
@@ -583,7 +572,7 @@ const views = {
       // muestra la referencia que SÍ existe (el número de pedido).
       const bloqueSerie = m.serie
         ? `<div class="cert-serie">
-             <span class="cert-serie-lbl">Nº de serie (tu llave de verificación)</span>
+             <span class="cert-serie-lbl">Nº de serie (el código de tu máquina)</span>
              <div class="cert-serie-row">
                <code class="cert-serie-num">${esc(m.serie)}</code>
                <button type="button" class="cert-copy btn ghost sm" data-copy="${esc(m.serie)}" aria-label="Copiar Nº de serie">Copiar</button>
@@ -591,7 +580,7 @@ const views = {
            </div>`
         : `<div class="cert-serie sin-serie">
              <span class="cert-serie-lbl">Nº de serie</span>
-             <p class="muted" style="margin:4px 0 0;font-size:14px">Aún no está registrado en tu ficha.${m.pedido ? ` Mientras tanto, tu referencia es el pedido <code>${esc(m.pedido)}</code>.` : ''}</p>
+             <p class="muted" style="margin:4px 0 0;font-size:14px">Todavía no lo tenemos registrado.${m.pedido ? ` Mientras tanto, tu referencia es el pedido <code>${esc(m.pedido)}</code>.` : ''}</p>
            </div>`;
       return `<div class="card cert-maq">
         <div class="cert-maq-top">
@@ -631,18 +620,10 @@ const views = {
       <div class="card" style="padding:12px"><img src="assets/certificado-calidad-c4v.png" alt="Certificado de Calidad C4V" class="cert-img" onerror="this.parentElement.remove()"/></div>
 
       <h2 class="section-title">Preguntas frecuentes</h2>
-      ${ci.faq.map(f => `<div class="faq-item"><button type="button" class="faq-q" aria-expanded="false"><span>${esc(f.q)}</span><span class="chev">＋</span></button><div class="faq-a">${esc(f.a)}</div></div>`).join('')}`;
+      ${ci.faq.map(f => `<div class="faq-item"><button type="button" class="faq-q" aria-expanded="false"><span>${esc(f.q)}</span><span class="chev" aria-hidden="true">＋</span></button><div class="faq-a">${esc(f.a)}</div></div>`).join('')}`;
   }
 };
 
-function ticketRows(tickets, isStaff) {
-  if (!tickets.length) return '<div class="empty">Aún no tienes tickets.</div>';
-  const badge = (e) => { const m = { nuevo: 'info', asignado: 'info', en_proceso: 'warn', resuelto: 'ok', cerrado: 'grey' }; return `<span class="badge ${m[e] || 'grey'}">${ESTADO_TICKET[e] || e}</span>`; };
-  return tickets.map(t => `<div class="row-card">
-    <div class="grow"><h4>${esc(t.asunto)} ${badge(t.estado)}</h4>
-      <div class="meta"><span class="badge ${t.tipo === 'soporte' ? 'red' : 'info'}">${t.tipo}</span><span>${esc(t.id)}</span><span class="pill-pais">${t.pais}</span><span>Atiende: ${esc(t.asignado_a)}</span></div></div>
-    ${isStaff ? `<select class="mini-select" data-ticket="${esc(t.id)}">${['nuevo', 'asignado', 'en_proceso', 'resuelto', 'cerrado'].map(e => `<option ${e === t.estado ? 'selected' : ''} value="${e}">${ESTADO_TICKET[e] || e}</option>`).join('')}</select>` : ''}</div>`).join('');
-}
 function leadRows(leads) {
   if (!leads.length) return '<div class="empty">No hay solicitudes con ese filtro.</div>';
   const cli = currentClient();
@@ -665,7 +646,7 @@ function leadRows(leads) {
 function bindTake() {
   view.querySelectorAll('[data-take]').forEach(b => b.onclick = async () => {
     const cli = currentClient();
-    if (!cli) { toast('Inicia sesión para tomar el trabajo'); return; }
+    if (!cli) { toast('Entra con tu documento para tomar este trabajo'); return; }
     try { await actions.tomarLead(b.dataset.take, cli.id); toast(state.offline ? 'Trabajo tomado (demostración: el contacto es de ejemplo)' : '🎉 ¡Trabajo tomado! Contacta al cliente'); render('bolsa'); } catch { toast('⚠️ Ese trabajo ya fue tomado'); }
   });
 }
@@ -674,13 +655,6 @@ function bindTake() {
 function bindAccordions(sel) { view.querySelectorAll(sel).forEach(it => { const q = it.querySelector('.faq-q, .course-head'); if (q) q.onclick = () => { const open = it.classList.toggle('open'); q.setAttribute('aria-expanded', open); }; }); }
 function bind(route) {
   view.querySelectorAll('[data-cevi]').forEach(b => b.onclick = () => ceviAbrir());
-  if (route === 'inicio') {
-    // Secciones bloqueadas hasta completar la preparación
-    view.querySelectorAll('[data-lock]').forEach(b => b.onclick = () => {
-      toast('🔒 Se desbloquea al completar tu guía «Preparar mi espacio»');
-      location.hash = '#/preparacion';
-    });
-  }
   if (route === 'academia') { bindAccordions('.faq-item'); bindAccordions('.course'); bindVideos(); bindQuizzes(); }
   if (route === 'preparacion') {
     view.querySelectorAll('#prepList input[type="checkbox"]').forEach(chk => chk.onchange = () => {
@@ -688,13 +662,22 @@ function bind(route) {
       try { chk.checked ? localStorage.setItem('c4v_prep_' + state.ctx + '_' + id, '1') : localStorage.removeItem('c4v_prep_' + state.ctx + '_' + id); } catch {}
       step.classList.toggle('done', chk.checked);
       const ins = view.querySelectorAll('#prepList input[type="checkbox"]'), n = [...ins].filter(i => i.checked).length;
-      $('#prepCount').textContent = n + '/' + ins.length;
+      $('#prepCount').textContent = n + ' de ' + ins.length;
       $('#prepBar').style.width = Math.round(n / ins.length * 100) + '%';
       // 🎉 Al completar todo, se desbloquea el portal
       if (n === ins.length && ins.length) {
         toast('🎉 ¡Espacio listo! Se desbloqueó tu Academia');
         render('preparacion'); window.scrollTo(0, 0);
       }
+    });
+    bindCorreo();
+    // "¿Cómo lo hago?" pegado a cada paso: antes la explicación estaba tres
+    // bloques más abajo y nadie bajaba a buscarla.
+    view.querySelectorAll('.prep-como-btn').forEach(b => b.onclick = () => {
+      const caja = b.nextElementSibling, abierto = !caja.hidden;
+      caja.hidden = abierto;
+      b.setAttribute('aria-expanded', String(!abierto));
+      b.textContent = abierto ? '¿Cómo lo hago?' : 'Ocultar';
     });
     const pb = $('#printPrep'); if (pb) pb.onclick = () => window.print();
   }
@@ -731,7 +714,7 @@ function bind(route) {
           <div class="form-row"><div class="field"><label>Nombre del cliente</label><input name="contacto" placeholder="Nombre" required></div><div class="field"><label>Teléfono o email</label><input name="telefono" placeholder="+51 …"></div></div>
           <button class="btn primary" type="submit">Publicar</button></form></div>`;
       $('#lf').onsubmit = async (e) => { e.preventDefault();
-        try { await actions.crearLead(Object.fromEntries(new FormData(e.target))); toast(state.offline ? 'Solicitud guardada en esta demostración' : '✅ Solicitud publicada'); render('bolsa'); } catch { toast('⚠️ Error'); } };
+        try { await actions.crearLead(Object.fromEntries(new FormData(e.target))); toast(state.offline ? 'Solicitud guardada en esta demostración' : '✅ Solicitud publicada'); render('bolsa'); } catch { toast('No pudimos publicar tu solicitud. Revisa tu internet y vuelve a intentar: no perdiste lo que escribiste.'); } };
     };
     bindTake();
   }
@@ -831,16 +814,10 @@ function bindQuizzes() {
 }
 
 // ---------- router ----------
-const TITLES = { inicio: 'Inicio', academia: 'Aprender a usar mi máquina', preparacion: 'Preparar mi espacio', soporte: 'Necesito ayuda', bolsa: 'Quiero más clientes', plantillas: 'Banco de Diseños', certificado: 'Tu Certificado de Calidad' };
+const TITLES = { inicio: 'Inicio', academia: 'Aprender a usar mi máquina', preparacion: 'Preparar mi espacio', soporte: 'Necesito ayuda', bolsa: 'Quiero más clientes', plantillas: 'Diseños listos para cortar', certificado: 'Tu Certificado de Calidad' };
+// El aviso del candado ya no existe; la preparación se acompaña, no se bloquea.
 function render(route) {
   if (!views[route]) route = 'inicio';
-  // Candado OBLIGATORIO: hasta completar la introducción/preparación, solo rutas libres.
-  // Todo lo demás (academia, bolsa, plantillas, y cualquier sección nueva) va a la guía.
-  if (!RUTAS_LIBRES.includes(route) && !prepEstado().completo) {
-    toast('🔒 Primero completa tu guía «Primeros Pasos: prepara tu espacio»');
-    route = 'preparacion';
-    if (location.hash !== '#/preparacion') { location.hash = '#/preparacion'; return; }
-  }
   // Sin menú: en cualquier pantalla que no sea el inicio, un solo camino de vuelta.
   const volver = route === 'inicio' ? ''
     : `<a class="volver" href="#/inicio"><span aria-hidden="true">←</span> Volver al inicio</a>
@@ -958,23 +935,23 @@ const docInfo = (paisCode, tipo) => {
 async function entrar(cliente) {
   state.ctx = cliente.id;
   await cargarDatosVivos();
+  pedirEstadoGuia();   // sin await: no debe retrasar la entrada
   $('#gate').hidden = true; $('#app').hidden = false;
   const info = docInfo(cliente.pais, cliente.tipo || 'persona');
   $('#me').innerHTML = `<strong>${esc(nombrePropio(cliente.nombre))}</strong>${esc(info.doc)} ${esc(cliente.documento)}`;
-  // Mientras la preparación NO esté completa, SIEMPRE se entra por ahí.
-  // La idea: que quede clarísimo qué debe tener comprado y listo antes de instalar.
+  // El cliente nuevo aterriza en la guía de preparación: es lo que necesita hoy.
+  // Ya no es un candado — puede ir a donde quiera desde el inicio.
   let primeraVez = false;
   try {
     if (!localStorage.getItem('c4v_hola_' + cliente.id)) { localStorage.setItem('c4v_hola_' + cliente.id, '1'); primeraVez = true; }
   } catch {}
   const pe = prepEstado();
-  if (!pe.completo) {
-    // Cliente nuevo (o preparación a medias): SIEMPRE aterriza en la guía de Primeros Pasos,
-    // sin importar el enlace/hash con el que haya entrado. No hay forma de saltarse la introducción.
-    if (location.hash !== '#/preparacion') location.hash = '#/preparacion';
+  const sinRuta = !location.hash || location.hash === '#/' || location.hash === '#/inicio';
+  if (!pe.completo && sinRuta) {
+    location.hash = '#/preparacion';
     setTimeout(() => toast(primeraVez
-      ? `👋 ¡Bienvenido${cliente.nombre ? ', ' + primerNombre(cliente.nombre) : ''}! Empieza aquí: deja tu espacio listo antes de continuar`
-      : `📋 Sigues en ${pe.n} de ${pe.total} — completa tu preparación para desbloquear tu portal`), 500);
+      ? `👋 ¡Hola${cliente.nombre ? ', ' + primerNombre(cliente.nombre) : ''}! Empieza por dejar tu espacio listo`
+      : `📋 Vas ${pe.n} de ${pe.total} en tu preparación`), 500);
     render('preparacion');
     return;
   }
@@ -1026,7 +1003,7 @@ function sondearEstado() {
         el.classList.add('ok');
         detenerSondeo();
       } else if (j.estado === 'vencida') {
-        el.textContent = '⌛ Pasó mucho tiempo. Vuelve a empezar para pedir otro código.';
+        el.textContent = '⌛ Pasaron más de 3 minutos. Pide un código nuevo.';
         detenerSondeo();
       }
     } catch { /* reintenta en el siguiente tic */ }
@@ -1046,6 +1023,19 @@ function pintarPasoOtp(datos, pais) {
   est.textContent = 'Esperando tu mensaje…'; est.classList.remove('ok');
   mostrarPaso('otp');
   sondearEstado();
+}
+
+// Marca el campo como erróneo y lo enlaza con el mensaje, para que un lector de
+// pantalla lo anuncie al volver al campo (no solo una vez al aparecer).
+function marcarError(campo, caja) {
+  if (!campo || !caja) return;
+  campo.setAttribute('aria-invalid', 'true');
+  campo.setAttribute('aria-describedby', caja.id);
+  campo.focus();
+}
+function limpiarError(campo, caja) {
+  if (caja) caja.hidden = true;
+  if (campo) campo.removeAttribute('aria-invalid');
 }
 
 function initGate() {
@@ -1068,6 +1058,7 @@ function initGate() {
     const info = docInfo(pais, tipo);
     docLabel.textContent = info.doc;
     inp.placeholder = info.ej;
+    const ej = $('#gateDocEjTxt'); if (ej) ej.textContent = info.ej;
     tiposBox.querySelectorAll('button').forEach(b => b.setAttribute('aria-checked', b.dataset.tipo === tipo));
     paisesBox.querySelectorAll('button').forEach(b => b.setAttribute('aria-checked', b.dataset.pais === pais));
     if (enfocar) inp.focus();
@@ -1117,19 +1108,19 @@ function initGate() {
 
   // ---- Paso A: identificar ----
   form.onsubmit = async (e) => {
-    e.preventDefault(); err.hidden = true;
+    e.preventDefault(); limpiarError(inp, err);
     const doc = normalizarDoc(inp.value);
     const info = docInfo(pais, tipo);
 
     if (!acepta.checked) {
       err.hidden = false;
-      err.innerHTML = 'Para continuar tienes que aceptar los Términos de Uso y la Política de Privacidad. Marca la casilla de arriba.';
-      acepta.focus(); return;
+      err.innerHTML = 'Marca la casilla para aceptar los Términos y la Política de Privacidad.';
+      marcarError(acepta, err); return;
     }
     if (doc.length < 5) {
       err.hidden = false;
-      err.innerHTML = `Parece que falta parte de tu ${esc(info.doc)}. Escríbelo completo, como en el ejemplo.`;
-      inp.focus(); return;
+      err.innerHTML = `Ese ${esc(info.doc)} está incompleto. Escríbelo completo, así: ${esc(info.ej)}.`;
+      marcarError(inp, err); return;
     }
 
     setCargando(true);
@@ -1141,7 +1132,7 @@ function initGate() {
     if (res.estado === 'otp') {
       const r = await apiPost('/api/otp/solicitar', { pais, doc });
       setCargando(false);
-      if (r.status === 429) { err.hidden = false; err.innerHTML = 'Pediste demasiados códigos seguidos. Espera unos minutos e inténtalo otra vez.'; return; }
+      if (r.status === 429) { err.hidden = false; err.innerHTML = 'Pediste muchos códigos seguidos. Espera 5 minutos y vuelve a intentar.'; return; }
       if (r.json.ok) {
         // Deja constancia del consentimiento junto al acceso.
         // Constancia del consentimiento: qué aceptó, cuándo y desde dónde.
@@ -1152,8 +1143,8 @@ function initGate() {
       err.hidden = false;
       err.innerHTML = r.json.motivo === 'sin_telefono'
         ? `No tenemos tu WhatsApp registrado, así que no podemos enviarte el código. <a href="${waLink('Hola, quiero entrar a mi Central de Postventa C4V pero no tienen mi WhatsApp registrado. ¿Me ayudan?')}" target="_blank" rel="noopener">Escríbenos y lo actualizamos</a> en un minuto.`
-        : `No encontramos tu ${esc(info.doc)} <strong>${esc(inp.value.trim())}</strong> entre nuestros clientes. Revisa el número, el país y si compraste como persona o empresa, o <a href="${waLink('Hola, mi documento no aparece en la Central de Postventa C4V. ¿Me ayudan?')}" target="_blank" rel="noopener">escríbenos por WhatsApp</a>.`;
-      err.focus?.(); return;
+        : `Ese ${esc(info.doc)} no nos aparece. Revisa que sea el mismo con el que compraste tu máquina. Si está bien, <a href="${waLink('Hola, mi documento no aparece en la Central de Postventa C4V. ¿Me ayudan?')}" target="_blank" rel="noopener">escríbenos por WhatsApp</a>.`;
+      marcarError(inp, err); return;
     }
 
     setCargando(false);
@@ -1161,22 +1152,22 @@ function initGate() {
 
     err.hidden = false;
     if (res.estado === 'limite') {
-      err.innerHTML = `Hiciste demasiados intentos seguidos. Espera unos minutos y vuelve a probar, o <a href="${waLink('Hola, no puedo entrar a mi Central de Postventa C4V. ¿Me ayudan?')}" target="_blank" rel="noopener">escríbenos por WhatsApp</a>.`;
+      err.innerHTML = `Demasiados intentos. Espera 5 minutos y vuelve a probar, o <a href="${waLink('Hola, no puedo entrar a mi Central de Postventa C4V. ¿Me ayudan?')}" target="_blank" rel="noopener">escríbenos por WhatsApp</a>.`;
     } else if (res.estado === 'error') {
-      err.innerHTML = `No pudimos verificar tu documento en este momento. Revisa tu conexión e inténtalo de nuevo, o <a href="${waLink('Hola, no puedo entrar a mi Central de Postventa C4V (error al verificar). ¿Me ayudan?')}" target="_blank" rel="noopener">escríbenos por WhatsApp</a>.`;
+      err.innerHTML = `No pudimos conectarnos. Revisa tu internet y vuelve a intentar. Si sigue igual, o <a href="${waLink('Hola, no puedo entrar a mi Central de Postventa C4V (error al verificar). ¿Me ayudan?')}" target="_blank" rel="noopener">escríbenos por WhatsApp</a>.`;
     } else {
-      err.innerHTML = `No encontramos tu ${esc(info.doc)} <strong>${esc(inp.value.trim())}</strong> entre nuestros clientes. Revisa el número, el país y si compraste como persona o empresa, o <a href="${waLink('Hola, mi documento no aparece en la Central de Postventa C4V. ¿Me ayudan?')}" target="_blank" rel="noopener">escríbenos por WhatsApp</a> y te ayudamos.`;
+      err.innerHTML = `Ese ${esc(info.doc)} no nos aparece. Revisa que sea el mismo con el que compraste tu máquina. Si está bien, <a href="${waLink('Hola, mi documento no aparece en la Central de Postventa C4V. ¿Me ayudan?')}" target="_blank" rel="noopener">escríbenos por WhatsApp</a> y te ayudamos.`;
     }
-    err.focus?.();
+    marcarError(inp, err);
   };
 
   // ---- Paso B: validar el código ----
   const otpForm = $('#otpForm'), otpErr = $('#otpError'), otpInp = $('#otpCodigo');
   otpInp.oninput = () => { otpInp.value = otpInp.value.replace(/\D/g, '').slice(0, 6); };
   otpForm.onsubmit = async (e) => {
-    e.preventDefault(); otpErr.hidden = true;
+    e.preventDefault(); limpiarError(otpInp, otpErr);
     const codigo = otpInp.value.replace(/\D/g, '');
-    if (codigo.length !== 6) { otpErr.hidden = false; otpErr.textContent = 'El código tiene 6 dígitos.'; otpInp.focus(); return; }
+    if (codigo.length !== 6) { otpErr.hidden = false; otpErr.textContent = 'Escribe los 6 números que te llegaron por WhatsApp.'; marcarError(otpInp, otpErr); return; }
     const boton = otpForm.querySelector('button');
     boton.disabled = true; boton.textContent = 'Entrando…';
     const r = await apiPost('/api/otp/verificar', { solicitud: otpEstado.solicitud, codigo });
@@ -1190,17 +1181,17 @@ function initGate() {
     }
     otpErr.hidden = false;
     const motivos = {
-      incorrecto: `Ese código no es. ${r.json.intentos_restantes ? `Te quedan ${r.json.intentos_restantes} intentos.` : ''}`,
-      vencido: 'El código venció. Vuelve a empezar para pedir uno nuevo.',
+      incorrecto: `Ese código no es el correcto.${r.json.intentos_restantes ? ` Te queda${r.json.intentos_restantes === 1 ? '' : 'n'} ${r.json.intentos_restantes} intento${r.json.intentos_restantes === 1 ? '' : 's'}.` : ''} Revisa el último mensaje de WhatsApp.`,
+      vencido: 'Tu código venció. Toca «Volver y cambiar mi documento» y pide uno nuevo.',
       usado: 'Ese código ya se usó. Pide uno nuevo.',
-      bloqueado: 'Demasiados intentos fallidos. Vuelve a empezar para pedir otro código.',
+      bloqueado: 'Demasiados intentos. Toca «Volver y cambiar mi documento» y pide otro código.',
       no_enviado: 'Todavía no nos llegó tu mensaje de WhatsApp. Envíalo y espera unos segundos.',
       invalido: 'Revisa el código e inténtalo de nuevo.'
     };
     otpErr.textContent = motivos[r.json.motivo] || (r.status === 429
       ? 'Demasiados intentos. Espera unos minutos.'
-      : 'No pudimos validar el código. Inténtalo de nuevo.');
-    otpErr.focus?.();
+      : 'No pudimos revisar tu código. Vuelve a intentarlo en unos segundos.');
+    marcarError(otpInp, otpErr);
   };
 
   $('#otpVolver').onclick = () => { detenerSondeo(); otpEstado.solicitud = null; mostrarPaso('doc'); inp.focus(); };
@@ -1249,7 +1240,7 @@ function ceviPintar() {
   const box = $('#ceviMsgs');
   if (!box) return;
   box.innerHTML = cevi.historial.map(m => ceviBurbuja(m.role === 'user' ? 'yo' : 'cevi', m.content, m.ticket
-    ? `<div class="cevi-ticket">✅ Abrí tu caso <strong>${esc(m.ticket)}</strong>. Un asesor te contactará.</div>` : '')).join('');
+    ? `<div class="cevi-ticket">✅ Ya le avisé a una persona del equipo. Te escriben por WhatsApp.</div>` : '')).join('');
   box.scrollTop = box.scrollHeight;
 }
 
@@ -1278,7 +1269,7 @@ async function ceviEnviar(texto) {
   document.getElementById('ceviSug')?.remove();   // ya no hacen falta
   ceviPintar();
   const input = $('#ceviInput'); if (input) { input.value = ''; input.disabled = true; }
-  $('#ceviMsgs').insertAdjacentHTML('beforeend', '<div class="cevi-msg cevi pensando"><div class="cevi-avatar">🐂</div><div class="cevi-txt"><span></span><span></span><span></span></div></div>');
+  $('#ceviMsgs').insertAdjacentHTML('beforeend', '<div class="cevi-msg cevi pensando" aria-hidden="true"><div class="cevi-avatar">🐂</div><div class="cevi-txt"><span></span><span></span><span></span></div></div>');
   $('#ceviMsgs').scrollTop = $('#ceviMsgs').scrollHeight;
 
   try {
@@ -1347,14 +1338,18 @@ function ceviPanelHTML() {
       <input id="ceviInput" type="text" autocomplete="off" placeholder="${nombre ? `Pregúntame lo que sea, ${esc(nombre)}` : 'Escribe tu pregunta'}" aria-label="Tu pregunta para CeVi">
       <button type="submit" class="cevi-send" aria-label="Enviar">${CEVI_ICONOS.enviar}</button>
     </form>
-    <p class="cevi-pie">CeVi es un asistente automático. Para casos delicados te pasamos con una persona.</p>`;
+    <p class="cevi-pie">CeVi responde solo, con inteligencia artificial. Si el tema es serio, te pasamos con una persona del equipo.</p>`;
 }
 
 function ceviAbrir() {
   const panel = $('#aiPanel'), btn = $('#aiBtn');
   if (!panel) return;
+  cevi.origen = document.activeElement;          // para devolver el foco al cerrar
   panel.innerHTML = ceviPanelHTML();
   panel.hidden = false; cevi.abierto = true;
+  panel.setAttribute('role', 'dialog');
+  panel.setAttribute('aria-modal', 'true');
+  panel.setAttribute('aria-label', 'Chat con CeVi, tu asistente');
   btn?.setAttribute('aria-expanded', 'true');
 
   if (!cevi.historial.length) {
@@ -1385,7 +1380,10 @@ function ceviCerrar() {
   const panel = $('#aiPanel');
   if (panel) { panel.hidden = true; panel.innerHTML = ''; }
   cevi.abierto = false;
-  $('#aiBtn')?.setAttribute('aria-expanded', 'false');
+  const btn = $('#aiBtn');
+  btn?.setAttribute('aria-expanded', 'false');
+  // Sin esto el foco caía al principio del documento al cerrar con Escape.
+  (cevi.origen && document.contains(cevi.origen) ? cevi.origen : btn)?.focus();
   if (cevi.hablando) { cevi.hablando.pause(); cevi.hablando = null; }
   if (cevi.escuchando) { try { cevi.escuchando.stop(); } catch {} cevi.escuchando = null; }
 }
@@ -1401,6 +1399,113 @@ function initAgente() {
 }
 window.ceviAbrir = ceviAbrir;
 
+/* ---------- Cuenta regresiva hasta la entrega ----------
+   La fecha ya venía de Odoo y no se mostraba en ningún lado. Sin fecha, "prepara
+   tu espacio antes de que llegue" es una idea abstracta; con fecha, es un plazo. */
+function fechaEntrega(maq) {
+  const f = maq?.fecha_entrega;
+  if (!f) return '';
+  const fecha = new Date(f + 'T12:00:00');
+  if (isNaN(fecha)) return '';
+  const dias = Math.round((fecha - new Date()) / 864e5);
+  const bonito = fecha.toLocaleDateString('es-PE', { day: 'numeric', month: 'long' });
+  if (dias < -30) return '';                       // entrega antigua: ya no es una cuenta regresiva
+  const txt = dias > 1 ? `Te quedan <strong>${dias} días</strong>`
+    : dias === 1 ? 'Es <strong>mañana</strong>'
+    : dias === 0 ? 'Es <strong>hoy</strong>'
+    : 'Ya debería estar contigo';
+  return `<div class="cuenta ${dias <= 7 ? 'urgente' : ''}">
+      <span class="cuenta-ic" aria-hidden="true">📅</span>
+      <div><strong>Tu ${esc(maq.modelo ? 'láser ' + maq.modelo : 'máquina')} llega alrededor del ${esc(bonito)}</strong>
+      <span>${txt} para dejar tu espacio listo.</span></div>
+    </div>`;
+}
+
+/* Solo el grupo del cliente. Mostrar los dos hacía que alguien con una compacta
+   leyera especificaciones industriales que no le tocan y se asustara. */
+function bloqueModelo(p, maq, waFicha) {
+  const pm = p.porModelo;
+  if (!pm) return '';
+  const modelo = String(maq?.modelo || '').replace(/\D/g, '');
+  const mio = (pm.grupos || []).find(g => g.modelos.includes(modelo));
+  if (!mio) {
+    return `<h2 class="section-h">Según tu modelo</h2>
+      <div class="card">
+        <p>No tenemos cargado qué modelo compraste, así que no podemos decirte si tu instalación es remota o presencial.</p>
+        <a class="wa-inline" href="${waFicha}" target="_blank" rel="noopener">Pregúntanos por WhatsApp</a>
+      </div>`;
+  }
+  return `<h2 class="section-h">Según tu modelo${maq?.modelo ? ` · ${esc(maq.modelo)}` : ''}</h2>
+    <div class="card modelo-card mio">
+      <p><strong>Instalación:</strong> ${esc(mio.instalacion)}</p>
+      <p><strong>En qué concentrarte:</strong> ${esc(mio.foco)}</p>
+      <p class="muted">${esc(mio.nota)}</p>
+    </div>`;
+}
+
+/* ---------- Llevarse la guía al correo ----------
+   El cliente va a ir a comprar con el celular en la mano y va a hablar con un
+   electricista. Tener la lista en su correo (y poder reenviársela) vale más que
+   tenerla solo aquí. Se le pide el correo UNA vez y se explica para qué. */
+function tarjetaCorreo() {
+  if (modoDemo()) return '';                       // en demostración no se envía nada
+  const g = state.guiaPorCorreo;
+  if (g && g.enviada) {
+    return `<div class="correo-caja lista">
+        <div class="correo-ic" aria-hidden="true">✅</div>
+        <div class="grow">
+          <strong>Te enviamos esta guía a ${esc(g.email || 'tu correo')}</strong>
+          <p>Llévala contigo cuando vayas a comprar y pásasela a tu electricista. ¿No llegó? Mira en tu carpeta de spam.</p>
+        </div>
+        <button type="button" class="btn ghost sm" id="correoOtra">Enviarla a otro correo</button>
+      </div>`;
+  }
+  return `<div class="correo-caja">
+      <div class="correo-ic" aria-hidden="true">📩</div>
+      <div class="grow">
+        <strong>Llévate esta guía en tu correo</strong>
+        <p>Te mandamos la lista de compras y el checklist completos. Así los tienes en la ferretería y se los puedes reenviar a tu electricista.</p>
+        <form class="correo-form" id="correoForm">
+          <input type="email" id="correoInput" placeholder="tucorreo@ejemplo.com" autocomplete="email" aria-label="Tu correo electrónico" required>
+          <button class="btn primary" type="submit">Enviármela</button>
+        </form>
+        <div class="correo-msg" id="correoMsg" role="status" hidden></div>
+      </div>
+    </div>`;
+}
+
+async function pedirEstadoGuia() {
+  if (modoDemo()) return;
+  const ses = leerSesion();
+  if (!ses?.t) return;
+  const r = await apiPost('/api/mi-guia/estado', { token: ses.t });
+  if (r.ok) state.guiaPorCorreo = r.json;
+}
+
+function bindCorreo() {
+  const form = $('#correoForm');
+  if (form) {
+    form.onsubmit = async (e) => {
+      e.preventDefault();
+      const email = $('#correoInput').value.trim();
+      const msg = $('#correoMsg'), btn = form.querySelector('button');
+      msg.hidden = true; msg.className = 'correo-msg';
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
+        msg.hidden = false; msg.classList.add('mal'); msg.textContent = 'Revisa tu correo: parece que falta algo.'; return;
+      }
+      btn.disabled = true; btn.textContent = 'Enviando…';
+      const ses = leerSesion();
+      const r = await apiPost('/api/mi-guia', { token: ses?.t, email });
+      btn.disabled = false; btn.textContent = 'Enviármela';
+      if (r.json.ok) { state.guiaPorCorreo = { enviada: true, email }; render('preparacion'); toast('📩 Te la enviamos. Revisa tu correo.'); return; }
+      msg.hidden = false; msg.classList.add('mal');
+      msg.textContent = r.json.error || 'No pudimos enviarla ahora. Tu guía sigue aquí, completa.';
+    };
+  }
+  const otra = $('#correoOtra');
+  if (otra) otra.onclick = () => { state.guiaPorCorreo = null; render('preparacion'); setTimeout(() => $('#correoInput')?.focus(), 80); };
+}
+
 // ---------- pie legal (datos del proveedor + accesos obligatorios) ----------
 /* El consumidor debe poder ver CON QUIÉN contrata y llegar al Libro de
    Reclamaciones desde cualquier página. Si falta un dato societario, se avisa
@@ -1410,8 +1515,10 @@ function pintarPieLegal() {
   if (!pie) return;
   const e = CFG.empresa || {};
   const faltan = ['razon_social', 'ruc', 'domicilio'].filter(k => !e[k]);
+  // Se avisa por consola a quien mantiene el portal, nunca en pantalla: el
+  // cliente no tiene por qué enterarse de nuestros pendientes internos.
+  if (faltan.length) console.warn('[C4V] Faltan datos del proveedor en config.js:', faltan.join(', '));
   pie.innerHTML = `
-    ${faltan.length ? `<p class="pie-falta">⚠️ Faltan datos obligatorios del proveedor: ${faltan.join(', ').replace(/_/g, ' ')}. Complétalos en <code>js/config.js</code> antes de abrir el portal a clientes.</p>` : ''}
     <p class="pie-empresa">
       <strong>${esc(e.razon_social || '')}</strong>${e.ruc ? ` · RUC ${esc(e.ruc)}` : ''}${e.domicilio ? `<br>${esc(e.domicilio)}` : ''}
       <br>Atención al cliente: WhatsApp ${esc(e.whatsapp_visible || CFG.whatsapp?.visible || '')}${e.telefono ? ` · Tel. ${esc(e.telefono)}` : ''}${e.email ? ` · ${esc(e.email)}` : ''}
@@ -1420,7 +1527,7 @@ function pintarPieLegal() {
       <a href="libro-reclamaciones.html" class="pie-lr" target="_blank" rel="noopener">📕 Libro de Reclamaciones</a>
       <a href="privacidad.html" target="_blank" rel="noopener">Política de Privacidad</a>
       <a href="terminos.html" target="_blank" rel="noopener">Términos de Uso</a>
-      <a href="privacidad.html#derechos" target="_blank" rel="noopener">Ejercer mis derechos sobre mis datos</a>
+      <a href="privacidad.html#derechos" target="_blank" rel="noopener">Ver, corregir o borrar mis datos</a>
     </nav>`;
 }
 

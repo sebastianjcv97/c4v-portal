@@ -10,7 +10,22 @@
   --ink:#141414; --muted:#5f5f5f; --line:#e8e8e8;
   --on-black:#ffffff; --on-black-dim:#b9b9b9;
   --amber:#FFC400; /* banda demo (como la banda promo del sitio) */
-  --ok:#2f7d51; --ok-50:#e9f3ec; --warn:#8a5f10; --warn-50:#f6efe0; --info:#2e5aac; --info-50:#eaeff8;
+  /* Estados: todos pasan contraste AA sobre su fondo -50 */
+  --ok:#256640; --ok-50:#e9f3ec;        /* antes 2f7d51 daba 4.43:1 y no pasaba */
+  --warn:#8a5f10; --warn-50:#f6efe0;
+  --err:#b3261e; --err-50:#fdecea;      /* se usaba con fallback sin estar declarada */
+  --info:#2e5aac; --info-50:#eaeff8;
+  /* WhatsApp: el verde de marca con texto blanco da 1.98:1 y no se puede leer.
+     Fondo verde oscuro; el verde de marca queda solo para el ícono. */
+  --wa:#117F44; --wa-hover:#0E6B39; --wa-brand:#25D366;
+
+  /* Una sola escala de espacio y tamaño. Si un valor no está aquí, no se usa. */
+  --s-1:4px; --s-2:8px; --s-3:12px; --s-4:16px; --s-5:24px; --s-6:32px; --s-7:48px;
+  --t-xs:12px; --t-sm:14px; --t-md:16px; --t-lg:18px; --t-xl:22px; --t-2xl:28px; --t-3xl:34px;
+  --lh-tight:1.2; --lh-snug:1.4; --lh-base:1.6;
+  --medida:62ch;
+  --tap:44px;
+  --r-sm:6px; --r-full:999px;
   --r:8px; --r-lg:12px;
   --sh:0 1px 3px rgba(20,20,20,.07);
   --sans:'Roboto',system-ui,-apple-system,'Segoe UI',Arial,sans-serif;
@@ -71,7 +86,7 @@ button{font-family:var(--sans)}
 .gate-foot a{color:var(--red);font-weight:700}
 
 /* ---------- Agente de IA (topbar) ---------- */
-.ai-btn{margin-left:auto;display:inline-flex;align-items:center;gap:8px;background:var(--red-cta);color:#fff;border:none;border-radius:var(--r);padding:9px 14px;font-size:14px;font-weight:500;font-family:var(--sans);cursor:pointer;white-space:nowrap}
+.ai-btn{min-height:var(--tap);margin-left:auto;display:inline-flex;align-items:center;gap:8px;background:var(--red-cta);color:#fff;border:none;border-radius:var(--r);padding:9px 14px;font-size:14px;font-weight:500;font-family:var(--sans);cursor:pointer;white-space:nowrap}
 .ai-btn:hover{background:var(--red-dark)}
 .ai-btn strong{font-weight:700}
 .ai-ic{width:18px;height:18px;flex-shrink:0}
@@ -114,8 +129,8 @@ button{font-family:var(--sans)}
 .big-arrow{flex-shrink:0;color:var(--red-cta);font-size:22px;font-weight:700}
 
 /* Botón grande de WhatsApp (la vía principal para pedir ayuda) */
-.wa-big{display:flex;align-items:center;gap:14px;min-height:72px;background:#25D366;color:#fff;border-radius:var(--r-lg);padding:16px 18px;margin-bottom:28px;transition:background .16s,transform .1s}
-.wa-big:hover{background:#1eb457}
+.wa-big{display:flex;align-items:center;gap:14px;min-height:72px;background:var(--wa);color:#fff;border-radius:var(--r-lg);padding:16px 18px;margin-bottom:28px;transition:background .16s,transform .1s}
+.wa-big:hover{background:var(--wa-hover)}
 .wa-big:active{transform:scale(.99)}
 .wa-ic{flex-shrink:0;width:32px;height:32px}
 .wa-txt{display:flex;flex-direction:column;gap:2px}
@@ -143,8 +158,8 @@ button{font-family:var(--sans)}
 .topbar-home{display:flex;align-items:center;min-height:44px}
 .topbar-logo{height:26px;width:auto}
 
-.view{padding:32px;max-width:1020px;width:100%}
-.foot{padding:24px 32px;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center;color:var(--muted);font-size:14px}
+.view{padding:32px;max-width:1020px;width:100%;margin:0 auto}
+.foot{padding:24px 32px;max-width:1020px;width:100%;margin:0 auto;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center;color:var(--muted);font-size:14px}
 .muted{color:var(--muted)}
 .loading{padding:48px;color:var(--muted)}
 
@@ -390,7 +405,7 @@ tr:last-child td{border-bottom:none}
 .prep-cta p{font-size:14px;color:var(--on-black-dim);margin:10px 0 12px;line-height:1.5}
 .prep-cta-btn{display:inline-block;background:var(--red-cta);color:#fff;border-radius:var(--r);padding:12px 18px;font-size:15px;font-weight:700;min-height:44px;transition:background .14s}
 .prep-cta:hover .prep-cta-btn{background:var(--red-dark)}
-.big.lock{opacity:.6;cursor:pointer;background:var(--alt);border-style:dashed;width:100%;text-align:left;font-family:var(--sans);font-size:inherit}
+.big.lock{cursor:pointer;background:var(--alt);border-style:dashed;width:100%;text-align:left;font-family:var(--sans);font-size:inherit}
 .big.lock .big-ico{background:#ececec;color:var(--muted)}
 .big.lock:hover{border-color:var(--line);background:var(--alt)}
 .prep-aviso{background:var(--red-50);border:1px solid #f3c2c2;border-radius:var(--r-lg);padding:14px 16px;margin-bottom:16px;font-size:14px;line-height:1.5}
@@ -462,7 +477,7 @@ tr:last-child td{border-bottom:none}
 .pdf-dl{font-size:13px;font-weight:700;color:var(--red-cta)}
 
 /* ---------- Botón WhatsApp (verde real de la marca WhatsApp) ---------- */
-.btn-wa{display:inline-flex;align-items:center;justify-content:center;gap:9px;background:#25D366;color:#fff;font-family:var(--sans);font-weight:700;font-size:15px;padding:12px 20px;border-radius:var(--r);min-height:44px;text-decoration:none}
+.btn-wa{display:inline-flex;align-items:center;justify-content:center;gap:9px;background:var(--wa);color:#fff;font-family:var(--sans);font-weight:700;font-size:15px;padding:12px 20px;border-radius:var(--r);min-height:44px;text-decoration:none}
 .btn-wa:hover{background:#1eb457}
 .btn-wa svg{width:20px;height:20px;flex-shrink:0}
 
@@ -480,7 +495,7 @@ tr:last-child td{border-bottom:none}
 /* ---------- Soporte: contexto + deep links por síntoma ---------- */
 .wa-ctx{margin:-18px 0 24px;font-size:13.5px;line-height:1.5}
 .wa-ctx strong{color:var(--ink);font-variant-numeric:tabular-nums}
-.wa-inline{display:inline-flex;align-items:center;gap:8px;min-height:44px;color:#128C4B;font-weight:700;font-size:14px}
+.wa-inline{display:inline-flex;align-items:center;gap:8px;min-height:44px;color:var(--wa);font-weight:700;font-size:14px}
 .wa-inline:hover{text-decoration:underline}
 .wa-inline .wa-ic{width:18px;height:18px;flex-shrink:0}
 
@@ -548,7 +563,8 @@ a.chip{text-decoration:none;color:var(--ink)}
 .ruta-num{flex-shrink:0;width:28px;height:28px;border-radius:50%;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;margin-top:2px}
 .ruta-pasos li.done .ruta-num{background:var(--ok);border-color:var(--ok);color:#fff}
 .ruta-pasos li.done .ruta-txt strong{text-decoration:line-through;color:var(--muted)}
-.ruta-pasos li.lock{opacity:.6}
+.ruta-pasos li.lock .ruta-txt strong,
+.ruta-pasos li.lock .ruta-txt small{color:var(--muted)}
 .ruta-txt{display:flex;flex-direction:column;gap:2px}
 .ruta-txt strong{font-size:15px}
 .ruta-txt small{font-size:13px;color:var(--muted);line-height:1.45}
@@ -576,7 +592,7 @@ a.chip{text-decoration:none;color:var(--ink)}
 .cevi-head-txt span{font-size:12px;color:var(--on-black-dim)}
 .cevi-avatar{width:32px;height:32px;border-radius:50%;background:var(--red);display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
 .cevi-avatar.grande{width:38px;height:38px;font-size:20px}
-.cevi-voz,.cevi-close{background:none;border:none;color:var(--on-black);cursor:pointer;padding:8px;border-radius:var(--r);min-width:40px;min-height:40px;display:flex;align-items:center;justify-content:center}
+.cevi-voz,.cevi-close{background:none;border:none;color:var(--on-black);cursor:pointer;padding:8px;border-radius:var(--r);min-width:var(--tap);min-height:var(--tap);display:flex;align-items:center;justify-content:center}
 .cevi-voz svg{width:20px;height:20px}
 .cevi-voz:hover,.cevi-close:hover{background:var(--black-2)}
 .cevi-voz[aria-pressed="false"]{opacity:.5}
@@ -600,9 +616,9 @@ a.chip{text-decoration:none;color:var(--ink)}
 .cevi-mic,.cevi-send{flex-shrink:0;width:44px;height:44px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center}
 .cevi-mic{background:var(--alt);color:var(--ink);border:2px solid var(--line)}
 .cevi-mic:hover{border-color:var(--ink)}
-.cevi-mic.grabando{background:var(--red);color:#fff;border-color:var(--red);animation:ceviLatido 1.1s infinite}
+.cevi-mic.grabando{background:var(--red-cta);color:#fff;border-color:var(--red-cta);animation:ceviLatido 1.1s infinite}
 @keyframes ceviLatido{50%{box-shadow:0 0 0 7px rgba(249,2,11,.16)}}
-.cevi-send{background:var(--red);color:#fff}
+.cevi-send{background:var(--red-cta);color:#fff}
 .cevi-send:hover{background:var(--red-dark)}
 .cevi-mic svg,.cevi-send svg{width:20px;height:20px}
 .cevi-pie{margin:0;padding:0 14px 12px;font-size:11.5px;color:var(--muted);background:var(--bg);text-align:center;flex-shrink:0}
@@ -664,3 +680,126 @@ button.big{width:100%;text-align:left;font-family:inherit;cursor:pointer}
 .card.vacio{text-align:center;padding:32px 24px}
 .card.vacio h3{font-family:var(--slab);font-size:18px;margin:0 0 8px}
 .card.vacio p{color:var(--muted);margin:0 0 16px;max-width:46ch;margin-left:auto;margin-right:auto}
+
+/* ---------- Llevarse la guía al correo ---------- */
+.correo-caja{display:flex;gap:14px;align-items:flex-start;background:var(--alt);border:2px solid var(--line);border-radius:var(--r-lg);padding:18px;margin-bottom:24px}
+.correo-caja.lista{background:var(--ok-50);border-color:var(--ok)}
+.correo-ic{font-size:24px;line-height:1;flex-shrink:0;margin-top:2px}
+.correo-caja strong{display:block;font-family:var(--slab);font-size:17px;margin-bottom:5px}
+.correo-caja p{margin:0 0 12px;font-size:14.5px;color:var(--muted);line-height:1.55;max-width:56ch}
+.correo-caja.lista p{margin-bottom:0}
+.correo-form{display:flex;gap:8px;flex-wrap:wrap}
+.correo-form input{flex:1;min-width:200px;padding:13px 14px;border:2px solid var(--line);border-radius:var(--r);font-family:var(--sans);font-size:16px;background:var(--bg);color:var(--ink)}
+.correo-form input:focus{outline:none;border-color:var(--red)}
+.correo-msg{margin-top:10px;font-size:14px}
+.correo-msg.mal{color:var(--red-dark)}
+@media(max-width:560px){.correo-caja{flex-direction:column;gap:10px}.correo-form button{width:100%}}
+.prep-imprimir{display:flex;justify-content:flex-end;margin:-4px 0 14px}
+
+/* ---------- Titular de sección (para frases largas) ----------
+   `.section-title` es un rótulo de 2 o 3 palabras en 12px mayúsculas. Se estaba
+   usando para titulares de 58 caracteres, que quedaban más chicos y más grises
+   que el texto de al lado. Esto es lo que va cuando el título es una frase. */
+.section-h{font-family:var(--slab);font-size:var(--t-lg);font-weight:700;line-height:var(--lh-snug);color:var(--ink);margin:var(--s-6) 0 var(--s-3);display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.section-h .contador{font-family:var(--sans);font-size:var(--t-sm);font-weight:600;color:var(--muted);font-variant-numeric:tabular-nums}
+
+/* ---------- Zonas táctiles de los enlaces legales ---------- */
+.gate-legal a,.pie-legal nav a,.redes-links a{display:inline-flex;align-items:center;min-height:var(--tap)}
+
+/* ---------- Densidad y medida de lectura en móvil ---------- */
+@media(max-width:560px){
+  .card,.row-card{padding:var(--s-4)}
+  .gate-paises{grid-template-columns:repeat(3,1fr)}
+  .gate-paises button{font-size:var(--t-xs);padding:10px 4px}
+}
+.big.lock .big-txt strong{color:var(--ink)}
+.big.lock .big-txt span{color:var(--muted)}
+
+/* ---------- Cuenta regresiva hasta la entrega ---------- */
+.cuenta{display:flex;gap:12px;align-items:flex-start;background:var(--black);color:var(--on-black);border-radius:var(--r-lg);padding:16px 18px;margin-bottom:var(--s-5)}
+.cuenta.urgente{background:var(--red-dark)}
+.cuenta-ic{font-size:22px;line-height:1;flex-shrink:0}
+.cuenta strong{display:block;font-family:var(--slab);font-size:var(--t-lg);line-height:var(--lh-snug);margin-bottom:4px}
+.cuenta span{font-size:var(--t-sm);color:var(--on-black-dim)}
+.cuenta.urgente span{color:#ffd9da}
+.cuenta strong strong{display:inline;font-family:inherit;font-size:inherit;color:var(--amber)}
+
+/* ---------- Lo que puede lastimarte, arriba y en rojo ---------- */
+.card.peligro{border:2px solid var(--red);background:var(--red-50)}
+.lista-peligro{margin:0;padding-left:20px}
+.lista-peligro li{margin-bottom:10px;font-size:var(--t-md);line-height:var(--lh-base)}
+.lista-peligro li:last-child{margin-bottom:0}
+
+/* ---------- Paso 0: pedir la ficha del modelo ---------- */
+.card.paso0{border:2px solid var(--ink)}
+.paso0-tag{display:inline-block;background:var(--ink);color:var(--on-black);font-size:var(--t-xs);font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:5px 10px;border-radius:var(--r-sm)}
+.card.paso0 .btn{margin-top:6px}
+
+/* ---------- Checklist: tiempos, opcionales y "¿cómo lo hago?" ---------- */
+.prep-tiempo{display:block;margin-top:5px;font-size:var(--t-sm);font-weight:700;color:var(--red-cta)}
+.prep-opcional{display:block;margin-top:5px;font-size:var(--t-sm);color:var(--muted);font-weight:400}
+.prep-como{padding:0 0 0 44px}
+.prep-como-btn{background:none;border:none;color:var(--red-cta);font-family:var(--sans);font-size:var(--t-sm);font-weight:700;cursor:pointer;padding:8px 0;min-height:var(--tap);text-decoration:underline}
+.prep-como-txt{background:var(--alt);border-radius:var(--r);padding:14px 16px;margin:4px 0 10px}
+.prep-como-txt .ulist{margin:0}
+.prep-como-txt li{font-size:var(--t-sm);line-height:var(--lh-base);margin-bottom:8px}
+
+/* ---------- El día que llega ---------- */
+.dia-entrega .acceso-pasos li.destacado{font-weight:700;color:var(--red-dark)}
+@media(max-width:560px){.prep-como{padding-left:0}}
+
+/* ============================================================
+   Correcciones de accesibilidad (auditoría WCAG 2.2 AA)
+   Van al final a propósito: pisan por orden a las reglas previas,
+   sin tener que reescribir el archivo entero.
+   ============================================================ */
+
+/* El texto del consentimiento legal estaba en 2.89:1 sobre el fondo negro del
+   acceso: ilegible, y encima es el texto que hay que leer ANTES de aceptar. */
+.gate-consent,
+.gate-consent.opcional em,
+.otp-pasos p,
+.otp-estado,
+.gate-volver,
+.gate-legal a,
+.otp-codigo-manual{color:var(--on-black-dim);opacity:1}
+.gate-consent a{color:#FF6B70}                 /* 5.6:1 sobre negro */
+.gate-foot a,.gate-paso strong{color:#FF6B70}
+.gate-doc-ej{color:var(--on-black-dim);font-size:var(--t-sm);margin:8px 0 0}
+
+/* El botón del acceso se volvía ilegible justo al pulsarlo (3.87:1). */
+.gate-btn[aria-busy="true"]{opacity:1;background:var(--red-dark);cursor:progress}
+
+/* No se quita el indicador de foco: se reemplaza por uno más visible. */
+.cevi-form input:focus-visible,
+.otp-form input:focus-visible,
+.correo-form input:focus-visible,
+.lr-form input:focus-visible,
+.lr-form textarea:focus-visible,
+.lr-form select:focus-visible{outline:3px solid var(--red-cta);outline-offset:2px;border-color:var(--red-cta)}
+
+/* El borde de los campos no se distinguía del fondo (1.23:1). Ahora 4.5:1. */
+.field input,.field textarea,.field select,
+.otp-form input,.correo-form input,.cevi-form input{border-color:#767676}
+#gateDoc,.gate-tipos button,.gate-paises button{border-color:#5a5a5a}
+
+/* Elegido vs no elegido se distinguía solo por color. */
+.gate-paises button[aria-checked="true"],
+.gate-tipos button[aria-checked="true"]{box-shadow:inset 0 0 0 2px rgba(255,255,255,.22)}
+
+/* A 320px o con zoom al 200% los cinco países se desbordaban. */
+.gate-paises{grid-template-columns:repeat(auto-fit,minmax(64px,1fr))}
+@media(max-width:360px){.gate-paises{grid-template-columns:repeat(3,1fr)}}
+.cert-maq-grid{grid-template-columns:repeat(auto-fill,minmax(min(300px,100%),1fr))}
+
+/* El foco no debe quedar debajo de la barra superior fija. */
+.view :is(a,button,input,select,textarea,summary){scroll-margin-top:72px}
+
+/* «Saltar al contenido» apuntaba a #view, que está oculto mientras se accede. */
+.gate:not([hidden]) ~ .skip,body:has(.gate:not([hidden])) .skip{display:none}
+
+/* Texto solo para lectores de pantalla (avisos de "abre en otra pestaña"). */
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+
+/* El subtexto del botón de WhatsApp perdía contraste por la opacidad. */
+.wa-txt span{opacity:1}
