@@ -217,11 +217,7 @@ const views = {
       </a>`}
 
       <div class="bigs">
-        <a class="big" href="#/cevi">
-          <div class="big-ico"><span class="toro" aria-hidden="true"></span></div>
-          <div class="big-txt"><strong>Habla con CeVi</strong><span>Pregúntale en voz alta</span></div>
-          <div class="big-arrow" aria-hidden="true">›</div>
-        </a>
+        <!-- CeVi no va aquí: el botón flotante lo ofrece en todas las pantallas. -->
         ${bigBtn('#/soporte', 'soporte', 'Necesito ayuda', 'Escríbenos por WhatsApp')}
         ${bigBtn('#/bolsa', 'bolsa', 'Trabajos para ti', 'Encargos de corte que te pasamos gratis')}
         ${bigBtn('#/plantillas', 'disenos', 'Diseños para cortar', 'Listos para usar, incluidos con tu máquina')}
@@ -1038,51 +1034,29 @@ async function apiPost(ruta, cuerpo) {
 
 function mostrarPaso(cual) {
   $('#gatePasoDoc').hidden = cual !== 'doc';
-  $('#gatePasoTel').hidden = cual !== 'tel';
   $('#gatePasoOtp').hidden = cual !== 'otp';
-  if (cual === 'tel') setTimeout(() => $('#telInput')?.focus(), 80);
-  if (cual === 'otp') setTimeout(() => (otpEstado.directo ? $('#otpCodigoDirecto') : $('#otpCodigo'))?.focus(), 80);
+  if (cual === 'otp') setTimeout(() => $('#otpCodigo')?.focus(), 80);
 }
 
-/* ── Paso: completar el teléfono ────────────────────────────────────────────
-   Se muestran los últimos 4 dígitos que hay en Odoo y la persona escribe el
-   resto. Sirve a la vez de prueba (solo el dueño sabe su número entero) y de
-   aviso (le dice a qué número le va a llegar el código). */
-function pintarPasoTel(datos, pais) {
-  otpEstado.solicitud = datos.solicitud;
-  otpEstado.pais = pais;
-  otpEstado.faltan = datos.faltan || 0;
-  const prefijo = (CFG.paises || []).find(p => p.code === pais)?.prefijo || '51';
-  $('#telPrefijo').textContent = '+' + prefijo;
-  $('#telCola').textContent = datos.pista || '';
-  $('#telFaltan').textContent = datos.faltan ? `${datos.faltan} dígitos que faltan` : 'dígitos que faltan';
-  const inp = $('#telInput');
-  inp.value = '';
-  inp.placeholder = '•'.repeat(Math.max(3, datos.faltan || 5));
-  inp.maxLength = Math.max(3, (datos.faltan || 5) + 3);   // holgura por si guardaron el prefijo
-  $('#telError').hidden = true;
-  mostrarPaso('tel');
-}
+/* ── El acceso, todo en una sola pantalla ───────────────────────────────────
+   El formulario crece: primero el documento, después el WhatsApp completo,
+   después el código. Lo ya escrito se queda a la vista pero bloqueado, para que
+   la persona no pierda de vista dónde está. Sin pantallas nuevas. */
+function faseAcceso(fase) {
+  acceso.fase = fase;
+  const tel = $('#gateTelBloque'), cod = $('#gateCodBloque'), btn = $('#gateForm .gate-btn');
+  tel.hidden = fase === 'doc';
+  cod.hidden = fase !== 'cod';
 
-/* El código ya salió: aquí solo se teclea. */
-function pintarPasoCodigo(pista, codigoDePrueba) {
-  otpEstado.directo = true;
-  $('#otpSubDirecto').hidden = false;
-  $('#otpSubInvertido').hidden = true;
-  $('#otpDirecto').hidden = false;
-  $('#otpInvertido').hidden = true;
-  $('#otpPista4').textContent = pista || '';
-  $('#otpCodigoDirecto').value = '';
-  $('#otpErrorDirecto').hidden = true;
-  const est = $('#otpEstadoDirecto');
-  if (codigoDePrueba) {
-    est.innerHTML = `<strong>Modo de prueba:</strong> todavía no enviamos WhatsApp, así que tu código es <strong class="codigo-prueba">${esc(codigoDePrueba)}</strong>.`;
-    est.classList.add('es-prueba');
-  } else {
-    est.textContent = 'Te llega en unos segundos. Revisa tu WhatsApp.';
-    est.classList.remove('es-prueba');
-  }
-  mostrarPaso('otp');
+  // Lo anterior se bloquea: ya cumplió su parte.
+  $('#gateDoc').disabled = fase !== 'doc';
+  $('#gateTel').disabled = fase !== 'tel';
+  $('#gateTipos').classList.toggle('bloqueado', fase !== 'doc');
+  $('#gatePaises').classList.toggle('bloqueado', fase !== 'doc');
+
+  btn.textContent = { doc: 'Ingresar', tel: 'Enviarme el código', cod: 'Entrar' }[fase];
+  const foco = { tel: '#gateTel', cod: '#gateCod' }[fase];
+  if (foco) setTimeout(() => $(foco)?.focus(), 80);
 }
 
 function detenerSondeo() {
