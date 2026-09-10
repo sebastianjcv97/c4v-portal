@@ -308,13 +308,7 @@ const views = {
   },
 
   inicio() {
-    const d = state.db, cli = currentClient();
-    const maq = cli ? d.maquinas.find(m => m.cliente_id === cli.id) : null;
-    const lista = maq ? d.maquinas.filter(m => m.cliente_id === cli.id) : [];
-    const certificada = maq?.certificado?.estado === 'certificada';
-    // 'desconocido' = el dato no está en Odoo. No es lo mismo que "en calibración":
-    // afirmarlo sería prometerle al cliente algo que no podemos comprobar.
-    const enRevision = ['en_revision', 'en_proceso'].includes(maq?.certificado?.estado);
+    const cli = currentClient();
     const prep = prepEstado();
 
     /* El inicio ya no repite lo que está en el menú de arriba. Solo tres cosas:
@@ -346,7 +340,7 @@ const views = {
       </a>`}
 
       <div class="bigs">
-        <!-- CeVi no va aquí: el botón flotante lo ofrece en todas las pantallas. -->
+        <!-- CeVi no va aquí: vive en el menú, junto a las demás secciones. -->
         ${bigBtn('#/soporte', 'soporte', 'Necesito ayuda', 'Escríbenos por WhatsApp')}
         ${bigBtn('#/bolsa', 'bolsa', 'Trabajos para ti', 'Encargos de corte, gratis')}
         ${bigBtn('#/plantillas', 'disenos', 'Diseños para cortar', 'Incluidos con tu máquina')}
