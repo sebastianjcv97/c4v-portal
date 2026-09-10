@@ -1722,14 +1722,23 @@ function ceviTrozos(texto, max = 150, primero = 70) {
 const ttsCache = new Map();
 const TTS_CACHE_MAX = 24;
 
+const TTS_TIMEOUT_MS = 9000;
+
 function ceviPedirTts(texto, señal) {
   const clave = String(texto).trim();
   if (ttsCache.has(clave)) return ttsCache.get(clave);
   const promesa = (async () => {
-    const r = await fetch(`${CFG.ceviApi}/tts`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: clave }), signal: señal
-    });
+    /* Con límite de tiempo: sin él, una petición colgada dejaba a CeVi en
+       "hablando" para siempre y no volvía a escuchar nunca. */
+    const corte = new AbortController();
+    const reloj = setTimeout(() => corte.abort(), TTS_TIMEOUT_MS);
+    let r;
+    try {
+      r = await fetch(`${CFG.ceviApi}/tts`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: clave }), signal: señal || corte.signal
+      });
+    } finally { clearTimeout(reloj); }
     if (!r.ok) throw new Error('tts ' + r.status);
     const blob = await r.blob();
     if (!blob.size) throw new Error('audio vacío');
@@ -1792,6 +1801,16 @@ function ceviReproducirTrozo(url) {
 /* Voz: reproduce la respuesta con la voz del backend, en cadena. Mientras suena
    un trozo ya se está sintetizando el siguiente, así que CeVi empieza a hablar
    en cuanto está lista la primera frase, no la respuesta entera. */
+/* Techo duro: hable o no hable, el turno termina. Antes, si algo se quedaba a
+   medias, la conversación entera se congelaba sin decir nada y sin volver a
+   escuchar. */
+function ceviHablarConTecho(texto, ms = 45000) {
+  return Promise.race([
+    ceviHablar(texto),
+    new Promise(r => setTimeout(() => { ceviParaVoz(); if (cevi.estado === 'hablando') ceviEstado('reposo'); r(); }, ms))
+  ]);
+}
+
 async function ceviHablar(texto) {
   // En modo voz siempre habla: silenciarla sería vaciar el modo de sentido.
   // El interruptor del altavoz solo manda cuando la conversación es escrita.
@@ -2009,7 +2028,7 @@ async function ceviEnviar(texto) {
     ceviPintar();
     if (input) input.disabled = false;
     ceviPintarPistas();
-    await ceviHablar(respuesta);
+    await ceviHablarConTecho(respuesta);
     await cerrarTurno();
   } catch {
     ceviCerrarCola();
@@ -2018,7 +2037,7 @@ async function ceviEnviar(texto) {
     cevi.historial.push({ role: 'assistant', content: caida, wa: waLink(`Hola equipo C4V. ${msg}`) });
     ceviPintar();
     if (input) input.disabled = false;
-    await ceviHablar(caida);
+    await ceviHablarConTecho(caida);
     if (input) input.disabled = false;
     if (cevi.estado === 'pensando') ceviEstado('reposo');
   }
@@ -2145,7 +2164,8 @@ function ceviTranscripcion(txt) {
 
 // El botón grande hace lo que toca según el estado. Un solo control, sin modos ocultos.
 function ceviVozToque() {
-  ceviDesbloquearAudio();
+  ceviDesbloquearAudio();          // dentro del gesto: es lo que exige Safari
+  ceviPrecargarRelleno();
   if (cevi.estado === 'escuchando') { cevi.manosLibres = false; ceviCallar(); return; }
   if (cevi.estado === 'hablando') { ceviParaVoz(); ceviEstado('reposo'); return; }
   if (cevi.estado === 'pensando') return;
@@ -2242,15 +2262,15 @@ function ceviPaginaIniciar() {
     });
   }
   ceviPintar();
-  // Se pide la voz del saludo ya, mientras la pantalla termina de pintarse.
+  /* El saludo se muestra ESCRITO y no se dice solo.
+     En iPhone, Safari solo deja sonar un <audio> que arrancó dentro del mismo
+     toque de la persona. Llegar aquí desde el menú no cuenta como ese toque:
+     el saludo se quedaba mudo y, peor, el estado se atascaba en "hablando",
+     que es por qué el micrófono parecía roto. Ahora el altavoz se desbloquea
+     en el primer toque del micrófono y a partir de ahí la conversación fluye. */
+  ceviEstado('reposo');
   if (primera) ceviPedirTts(ceviTrozos(cevi.historial[0].content)[0]).catch(() => {});
-  if (!HAY_DICTADO) { ceviAviso('Tu navegador no puede escuchar. Escríbeme tu pregunta aquí abajo.'); return; }
-  /* El primer toque de la persona fue el enlace que trajo aquí, así que el
-     altavoz ya está desbloqueado y puede saludar sola. */
-  (async () => {
-    if (primera) await ceviHablar(cevi.historial[0].content);
-    if (currentRoute() === 'cevi' && cevi.manosLibres) ceviEscuchar();
-  })();
+  if (!HAY_DICTADO) ceviAviso('Tu navegador no puede escuchar. Escríbeme tu pregunta aquí abajo.');
 }
 
 /* Pitidos de cambio de turno. Quien está hablando no mira la pantalla, así que
@@ -2324,7 +2344,7 @@ function ceviSinRespuesta() {
   if (cevi.silencios > 2) { cevi.manosLibres = false; ceviPintarPistas(); return false; }
   const texto = REPREGUNTAS[Math.min(cevi.silencios, REPREGUNTAS.length) - 1];
   (async () => {
-    await ceviHablar(texto);
+    await ceviHablarConTecho(texto);
     if (cevi.abierto && cevi.manosLibres && !cevi.cerrando) ceviEscuchar();
   })();
   return true;
