@@ -1339,7 +1339,7 @@ body{background:var(--mesa)}
   background:var(--papel);border:2px solid var(--regla);border-radius:var(--r-lg);
   padding:var(--s-4) var(--s-5);min-height:72px;cursor:pointer;font-family:var(--sans);color:var(--tinta)}
 .qz-start:hover{border-color:var(--tinta)}
-.qz-area{margin-top:var(--s-4);border:2px solid var(--tinta);border-radius:var(--r-lg);padding:var(--s-5)}
+.qz-area{margin-top:var(--s-4);border:2px solid var(--tinta);border-radius:var(--r-lg);padding:var(--s-5);background:var(--papel)}
 .qz-prog{font-size:var(--t-sm);font-weight:700;color:var(--grafito);margin-bottom:var(--s-2)}
 .qz-barra{height:6px;border-radius:var(--r-full);background:var(--regla);overflow:hidden;margin:0 0 var(--s-4)}
 .qz-barra i{display:block;height:100%;background:var(--rojo-tinta);transition:width .3s}
