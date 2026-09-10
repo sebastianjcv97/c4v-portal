@@ -19,7 +19,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@700;800&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/styles.css?v=20260913i" />
+  <link rel="stylesheet" href="css/styles.css?v=20260913k" />
 </head>
 <body>
   <a class="skip" href="#view">Saltar al contenido</a>
@@ -167,18 +167,22 @@
 
       <main id="view" class="view"><div class="loading">Cargando…</div></main>
 
-      <footer class="foot">
-        <div class="me" id="me"></div>
-        <button class="ctx-out" id="logoutBtn" type="button">Salir</button>
+      <!-- Un solo pie: quién eres, cómo salir, y lo que la ley obliga a mostrar.
+           Antes eran dos pies distintos, uno encima del otro. -->
+      <footer class="pie-legal">
+        <div class="pie-sesion">
+          <div class="me" id="me"></div>
+          <!-- Cerrar sesión vive en Mi cuenta, a un toque del nombre. Aquí queda
+               oculto porque el resto del código lo usa como camino único. -->
+          <button class="ctx-out" id="logoutBtn" type="button" hidden>Cerrar sesión</button>
+        </div>
+        <div id="pieLegal"></div>
       </footer>
-
-      <!-- Datos del proveedor + accesos legales (los rellena app.js desde config.js) -->
-      <footer class="pie-legal" id="pieLegal"></footer>
     </div>
   </div>
 
-  <script src="js/config.js?v=20260913i"></script>
-  <script src="js/data.js?v=20260913i"></script>
-  <script src="js/app.js?v=20260913i"></script>
+  <script src="js/config.js?v=20260913k"></script>
+  <script src="js/data.js?v=20260913k"></script>
+  <script src="js/app.js?v=20260913k"></script>
 </body>
 </html>
