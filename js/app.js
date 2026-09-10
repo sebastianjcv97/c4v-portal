@@ -520,29 +520,8 @@ const views = {
         ${wa()}
         <div class="wa-txt"><strong>Escríbenos por WhatsApp</strong><span>${esc(sop.whatsapp)}, ${esc(sop.horario.toLowerCase())}</span></div>
       </a>
-      ${refMaq ? `<p class="wa-ctx muted">Tu mensaje ya lleva los datos de tu máquina (<strong>${esc(refMaq)}</strong>) para atenderte más rápido.</p>` : ''}
 
-      <div class="help-card cevi-card">
-        <div class="big-ico" aria-hidden="true"><img class="toro-cara" src="assets/cevi/listo-sm.png" width="96" height="96" alt="" decoding="async"></div>
-        <div class="grow"><h3>¿Quieres una respuesta ahora mismo?</h3>
-          <p>Háblale a CeVi y te contesta en voz alta sobre potencias, mantenimiento y fallas. Si no puede, te pasa con una persona.</p></div>
-        <a class="btn primary sm" href="#/cevi">Habla con CeVi</a>
-      </div>
-
-      ${(sop.lives || sop.redes) ? `
-      <h2 class="section-h">Otras formas de encontrarnos</h2>
-      <div class="card redes">
-        ${sop.lives ? `<p><strong>Clases en vivo:</strong> ${esc(sop.lives)}</p>` : ''}
-        ${sop.redes ? `<p class="redes-links">
-          ${sop.redes.tiktok ? `<a href="${esc(sop.redes.tiktok_url || '#')}" target="_blank" rel="noopener">TikTok ${esc(sop.redes.tiktok)}</a>` : ''}
-          ${sop.redes.instagram ? `<span>Instagram ${esc(sop.redes.instagram)}</span>` : ''}
-          ${sop.redes.facebook ? `<span>Facebook ${esc(sop.redes.facebook)}</span>` : ''}
-          ${sop.fijo ? `<span>Teléfono fijo ${esc(sop.fijo)}</span>` : ''}
-        </p>` : ''}
-      </div>` : ''}
-
-      <h2 class="section-h">Antes de escribir, mira si es algo común</h2>
-      <p class="muted" style="margin:0 0 14px;font-size:15px">Estos son los problemas que más nos consultan. Muchos se resuelven en un minuto.</p>
+      <h2 class="section-h">Problemas más comunes</h2>
       <div id="guiaList">
         ${d.soporte_guia.map(g => `<div class="faq-item guia"><button type="button" class="faq-q" aria-expanded="false"><span>${esc(g.titulo)}</span><span class="chev" aria-hidden="true">+</span></button>
           <div class="faq-a"><p style="margin:0 0 6px"><strong>Qué pasa:</strong> ${esc(g.sintoma)}</p>
@@ -567,17 +546,11 @@ const views = {
 
   bolsa() {
     return `
+      <!-- Sin filtros por país ni botón de publicar: eran ocho controles para
+           una lista que casi siempre está vacía. Cuando haya muchos encargos,
+           el filtro vuelve. -->
       <div class="page-head">
-        <p>Nos escriben personas buscando quien les corte algo. Nosotros solo fabricamos las máquinas, así que sus encargos se publican aquí para ti. Toma el que quieras y verás su contacto.</p></div>
-      <div class="toolbar"><div class="filters">
-          <button class="chip active" data-filter="todos">Todos</button>
-          <button class="chip" data-filter="PE">🇵🇪 Perú</button>
-          <button class="chip" data-filter="EC">🇪🇨 Ecuador</button>
-          <button class="chip" data-filter="BO">🇧🇴 Bolivia</button>
-          <button class="chip" data-filter="CL">🇨🇱 Chile</button>
-          <button class="chip" data-filter="CO">🇨🇴 Colombia</button></div>
-        <button class="btn primary sm" id="newLeadBtn">+ Publicar solicitud</button></div>
-      <div id="leadForm"></div>
+        <p>Nos escriben personas buscando quién les corte algo. Sus encargos se publican aquí. Toma el que quieras y verás su contacto.</p></div>
       ${state.db.leads.length
         ? `<div class="list" id="leadList">${leadRows(state.db.leads)}</div>`
         : `<div class="card vacio" id="leadList">
@@ -587,11 +560,7 @@ const views = {
                  : 'Cuando alguien nos pida un servicio de corte, lo publicamos aquí y podrás tomarlo. Vuelve a mirar en unos días.'}</p>
              <a class="btn ghost sm" href="${waLink('Hola, quiero que me avisen cuando publiquen trabajos en la Bolsa de C4V.')}" target="_blank" rel="noopener">Avísenme cuando haya trabajos</a>
            </div>`}
-      <h2 class="section-h">Trae más trabajos a la red</h2>
-      <div class="help-card">${icon('bolsa')}
-        <div class="grow"><h3>¿Conoces a alguien que necesita corte láser?</h3>
-          <p>Compártele el enlace de solicitudes: deja su pedido en 1 minuto y se publica en esta bolsa.</p></div>
-        <a class="btn ghost sm" href="solicita.html" target="_blank" rel="noopener">Abrir página de solicitudes</a></div>`;
+`;
   },
 
   /* Era una página de 3264px con siete tarjetas que decían "Muy pronto" y ni un
@@ -788,27 +757,7 @@ function bind(route) {
     };
   }
   if (route === 'bolsa') {
-    let filtro = 'todos';
-    const apply = () => {
-      const lista = filtro === 'todos' ? state.db.leads : state.db.leads.filter(l => l.pais === filtro);
-      const caja = $('#leadList'); if (!caja) return;
-      caja.innerHTML = lista.length ? leadRows(lista) : '<p class="muted" style="padding:18px">No hay trabajos publicados en ese país por ahora.</p>';
-      bindTake();
-    };
-    view.querySelectorAll('[data-filter]').forEach(b => b.onclick = () => { filtro = b.dataset.filter; view.querySelectorAll('.chip').forEach(c => c.classList.toggle('active', c === b)); apply(); });
-    $('#newLeadBtn').onclick = () => {
-      const box = $('#leadForm'); if (box.innerHTML) { box.innerHTML = ''; return; }
-      box.innerHTML = `<div class="card" style="margin-bottom:16px"><h3>Publicar una solicitud</h3>
-        <form class="form" id="lf" style="margin-top:10px">
-          <div class="field"><label>¿Qué trabajo es?</label><input name="titulo" placeholder="Ej: corte de 100 llaveros" required></div>
-          <div class="field"><label>Detalle</label><textarea name="descripcion"></textarea></div>
-          <div class="form-row"><div class="field"><label>Material</label><input name="material" placeholder="MDF 3mm"></div><div class="field"><label>Cantidad</label><input name="cantidad" placeholder="100 unidades"></div></div>
-          <div class="form-row"><div class="field"><label>País</label><select name="pais"><option>PE</option><option>EC</option><option>BO</option><option>CL</option><option>CO</option></select></div><div class="field"><label>Ciudad</label><input name="ciudad"></div></div>
-          <div class="form-row"><div class="field"><label>Nombre del cliente</label><input name="contacto" placeholder="Nombre" required></div><div class="field"><label>Teléfono o email</label><input name="telefono" placeholder="+51 …"></div></div>
-          <button class="btn primary" type="submit">Publicar</button></form></div>`;
-      $('#lf').onsubmit = async (e) => { e.preventDefault();
-        try { await actions.crearLead(Object.fromEntries(new FormData(e.target))); toast(state.offline ? 'Solicitud guardada en esta demostración' : '✅ Solicitud publicada'); render('bolsa'); } catch { toast('No pudimos publicar tu solicitud. Revisa tu internet y vuelve a intentar: no perdiste lo que escribiste.'); } };
-    };
+    // Sin filtros ni formulario de publicar: la pantalla solo lista y deja tomar.
     bindTake();
   }
 }
@@ -1089,7 +1038,7 @@ async function entrar(cliente) {
   $('#gate').hidden = true; $('#app').hidden = false;
   pintarPieLegal();   // ahora sabemos con qué empresa contrató
   const info = docInfo(cliente.pais, cliente.tipo || 'persona');
-  $('#me').innerHTML = `<a class="me-link" href="#/cuenta"><strong>${esc(nombrePropio(cliente.nombre))}</strong><span>${esc(info.doc)} ${esc(cliente.documento)}</span></a>`;
+  $('#me').innerHTML = `<a class="me-link" href="#/cuenta"><span class="me-txt"><strong>${esc(nombrePropio(cliente.nombre))}</strong><span>${esc(info.doc)} ${esc(cliente.documento)}</span></span></a>`;
   // El cliente nuevo aterriza en la guía de preparación: es lo que necesita hoy.
   // Ya no es un candado — puede ir a donde quiera desde el inicio.
   let primeraVez = false;

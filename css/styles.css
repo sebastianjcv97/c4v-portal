@@ -1482,3 +1482,9 @@ body.ruta-cevi .chat{min-height:calc(100dvh - var(--alto-menu, 176px))}
 .pie-empresa{margin:0;font-size:var(--t-xs);line-height:1.6;color:var(--grafito)}
 .pie-empresa strong{color:var(--tinta)}
 @media(min-width:700px){ .pie-enlaces .pie-lr{flex-basis:auto;min-width:290px} }
+/* El nombre lleva a Mi cuenta, pero en el teléfono no hay «hover» que lo
+   delate: se le pone la misma flecha que a los demás destinos. */
+.me-link{display:flex;align-items:center;gap:var(--s-3);padding:var(--s-3) 0;
+  border-top:1px solid var(--regla);border-bottom:1px solid var(--regla)}
+.me-link .me-txt{flex:1;min-width:0}
+.me-link::after{content:'›';color:var(--rojo-tinta);font-size:var(--t-lg);line-height:1}
