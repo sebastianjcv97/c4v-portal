@@ -158,6 +158,10 @@ const ICONS = {
   // Casilla marcada: los primeros pasos.
   prep: '<rect x="3.5" y="3.5" width="17" height="17" rx="3"/><path d="M8 12.2l2.8 2.8L16.5 9.3"/>',
   // Casa: el inicio.
+  // Un toro de línea para el asistente: es CeVi, no un globo de chat genérico.
+  cevi: '<path d="M5 7.5C5 5 3.5 4 3.5 4s3 0 4.5 2"/><path d="M19 7.5c0-2.5 1.5-3.5 1.5-3.5s-3 0-4.5 2"/><path d="M7.5 8.5h9a3 3 0 0 1 3 3v1a7.5 7.5 0 0 1-15 0v-1a3 3 0 0 1 3-3z"/><path d="M9.5 12.5h.01M14.5 12.5h.01"/><path d="M9.5 16.5c1.6 1.2 3.4 1.2 5 0"/>',
+  // Libro abierto con una marca: el Libro de Reclamaciones.
+  reclamo: '<path d="M4 5.5h6a2 2 0 0 1 2 2v11a2 2 0 0 0-2-2H4z"/><path d="M20 5.5h-6a2 2 0 0 0-2 2v11a2 2 0 0 1 2-2h6z"/><path d="M15 9.5h3M15 12.5h3"/>',
   inicio: '<path d="M3.5 10.5L12 3.5l8.5 7"/><path d="M5.5 9.5v10h13v-10"/><path d="M9.5 19.5v-6h5v6"/>',
   // Signo de pregunta: dudas.
   help: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9.3a2.5 2.5 0 1 1 3.3 2.4c-.8.3-1.2.9-1.2 1.7"/><path d="M11.6 16.6h.8"/>'
@@ -222,14 +226,27 @@ function vistaCurso(a, id) {
       </div>`;
   };
 
+  /* Un módulo sin lecciones no es un módulo: es el examen del curso. Numerarlo
+     como uno más confundía, porque parecía que quedaba contenido por leer. */
+  const esExamen = (m) => !(m.lecciones || []).length && (m.preguntas || []).length;
+
+  let n = 0;
   const modulos = c.modulos.map((m, mi) => {
-    const lecciones = m.lecciones || [];
+    if (esExamen(m)) return '';
+    n++;
     return `<section class="modulo">
-      <h3 class="modulo-tit"><span class="modulo-n">${mi + 1}</span>${esc(m.titulo)}</h3>
-      ${lecciones.length ? `<ul class="lecciones">${lecciones.map(leccion).join('')}</ul>` : ''}
+      <h3 class="modulo-tit"><span class="modulo-n">${n}</span>${esc(m.titulo)}</h3>
+      <ul class="lecciones">${m.lecciones.map(leccion).join('')}</ul>
       ${evaluacion(m, mi)}
     </section>`;
   }).join('');
+
+  const examenes = c.modulos.map((m, mi) => esExamen(m) ? `
+    <section class="examen">
+      <h2 class="section-h">Evaluación final</h2>
+      <p class="bajada">Repasa los ${n} módulos y ponte a prueba con todo el curso.</p>
+      ${evaluacion(m, mi)}
+    </section>` : '').join('');
 
   // Las guías de ESTE curso, al final, donde ya se entiende para qué sirven.
   const guias = (a.guiasPdf || []).filter(g => g.curso === c.id);
@@ -254,12 +271,42 @@ function vistaCurso(a, id) {
     </div>
     <p class="bajada">${esc(p.nota)}</p>` : '';
 
-  return modulos + bloqueParams + bloqueGuias;
+  return modulos + examenes + bloqueParams + bloqueGuias;
 }
 
 const views = {
   /* Pantalla única: saludo + tu máquina + 5 botones grandes. Nada más.
      Todo lo demás vive DENTRO de esos botones. */
+  /* Mi cuenta. Antes la tarjeta de la máquina ocupaba el inicio, donde nadie la
+     busca. Aquí sí: se llega tocando tu nombre, que es lo que uno hace cuando
+     quiere ver "lo mío". */
+  cuenta() {
+    const d = state.db, cli = currentClient();
+    if (!cli) return '<p class="muted">Entra con tu documento para ver tus datos.</p>';
+    const maqs = d.maquinas.filter(m => m.cliente_id === cli.id);
+    const info = docInfo(cli.pais, cli.tipo);
+    return `
+      <div class="cuenta-datos">
+        <p class="cuenta-nombre">${esc(nombrePropio(cli.nombre))}</p>
+        <p class="muted">${esc(info.doc)} ${esc(cli.documento)}${cli.ciudad ? ' · ' + esc(cli.ciudad) : ''}</p>
+      </div>
+
+      <h2 class="section-h">${maqs.length > 1 ? 'Tus máquinas' : 'Tu máquina'}</h2>
+      ${maqs.length ? maqs.map(m => `
+        <a class="maq" href="#/certificado">
+          <div class="maq-seal">${SEAL}</div>
+          <div class="maq-txt">
+            <strong>Láser ${esc(m.modelo)}</strong>
+            <span>${m.certificado?.estado === 'certificada' ? 'Probada y calibrada. Ver tu certificado'
+                 : ['en_revision','en_proceso'].includes(m.certificado?.estado) ? 'La estamos probando'
+                 : 'Ver tu certificado'}</span>
+          </div>
+          <div class="big-arrow" aria-hidden="true">›</div>
+        </a>`).join('') : '<p class="muted">Todavía no vemos una máquina a tu nombre. Escríbenos y lo revisamos.</p>'}
+
+      <button type="button" class="btn ghost cuenta-salir" id="salirCuenta">Cerrar sesión</button>`;
+  },
+
   inicio() {
     const d = state.db, cli = currentClient();
     const maq = cli ? d.maquinas.find(m => m.cliente_id === cli.id) : null;
@@ -284,19 +331,6 @@ const views = {
         <img class="saludo-toro" src="assets/cevi/saluda.png" width="124" height="160" loading="lazy" alt="" aria-hidden="true" decoding="async">
         <h1 class="saludo">${cli ? `Hola, ${esc(primerNombre(cli.nombre))}` : 'Hola'}</h1>
       </div>
-
-      ${maq ? `<a class="maq" href="#/certificado">
-        <div class="maq-seal">${SEAL}</div>
-        <div class="maq-txt">
-          <strong>Tu láser ${esc(maq.modelo)}</strong>
-          <span>${certificada
-            ? 'Probada y calibrada'
-            : enRevision
-              ? 'La estamos probando'
-              : 'Ver tu certificado'}</span>
-          ${lista.length > 1 ? `<span class="muted">y ${lista.length - 1} máquina${lista.length > 2 ? 's' : ''} más</span>` : ''}
-        </div>
-        <div class="big-arrow" aria-hidden="true">›</div></a>` : ''}
 
       ${prep.completo ? `
       <a class="prep-cta lista" href="#/academia">
@@ -332,24 +366,29 @@ const views = {
 
     const nLec = (c) => c.modulos.reduce((t, m) => t + m.lecciones.length, 0);
     const nGuias = (c) => (a.guiasPdf || []).filter(g => g.curso === c.id).length;
+    /* Evaluaciones aprobadas de cada curso: es lo que dice de verdad por dónde
+       va, mejor que el número de lecciones. */
+    const avance = (c) => {
+      const conQ = c.modulos.filter(m => (m.preguntas || []).length);
+      if (!conQ.length) return null;
+      const ok = conQ.filter((m, i) => {
+        const mi = c.modulos.indexOf(m);
+        try { return (JSON.parse(localStorage.getItem('c4v_quiz_' + state.ctx + '_' + c.id + '-' + mi) || 'null') || {}).p >= 70; }
+        catch { return false; }
+      }).length;
+      return { ok, total: conQ.length };
+    };
     const disponibles = (a.cursos || []).filter(c => c.estado === 'disponible');
     const pronto = (a.cursos || []).filter(c => c.estado !== 'disponible');
-    const s = a.seguridad;
-
     return `
-      ${s ? `<a class="aviso-reglas" href="#/academia/curso/c2">
-        <span class="destino-ico" aria-hidden="true">${icon('alerta')}</span>
-        <span class="destino-txt"><strong>${esc(s.titulo)}</strong>
-          <small>${s.puntos.map(x => esc(x.t)).join('. ')}.</small></span>
-      </a>` : ''}
-
       <div class="destinos">
         ${disponibles.map(c => {
           const g = nGuias(c);
           return `<a class="destino" href="#/academia/curso/${esc(c.id)}">
             ${cursoIcono(c.icono)}
             <span class="destino-txt"><strong>${esc(c.titulo)}</strong>
-              <small>${nLec(c)} lecciones${g ? ` · ${g} guía${g > 1 ? 's' : ''}` : ''}</small></span>
+              <small>${nLec(c)} lecciones${g ? ` · ${g} guía${g > 1 ? 's' : ''}` : ''}</small>
+              ${(() => { const v = avance(c); return v ? `<small class="destino-avance${v.ok === v.total ? ' completo' : ''}">${v.ok} de ${v.total} evaluaciones aprobadas</small>` : ''; })()}</span>
             <span class="destino-flecha" aria-hidden="true">›</span>
           </a>`;
         }).join('')}
@@ -367,14 +406,14 @@ const views = {
     const total = p.checklist.length;
     const hechos = p.checklist.filter(c => done(c.id)).length;
 
-    if (hechos === total) {
+    if (hechos === total && !state.revisando) {
       return `
         <div class="paso-fin">
           <img class="fin-toro" src="assets/cevi/gracias.png" width="200" height="186" loading="lazy" alt="" aria-hidden="true" decoding="async">
           <h2>Tu espacio está listo</h2>
           <p>Ya puedes recibir tu máquina con confianza.</p>
-          <a class="btn primary" href="#/academia">Aprender a usarla</a>
-          <button type="button" class="paso-link" data-ir="0">Volver a ver la guía</button>
+          <button type="button" class="btn primary" id="verGuia">Volver a ver la guía</button>
+          ${modoDemo() ? '<button type="button" class="paso-link" id="reiniciarPasos">Empezar la guía de cero (demostración)</button>' : ''}
         </div>`;
     }
 
@@ -434,42 +473,41 @@ const views = {
   /* Página propia de CeVi. Es el mismo asistente que el botón flotante, con los
      mismos ids, así que todo lo que ya funciona sirve tal cual. Aquí el orbe se
      lleva la pantalla, que es lo que pidió el modo voz. */
+  /* ---------- El asistente ----------
+     Antes era una pantalla dispersa: un orbe enorme en medio, el estado suelto,
+     tres enlaces para cambiar de modo y los mensajes perdidos abajo. En un
+     teléfono no cabía nada. Ahora es lo que la gente ya sabe usar: la
+     conversación ocupa la pantalla y abajo hay una sola barra con el micrófono
+     y el campo de texto. */
   cevi() {
     const cli = currentClient();
-    const maq = cli ? state.db.maquinas.find(m => m.cliente_id === cli.id) : null;
     const nombre = primerNombre(cli?.nombre);
     return `
-      <section class="cevi-pag" id="ceviPagina" data-cevi-estado="reposo" data-cevi-modo="voz">
-        <p class="cevi-pag-intro">${nombre ? `Háblale, ${esc(nombre)}` : 'Háblale'}. Te contesta en voz alta sobre${maq?.modelo ? ` tu ${esc(maq.modelo)}` : ' tu máquina'}: potencias, mantenimiento y fallas.</p>
+      <section class="chat" id="ceviPagina" data-cevi-estado="reposo">
+        <div class="chat-hilo" id="ceviMsgs" role="log" aria-live="polite" aria-label="Conversación con CeVi"></div>
 
-        <div class="cevi-pag-orbe">
-          <button type="button" class="cevi-voz-btn" id="ceviVozBtn" aria-label="Hablar con CeVi">
-            ${orbeHTML('gigante')}
-          </button>
-          <span class="cevi-voz-txt" id="ceviVozTxt">Toca para hablar</span>
-          <p class="cevi-dictado" id="ceviDictado" aria-live="polite"></p>
+        <p class="chat-aviso" id="ceviAviso" role="status" hidden></p>
+
+        <div class="chat-abajo">
+          <div class="chat-sug" id="ceviSug">
+            ${['¿Con qué potencia corto MDF de 3 mm?', '¿Cada cuánto cambio el agua del chiller?', 'Mi láser dejó de cortar bien']
+              .map(q => `<button type="button" class="chip" data-q="${esc(q)}">${esc(q)}</button>`).join('')}
+          </div>
+
+          <p class="chat-estado" id="ceviEstadoTxt" aria-live="polite"></p>
+
+          <form class="chat-barra" id="ceviForm">
+            <button type="button" class="chat-mic" id="ceviMic" aria-label="Hablar con CeVi">
+              ${CEVI_ICONOS.mic}
+            </button>
+            <input id="ceviInput" type="text" autocomplete="off" enterkeyhint="send"
+                   placeholder="${nombre ? `Escribe o toca el micrófono, ${esc(nombre)}` : 'Escribe o toca el micrófono'}"
+                   aria-label="Tu pregunta para CeVi">
+            <button type="submit" class="chat-enviar" aria-label="Enviar">${CEVI_ICONOS.enviar}</button>
+          </form>
+
+          <p class="chat-pie">CeVi responde con inteligencia artificial. Si el tema es serio, te pasamos con una persona.</p>
         </div>
-
-        <p class="cevi-aviso" id="ceviAviso" role="status" hidden></p>
-
-        <div class="cevi-msgs" id="ceviMsgs" role="log" aria-live="polite" aria-label="Conversación con CeVi"></div>
-
-        <div class="cevi-sug" id="ceviSug">
-          ${['¿Con qué potencia corto MDF de 3 mm?', '¿Cada cuánto cambio el agua del chiller?', 'Mi láser dejó de cortar bien']
-            .map(q => `<button type="button" class="chip" data-q="${esc(q)}">${esc(q)}</button>`).join('')}
-        </div>
-
-        <form class="cevi-form" id="ceviForm">
-          <input id="ceviInput" type="text" autocomplete="off" placeholder="${nombre ? `Escríbeme, ${esc(nombre)}` : 'Escribe tu pregunta'}" aria-label="Tu pregunta para CeVi">
-          <button type="submit" class="cevi-send" aria-label="Enviar">${CEVI_ICONOS.enviar}</button>
-        </form>
-
-        <div class="cevi-pag-pie">
-          <button type="button" class="cevi-cambiar" id="ceviEscribir">Prefiero escribir</button>
-          <button type="button" class="cevi-cambiar" id="ceviHablarBtn">Prefiero hablar</button>
-          <button type="button" class="cevi-cambiar" id="ceviLimpiar">Empezar de nuevo</button>
-        </div>
-        <p class="cevi-pie">CeVi responde solo, con inteligencia artificial. Si el tema es serio, te pasamos con una persona del equipo.</p>
       </section>`;
   },
 
@@ -651,12 +689,6 @@ const views = {
       <h2 class="section-h">El recorrido de tu máquina</h2>
       <div class="card">${ci.etapas.map(e => `<div class="step"><div class="n">${e.n}</div><div><h4>${esc(e.titulo)}</h4><p>${esc(e.detalle)}</p></div></div>`).join('')}</div>
 
-      <h2 class="section-h">Por qué lo hacemos</h2>
-      <div class="grid cols-3">${ci.porque.map(x => `<div class="card"><h3>${esc(x.q)}</h3><p>${esc(x.a)}</p></div>`).join('')}</div>
-
-      <h2 class="section-h">Así se ve tu certificado digital</h2>
-      <div class="card" style="padding:12px"><img src="assets/certificado-calidad-c4v.png" alt="Certificado de Calidad C4V" class="cert-img" onerror="this.parentElement.remove()"/></div>
-
       <h2 class="section-h">Preguntas frecuentes</h2>
       ${ci.faq.map(f => `<div class="faq-item"><button type="button" class="faq-q" aria-expanded="false"><span>${esc(f.q)}</span><span class="chev" aria-hidden="true">+</span></button><div class="faq-a">${esc(f.a)}</div></div>`).join('')}`;
   }
@@ -692,17 +724,23 @@ function bindTake() {
 // ---------- interacciones ----------
 function bindAccordions(sel) { view.querySelectorAll(sel).forEach(it => { const q = it.querySelector('.faq-q, .course-head'); if (q) q.onclick = () => { const open = it.classList.toggle('open'); q.setAttribute('aria-expanded', open); }; }); }
 function bind(route) {
-  view.querySelectorAll('[data-cevi]').forEach(b => b.onclick = () => ceviAbrir());
-  // En la página de CeVi el botón flotante sobra: la página ya es el asistente.
-  const flotante = $('#aiBtn');
-  if (flotante) flotante.classList.toggle('oculto', route === 'cevi');
-  if (route === 'cevi') { if (cevi.abierto && $('#aiPanel') && !$('#aiPanel').hidden) ceviCerrar(); ceviPaginaIniciar(); }
-  else if (!$('#aiPanel') || $('#aiPanel').hidden) {
+  view.querySelectorAll('[data-cevi]').forEach(b => b.onclick = () => { location.hash = '#/cevi'; });
+  /* En el asistente la conversación se queda con la pantalla entera: sin pie
+     ni títulos que empujen la barra de escribir fuera de la vista. */
+  document.body.classList.toggle('ruta-cevi', route === 'cevi');
+  // El alto real de la barra superior, medido: así el chat encaja exacto sea
+  // cual sea el teléfono, en vez de restar un número escrito a mano.
+  const barra = document.querySelector('.topbar');
+  if (barra) document.documentElement.style.setProperty('--alto-menu', barra.offsetHeight + 40 + 'px');
+  if (route === 'cevi') { ceviPaginaIniciar(); }
+  else {
     // Al salir de la página, CeVi deja de escuchar y de hablar.
     cevi.manosLibres = false; cevi.abierto = false;
     ceviCallar(); ceviParaVoz(); orbeParar();
   }
   if (route === 'academia' && state.sub.startsWith('curso/')) { bindVideos(); bindGuias(); bindQuizzes(); }
+  const salir = $('#salirCuenta');
+  if (salir) salir.onclick = () => { const b = $('#logoutBtn'); if (b) b.click(); };
   if (route === 'preparacion') {
     /* La marca se puede poner y quitar: alguien que se equivocó tiene que poder
        corregirlo sin empezar de cero. Al marcar el último que faltaba, se cierra
@@ -717,7 +755,7 @@ function bind(route) {
       const lista = state.db.preparacion.checklist, total = lista.length;
       const hechos = lista.filter(c => { try { return localStorage.getItem('c4v_prep_' + state.ctx + '_' + c.id) === '1'; } catch { return false; } }).length;
       if (!estaba) {
-        if (hechos === total) state.paso = null;
+        if (hechos === total) { state.paso = null; state.revisando = false; }
         else state.paso = Math.min(state.paso + 1, total - 1);
       }
       render('preparacion'); window.scrollTo(0, 0);
@@ -726,6 +764,19 @@ function bind(route) {
       state.paso = Number(b.dataset.ir);
       render('preparacion'); window.scrollTo(0, 0);
     });
+    /* Repasar la guía después de terminarla: se entra en modo revisión, que es
+       lo único que permite ver los pasos con todo marcado. Antes el enlace no
+       hacía nada visible y parecía roto. */
+    const ver = $('#verGuia');
+    if (ver) ver.onclick = () => { state.revisando = true; state.paso = 0; render('preparacion'); window.scrollTo(0, 0); };
+    // Solo en demostración: deja la cuenta como recién llegada, para poder probar.
+    const cero = $('#reiniciarPasos');
+    if (cero) cero.onclick = () => {
+      state.db.preparacion.checklist.forEach(c => { try { localStorage.removeItem('c4v_prep_' + state.ctx + '_' + c.id); } catch {} });
+      state.revisando = false; state.paso = 0;
+      render('preparacion'); window.scrollTo(0, 0);
+      toast('Avance borrado. La guía vuelve a empezar.');
+    };
   }
   if (route === 'certificado') {
     bindAccordions('.faq-item');
@@ -900,7 +951,7 @@ function bindQuizzes() {
 // ---------- router ----------
 /* Títulos cortos: los largos ("Aprender a usar mi máquina") no cabían en el
    menú ni en la cabecera del móvil. */
-const TITLES = { inicio: 'Inicio', cevi: 'Habla con CeVi', academia: 'Academia', preparacion: 'Primeros pasos', soporte: 'Necesito ayuda', bolsa: 'Trabajos para ti', plantillas: 'Diseños para cortar', certificado: 'Tu Certificado de Calidad' };
+const TITLES = { inicio: 'Inicio', cuenta: 'Mi cuenta', cevi: 'Asistente', academia: 'Academia', preparacion: 'Primeros pasos', soporte: 'Necesito ayuda', bolsa: 'Trabajos para ti', plantillas: 'Diseños para cortar', certificado: 'Tu Certificado de Calidad' };
 // El aviso del candado ya no existe; la preparación se acompaña, no se bloquea.
 function render(route) {
   /* Las secciones pueden tener subpáginas: `#/academia/cursos`. Así cada una es
@@ -1051,7 +1102,7 @@ async function entrar(cliente) {
   $('#gate').hidden = true; $('#app').hidden = false;
   pintarPieLegal();   // ahora sabemos con qué empresa contrató
   const info = docInfo(cliente.pais, cliente.tipo || 'persona');
-  $('#me').innerHTML = `<strong>${esc(nombrePropio(cliente.nombre))}</strong>${esc(info.doc)} ${esc(cliente.documento)}`;
+  $('#me').innerHTML = `<a class="me-link" href="#/cuenta"><strong>${esc(nombrePropio(cliente.nombre))}</strong><span>${esc(info.doc)} ${esc(cliente.documento)}</span></a>`;
   // El cliente nuevo aterriza en la guía de preparación: es lo que necesita hoy.
   // Ya no es un candado — puede ir a donde quiera desde el inicio.
   let primeraVez = false;
@@ -1708,10 +1759,10 @@ function ceviReproducirTrozo(url) {
     audio.muted = false;
     cevi.ultimoFalloVoz = null;
     let acabado = false, sonó = false;
-    const fin = (ok) => {
+    let fin = (ok) => {
       if (acabado) return;
       acabado = true;
-      audio.onended = audio.onerror = audio.ontimeupdate = null;
+      audio.onended = audio.onerror = audio.ontimeupdate = audio.onloadedmetadata = null;
       listo(ok !== false && sonó);
     };
     // Por evento y no por temporizador: si el navegador tarda en arrancar, un
@@ -1722,7 +1773,24 @@ function ceviReproducirTrozo(url) {
       cevi.ultimoFalloVoz = audio.error ? `media ${audio.error.code}` : 'media';
       fin(false);
     };
-    setTimeout(() => fin(sonó), 120000);
+    /* Red de seguridad corta. Antes eran 120 segundos: si el audio no arrancaba
+       y el navegador no avisaba con `error`, CeVi se quedaba dos minutos en
+       "hablando" y parecía colgada. Ahora se corta a los dos segundos si no ha
+       avanzado ni un fotograma, y en cuanto se sabe la duración se ajusta a
+       ella con un margen. */
+    const cortar = setTimeout(() => {
+      if (!sonó) { cevi.ultimoFalloVoz = cevi.ultimoFalloVoz || 'sin arrancar'; fin(false); }
+    }, 2200);
+    let porDuracion = null;
+    audio.onloadedmetadata = () => {
+      const d = audio.duration;
+      if (Number.isFinite(d) && d > 0) {
+        clearTimeout(porDuracion);
+        porDuracion = setTimeout(() => fin(sonó), (d + 4) * 1000);
+      }
+    };
+    const finLimpio = fin;
+    fin = (ok) => { clearTimeout(cortar); clearTimeout(porDuracion); finLimpio(ok); };
     audio.play().then(() => { cevi.audioListo = true; })
       .catch((e) => { cevi.ultimoFalloVoz = e && e.name ? e.name : 'play'; fin(false); });
   });
@@ -2062,29 +2130,24 @@ function ceviCallar() {
    aria-live nunca se contradicen entre sí. */
 function ceviEstado(nuevo) {
   cevi.estado = nuevo;
-  const panel = $('#aiPanel');
-  if (panel) panel.dataset.estado = nuevo;
   const pagina = $('#ceviPagina');
-  if (pagina) pagina.dataset.ceviEstado = nuevo;
-  if (!panel && !pagina) return;
-  const b = $('#ceviVozBtn');
-  if (b) {
-    const etiquetas = {
-      reposo: ['Toca para hablar', 'Hablar con CeVi'],
-      escuchando: ['Te escucho…', 'Dejar de escuchar'],
-      pensando: ['Pensando…', 'CeVi está pensando'],
-      hablando: ['CeVi está hablando', 'Interrumpir a CeVi']
-    };
-    const [texto, aria] = etiquetas[nuevo] || etiquetas.reposo;
-    const t = $('#ceviVozTxt'); if (t) t.textContent = texto;
-    b.setAttribute('aria-label', aria);
-  }
+  if (!pagina) return;
+  pagina.dataset.ceviEstado = nuevo;
+  const etiquetas = {
+    reposo: ['', 'Hablar con CeVi'],
+    escuchando: ['Te escucho…', 'Dejar de escuchar'],
+    pensando: ['Pensando…', 'CeVi está pensando'],
+    hablando: ['Toca para interrumpir', 'Interrumpir a CeVi']
+  };
+  const [texto, aria] = etiquetas[nuevo] || etiquetas.reposo;
+  const t = $('#ceviEstadoTxt'); if (t) t.textContent = texto;
+  const mic = $('#ceviMic'); if (mic) mic.setAttribute('aria-label', aria);
 }
 
 // Lo que se va oyendo, en pantalla, mientras la persona habla.
 function ceviTranscripcion(txt) {
-  const el = $('#ceviDictado');
-  if (el) el.textContent = txt;
+  const el = $('#ceviEstadoTxt');
+  if (el && txt) el.textContent = txt;
 }
 
 // El botón grande hace lo que toca según el estado. Un solo control, sin modos ocultos.
@@ -2102,8 +2165,6 @@ function ceviVozToque() {
 function ceviModoTexto(motivo) {
   cevi.modo = 'texto';
   cevi.manosLibres = false;
-  const panel = $('#aiPanel');
-  if (panel) panel.dataset.modo = 'texto';
   const pagina = $('#ceviPagina');
   if (pagina) pagina.dataset.ceviModo = 'texto';
   ceviEstado('reposo');
@@ -2132,74 +2193,22 @@ function ceviAviso(texto, accion) {
   el.hidden = !texto;
 }
 
-function ceviPanelHTML() {
-  const ag = CFG.agente || {};
-  const cli = currentClient();
-  const nombre = primerNombre(cli?.nombre);
-  return `
-    <div class="cevi-head">
-      <div class="cevi-avatar grande" aria-hidden="true">${TORO}</div>
-      <div class="cevi-head-txt">
-        <strong>${esc(ag.nombre || 'CeVi')}</strong>
-        <span>Háblale, te contesta en voz alta</span>
-      </div>
-      <button type="button" class="cevi-voz" id="ceviVoz" aria-pressed="${ceviVozActiva()}" aria-label="Leer respuestas en voz alta">${ceviVozActiva() ? CEVI_ICONOS.audioOn : CEVI_ICONOS.audioOff}</button>
-      <button type="button" class="cevi-close" id="ceviClose" aria-label="Cerrar">×</button>
-    </div>
-
-    <div class="cevi-msgs" id="ceviMsgs" role="log" aria-live="polite" aria-label="Conversación con CeVi"></div>
-
-    <p class="cevi-aviso" id="ceviAviso" role="status" hidden></p>
-
-    <!-- El micrófono es el control principal: ocupa el sitio que antes tenía el
-         cuadro de escribir, porque hablar es lo que la mayoría va a hacer. -->
-    <div class="cevi-voz-zona">
-      <p class="cevi-dictado" id="ceviDictado" aria-live="polite"></p>
-      <button type="button" class="cevi-voz-btn" id="ceviVozBtn" aria-label="Hablar con CeVi">
-        ${orbeHTML('grande')}
-      </button>
-      <span class="cevi-voz-txt" id="ceviVozTxt">Toca para hablar</span>
-      <button type="button" class="cevi-cambiar" id="ceviEscribir">Prefiero escribir</button>
-    </div>
-
-    <div class="cevi-sug" id="ceviSug">
-      ${['¿Con qué potencia corto MDF de 3 mm?', '¿Cada cuánto cambio el agua del chiller?', 'Mi láser dejó de cortar bien']
-        .map(q => `<button type="button" class="chip" data-q="${esc(q)}">${esc(q)}</button>`).join('')}
-    </div>
-
-    <form class="cevi-form" id="ceviForm">
-      <input id="ceviInput" type="text" autocomplete="off" placeholder="${nombre ? `Escríbeme, ${esc(nombre)}` : 'Escribe tu pregunta'}" aria-label="Tu pregunta para CeVi">
-      <button type="submit" class="cevi-send" aria-label="Enviar">${CEVI_ICONOS.enviar}</button>
-      <button type="button" class="cevi-cambiar" id="ceviHablarBtn">Prefiero hablar</button>
-    </form>
-
-    <p class="cevi-pie">CeVi responde solo, con inteligencia artificial. Si el tema es serio, te pasamos con una persona del equipo.</p>`;
-}
 
 /* Los controles son los mismos en el panel flotante y en la página, así que se
    cablean en un solo sitio con los mismos ids. */
 function ceviCablear(raiz) {
   const marca = (m) => {
     cevi.modo = m;
-    const p = $('#aiPanel'); if (p) p.dataset.modo = m;
     const g = $('#ceviPagina'); if (g) g.dataset.ceviModo = m;
   };
   const f = $('#ceviForm');
   if (f) f.onsubmit = (e) => { e.preventDefault(); ceviEnviar($('#ceviInput').value); };
-  const vb = $('#ceviVozBtn'); if (vb) vb.onclick = ceviVozToque;
-  const esc2 = $('#ceviEscribir'); if (esc2) esc2.onclick = () => ceviModoTexto('');
-  const hab = $('#ceviHablarBtn');
-  if (hab) hab.onclick = () => {
-    if (!HAY_DICTADO) { ceviAviso('Tu navegador no puede escuchar. Escríbeme tu pregunta.'); return; }
+  const mic = $('#ceviMic');
+  if (mic) mic.onclick = () => {
+    if (!HAY_DICTADO) { ceviAviso('Tu navegador no puede escuchar. Escríbeme tu pregunta aquí abajo.'); return; }
     marca('voz');
-    ceviAviso(''); ceviTranscripcion(''); ceviVozToque();
-  };
-  const lim = $('#ceviLimpiar');
-  if (lim) lim.onclick = () => {
-    ceviParaVoz(); ceviCallar();
-    cevi.historial = []; cevi.partnerId = null;
-    ceviPintar(); ceviAviso(''); ceviTranscripcion(''); ceviEstado('reposo');
-    const sug = $('#ceviSug'); if (sug) sug.hidden = false;
+    ceviAviso('');
+    ceviVozToque();
   };
   const alt = $('#ceviVoz');
   if (alt) alt.onclick = (e) => {
@@ -2378,82 +2387,17 @@ function ceviDespertarBackend() {
   fetch(`${CFG.ceviApi}/health`, { cache: 'no-store' }).catch(() => {});
 }
 
-function ceviAbrir() {
-  const panel = $('#aiPanel'), btn = $('#aiBtn');
-  if (!panel) return;
-  ceviDesbloquearAudio();                        // el toque que abre también libera el altavoz
-  cevi.origen = document.activeElement;          // para devolver el foco al cerrar
-  cevi.cerrando = false;
-  cevi.modo = HAY_DICTADO ? 'voz' : 'texto';
-  cevi.manosLibres = cevi.modo === 'voz';
-  panel.innerHTML = ceviPanelHTML();
-  panel.dataset.modo = cevi.modo;
-  panel.hidden = false; cevi.abierto = true;
-  panel.setAttribute('role', 'dialog');
-  panel.setAttribute('aria-modal', 'true');
-  panel.setAttribute('aria-label', 'Hablar con CeVi, tu asistente');
-  btn?.setAttribute('aria-expanded', 'true');
-  ceviEstado('reposo');
-  orbeArrancar();
-  ceviDespertarBackend();
-  ceviPrecargarRelleno();
 
-  const cli = currentClient();
-  const maq = cli ? state.db.maquinas.find(m => m.cliente_id === cli.id) : null;
-  const primera = !cevi.historial.length;
-  if (primera) {
-    cevi.historial.push({
-      role: 'assistant',
-      /* Corto y en pregunta. El saludo largo tardaba ocho segundos en decirse y
-         la persona no podía hablar hasta el final; además una pregunta invita a
-         contestar, que es justo lo que hace falta en un asistente de voz. */
-      content: `Hola${cli ? ' ' + primerNombre(cli.nombre) : ''}, soy CeVi. ¿En qué te ayudo con tu ${maq?.modelo || 'máquina'}?`
-    });
-  }
-  ceviPintar();
-  if (primera) ceviPedirTts(ceviTrozos(cevi.historial[0].content)[0]).catch(() => {});
 
-  ceviCablear(panel);
-  $('#ceviClose').onclick = ceviCerrar;
-
-  if (cevi.modo === 'voz') {
-    // Saluda en voz alta y se queda escuchando: no hay que tocar nada más.
-    (async () => {
-      if (primera) await ceviHablar(cevi.historial[0].content);
-      if (cevi.abierto && !cevi.cerrando && cevi.manosLibres) ceviEscuchar();
-    })();
-  } else {
-    if (!HAY_DICTADO) ceviAviso('Tu navegador no puede escuchar. Escríbeme tu pregunta aquí abajo.');
-    setTimeout(() => $('#ceviInput')?.focus(), 60);
-  }
-}
-
-function ceviCerrar() {
-  cevi.cerrando = true;
-  const panel = $('#aiPanel');
-  if (panel) { panel.hidden = true; panel.innerHTML = ''; delete panel.dataset.estado; }
-  cevi.abierto = false;
-  cevi.manosLibres = false;
-  cevi.estado = 'reposo';
-  const btn = $('#aiBtn');
-  btn?.setAttribute('aria-expanded', 'false');
-  // Sin esto el foco caía al principio del documento al cerrar con Escape.
-  (cevi.origen && document.contains(cevi.origen) ? cevi.origen : btn)?.focus();
-  ceviParaVoz();
-  if (cevi.escuchando) { try { cevi.escuchando.abort(); } catch {} cevi.escuchando = null; }
-  if (!document.querySelector('[data-orbe]')) orbeParar();
-}
-
+/* El asistente ya no es un botón que flota encima del contenido: es una sección
+   del menú, como Inicio o Academia. Si no hay backend, se esconde del menú en
+   vez de fingir que existe. */
 function initAgente() {
-  const btn = $('#aiBtn');
-  const nombreEl = $('#aiName');
-  if (nombreEl) nombreEl.textContent = (CFG.agente || {}).nombre || 'CeVi';
-  if (!btn) return;
-  if (!CFG.ceviApi) { btn.hidden = true; return; }   // sin backend, no fingimos que existe
-  btn.onclick = () => (cevi.abierto ? ceviCerrar() : ceviAbrir());
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && cevi.abierto) ceviCerrar(); });
+  if (!CFG.ceviApi) {
+    const enlace = document.querySelector('.menu a[data-nav="cevi"]');
+    if (enlace) enlace.hidden = true;
+  }
 }
-window.ceviAbrir = ceviAbrir;
 
 
 
@@ -2514,17 +2458,31 @@ function pintarPieLegal() {
   // Se avisa por consola a quien mantiene el portal, nunca en pantalla: el
   // cliente no tiene por qué enterarse de nuestros pendientes internos.
   if (faltan.length) console.warn('[C4V] Faltan datos del proveedor en config.js:', faltan.join(', '));
+  /* Qué se queda y por qué:
+     - Razón social, RUC y domicilio: el consumidor debe poder saber CON QUIÉN
+       contrata (Ley 29571).
+     - Libro de Reclamaciones: obligatorio y visible desde cualquier página
+       (Ley 29571 y DS 011-2011-PCM). Va primero y con más peso que el resto.
+     - Privacidad, Términos y el acceso a los datos personales: Ley 29733.
+     Se retiraron el teléfono fijo y el correo: el canal de atención es WhatsApp,
+     y el correo para ejercer derechos sobre datos personales sigue publicado
+     dentro de la Política de Privacidad, que es donde la ley lo pide. */
+  const wa = esc(e.whatsapp_visible || CFG.whatsapp?.visible || '');
   pie.innerHTML = `
+    <nav class="pie-enlaces" aria-label="Información legal">
+      <a href="libro-reclamaciones.html" class="pie-lr" target="_blank" rel="noopener">
+        <span class="pie-lr-ic" aria-hidden="true">${icon('reclamo')}</span>
+        <span><strong>Libro de Reclamaciones</strong><small>Déjanos tu queja o reclamo</small></span>
+      </a>
+      <a href="privacidad.html" target="_blank" rel="noopener">Privacidad</a>
+      <a href="terminos.html" target="_blank" rel="noopener">Términos</a>
+      <a href="privacidad.html#derechos" target="_blank" rel="noopener">Mis datos personales</a>
+    </nav>
     <p class="pie-empresa">
-      <strong>${esc(e.razon_social || '')}</strong>${e.ruc ? `, RUC ${esc(e.ruc)}` : ''}${e.domicilio ? `<br>${esc(e.domicilio)}` : ''}
-      <br>Atención al cliente: WhatsApp ${esc(e.whatsapp_visible || CFG.whatsapp?.visible || '')}${e.telefono ? `<br>Teléfono ${esc(e.telefono)}` : ''}${e.email ? `<br>${esc(e.email)}` : ''}
-    </p>
-    <nav aria-label="Información legal">
-      <a href="libro-reclamaciones.html" class="pie-lr" target="_blank" rel="noopener">📕 Libro de Reclamaciones</a>
-      <a href="privacidad.html" target="_blank" rel="noopener">Política de Privacidad</a>
-      <a href="terminos.html" target="_blank" rel="noopener">Términos de Uso</a>
-      <a href="privacidad.html#derechos" target="_blank" rel="noopener">Ver, corregir o borrar mis datos</a>
-    </nav>`;
+      <strong>${esc(e.razon_social || '')}</strong>${e.ruc ? `, RUC ${esc(e.ruc)}` : ''}
+      ${e.domicilio ? `<br>${esc(e.domicilio)}` : ''}
+      ${wa ? `<br>Atención al cliente por WhatsApp ${wa}` : ''}
+    </p>`;
 }
 
 // ---------- init ----------

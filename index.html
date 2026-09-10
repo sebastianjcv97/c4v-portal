@@ -12,13 +12,14 @@
   <meta property="og:type" content="website" />
   <meta property="og:title" content="Central de Postventa · C4V Láser" />
   <meta property="og:description" content="Aprende, resuelve y haz crecer tu negocio con tu máquina láser C4V. Soporte en español los 365 días." />
-  <meta property="og:image" content="https://sebastianjcv97.github.io/c4v-portal/assets/certificado-calidad-c4v.png" />
+  <!-- Sin og:image: la vista previa del enlace mostraba la imagen del certificado,
+       que no es lo que representa al portal. -->
   <meta property="og:url" content="https://sebastianjcv97.github.io/c4v-portal/" />
   <meta property="og:locale" content="es_PE" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@700;800&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/styles.css?v=20260912z" />
+  <link rel="stylesheet" href="css/styles.css?v=20260913i" />
 </head>
 <body>
   <a class="skip" href="#view">Saltar al contenido</a>
@@ -152,26 +153,17 @@
         <a class="topbar-home" href="#/inicio" aria-label="Ir al inicio">
           <img class="topbar-logo" src="assets/c4v-wordmark.png" alt="C4V Láser" />
         </a>
-        <!-- Tres destinos, siempre los mismos y siempre visibles. Antes no había
-             menú: para pasar de una sección a otra había que volver al inicio. -->
+        <!-- Cuatro destinos, siempre los mismos y siempre visibles. Antes no había
+             menú (había que volver al inicio para cambiar de sección) y CeVi era
+             un botón flotante que tapaba contenido. -->
         <nav class="menu" aria-label="Secciones">
           <a href="#/inicio" data-nav="inicio"><span class="menu-ic" data-ic="inicio"></span><span>Inicio</span></a>
           <a href="#/preparacion" data-nav="preparacion"><span class="menu-ic" data-ic="prep"></span><span>Primeros pasos</span></a>
           <a href="#/academia" data-nav="academia"><span class="menu-ic" data-ic="academia"></span><span>Academia</span></a>
+          <a href="#/cevi" data-nav="cevi"><span class="menu-ic" data-ic="cevi"></span><span>Asistente</span></a>
         </nav>
       </header>
 
-      <!-- Agente de voz: botón flotante, presente en toda la pantalla y en todas
-           las vistas. Antes vivía en la barra superior y se perdía entre el logo. -->
-      <button class="ai-btn" id="aiBtn" type="button" aria-expanded="false" aria-controls="aiPanel">
-        <span class="ai-orbe" aria-hidden="true">
-          <span class="ai-orbe-halo"></span>
-          <span class="ai-orbe-disco"><img class="toro-cara" src="assets/cevi/listo-sm.png" width="96" height="96" alt="" decoding="async"></span>
-        </span>
-        <span class="ai-txt"><span class="ai-linea">Habla con <strong id="aiName">CeVi</strong></span><small>Pregúntale en voz alta</small></span>
-      </button>
-
-      <div class="ai-panel" id="aiPanel" hidden></div>
 
       <main id="view" class="view"><div class="loading">Cargando…</div></main>
 
@@ -185,8 +177,8 @@
     </div>
   </div>
 
-  <script src="js/config.js?v=20260912z"></script>
-  <script src="js/data.js?v=20260912z"></script>
-  <script src="js/app.js?v=20260912z"></script>
+  <script src="js/config.js?v=20260913i"></script>
+  <script src="js/data.js?v=20260913i"></script>
+  <script src="js/app.js?v=20260913i"></script>
 </body>
 </html>

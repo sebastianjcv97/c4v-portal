@@ -151,7 +151,6 @@ window.__SEED__ = {
             { q: "El lema del Certificado de Calidad C4V es…", opciones: ["«Probada antes de ser tuya»", "«Compra sin miedo»", "«Garantía para siempre»"], ok: 0, ex: "«Probada antes de ser tuya»: no te entregamos una caja, sino una máquina lista para producir." }
           ]},
           { titulo: "Prepara tu espacio", lecciones: ["Lista de compras antes de que llegue", "Instalación eléctrica y pozo a tierra", "Ambiente y seguridad"], quizzes: 3, preguntas: [
-            { q: "¿Qué voltaje necesita tu máquina C4V?", opciones: ["110V", "220V", "380V"], ok: 1, ex: "220V, en un circuito independiente y con cable a tierra." },
             { q: "¿Qué debes tener listo ANTES de que llegue tu máquina?", opciones: ["Nada, se instala sola", "Todo el kit y la instalación eléctrica lista", "Solo el diseño"], ok: 1, ex: "Ten el espacio, el eléctrico y el kit listos para poder cortar el mismo día." },
             { q: "¿Se puede instalar sin pozo a tierra?", opciones: ["Sí, si hay apuro", "No: el pozo a tierra es obligatorio"], ok: 1, ex: "El pozo a tierra te protege a ti, a la electrónica y a la calidad del corte. Es la causa #1 de retrasos." }
           ]},

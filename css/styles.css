@@ -1363,3 +1363,93 @@ body{background:var(--mesa)}
 .qz-fin.ok .qz-nota{color:var(--ok)}
 .qz-fin p{margin:0;color:var(--grafito);font-size:var(--t-md)}
 .qz-fin .btn{width:100%;justify-content:center}
+/* Mi cuenta: se llega tocando tu nombre en el pie. */
+.me-link{display:block;text-decoration:none;color:inherit}
+.me-link strong{display:block;color:var(--tinta);font-size:var(--t-sm)}
+.me-link span{display:block;color:var(--grafito);font-size:var(--t-xs)}
+.me-link:hover strong{text-decoration:underline}
+.cuenta-datos{margin:0 0 var(--s-5)}
+.cuenta-nombre{margin:0;font-family:var(--slab);font-size:var(--t-xl);line-height:var(--lh-snug)}
+.cuenta-datos .muted{margin:4px 0 0;font-size:var(--t-sm)}
+.cuenta-salir{margin-top:var(--s-6)}
+/* Progreso del curso en la portada: lo que dice de verdad por dónde vas. */
+.destino-avance{font-weight:700;color:var(--grafito)}
+.destino-avance.completo{color:var(--ok)}
+/* El examen final no es un módulo más: va separado y sin número. */
+.examen{border-top:2px solid var(--tinta);padding-top:var(--s-4);margin-top:var(--s-6)}
+.examen .section-h{margin-top:0}
+
+/* ════════════════════════════════════════════════════════════════════════
+   EL ASISTENTE, COMO UN CHAT
+   La pantalla anterior repartía las piezas por todo el alto: un orbe enorme
+   en medio, el estado suelto debajo, tres enlaces para cambiar de modo y los
+   mensajes al final. En un teléfono no cabía y no se entendía qué hacer.
+   Ahora la conversación ocupa la pantalla y abajo hay UNA barra: micrófono,
+   campo de texto y enviar. Es lo que la gente ya sabe usar.
+   ════════════════════════════════════════════════════════════════════════ */
+.chat{display:flex;flex-direction:column;min-height:calc(100dvh - 210px);gap:0}
+
+.chat-hilo{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:var(--s-3);
+  padding:var(--s-2) 0 var(--s-4)}
+.chat-hilo:empty{display:none}
+
+/* Burbujas: CeVi a la izquierda con su cara, la persona a la derecha. */
+.chat-hilo .cevi-msg{display:flex;gap:10px;align-items:flex-end;max-width:100%}
+.chat-hilo .cevi-msg.yo{justify-content:flex-end}
+.chat-hilo .cevi-txt{max-width:82%;border-radius:18px;padding:11px 15px;
+  font-size:var(--t-md);line-height:1.5;white-space:pre-wrap;
+  background:var(--mesa);border:none;color:var(--tinta)}
+.chat-hilo .cevi-msg.yo .cevi-txt{background:var(--tinta);color:#fff}
+.chat-hilo .cevi-avatar{width:30px;height:30px;flex-shrink:0;align-self:flex-end}
+
+.chat-aviso{margin:0 0 var(--s-2);padding:10px 14px;background:var(--mesa);
+  border-radius:var(--r);font-size:var(--t-sm);line-height:1.45;color:var(--tinta)}
+
+/* Todo lo que se toca vive abajo, junto, al alcance del pulgar. */
+.chat-abajo{position:sticky;bottom:0;background:var(--papel);padding-top:var(--s-2);
+  padding-bottom:calc(var(--s-2) + env(safe-area-inset-bottom))}
+.chat-sug{display:flex;gap:8px;overflow-x:auto;padding:0 0 var(--s-2);
+  scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.chat-sug::-webkit-scrollbar{display:none}
+.chat-sug .chip{flex:0 0 auto;font-size:var(--t-sm);white-space:nowrap}
+.chat-sug:empty,.chat-sug[hidden]{display:none}
+
+.chat-estado{margin:0 0 6px;min-height:18px;font-size:var(--t-sm);color:var(--grafito);
+  text-align:center}
+
+.chat-barra{display:flex;align-items:center;gap:8px;
+  background:var(--papel);border:2px solid var(--regla);border-radius:var(--r-full);
+  padding:5px 6px 5px 5px}
+.chat-barra:focus-within{border-color:var(--tinta)}
+.chat-barra input{flex:1;min-width:0;border:none;background:transparent;
+  font-family:var(--sans);font-size:var(--t-md);color:var(--tinta);padding:10px 4px}
+.chat-barra input:focus{outline:none}
+
+.chat-mic,.chat-enviar{flex-shrink:0;width:44px;height:44px;border-radius:50%;
+  border:none;cursor:pointer;display:grid;place-items:center}
+.chat-mic{background:var(--mesa);color:var(--tinta)}
+.chat-mic svg{width:22px;height:22px}
+.chat-mic:hover{background:var(--regla)}
+.chat-enviar{background:var(--rojo-tinta);color:#fff}
+.chat-enviar svg{width:20px;height:20px}
+.chat-enviar:hover{background:var(--tinta)}
+
+/* Escuchando: el micrófono se pone rojo y late. Es la única señal que hace
+   falta; el estado en palabras va justo encima. */
+[data-cevi-estado="escuchando"] .chat-mic{background:var(--rojo-tinta);color:#fff;
+  animation:chatLate 1.3s ease-in-out infinite}
+[data-cevi-estado="hablando"] .chat-mic{background:var(--rojo-tinta);color:#fff}
+[data-cevi-estado="pensando"] .chat-mic{background:var(--grafito);color:#fff}
+@keyframes chatLate{0%,100%{box-shadow:0 0 0 0 rgba(196,3,9,.45)}
+  50%{box-shadow:0 0 0 9px rgba(196,3,9,0)}}
+
+.chat-pie{margin:var(--s-2) 0 0;font-size:var(--t-xs);color:var(--grafito);text-align:center}
+
+/* Los tres puntos de "pensando", dentro de la burbuja. */
+.chat-hilo .cevi-msg.pensando .cevi-txt{background:var(--mesa)}
+
+@media (prefers-reduced-motion:reduce){ .chat-mic{animation:none} }
+/* En el asistente, la conversación se queda con toda la pantalla. */
+body.ruta-cevi .foot,body.ruta-cevi .pie-legal,body.ruta-cevi .pag-title{display:none}
+body.ruta-cevi .view{padding-top:var(--s-3);padding-bottom:0}
+body.ruta-cevi .chat{min-height:calc(100dvh - var(--alto-menu, 176px))}
