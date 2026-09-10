@@ -673,21 +673,14 @@ const views = {
       <div class="cert-hero">
         <div class="cert-seal">${SEAL}</div>
         <div><h2 class="cert-hero-t">${esc(ci.nombre)}</h2>
-          <p class="cert-lema">«${esc(ci.lema)}»</p>
-          <p class="muted" style="max-width:52ch">${esc(ci.frase_ancla)}</p></div>
+          <p class="cert-lema">«${esc(ci.lema)}»</p></div>
       </div>
 
       ${maqs.length ? `<h2 class="section-h">${maqs.length > 1 ? 'Tus máquinas' : 'Tu máquina'}</h2>
       <div class="cert-maq-grid">${maqs.map(certMaq).join('')}</div>` : ''}
 
       <h2 class="section-h">Qué garantiza</h2>
-      <div class="grid cols-2">
-        <div class="card"><ul class="ulist">${ci.promesa.map(p => `<li>${esc(p)}</li>`).join('')}</ul></div>
-        <div class="card"><p>${esc(ci.narrativa)}</p></div>
-      </div>
-
-      <h2 class="section-h">El recorrido de tu máquina</h2>
-      <div class="card">${ci.etapas.map(e => `<div class="step"><div class="n">${e.n}</div><div><h4>${esc(e.titulo)}</h4><p>${esc(e.detalle)}</p></div></div>`).join('')}</div>
+      <div class="card"><ul class="ulist">${ci.promesa.map(p => `<li>${esc(p)}</li>`).join('')}</ul></div>
 
       <h2 class="section-h">Preguntas frecuentes</h2>
       ${ci.faq.map(f => `<div class="faq-item"><button type="button" class="faq-q" aria-expanded="false"><span>${esc(f.q)}</span><span class="chev" aria-hidden="true">+</span></button><div class="faq-a">${esc(f.a)}</div></div>`).join('')}`;
