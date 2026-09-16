@@ -1436,7 +1436,7 @@ function initGate() {
    estado: 'reposo' | 'escuchando' | 'pensando' | 'hablando'   */
 const cevi = {
   abierto: false, historial: [], hablando: null, escuchando: null, partnerId: null,
-  modo: 'voz', estado: 'reposo', manosLibres: true, audioListo: false, cerrando: false,
+  modo: 'voz', estado: 'reposo', manosLibres: false, audioListo: false, cerrando: false,
   turnoVoz: 0, reproductor: null, textoPendiente: null
 };
 
@@ -1930,7 +1930,7 @@ async function ceviEnviar(texto) {
     if (input) { input.disabled = false; if (cevi.modo === 'texto') input.focus(); }
     if (cevi.estado === 'pensando') ceviEstado('reposo');
     // Manos libres: en cuanto CeVi termina de hablar, vuelve a escuchar sola.
-    if (cevi.abierto && cevi.modo === 'voz' && cevi.manosLibres && !cevi.cerrando) ceviEscuchar();
+    // Cada turno empieza con un toque en el micrófono: fiable en todos los teléfonos.
   };
 
   try {
@@ -2053,13 +2053,12 @@ function ceviEscuchar(desdeToque = false) {
        cualquier cosa y la conversación se vuelve absurda. */
     if (dicho && dicho.replace(/[^a-záéíóúñ]/gi, '').length < 4) {
       ceviTranscripcion('No te entendí. ¿Me lo repites?');
-      if (cevi.manosLibres) { setTimeout(() => ceviEscuchar(), 400); return; }
       ceviEstado('reposo'); return;
     }
     if (dicho) { cevi.silencios = 0; ceviEnviar(dicho); return; }
     if (cevi.estado === 'escuchando') {
       ceviEstado('reposo');
-      if (cevi.manosLibres && !ceviSinRespuesta()) ceviPintarPistas();
+      ceviPintarPistas();
     }
   };
 
@@ -2089,7 +2088,7 @@ function ceviEstado(nuevo) {
   if (!pagina) return;
   pagina.dataset.ceviEstado = nuevo;
   const etiquetas = {
-    reposo: ['', 'Hablar con CeVi'],
+    reposo: ['Toca el micrófono y habla', 'Hablar con CeVi'],
     escuchando: ['Te escucho…', 'Dejar de escuchar'],
     pensando: ['Pensando…', 'CeVi está pensando'],
     hablando: ['Toca para interrumpir', 'Interrumpir a CeVi']
@@ -2112,7 +2111,7 @@ function ceviVozToque() {
   if (cevi.estado === 'escuchando') { cevi.manosLibres = false; ceviCallar(); return; }
   if (cevi.estado === 'hablando') { ceviParaVoz(); ceviEstado('reposo'); return; }
   if (cevi.estado === 'pensando') return;
-  cevi.manosLibres = true;
+  cevi.manosLibres = false;
   ceviAviso('');
   ceviEscuchar(true);
 }
@@ -2184,7 +2183,6 @@ function ceviPaginaIniciar() {
   cevi.cerrando = false;
   cevi.abierto = true;
   cevi.modo = HAY_DICTADO ? 'voz' : 'texto';
-  cevi.manosLibres = cevi.modo === 'voz';
   g.dataset.ceviModo = cevi.modo;
   ceviCablear(g);
   ceviEstado('reposo');
@@ -2273,25 +2271,6 @@ function ceviPintarPistas() {
   box.querySelectorAll('.chip[data-q]').forEach(b => b.onclick = () => ceviEnviar(b.dataset.q));
 }
 
-/* Si nadie contesta, CeVi no se queda muda: vuelve a ofrecer, una sola vez, y
-   después se calla para no hostigar. Es lo que recomienda cualquier guía de
-   interfaces de voz para el "no-input". */
-const REPREGUNTAS = [
-  'Sigo aquí. Puedes preguntarme por potencias, por limpieza, o contarme qué falla tienes.',
-  '¿Te ayudo con algo más? Si prefieres, toca el toro y háblame cuando quieras.'
-];
-
-function ceviSinRespuesta() {
-  if (cevi.modo !== 'voz') return false;
-  cevi.silencios = (cevi.silencios || 0) + 1;
-  if (cevi.silencios > 2) { cevi.manosLibres = false; ceviPintarPistas(); return false; }
-  const texto = REPREGUNTAS[Math.min(cevi.silencios, REPREGUNTAS.length) - 1];
-  (async () => {
-    await ceviHablarConTecho(texto);
-    if (cevi.abierto && cevi.manosLibres && !cevi.cerrando) ceviEscuchar();
-  })();
-  return true;
-}
 
 /* ---------- Relleno de espera ----------
    Entre que dejas de hablar y CeVi contesta pasan unos dos segundos y medio: es
