@@ -1539,3 +1539,6 @@ body.ruta-cevi .chat{min-height:calc(100dvh - var(--alto-menu, 176px))}
 .pie-enlaces{row-gap:4px;column-gap:var(--s-3)}
 .pie-enlaces a{min-height:36px}
 .pie-empresa{margin-top:var(--s-2)}
+/* Con más peso para ganar a la regla del pie que venía después. */
+.pie-legal .pie-enlaces{row-gap:2px;column-gap:var(--s-3)}
+.pie-legal .pie-enlaces a{min-height:34px;padding:0}
