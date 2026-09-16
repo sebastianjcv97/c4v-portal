@@ -144,6 +144,19 @@ const ICONS = {
   alerta: '<path d="M12 4 2.5 20h19z"/><path d="M12 10v5"/><path d="M12 17.5v.5"/>',
   descarga: '<path d="M12 3v11"/><path d="M8 10.5 12 14.5l4-4"/><path d="M4.5 18.5h15"/>',
   play: '<circle cx="12" cy="12" r="8.5"/><path d="M10.2 8.8 15.5 12l-5.3 3.2z"/>',
+  /* Iconos de módulo: se eligen por palabra clave del título (ver iconoModulo). */
+  caja: '<path d="M3.5 8 12 4l8.5 4v8L12 20l-8.5-4z"/><path d="M3.5 8 12 12l8.5-4"/><path d="M12 12v8"/>',
+  sello: '<circle cx="12" cy="10" r="6"/><path d="M9 15.5 8 21l4-2 4 2-1-5.5"/>',
+  espacio: '<rect x="3.5" y="5.5" width="17" height="13" rx="1.5"/><path d="M3.5 10.5h17"/><path d="M8 5.5v13"/>',
+  encendido: '<path d="M12 4v8"/><path d="M7 7.5a7 7 0 1 0 10 0"/>',
+  corte: '<circle cx="7" cy="7" r="2.5"/><circle cx="7" cy="17" r="2.5"/><path d="M9 8.5 19 18"/><path d="M9 15.5 19 6"/>',
+  lupa: '<circle cx="10.5" cy="10.5" r="5.5"/><path d="M14.5 14.5 20 20"/>',
+  gota: '<path d="M12 3.5c3 4 6 7 6 10.5a6 6 0 0 1-12 0c0-3.5 3-6.5 6-10.5z"/>',
+  aceite: '<path d="M6 20V11l4-3h5l3 3v9z"/><path d="M15 8V5.5h-3"/><path d="M11 20v-4"/>',
+  enchufe: '<path d="M9 3.5v4"/><path d="M15 3.5v4"/><path d="M6 7.5h12v3a6 6 0 0 1-12 0z"/><path d="M12 16.5v4"/>',
+  pantalla: '<rect x="3" y="4.5" width="18" height="12" rx="2"/><path d="M7 9h6"/><path d="M7 12.5h10"/><path d="M9 20.5h6"/>',
+  texto: '<path d="M5 6h14"/><path d="M12 6v13"/><path d="M8.5 19h7"/>',
+  estrella: '<path d="M12 3.8l2.5 5.2 5.7.7-4.2 3.9 1.1 5.6L12 16.4l-5.1 2.8 1.1-5.6-4.2-3.9 5.7-.7z"/>',
   visto: '<circle cx="12" cy="12" r="8.5"/><path d="M8.4 12.2 11 14.8l4.6-5"/>',
   prueba: '<path d="M6.5 3.5h11v17h-11z"/><path d="M9.5 9h5"/><path d="M9.5 13h5"/><path d="M9.5 17h3"/>',
   tabla: '<rect x="3.5" y="4.5" width="17" height="15" rx="2"/><path d="M3.5 9.5h17"/><path d="M9.5 9.5v10"/>',
@@ -185,6 +198,22 @@ const diag = (k) => `<svg class="diag" aria-hidden="true" viewBox="0 0 220 120" 
    La portada son los cursos y nada más. Las guías en PDF y la tabla de
    parámetros dejaron de ser secciones sueltas: viven dentro del curso al que
    pertenecen, que es donde alguien las va a buscar. */
+
+/* Un icono por módulo, elegido por lo que dice el título. Si nada encaja, el
+   del curso. Así cada fila tiene una pista visual sin tocar los datos. */
+function iconoModulo(titulo, porDefecto) {
+  const t = String(titulo || '').toLowerCase();
+  const reglas = [
+    [/compra|accesos|kit/, 'caja'], [/certificado/, 'sello'], [/espacio|prep[aá]rate/, 'espacio'],
+    [/capacitaci[oó]n|primer corte|proyecto/, 'corte'], [/encendido|encender/, 'encendido'],
+    [/revisi[oó]n/, 'lupa'], [/lente|espejo|limpieza/, 'lupa'], [/agua|enfriador|chiller/, 'gota'],
+    [/lubric|riel|aceite/, 'aceite'], [/error|destruy|seguridad/, 'alerta'],
+    [/instalaci[oó]n|conexi[oó]n/, 'enchufe'], [/interfaz|herramienta/, 'pantalla'],
+    [/texto|vector/, 'texto'], [/evaluaci[oó]n/, 'prueba']
+  ];
+  const r = reglas.find(([re]) => re.test(t));
+  return r ? r[1] : (porDefecto || 'academia');
+}
 
 function cursoIcono(clave) {
   return `<span class="destino-ico" aria-hidden="true">${icon(clave || 'academia')}</span>`;
@@ -230,12 +259,17 @@ function vistaCurso(a, id) {
      como uno más confundía, porque parecía que quedaba contenido por leer. */
   const esExamen = (m) => !(m.lecciones || []).length && (m.preguntas || []).length;
 
+  const cabecera = c.img ? `<figure class="curso-dibujo"><img src="assets/academia/${esc(c.img)}" alt="" onerror="this.closest('.curso-dibujo').remove()"></figure>` : '';
+
   let n = 0;
   const modulos = c.modulos.map((m, mi) => {
     if (esExamen(m)) return '';
     n++;
     return `<section class="modulo">
-      <h3 class="modulo-tit"><span class="modulo-n">${n}</span>${esc(m.titulo)}</h3>
+      <h3 class="modulo-tit">
+        <span class="modulo-ico" aria-hidden="true">${icon(iconoModulo(m.titulo, c.icono))}</span>
+        <span class="modulo-n">${n}</span>${esc(m.titulo)}
+      </h3>
       <ul class="lecciones">${m.lecciones.map(leccion).join('')}</ul>
       ${evaluacion(m, mi)}
     </section>`;
@@ -271,7 +305,7 @@ function vistaCurso(a, id) {
     </div>
     <p class="bajada">${esc(p.nota)}</p>` : '';
 
-  return modulos + examenes + bloqueParams + bloqueGuias;
+  return cabecera + modulos + examenes + bloqueParams + bloqueGuias;
 }
 
 const views = {
@@ -378,8 +412,8 @@ const views = {
       <div class="destinos">
         ${disponibles.map(c => {
           const g = nGuias(c);
-          return `<a class="destino" href="#/academia/curso/${esc(c.id)}">
-            ${cursoIcono(c.icono)}
+          return `<a class="destino destino-curso" href="#/academia/curso/${esc(c.id)}">
+            ${c.img ? `<span class="destino-dibujo" aria-hidden="true"><img src="assets/academia/${esc(c.img)}" alt="" loading="lazy" onerror="this.parentElement.remove()"></span>` : cursoIcono(c.icono)}
             <span class="destino-txt"><strong>${esc(c.titulo)}</strong>
               <small>${nLec(c)} lecciones${g ? ` · ${g} guía${g > 1 ? 's' : ''}` : ''}</small>
               ${(() => { const v = avance(c); return v ? `<small class="destino-avance${v.ok === v.total ? ' completo' : ''}">${v.ok} de ${v.total} evaluaciones aprobadas</small>` : ''; })()}</span>

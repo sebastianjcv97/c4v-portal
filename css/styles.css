@@ -1511,3 +1511,31 @@ body.ruta-cevi .chat{min-height:calc(100dvh - var(--alto-menu, 176px))}
 .cert-hero-t{font-size:var(--t-lg);margin:0}
 .cert-lema{font-size:var(--t-sm);margin:2px 0 0}
 @media(max-width:620px){.cert-seal{width:56px}.cert-hero{padding:14px 16px}}
+
+/* ---------- Dibujos e iconos de la Academia ----------
+   Un dibujo técnico por curso, como en la guía de preparación, y un icono por
+   módulo: se reconoce de qué va antes de leer. */
+.destino-curso{align-items:center}
+.destino-dibujo{flex-shrink:0;width:96px;height:96px;display:grid;place-items:center}
+.destino-dibujo img{max-width:96px;max-height:96px;width:auto;height:auto;mix-blend-mode:multiply}
+.curso-dibujo{margin:0 0 var(--s-5);display:grid;place-items:center;padding:var(--s-2) 0 var(--s-3);
+  border-bottom:1px solid var(--regla)}
+.curso-dibujo img{max-width:280px;max-height:200px;width:auto;height:auto;mix-blend-mode:multiply}
+.modulo-ico{flex-shrink:0;width:40px;height:40px;border-radius:50%;background:var(--mesa);
+  display:grid;place-items:center;color:var(--rojo-tinta)}
+.modulo-ico svg{width:22px;height:22px}
+.modulo-n{width:auto;height:auto;background:none;color:var(--grafito);font-size:var(--t-sm);
+  border-radius:0;display:inline;margin-right:6px}
+.modulo-n::after{content:"."}
+@media(max-width:620px){
+  .destino-dibujo{width:80px;height:80px}
+  .destino-dibujo img{max-width:80px;max-height:80px}
+  .curso-dibujo img{max-width:220px;max-height:160px}
+}
+/* El nombre sin rayas propias: la línea del pie ya separa. Y los enlaces en
+   una fila apretada, para que "Mis datos" no se caiga solo a una segunda línea
+   con medio pie de aire encima. */
+.pie-sesion .me-link{border:none;padding:6px 0}
+.pie-enlaces{row-gap:4px;column-gap:var(--s-3)}
+.pie-enlaces a{min-height:36px}
+.pie-empresa{margin-top:var(--s-2)}

@@ -137,7 +137,7 @@ window.__SEED__ = {
     ],
     cursos: [
       {
-        id: "c0", icono: "bienvenida", titulo: "Bienvenida a C4V: Tus Primeros Pasos", nivel: "Empieza aquí", estado: "disponible",
+        id: "c0", img: "c0.png", icono: "bienvenida", titulo: "Bienvenida a C4V: Tus Primeros Pasos", nivel: "Empieza aquí", estado: "disponible",
         descripcion: "Todo lo que necesitas apenas compras tu máquina: tus accesos, tu código, tu certificado y cómo prepararte. (~10 min)",
         modulos: [
           { titulo: "Tu compra y tus accesos", lecciones: ["Qué incluye tu compra C4V", "Cómo entrar a tu plataforma", "Tu código de máquina (Nº de serie): guárdalo bien"], quizzes: 3, preguntas: [
@@ -162,7 +162,7 @@ window.__SEED__ = {
         ]
       },
       {
-        id: "c1", icono: "laser", titulo: "Domina tu Láser: Primeros Pasos", nivel: "Básico", estado: "disponible",
+        id: "c1", img: "c1.png", icono: "laser", titulo: "Domina tu Láser: Primeros Pasos", nivel: "Básico", estado: "disponible",
         descripcion: "Desde antes de recibir la máquina hasta tu primer corte real, sin errores graves. (~25-35 min)",
         /* preguntas: { q, opciones, ok (índice correcto), ex (explicación de Lumo 🦉) } */
         modulos: [
@@ -200,7 +200,7 @@ window.__SEED__ = {
         ]
       },
       {
-        id: "c2", icono: "llave", titulo: "Seguridad, Limpieza y Mantenimiento", nivel: "Intermedio", estado: "disponible",
+        id: "c2", img: "c2.png", icono: "llave", titulo: "Seguridad, Limpieza y Mantenimiento", nivel: "Intermedio", estado: "disponible",
         descripcion: "Prevén fallas, extiende la vida útil y mantén el rendimiento. Requiere el Curso 1. (~30-40 min)",
         modulos: [
           { titulo: "Tu kit de mantenimiento (5 materiales)", lecciones: ["Agua destilada (Vistony)", "Aceite 3-EN-UNO para rieles", "Alcohol isopropílico", "Hisopos de alta calidad", "Paño de microfibra sin pelusa"], quizzes: 3, preguntas: [
@@ -234,7 +234,7 @@ window.__SEED__ = {
         ]
       },
       {
-        id: "c3", icono: "monitor", titulo: "Domina C4VTech: Diseño y Corte (software)", nivel: "Intermedio", estado: "disponible",
+        id: "c3", img: "c3.png", icono: "monitor", titulo: "Domina C4VTech: Diseño y Corte (software)", nivel: "Intermedio", estado: "disponible",
         descripcion: "Curso completo en video del software propio C4VTech: de la instalación a tu primer proyecto real. (20 videos, ~37 min)",
         /* Lecciones en video: { t: título, v: archivo en videos/c4vtech/, dur: segundos } */
         modulos: [
