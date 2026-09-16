@@ -1542,3 +1542,37 @@ body.ruta-cevi .chat{min-height:calc(100dvh - var(--alto-menu, 176px))}
 /* Con más peso para ganar a la regla del pie que venía después. */
 .pie-legal .pie-enlaces{row-gap:2px;column-gap:var(--s-3)}
 .pie-legal .pie-enlaces a{min-height:34px;padding:0}
+
+/* ════════════════════════════════════════════════════════════════════════
+   MODO VOZ
+   Solo el toro en pantalla, como los asistentes de voz que la gente ya
+   conoce. Abajo, dos botones: hablar y salir. El texto bajo el toro dice de
+   quién es el turno o lo que se va oyendo.
+   ════════════════════════════════════════════════════════════════════════ */
+.voz{position:fixed;inset:0;z-index:60;background:var(--papel);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:var(--s-5);
+  padding:var(--s-6) var(--s-4) calc(120px + env(safe-area-inset-bottom))}
+.voz[hidden]{display:none}
+.voz-orbe{background:none;border:none;padding:0;cursor:pointer;border-radius:50%;
+  -webkit-tap-highlight-color:transparent;transition:transform .15s}
+.voz-orbe:active{transform:scale(.97)}
+.voz-orbe:focus-visible{outline:3px solid var(--tinta);outline-offset:10px}
+.voz-orbe .orbe{width:min(64vw,280px);height:min(64vw,280px)}
+.voz-txt{margin:0;min-height:2.8em;max-width:30ch;text-align:center;
+  font-size:var(--t-lg);line-height:1.35;color:var(--grafito)}
+[data-cevi-estado="escuchando"] .voz-txt{color:var(--tinta);font-weight:700}
+.voz-botones{position:absolute;left:0;right:0;bottom:calc(var(--s-6) + env(safe-area-inset-bottom));
+  display:flex;justify-content:center;gap:var(--s-6)}
+.voz-btn{width:68px;height:68px;border-radius:50%;border:none;cursor:pointer;
+  background:var(--mesa);color:var(--tinta);display:grid;place-items:center;
+  -webkit-tap-highlight-color:transparent}
+.voz-btn svg{width:28px;height:28px}
+.voz-btn:hover{background:var(--regla)}
+.voz-btn:focus-visible{outline:3px solid var(--tinta);outline-offset:4px}
+.voz-cerrar{background:var(--tinta);color:var(--papel)}
+.voz-cerrar:hover{background:#000}
+[data-cevi-estado="escuchando"] .voz-mic{background:var(--rojo-tinta);color:#fff}
+[data-cevi-estado="hablando"] .voz-mic{background:var(--tinta);color:var(--papel)}
+/* Mientras está abierta, la página de atrás no se desplaza. */
+body.cevi-en-voz{overflow:hidden}
+@media (prefers-reduced-motion:reduce){ .voz-orbe{transition:none} }
