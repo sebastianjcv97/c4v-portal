@@ -1459,8 +1459,8 @@ function ceviReproductor() {
   return cevi.reproductor;
 }
 
-function ceviDesbloquearAudio() {
-  if (cevi.audioListo) return;
+function ceviDesbloquearAudio(forzar) {
+  if (cevi.audioListo && !forzar) return;
   try {
     const a = ceviReproductor();
     a.src = SILENCIO;
@@ -2106,7 +2106,7 @@ function ceviTranscripcion(txt) {
 
 // El botón grande hace lo que toca según el estado. Un solo control, sin modos ocultos.
 function ceviVozToque() {
-  ceviDesbloquearAudio();          // dentro del gesto: es lo que exige Safari
+  ceviDesbloquearAudio(true);      // dentro del gesto: es lo que exige Safari
   ceviPrecargarRelleno();
   if (cevi.estado === 'escuchando') { cevi.manosLibres = false; ceviCallar(); return; }
   if (cevi.estado === 'hablando') { ceviParaVoz(); ceviEstado('reposo'); return; }
@@ -2139,6 +2139,7 @@ function ceviAviso(texto, accion) {
     const b = document.createElement('button');
     b.type = 'button'; b.className = 'cevi-aviso-btn'; b.textContent = accion;
     b.onclick = () => {
+      ceviDesbloquearAudio(true);        // en el mismo toque, antes de cualquier await
       ceviAviso('');
       const t = cevi.textoPendiente;
       if (t) { cevi.textoPendiente = null; ceviHablar(t); }
@@ -2402,22 +2403,17 @@ function pintarPieLegal() {
      Se retiraron el teléfono fijo y el correo: el canal de atención es WhatsApp,
      y el correo para ejercer derechos sobre datos personales sigue publicado
      dentro de la Política de Privacidad, que es donde la ley lo pide. */
-  const wa = esc(e.whatsapp_visible || CFG.whatsapp?.visible || '');
+  /* Tres líneas y nada más. Lo que la ley obliga a mostrar sigue todo aquí:
+     el Libro de Reclamaciones (Ley 29571), la política de datos (Ley 29733) y
+     quién es el proveedor. Solo se quitó el adorno. */
   pie.innerHTML = `
     <nav class="pie-enlaces" aria-label="Información legal">
-      <a href="libro-reclamaciones.html" class="pie-lr" target="_blank" rel="noopener">
-        <span class="pie-lr-ic" aria-hidden="true">${icon('reclamo')}</span>
-        <span><strong>Libro de Reclamaciones</strong><small>Déjanos tu queja o reclamo</small></span>
-      </a>
+      <a href="libro-reclamaciones.html" class="pie-lr" target="_blank" rel="noopener">Libro de Reclamaciones</a>
       <a href="privacidad.html" target="_blank" rel="noopener">Privacidad</a>
       <a href="terminos.html" target="_blank" rel="noopener">Términos</a>
-      <a href="privacidad.html#derechos" target="_blank" rel="noopener">Mis datos personales</a>
+      <a href="privacidad.html#derechos" target="_blank" rel="noopener">Mis datos</a>
     </nav>
-    <p class="pie-empresa">
-      <strong>${esc(e.razon_social || '')}</strong>${e.ruc ? `, RUC ${esc(e.ruc)}` : ''}
-      ${e.domicilio ? `<br>${esc(e.domicilio)}` : ''}
-      ${wa ? `<br>Atención al cliente por WhatsApp ${wa}` : ''}
-    </p>`;
+    <p class="pie-empresa">${esc(e.razon_social || '')}${e.ruc ? `, RUC ${esc(e.ruc)}` : ''}${e.domicilio ? `. ${esc(e.domicilio)}` : ''}</p>`;
 }
 
 // ---------- init ----------

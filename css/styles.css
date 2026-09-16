@@ -1488,3 +1488,26 @@ body.ruta-cevi .chat{min-height:calc(100dvh - var(--alto-menu, 176px))}
   border-top:1px solid var(--regla);border-bottom:1px solid var(--regla)}
 .me-link .me-txt{flex:1;min-width:0}
 .me-link::after{content:'›';color:var(--rojo-tinta);font-size:var(--t-lg);line-height:1}
+
+/* Pie, versión mínima: nombre y salir en una línea, los cuatro enlaces
+   legales en otra, y el proveedor en una tercera. Sin marcos ni iconos. */
+.pie-legal{padding:var(--s-4) var(--s-4) calc(var(--s-6) + env(safe-area-inset-bottom))}
+.pie-sesion{padding-bottom:var(--s-3);margin-bottom:var(--s-3);border-bottom:1px solid var(--regla)}
+.pie-salir{background:none;border:none;padding:8px 0;min-height:var(--tap);font-family:var(--sans);
+  font-size:var(--t-sm);color:var(--grafito);text-decoration:underline;cursor:pointer}
+.pie-salir:hover{color:var(--tinta)}
+.pie-enlaces{gap:var(--s-2) var(--s-4);margin-bottom:var(--s-2)}
+.pie-enlaces .pie-lr{flex-basis:auto;min-width:0;padding:0;border:none;background:none;
+  color:var(--tinta);font-weight:700;text-decoration:underline;font-size:var(--t-sm)}
+.pie-enlaces .pie-lr:hover{background:none;color:var(--rojo-tinta)}
+.pie-empresa{font-size:var(--t-xs);color:var(--grafito)}
+
+/* ---------- El certificado deja de ser la imagen principal ----------
+   Era un bloque negro de 400px con el sello a 150px que se comía la pantalla.
+   Ahora el sello va pequeño al lado del título, como una insignia, y el bloque
+   queda en una franja. La pantalla es sobre TU máquina, no sobre el sello. */
+.cert-hero{padding:16px 18px;gap:14px;flex-wrap:nowrap;margin-bottom:16px}
+.cert-seal{width:64px}
+.cert-hero-t{font-size:var(--t-lg);margin:0}
+.cert-lema{font-size:var(--t-sm);margin:2px 0 0}
+@media(max-width:620px){.cert-seal{width:56px}.cert-hero{padding:14px 16px}}
