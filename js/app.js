@@ -219,70 +219,154 @@ function cursoIcono(clave) {
   return `<span class="destino-ico" aria-hidden="true">${icon(clave || 'academia')}</span>`;
 }
 
+/* ---------- El curso como secuencia de pantallas ----------
+   Misma dinámica que Primeros pasos: una lección por pantalla, visto ✓ al
+   avanzar, y la evaluación del módulo justo cuando termina el módulo. */
+function secuenciaCurso(c) {
+  const seq = [];
+  const esExamen = (m) => !(m.lecciones || []).length && (m.preguntas || []).length;
+  c.modulos.forEach((m, mi) => {
+    if (esExamen(m)) return;
+    (m.lecciones || []).forEach((l, li) => seq.push({ tipo: 'leccion', mi, li, l, m }));
+    if ((m.preguntas || []).length) seq.push({ tipo: 'quiz', mi, m });
+  });
+  c.modulos.forEach((m, mi) => { if (esExamen(m)) seq.push({ tipo: 'quiz', mi, m, examen: true }); });
+  return seq;
+}
+
+const claveLec = (cid, mi, li) => 'c4v_lec_' + state.ctx + '_' + cid + '_' + mi + '_' + li;
+const lecVista = (cid, mi, li) => { try { return localStorage.getItem(claveLec(cid, mi, li)) === '1'; } catch { return false; } };
+const quizAprobado = (cid, mi) => { try { return ((JSON.parse(localStorage.getItem('c4v_quiz_' + state.ctx + '_' + cid + '-' + mi) || 'null') || {}).p || 0) >= 70; } catch { return false; } };
+
+// Primer paso que falta: por ahí se retoma.
+function primerPendiente(c) {
+  const seq = secuenciaCurso(c);
+  const i = seq.findIndex(p => p.tipo === 'leccion' ? !lecVista(c.id, p.mi, p.li) : !quizAprobado(c.id, p.mi));
+  return i === -1 ? seq.length : i;
+}
+
+function vistaLeccion(a, c, idx) {
+  const seq = secuenciaCurso(c);
+  const total = seq.length;
+  if (idx >= total) {
+    return `<div class="paso-fin">
+        <h2>Terminaste el curso</h2>
+        <p>${esc(c.titulo)}</p>
+        <a class="btn primary" href="#/academia">Volver a la Academia</a>
+        <a class="paso-link" href="#/academia/curso/${esc(c.id)}/p/0">Verlo otra vez</a>
+      </div>`;
+  }
+  const p = seq[idx];
+  const base = `#/academia/curso/${esc(c.id)}`;
+  const nLec = seq.filter(x => x.tipo === 'leccion').length;
+  const nAqui = seq.slice(0, idx + 1).filter(x => x.tipo === 'leccion').length;
+  const cabecera = (texto) => `
+    <p class="paso-cuenta">${texto}</p>
+    <div class="paso-barra"><i style="width:${Math.round((idx + 1) / total * 100)}%"></i></div>`;
+  const pie = (siguiente) => `
+    <div class="paso-pie">
+      ${siguiente}
+      ${idx > 0 ? `<a class="paso-link" href="${base}/p/${idx - 1}">Atrás</a>` : `<a class="paso-link" href="${base}">Volver al curso</a>`}
+    </div>`;
+
+  if (p.tipo === 'quiz') {
+    return `<section class="paso paso-quiz">
+      ${cabecera(p.examen ? 'Evaluación final' : `Evaluación del módulo ${p.mi + 1}`)}
+      <h2 class="paso-titulo">${esc(p.examen ? 'Evaluación final' : p.m.titulo)}</h2>
+      <div class="quiz-box auto" data-key="${esc(c.id + '-' + p.mi)}" data-curso="${esc(c.id)}" data-mod="${p.mi}" data-siguiente="${base}/p/${idx + 1}">
+        <button type="button" class="qz-start" hidden></button>
+        <div class="qz-area"></div>
+      </div>
+      ${pie(quizAprobado(c.id, p.mi) ? `<a class="btn primary" href="${base}/p/${idx + 1}">Siguiente</a>` : '')}
+    </section>`;
+  }
+
+  const l = p.l;
+  const esVideo = typeof l !== 'string' && l.v;
+  const esImagen = typeof l !== 'string' && l.img;
+  const texto = typeof l === 'string' ? l : (l.t || '');
+  let cuerpo = '';
+  if (esImagen && c.laminas) {
+    // Lámina ilustrada: el título va dentro, así que no se repite encima.
+    cuerpo = `<figure class="lec-lamina"><img src="assets/academia/${esc(c.id)}/${esc(l.img)}" alt="${esc(texto)}" onerror="this.closest('.lec-lamina').remove()"></figure>
+      ${texto ? `<p class="lec-pie">${esc(texto)}</p>` : ''}`;
+  } else if (esImagen) {
+    // Foto real de un procedimiento: la instrucción va arriba, como título.
+    cuerpo = `<h2 class="paso-titulo lec-instruccion">${esc(texto)}</h2>
+      <figure class="lec-foto"><img src="assets/academia/${esc(c.id)}/${esc(l.img)}" alt="" onerror="this.closest('.lec-foto').remove()"></figure>`;
+  } else if (esVideo) {
+    cuerpo = `<h2 class="paso-titulo">${esc(texto)}</h2>
+      <div class="lec-video-caja" data-video="${esc(l.v)}"><div class="lv-player"></div></div>`;
+  } else {
+    cuerpo = `<h2 class="paso-titulo">${esc(texto)}</h2>`;
+  }
+  return `<section class="paso">
+    ${cabecera(`Lección ${nAqui} de ${nLec}`)}
+    <p class="lec-modulo">${p.mi + 1}. ${esc(p.m.titulo)}</p>
+    ${cuerpo}
+    ${pie(`<a class="btn primary lec-siguiente" href="${base}/p/${idx + 1}" data-vista="${claveLec(c.id, p.mi, p.li)}">Siguiente</a>`)}
+  </section>`;
+}
+
 function vistaCurso(a, id) {
   const c = (a.cursos || []).find(x => x.id === id);
   if (!c) return '<p class="bajada">Ese curso ya no está.</p>';
-
-  const fmtDur = (sg) => `${Math.floor(sg / 60)}:${String(sg % 60).padStart(2, '0')}`;
-  const visto = (v) => { try { return localStorage.getItem('c4v_video_' + state.ctx + '_' + v) === '1'; } catch { return false; } };
-  const mejor = (k) => { try { return JSON.parse(localStorage.getItem('c4v_quiz_' + state.ctx + '_' + k) || 'null'); } catch { return null; } };
-
-  const leccion = (l) => typeof l === 'string'
-    ? `<li class="lec">${esc(l)}</li>`
-    : `<li class="lec lec-video${visto(l.v) ? ' visto' : ''}" data-video="${esc(l.v)}">
-         <button type="button" class="lv-btn">
-           <span class="lv-ico" aria-hidden="true">${icon(visto(l.v) ? 'visto' : 'play')}</span>
-           <span class="lv-tit">${esc(l.t)}</span>
-           <span class="lv-dur">${fmtDur(l.dur)}</span>
-         </button>
-         <div class="lv-player" hidden></div>
-       </li>`;
-
-  /* La evaluación de cada módulo: un solo botón, con el mejor puntaje al lado si
-     ya la hizo. Antes estaba fuera de la vista del curso y no se podía llegar. */
-  const evaluacion = (m, mi) => {
-    const preguntas = (m.preguntas || []).filter(p => p && p.q && Array.isArray(p.opciones) && p.opciones.length);
-    if (!preguntas.length) return '';
-    const k = c.id + '-' + mi, b = mejor(k);
-    return `<div class="quiz-box" data-key="${k}" data-curso="${c.id}" data-mod="${mi}">
-        <button type="button" class="qz-start">
-          <span class="destino-ico" aria-hidden="true">${icon('prueba')}</span>
-          <span class="destino-txt"><strong>Ponte a prueba</strong>
-            <small>${preguntas.length} preguntas${b ? ` · tu mejor: ${b.b} de ${b.n}` : ''}</small></span>
-          <span class="destino-flecha" aria-hidden="true">›</span>
-        </button>
-        <div class="qz-area" hidden></div>
-      </div>`;
-  };
-
-  /* Un módulo sin lecciones no es un módulo: es el examen del curso. Numerarlo
-     como uno más confundía, porque parecía que quedaba contenido por leer. */
-  const esExamen = (m) => !(m.lecciones || []).length && (m.preguntas || []).length;
+  const base = `#/academia/curso/${esc(c.id)}`;
+  const seq = secuenciaCurso(c);
+  const pend = primerPendiente(c);
+  const nLec = seq.filter(x => x.tipo === 'leccion').length;
+  const vistas = seq.filter(x => x.tipo === 'leccion' && lecVista(c.id, x.mi, x.li)).length;
+  const terminado = pend >= seq.length;
 
   const cabecera = c.img ? `<figure class="curso-dibujo"><img src="assets/academia/${esc(c.img)}" alt="" onerror="this.closest('.curso-dibujo').remove()"></figure>` : '';
 
-  let n = 0;
+  const boton = terminado
+    ? `<a class="btn primary paso-listo" href="${base}/p/0">Verlo otra vez</a>`
+    : `<a class="btn primary paso-listo" href="${base}/p/${pend}">${vistas ? 'Continuar' : 'Empezar'}</a>`;
+
+  // Cada lección con su ✓ y su flecha: se ve qué falta y se puede saltar a ella.
+  let k = -1;
   const modulos = c.modulos.map((m, mi) => {
-    if (esExamen(m)) return '';
-    n++;
+    const esExamen = !(m.lecciones || []).length && (m.preguntas || []).length;
+    if (esExamen) return '';
+    const filas = (m.lecciones || []).map((l, li) => {
+      k++;
+      const idx = seq.findIndex(x => x.tipo === 'leccion' && x.mi === mi && x.li === li);
+      const t = typeof l === 'string' ? l : (l.t || '');
+      const v = lecVista(c.id, mi, li);
+      return `<a class="lec-fila${v ? ' vista' : ''}" href="${base}/p/${idx}">
+        <span class="lec-check" aria-hidden="true">${v ? icon('visto') : (typeof l !== 'string' && l.v ? icon('play') : '')}</span>
+        <span class="lec-txt">${esc(t)}</span>
+        <span class="destino-flecha" aria-hidden="true">›</span>
+      </a>`;
+    }).join('');
+    const q = (m.preguntas || []).length;
+    const qi = seq.findIndex(x => x.tipo === 'quiz' && x.mi === mi);
+    const evalFila = q ? `<a class="lec-fila lec-eval${quizAprobado(c.id, mi) ? ' vista' : ''}" href="${base}/p/${qi}">
+        <span class="lec-check" aria-hidden="true">${quizAprobado(c.id, mi) ? icon('visto') : icon('prueba')}</span>
+        <span class="lec-txt">Evaluación del módulo</span>
+        <span class="destino-flecha" aria-hidden="true">›</span>
+      </a>` : '';
     return `<section class="modulo">
       <h3 class="modulo-tit">
         <span class="modulo-ico" aria-hidden="true">${icon(iconoModulo(m.titulo, c.icono))}</span>
-        <span class="modulo-n">${n}</span>${esc(m.titulo)}
+        <span class="modulo-n">${mi + 1}</span>${esc(m.titulo)}
       </h3>
-      <ul class="lecciones">${m.lecciones.map(leccion).join('')}</ul>
-      ${evaluacion(m, mi)}
+      <div class="lec-lista">${filas}${evalFila}</div>
     </section>`;
   }).join('');
 
-  const examenes = c.modulos.map((m, mi) => esExamen(m) ? `
-    <section class="examen">
-      <h2 class="section-h">Evaluación final</h2>
-      <p class="bajada">Repasa los ${n} módulos y ponte a prueba con todo el curso.</p>
-      ${evaluacion(m, mi)}
-    </section>` : '').join('');
+  const examen = c.modulos.some(m => !(m.lecciones || []).length && (m.preguntas || []).length)
+    ? (() => { const qi = seq.findIndex(x => x.examen); const mi = seq[qi].mi; return `
+      <section class="examen">
+        <a class="lec-fila lec-eval${quizAprobado(c.id, mi) ? ' vista' : ''}" href="${base}/p/${qi}">
+          <span class="lec-check" aria-hidden="true">${quizAprobado(c.id, mi) ? icon('visto') : icon('prueba')}</span>
+          <span class="lec-txt"><strong>Evaluación final</strong></span>
+          <span class="destino-flecha" aria-hidden="true">›</span>
+        </a>
+      </section>`; })()
+    : '';
 
-  // Las guías de ESTE curso, al final, donde ya se entiende para qué sirven.
   const guias = (a.guiasPdf || []).filter(g => g.curso === c.id);
   const bloqueGuias = guias.length ? `
     <h2 class="section-h">Para descargar</h2>
@@ -293,19 +377,24 @@ function vistaCurso(a, id) {
       </button>`).join('')}
     </div>` : '';
 
-  // La tabla de potencia y velocidad vive en el curso de operación.
-  const p = a.parametros;
-  const bloqueParams = (c.id === 'c1' && p) ? `
+  const pr = a.parametros;
+  const bloqueParams = (c.id === 'c1' && pr) ? `
     <h2 class="section-h">Potencia y velocidad por material</h2>
     <div class="tabla-scroll">
       <table class="tabla-params"><thead><tr>
         <th>Material</th><th>Grosor</th><th>Corte</th><th>Marcado</th><th>Grabado</th>
       </tr></thead>
-      <tbody>${p.filas.map(f => `<tr><td><strong>${esc(f.m)}</strong></td><td>${esc(f.g)}</td><td>${esc(f.corte)}</td><td>${esc(f.marcado)}</td><td>${esc(f.grabado)}</td></tr>`).join('')}</tbody></table>
+      <tbody>${pr.filas.map(f => `<tr><td><strong>${esc(f.m)}</strong></td><td>${esc(f.g)}</td><td>${esc(f.corte)}</td><td>${esc(f.marcado)}</td><td>${esc(f.grabado)}</td></tr>`).join('')}</tbody></table>
     </div>
-    <p class="bajada">${esc(p.nota)}</p>` : '';
+    <p class="bajada">${esc(pr.nota)}</p>` : '';
 
-  return cabecera + modulos + examenes + bloqueParams + bloqueGuias;
+  return `${cabecera}
+    <div class="curso-avance">
+      <p class="paso-cuenta">${vistas} de ${nLec} lecciones vistas</p>
+      <div class="paso-barra"><i style="width:${nLec ? Math.round(vistas / nLec * 100) : 0}%"></i></div>
+      ${boton}
+    </div>
+    ${modulos}${examen}${bloqueParams}${bloqueGuias}`;
 }
 
 const views = {
@@ -389,8 +478,12 @@ const views = {
      cursos: cuatro botones con su icono. */
   academia(ruta) {
     const a = state.db.academia;
-    const [sec, id] = String(ruta || '').split('/');
-    if (sec === 'curso' && id) return vistaCurso(a, id);
+    const [sec, id, modo, n] = String(ruta || '').split('/');
+    if (sec === 'curso' && id) {
+      const c = (a.cursos || []).find(x => x.id === id);
+      if (c && modo === 'p') return vistaLeccion(a, c, Math.max(0, parseInt(n, 10) || 0));
+      return vistaCurso(a, id);
+    }
 
     const nLec = (c) => c.modulos.reduce((t, m) => t + m.lecciones.length, 0);
     const nGuias = (c) => (a.guiasPdf || []).filter(g => g.curso === c.id).length;
@@ -742,7 +835,9 @@ function bind(route) {
     cevi.manosLibres = false; cevi.abierto = false;
     ceviVozCerrar(); ceviCallar(); ceviParaVoz(); orbeParar();
   }
-  if (route === 'academia' && state.sub.startsWith('curso/')) { bindVideos(); bindGuias(); bindQuizzes(); }
+  if (route === 'academia' && state.sub.startsWith('curso/')) {
+    bindGuias(); bindQuizzes(); bindLeccion();
+  }
   const salir = $('#salirCuenta');
   if (salir) salir.onclick = () => { const b = $('#logoutBtn'); if (b) b.click(); };
   if (route === 'preparacion') {
@@ -826,6 +921,33 @@ function bindGuias() {
       etiqueta.textContent = original;
       window.open(url, '_blank', 'noopener');
     };
+  });
+}
+
+function bindLeccion() {
+  // «Siguiente» marca la lección como vista y avanza.
+  view.querySelectorAll('.lec-siguiente[data-vista]').forEach(b => b.addEventListener('click', () => {
+    try { localStorage.setItem(b.dataset.vista, '1'); } catch {}
+  }));
+  // El video se monta de una vez: en una pantalla que ES el video no hay nada que plegar.
+  view.querySelectorAll('.lec-video-caja').forEach(caja => {
+    const archivo = caja.dataset.video, box = caja.querySelector('.lv-player');
+    box.hidden = false;
+    box.innerHTML = `<video controls playsinline preload="metadata" controlsList="nodownload">
+        <source src="videos/c4vtech/${esc(archivo)}" type="video/mp4">
+        Tu navegador no puede reproducir este video.
+      </video>`;
+    const vid = box.querySelector('video');
+    vid.ontimeupdate = () => {
+      if (vid.duration && vid.currentTime / vid.duration > 0.8) {
+        try { localStorage.setItem('c4v_video_' + state.ctx + '_' + archivo, '1'); } catch {}
+      }
+    };
+  });
+  // La evaluación en su propia pantalla arranca sola, sin botón previo.
+  view.querySelectorAll('.quiz-box.auto').forEach(box => {
+    const start = box.querySelector('.qz-start');
+    if (start && start.onclick) start.onclick();
   });
 }
 
@@ -913,15 +1035,18 @@ function bindQuizzes() {
         <div class="qz-fin ${paso ? 'ok' : ''}">
           <div class="qz-nota">${puntos} de ${total}</div>
           <p>${paso ? 'Dominas este módulo.' : 'Repasa las lecciones de arriba y vuelve a probar.'}</p>
-          <button type="button" class="btn primary qz-retry">Intentar de nuevo</button>
-          <button type="button" class="paso-link qz-cerrar">Cerrar</button>
+          ${box.dataset.siguiente
+            ? (paso ? `<a class="btn primary" href="${esc(box.dataset.siguiente)}">Siguiente</a><button type="button" class="paso-link qz-retry">Intentar de nuevo</button>`
+                    : `<button type="button" class="btn primary qz-retry">Intentar de nuevo</button><a class="paso-link" href="${esc(box.dataset.siguiente)}">Seguir sin aprobar</a>`)
+            : `<button type="button" class="btn primary qz-retry">Intentar de nuevo</button><button type="button" class="paso-link qz-cerrar">Cerrar</button>`}
         </div>`;
-      area.querySelector('.qz-cerrar').onclick = () => { area.hidden = true; render('academia'); location.hash = '#/academia/curso/' + box.dataset.curso; };
+      const cerrar = area.querySelector('.qz-cerrar');
+      if (cerrar) cerrar.onclick = () => { area.hidden = true; render('academia'); location.hash = '#/academia/curso/' + box.dataset.curso; };
       area.querySelector('.qz-retry').onclick = () => { idx = 0; puntos = 0; preguntar(); };
     };
 
     start.onclick = () => {
-      const abierto = !area.hidden;
+      const abierto = box.classList.contains('auto') ? false : !area.hidden;
       area.hidden = abierto;
       start.setAttribute('aria-expanded', String(!abierto));
       if (!abierto) {
@@ -956,11 +1081,13 @@ function render(route) {
     const c = (state.db.academia.cursos || []).find(x => x.id === state.sub.split('/')[1]);
     if (c) titulo = c.titulo;
   }
+  // Dentro de una lección la cabecera sobra: la pantalla ya dice dónde estás.
+  const enLeccion = route === 'academia' && /^curso\/[^/]+\/p\//.test(state.sub);
   // Toda subpágina vuelve a la portada de su sección: un solo camino de vuelta.
   const atras = state.sub
     ? `<a class="volver" href="#/${route}"><span aria-hidden="true">←</span> ${esc(TITLES[route])}</a>`
     : '';
-  const cabecera = route === 'inicio' ? '' : atras + `<h1 class="pag-title">${esc(titulo)}</h1>`;
+  const cabecera = route === 'inicio' ? '' : enLeccion ? atras : atras + `<h1 class="pag-title">${esc(titulo)}</h1>`;
   /* La ruta queda en el DOM: el CSS la necesita para subir el botón de CeVi
      cuando la barra del paso se pega abajo. */
   document.getElementById('app')?.setAttribute('data-ruta', route);

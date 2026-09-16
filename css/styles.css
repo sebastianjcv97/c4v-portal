@@ -1576,3 +1576,35 @@ body.ruta-cevi .chat{min-height:calc(100dvh - var(--alto-menu, 176px))}
 /* Mientras está abierta, la página de atrás no se desplaza. */
 body.cevi-en-voz{overflow:hidden}
 @media (prefers-reduced-motion:reduce){ .voz-orbe{transition:none} }
+
+/* ---------- Una lección por pantalla ----------
+   La lámina se lleva la pantalla; el título ya va dentro de ella. */
+.lec-modulo{margin:0;font-size:var(--t-sm);color:var(--grafito)}
+.lec-lamina{margin:0;display:grid;place-items:center}
+.lec-lamina img{max-width:100%;max-height:70vh;width:auto;height:auto;border-radius:var(--r-lg);
+  box-shadow:0 1px 2px rgba(20,20,20,.06),0 8px 24px rgba(20,20,20,.08)}
+.lec-pie{margin:0;font-size:var(--t-md);line-height:var(--lh-base);color:var(--tinta);max-width:var(--medida)}
+.lec-video-caja .lv-player{padding:0}
+.lec-video-caja video{width:100%;max-height:62vh;background:#000;border-radius:var(--r-lg);display:block}
+.paso-quiz .qz-area{border:none;padding:0;margin-top:0}
+
+/* Portada del curso: avance, botón único y la lista con ✓ por lección. */
+.curso-avance{display:flex;flex-direction:column;gap:var(--s-2);margin:0 0 var(--s-6)}
+.curso-avance .paso-listo{margin-top:var(--s-2);width:100%;justify-content:center;font-size:var(--t-lg);padding:16px 20px}
+@media(min-width:700px){.curso-avance .paso-listo{width:auto;min-width:240px;align-self:flex-start}}
+.lec-lista{border-top:1px solid var(--regla)}
+.lec-fila{display:flex;align-items:center;gap:var(--s-3);padding:var(--s-3) 0;border-bottom:1px solid var(--regla);
+  text-decoration:none;color:var(--tinta);font-size:var(--t-md);line-height:var(--lh-snug);min-height:var(--tap)}
+.lec-fila:hover .lec-txt{color:var(--rojo-tinta)}
+.lec-check{flex-shrink:0;width:28px;height:28px;border-radius:50%;border:2px solid var(--regla);
+  display:grid;place-items:center;color:var(--grafito)}
+.lec-check svg{width:18px;height:18px}
+.lec-fila.vista .lec-check{border-color:var(--ok);color:var(--ok);background:var(--ok-50)}
+.lec-fila.vista .lec-txt{color:var(--grafito)}
+.lec-txt{flex:1;min-width:0}
+.lec-eval .lec-check{border-color:var(--tinta);color:var(--tinta)}
+.lec-eval.vista .lec-check{border-color:var(--ok);color:var(--ok)}
+.examen .lec-fila{border-top:none}
+.lec-instruccion{font-size:var(--t-xl)}
+.lec-foto{margin:0}
+.lec-foto img{width:100%;height:auto;border-radius:var(--r-lg);display:block}

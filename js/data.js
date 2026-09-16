@@ -162,11 +162,17 @@ window.__SEED__ = {
         ]
       },
       {
-        id: "c1", img: "c1.png", icono: "laser", titulo: "Domina tu Láser: Primeros Pasos", nivel: "Básico", estado: "disponible",
+        id: "c1", img: "c1.png", icono: "laser", laminas: true, /* el título va DENTRO de cada lámina */ titulo: "Domina tu Láser: Primeros Pasos", nivel: "Básico", estado: "disponible",
         descripcion: "Desde antes de recibir la máquina hasta tu primer corte real, sin errores graves. (~25-35 min)",
         /* preguntas: { q, opciones, ok (índice correcto), ex (explicación de Lumo 🦉) } */
         modulos: [
-          { titulo: "Prepárate antes de que llegue tu máquina", lecciones: ["220V + circuito independiente + cable a tierra", "Área limpia y ventilada", "Seguridad: extintor, gafas, ventilación", "Kit completo antes de la llegada", "Mentalidad de negocio"], quizzes: 7, preguntas: [
+          { titulo: "Prepárate antes de que llegue tu máquina", lecciones: [
+            { img: "18.jpg", t: "Un punto de 220V con circuito independiente y cable a tierra." },
+            { img: "02.jpg", t: "Un área limpia y ventilada." },
+            { img: "19.jpg", t: "Extintor a la mano, gafas y ventilación." },
+            { img: "20.jpg", t: "Con el kit completo la instalación no se retrasa." },
+            { img: "21.jpg", t: "Prepararte antes es mentalidad de empresario." }
+          ], quizzes: 7, preguntas: [
             { q: "¿Qué voltaje necesita tu máquina C4V?", opciones: ["110V", "220V", "380V"], ok: 1, ex: "220V, en un circuito independiente y con cable a tierra." },
             { q: "¿La máquina puede compartir enchufe con otros equipos?", opciones: ["Sí, mientras haya espacio", "No: necesita circuito independiente", "Solo si el cable es grueso"], ok: 1, ex: "Una línea eléctrica independiente evita sobrecargas y fallas." },
             { q: "¿Es opcional tener extintor antes de instalar la máquina?", opciones: ["Verdadero", "Falso"], ok: 1, ex: "La prevención es parte del estándar profesional C4V." },
@@ -175,17 +181,36 @@ window.__SEED__ = {
             { q: "El agua destilada de tu kit sirve para…", opciones: ["El chiller (enfriamiento)", "Limpiar la mesa", "El compresor"], ok: 0, ex: "El agua destilada protege el tubo láser en el chiller." },
             { q: "El aceite 3-EN-UNO de tu kit sirve para…", opciones: ["El tubo láser", "Lubricar los rieles", "La lente"], ok: 1, ex: "Rieles limpios y lubricados = movimiento suave y preciso." }
           ]},
-          { titulo: "Antes de encender: revisión general", lecciones: ["Extractor y compresor conectados", "Chiller con agua destilada", "Conexiones de agua (inlet / outlet)", "Máquina lista"], quizzes: 3, preguntas: [
+          { titulo: "Antes de encender: revisión general", lecciones: [
+            { img: "01.jpg", t: "Antes de encender, revisa esto." },
+            { img: "03.jpg", t: "Extractor y compresor conectados." },
+            { img: "04.jpg", t: "El enfriador con agua destilada. La del caño daña el tubo." },
+            { img: "05.jpg", t: "Con todo listo, ahora sí: enciende." },
+            { img: "16.jpg", t: "El éxito no empieza cuando cortas. Empieza cuando verificas." }
+          ], quizzes: 3, preguntas: [
             { q: "¿Qué tipo de agua debe usar el chiller?", opciones: ["Agua del caño", "Agua hervida", "Agua destilada", "Agua mineral"], ok: 2, ex: "El agua destilada protege el tubo láser." },
             { q: "Antes de encender, el extractor debe estar…", opciones: ["Guardado", "Conectado y listo", "Da igual"], ok: 1, ex: "Sin extracción, el humo regresa al cabezal y lo daña." },
             { q: "¿El agua común daña el tubo láser?", opciones: ["Verdadero", "Falso"], ok: 0, ex: "Sus minerales obstruyen y dañan el tubo. Solo destilada." }
           ]},
-          { titulo: "Primer encendido seguro", lecciones: ["Orden: 1) Estabilizador → 2) Chiller → 3) Máquina", "Observar el panel Ruida", "Checklist sin alarmas", "Verificar conexiones eléctricas"], quizzes: 3, preguntas: [
+          { titulo: "Primer encendido seguro", lecciones: [
+            { img: "06.jpg", t: "Primer encendido, con calma." },
+            { img: "07.jpg", t: "Enciende en este orden: estabilizador, enfriador, máquina." },
+            { img: "08.jpg", t: "Observa el panel." },
+            { img: "09.jpg", t: "Sin alarmas: sistema, red y energía en orden." },
+            { img: "10.jpg", t: "Sistema listo." }
+          ], quizzes: 3, preguntas: [
             { q: "¿Cuál es el orden correcto de encendido?", opciones: ["Máquina → Chiller → Estabilizador", "Estabilizador → Chiller → Máquina", "Chiller → Máquina → Estabilizador"], ok: 1, ex: "1) Estabilizador · 2) Chiller · 3) Máquina. Siempre." },
             { q: "Si el panel muestra una alarma, ¿qué haces?", opciones: ["Sigo trabajando", "Apago todo y reviso las conexiones", "Subo la potencia"], ok: 1, ex: "Revisar primero es actuar como profesional." },
             { q: "¿El chiller se enciende antes que el láser?", opciones: ["Verdadero", "Falso"], ok: 0, ex: "El tubo necesita enfriamiento desde el primer segundo." }
           ]},
-          { titulo: "Tu primer corte real", lecciones: ["Cargar archivo en RDWorks", "Potencia y velocidad", "MDF 3mm: potencia 20-35, velocidad 15-25", "Presionar START y evaluar"], quizzes: 3, preguntas: [
+          { titulo: "Tu primer corte real", lecciones: [
+            { img: "17.jpg", t: "Ahora sí: tu primer corte simple." },
+            { img: "11.jpg", t: "Carga un diseño simple y pequeño." },
+            { img: "12.jpg", t: "Velocidad media, potencia moderada, material de prueba. Para MDF de 3 mm: potencia 20 a 35, velocidad 15 a 25." },
+            { img: "13.jpg", t: "Tapa cerrada y observación atenta." },
+            { img: "14.jpg", t: "Evalúa: corte completo, nivel de quemado, y ajusta." },
+            { img: "15.jpg", t: "Tu máquina está lista. Y tú también." }
+          ], quizzes: 3, preguntas: [
             { q: "¿Cuál es la mejor práctica para tu primer corte?", opciones: ["Usar potencia máxima", "Probar con un diseño pequeño", "Cortar una pieza grande"], ok: 1, ex: "Empezar pequeño reduce riesgos y no desperdicia material." },
             { q: "Para MDF de 3mm, ¿qué potencia usas?", opciones: ["20-35", "60-80", "90-100"], ok: 0, ex: "MDF 3mm: potencia 20-35, velocidad 15-25." },
             { q: "¿Conviene empezar con material grueso?", opciones: ["Verdadero", "Falso"], ok: 1, ex: "Empieza con 3mm para practicar y ajustar parámetros." }
@@ -208,19 +233,33 @@ window.__SEED__ = {
             { q: "¿Con qué se lubrican los rieles?", opciones: ["Aceite de motor", "WD-40", "Aceite 3-EN-UNO"], ok: 2, ex: "Ni motor, ni WD-40, ni cocina: aceite 3-EN-UNO." },
             { q: "¿Sirven los hisopos genéricos para la lente?", opciones: ["Verdadero", "Falso"], ok: 1, ex: "Los baratos rayan la lente. Solo de alta calidad." }
           ]},
-          { titulo: "Limpieza de lente y espejos", lecciones: ["Retirar la lente con cuidado", "Alcohol isopropílico + hisopo, circular y sin presión", "Misma técnica en los 3 espejos", "Mínimo cada 2 semanas con uso diario"], quizzes: 4, preguntas: [
+          { titulo: "Limpieza de lente y espejos", lecciones: [
+            { img: "lente-retirar.jpg", t: "Retira la lente con cuidado: suelta el tubo de aire, la perilla dorada y el anillo con la llave." },
+            { img: "lente-limpiar.jpg", t: "Alcohol isopropílico en el paño o el hisopo, en círculos y sin presionar. Las dos caras." },
+            { img: "espejos.jpg", t: "La misma técnica en los tres espejos, con paño de microfibra." },
+            { img: "espejos-frecuencia.jpg", t: "Como mínimo cada dos semanas si la usas a diario. Si trabajas jornadas largas, cada semana." }
+          ], quizzes: 4, preguntas: [
             { q: "¿Con qué líquido se limpia la lente?", opciones: ["Agua con jabón", "Alcohol isopropílico", "Thinner"], ok: 1, ex: "Alcohol isopropílico (o alcohol 98% como alternativa)." },
             { q: "¿Cómo debe ser el movimiento al limpiar?", opciones: ["Circular, suave y sin presión", "De arriba a abajo, con fuerza", "En zigzag rápido"], ok: 0, ex: "Circular y suave: la presión daña el recubrimiento." },
             { q: "¿Cuántos espejos tiene tu máquina?", opciones: ["1", "2", "3"], ok: 2, ex: "Son 3 espejos, y se limpian con la misma técnica." },
             { q: "¿Una lente sucia hace perder potencia?", opciones: ["Verdadero", "Falso"], ok: 0, ex: "Los residuos absorben la energía del láser." }
           ]},
-          { titulo: "Agua del enfriador (chiller)", lecciones: ["Solo agua destilada, nunca del grifo", "Cambio cada 2-4 semanas", "Temperatura ideal 15-25 °C"], quizzes: 4, preguntas: [
+          { titulo: "Agua del enfriador (chiller)", lecciones: [
+            { img: "chiller-agua.jpg", t: "Solo agua destilada. La del grifo deja minerales que arruinan el tubo." },
+            { img: "chiller-cambio.jpg", t: "Cámbiala cada dos a cuatro semanas: desconecta la manguera, vacía y vuelve a llenar." },
+            { img: "chiller-temperatura.jpg", t: "La pantalla debe marcar entre 15 y 25 grados. Si no vas a usarla en cinco días, sácale el agua." }
+          ], quizzes: 4, preguntas: [
             { q: "¿Cada cuánto se cambia el agua del chiller?", opciones: ["Cada 6 meses", "Cada 2-4 semanas según el uso", "Nunca"], ok: 1, ex: "Cada 2 a 4 semanas, dependiendo de cuánto uses la máquina." },
             { q: "¿Por qué NO usar agua del grifo?", opciones: ["Es muy cara", "Sus minerales obstruyen y dañan el tubo", "Se evapora rápido"], ok: 1, ex: "Los residuos minerales dañan el tubo láser." },
             { q: "¿Cuál es la temperatura ideal del agua?", opciones: ["5-10 °C", "15-25 °C", "30-40 °C"], ok: 1, ex: "Entre 15 y 25 grados protege el tubo." },
             { q: "El agua del chiller debe ser…", opciones: ["Destilada", "Potable", "Con anticongelante casero"], ok: 0, ex: "Siempre destilada. Es la regla de oro del chiller." }
           ]},
-          { titulo: "Lubricación y cuidado de rieles", lecciones: ["Limpiar con microfibra", "Aceite 3-EN-UNO en gotas", "Mover el cabezal para distribuir", "Semanal con uso diario"], quizzes: 3, preguntas: [
+          { titulo: "Lubricación y cuidado de rieles", lecciones: [
+            { img: "rieles-limpiar.jpg", t: "Limpia las vías plateadas de los ejes X e Y con paño de microfibra." },
+            { img: "rieles-aceite.jpg", t: "Unas gotas de aceite 3-EN-UNO sobre la vía. La cinta de goma no se lubrica." },
+            { img: "rieles-mover.jpg", t: "Mueve el cabezal de lado a lado para repartir el aceite." },
+            "Cada semana si la usas a diario."
+          ], quizzes: 3, preguntas: [
             { q: "¿Qué aceite se usa en los rieles?", opciones: ["De oliva", "3-EN-UNO", "De motor"], ok: 1, ex: "Aceite 3-EN-UNO en gotas, sobre el riel limpio." },
             { q: "Después de aplicar el aceite, ¿qué haces?", opciones: ["Enciendes a cortar de inmediato", "Mueves el cabezal para distribuirlo", "Lo dejas secar 24 h"], ok: 1, ex: "Mover el cabezal distribuye el aceite por todo el riel." },
             { q: "¿Lubricar cada 6 meses es suficiente?", opciones: ["Verdadero", "Falso"], ok: 1, ex: "Con uso diario, la lubricación es semanal." }
