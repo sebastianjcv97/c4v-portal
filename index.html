@@ -22,7 +22,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@700;800&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/styles.css?v=20260916e" />
+  <link rel="stylesheet" href="css/styles.css?v=20260916c" />
 </head>
 <body>
   <a class="skip" href="#view">Saltar al contenido</a>
@@ -73,7 +73,8 @@
               <span class="gate-tel-ic" aria-hidden="true">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="3"/><path d="M10.5 18.5h3"/></svg>
               </span>
-              <input id="gateTel" type="tel" inputmode="numeric" autocomplete="tel" placeholder="" />
+              <span class="gate-tel-cod" id="gateTelCod" aria-hidden="true"></span>
+              <input id="gateTel" type="tel" inputmode="numeric" autocomplete="tel" placeholder="" aria-describedby="gateTelCod" />
             </div>
           </div>
 
@@ -183,8 +184,8 @@
     </div>
   </div>
 
-  <script src="js/config.js?v=20260916e"></script>
-  <script src="js/data.js?v=20260916e"></script>
-  <script src="js/app.js?v=20260916e"></script>
+  <script src="js/config.js?v=20260916c"></script>
+  <script src="js/data.js?v=20260916c"></script>
+  <script src="js/app.js?v=20260916c"></script>
 </body>
 </html>

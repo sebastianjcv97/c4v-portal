@@ -1289,6 +1289,10 @@ function faseAcceso(fase) {
   const tel = $('#gateTelBloque'), cod = $('#gateCodBloque'), btn = $('#gateForm .gate-btn');
   tel.hidden = fase === 'doc';
   cod.hidden = fase !== 'cod';
+  if (fase === 'tel') {
+    const cod2 = $('#gateTelCod');
+    if (cod2) cod2.textContent = '+' + (PREFIJOS_PAIS[String(acceso.pais || '').toUpperCase()] || '');
+  }
 
   // Lo anterior se bloquea: ya cumplió su parte.
   $('#gateDoc').disabled = fase !== 'doc';
