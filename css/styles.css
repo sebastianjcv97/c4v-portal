@@ -261,21 +261,6 @@ button{font-family:var(--sans)}
 .guia{display:flex;flex-direction:column}
 .diag{width:84%;height:84%;color:var(--red-cta)}
 
-/* ---------- Cursos ---------- */
-.course{background:var(--bg);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--sh);overflow:hidden;margin-bottom:12px}
-.course-head{width:100%;text-align:left;background:none;border:none;display:flex;gap:16px;align-items:center;padding:16px 24px;cursor:pointer;color:var(--ink);font-family:var(--sans)}
-.course-head:hover{background:var(--alt)}
-.course-ico{width:40px;height:40px;border-radius:var(--r);background:var(--black);color:#fff;font-family:var(--slab);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;flex-shrink:0}
-.course-head h3{font-family:var(--slab);font-size:18px;font-weight:700;margin:0}
-.course-head .sub{font-size:14px;color:var(--muted);margin-top:2px}
-.course-body{display:none;padding:4px 24px 16px;border-top:1px solid var(--line)}
-.course.open .course-body{display:block}
-.module{padding:12px 0;border-bottom:1px solid var(--line)}
-.module:last-child{border-bottom:none}
-.module h4{font-size:16px;font-weight:700;margin:0 0 6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.module .num-mod{width:24px;height:24px;border-radius:6px;background:var(--alt);border:1px solid var(--line);display:inline-flex;align-items:center;justify-content:center;font-size:12px;color:var(--muted)}
-.lessons{margin:0;padding-left:32px;color:var(--muted);font-size:14px;line-height:1.75}
-
 /* ---------- Tabla ---------- */
 table{width:100%;border-collapse:collapse;font-size:14px;background:var(--bg);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden}
 th{text-align:left;font-size:12px;letter-spacing:.05em;color:var(--muted);padding:12px 16px;background:var(--alt);border-bottom:1px solid var(--line)}
@@ -318,18 +303,6 @@ tr:last-child td{border-bottom:none}
   .cert-seal{width:112px}
   th,td{padding:8px 12px}
 }
-
-/* ---------- Lecciones en video (Academia) ---------- */
-.lesson-video{list-style:none;margin-left:-20px}
-.lv-btn{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:var(--alt);border:1px solid var(--line);border-radius:var(--r);padding:10px 12px;margin:4px 0;font-size:15px;font-family:var(--sans);cursor:pointer;min-height:48px;color:var(--ink)}
-.lv-btn:hover{border-color:var(--red-cta);background:var(--red-50)}
-.lv-play{flex-shrink:0;width:28px;height:28px;border-radius:50%;background:var(--red-cta);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;padding-left:2px}
-.lesson-video.visto .lv-play{background:var(--ok)}
-.lv-tit{flex:1;min-width:0;font-weight:500}
-.lv-dur{flex-shrink:0;color:var(--muted);font-size:13px;font-variant-numeric:tabular-nums}
-.lesson-video.visto .lv-dur{color:var(--ok);font-weight:700}
-.lv-player{margin:4px 0 10px}
-.lv-player video{width:100%;max-height:70vh;border-radius:var(--r);background:#000;display:block}
 
 /* ---------- Gate: persona/empresa + 5 países ---------- */
 .gate-tipos{display:flex;gap:8px;margin-bottom:22px}
@@ -404,12 +377,6 @@ tr:last-child td{border-bottom:none}
 .tabla-params th span{font-weight:400;opacity:.75;font-size:11px}
 .tabla-params td{padding:7px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
 .tabla-params tbody tr:nth-child(even){background:var(--alt)}
-.pdf-card{display:flex;flex-direction:column;gap:6px;color:var(--ink)}
-.pdf-card:hover{border-color:var(--red-cta)}
-.pdf-ico{width:40px;height:48px;background:#fff;border:1.5px solid var(--red-cta);border-radius:5px;display:grid;place-items:center;font-size:11px;font-weight:800;color:var(--red-cta)}
-.pdf-card h3{font-size:15px}
-.pdf-card p{font-size:13px;color:var(--muted);flex:1}
-.pdf-dl{font-size:13px;font-weight:700;color:var(--red-cta)}
 
 /* ---------- Botón WhatsApp (verde real de la marca WhatsApp) ---------- */
 
@@ -853,8 +820,6 @@ body{background:var(--mesa)}
 /* La tabla vive dentro de una tarjeta: un marco basta. */
 .tabla-scroll table{border:none;border-radius:0}
 /* Las lecciones en video son un indice del curso, no veinte pildoras grises. */
-.lv-btn{background:transparent;border:none;border-bottom:1px solid var(--regla);border-radius:0}
-.lv-btn:hover{background:transparent;color:var(--rojo-tinta)}
 .cert-hero-t{font-family:var(--slab);font-size:var(--t-xl);line-height:var(--lh-snug);margin:0 0 4px}
 
 /* ────────────────────────────────────────────────────────────────────────
@@ -1077,8 +1042,6 @@ body{background:var(--mesa)}
    quedaba en 4.42:1, justo por debajo del mínimo. */
 .gate-legal .lr-link{color:#fff}
 .gate-foot a,.gate-paso strong{color:#FF8A8F}
-.lv-cargando{margin:0;padding:18px;text-align:center;color:var(--grafito);font-size:var(--t-sm)}
-.pdf-card{text-align:left;width:100%;font-family:var(--sans);cursor:pointer}
 
 /* ---------- Completar el teléfono ----------
    Se lee como un solo número: prefijo fijo, lo que la persona escribe, y los
@@ -1310,19 +1273,6 @@ body{background:var(--mesa)}
   font-family:var(--slab);font-size:var(--t-lg);line-height:var(--lh-snug)}
 .modulo-n{flex-shrink:0;width:30px;height:30px;border-radius:50%;background:var(--tinta);
   color:#fff;display:grid;place-items:center;font-size:var(--t-sm);font-weight:800}
-.lecciones{list-style:none;margin:0 0 var(--s-3);padding:0;border-top:1px solid var(--regla)}
-.lec{padding:var(--s-3) 0;border-bottom:1px solid var(--regla);
-  font-size:var(--t-md);line-height:var(--lh-base);max-width:var(--medida)}
-.lec-video{padding:0;max-width:none}
-.lv-btn{display:flex;align-items:center;gap:var(--s-3);width:100%;text-align:left;
-  background:none;border:none;padding:var(--s-3) 0;min-height:var(--tap);cursor:pointer;
-  font-family:var(--sans);font-size:var(--t-md);color:var(--tinta)}
-.lv-ico{flex-shrink:0;color:var(--rojo-tinta);display:flex}
-.lv-ico svg{width:24px;height:24px}
-.lv-tit{flex:1;min-width:0;line-height:var(--lh-snug)}
-.lv-dur{flex-shrink:0;font-size:var(--t-sm);color:var(--grafito);font-variant-numeric:tabular-nums}
-.lec-video.visto .lv-ico{color:var(--ok)}
-.lec-video.visto .lv-tit{color:var(--grafito)}
 .lv-player{padding:0 0 var(--s-3)}
 .lv-player video{width:100%;max-height:60vh;background:#000;border-radius:var(--r);display:block}
 
@@ -1601,3 +1551,10 @@ body.cevi-en-voz{overflow:hidden}
 .lec-instruccion{font-size:var(--t-xl)}
 .lec-foto{margin:0}
 .lec-foto img{width:100%;height:auto;border-radius:var(--r-lg);display:block}
+
+/* Evaluación ya aprobada: un resumen quieto, no la pregunta relanzada sola. */
+.quiz-hecho{display:flex;flex-direction:column;align-items:flex-start;gap:var(--s-3);
+  border:2px solid var(--ok);background:var(--ok-50);border-radius:var(--r-lg);
+  padding:var(--s-5)}
+.quiz-hecho-nota{margin:0;font-size:var(--t-lg);font-weight:700;color:var(--ok)}
+.quiz-hecho .btn{width:100%;justify-content:center}

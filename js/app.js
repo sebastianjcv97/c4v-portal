@@ -270,14 +270,25 @@ function vistaLeccion(a, c, idx) {
     </div>`;
 
   if (p.tipo === 'quiz') {
+    /* Si ya la aprobaste, no se relanza sola: antes mostraba a la vez un
+       "Siguiente" arriba Y una pregunta nueva abajo, como si una cosa no
+       tuviera nada que ver con la otra. Ahora, si ya pasaste, se ve el
+       resultado y un solo camino claro: seguir, o volver a intentarla. */
+    const mejor = (() => { try { return JSON.parse(localStorage.getItem('c4v_quiz_' + state.ctx + '_' + c.id + '-' + p.mi) || 'null'); } catch { return null; } })();
+    const yaAprobado = quizAprobado(c.id, p.mi);
     return `<section class="paso paso-quiz">
       ${cabecera(p.examen ? 'Evaluación final' : `Evaluación del módulo ${p.mi + 1}`)}
       <h2 class="paso-titulo">${esc(p.examen ? 'Evaluación final' : p.m.titulo)}</h2>
-      <div class="quiz-box auto" data-key="${esc(c.id + '-' + p.mi)}" data-curso="${esc(c.id)}" data-mod="${p.mi}" data-siguiente="${base}/p/${idx + 1}">
+      <div class="quiz-hecho" data-siguiente="${base}/p/${idx + 1}"${yaAprobado ? '' : ' hidden'}>
+        <p class="quiz-hecho-nota">Ya aprobaste esta evaluación${mejor ? `: ${mejor.b} de ${mejor.n}` : ''}.</p>
+        <a class="btn primary" href="${base}/p/${idx + 1}">Siguiente</a>
+        <button type="button" class="paso-link quiz-reintentar">Volver a intentarla</button>
+      </div>
+      <div class="quiz-box auto" data-key="${esc(c.id + '-' + p.mi)}" data-curso="${esc(c.id)}" data-mod="${p.mi}" data-siguiente="${base}/p/${idx + 1}"${yaAprobado ? ' hidden' : ''}>
         <button type="button" class="qz-start" hidden></button>
         <div class="qz-area"></div>
       </div>
-      ${pie(quizAprobado(c.id, p.mi) ? `<a class="btn primary" href="${base}/p/${idx + 1}">Siguiente</a>` : '')}
+      ${pie('')}
     </section>`;
   }
 
@@ -911,7 +922,7 @@ function bind(route) {
 function bindGuias() {
   view.querySelectorAll('[data-guia]').forEach(b => {
     b.onclick = async () => {
-      const etiqueta = b.querySelector('.pdf-dl, .destino-txt small');
+      const etiqueta = b.querySelector('.destino-txt small');
       const original = etiqueta.textContent;
       etiqueta.textContent = 'Preparando…';
       /* Con sesión real, la guía sale firmada y caduca desde la API. Mientras el
@@ -945,40 +956,21 @@ function bindLeccion() {
     };
   });
   // La evaluación en su propia pantalla arranca sola, sin botón previo.
+  // Si ya la aprobaste, se queda escondida: no tiene sentido gastar trabajo
+  // preparando una pregunta que nadie va a ver.
   view.querySelectorAll('.quiz-box.auto').forEach(box => {
+    if (box.hidden) return;
     const start = box.querySelector('.qz-start');
     if (start && start.onclick) start.onclick();
   });
-}
-
-function bindVideos() {
-  view.querySelectorAll('.lec-video').forEach(li => {
-    const btn = li.querySelector('.lv-btn'), box = li.querySelector('.lv-player'), archivo = li.dataset.video;
-    btn.onclick = () => {
-      const abierto = !box.hidden;
-      // Solo un video abierto a la vez (ahorra datos y evita audios cruzados)
-      view.querySelectorAll('.lv-player').forEach(p => { p.hidden = true; p.innerHTML = ''; });
-      if (abierto) return;
-      box.hidden = false;
-      /* PENDIENTE: los videos siguen colgando de una ruta pública. Las guías ya
-         salen firmadas desde /api/media; los videos no pueden hacerlo todavía
-         porque sus 65 MB no caben en la subida de `railway up`. En cuanto estén
-         en el volumen, esto pasa a `await enlaceMedio('videos', archivo)`. */
-      box.innerHTML = `<video controls autoplay playsinline preload="none" controlsList="nodownload">
-          <source src="videos/c4vtech/${archivo}" type="video/mp4">
-          Tu navegador no puede reproducir este video.
-        </video>`;
-      const vid = box.querySelector('video');
-      // Marcar como visto al llegar al 80%
-      vid.ontimeupdate = () => {
-        if (vid.duration && vid.currentTime / vid.duration > 0.8 && !li.classList.contains('visto')) {
-          li.classList.add('visto');
-          try { localStorage.setItem('c4v_video_' + state.ctx + '_' + archivo, '1'); } catch {}
-          const dur = li.querySelector('.lv-dur');
-          if (dur && !dur.textContent.includes('visto')) dur.textContent = '✓ visto · ' + dur.textContent;
-        }
-      };
-    };
+  // «Volver a intentarla»: cambia el resumen por la evaluación de verdad.
+  view.querySelectorAll('.quiz-reintentar').forEach(b => b.onclick = () => {
+    const hecho = b.closest('.quiz-hecho'), box = hecho.nextElementSibling;
+    hecho.hidden = true;
+    box.hidden = false;
+    const start = box.querySelector('.qz-start');
+    if (start && start.onclick) start.onclick();
+    box.scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
 }
 
