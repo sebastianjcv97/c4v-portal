@@ -1229,7 +1229,7 @@ async function entrar(cliente) {
 /* ---------- Acceso en dos pasos ----------
    Paso A: documento + país + consentimiento.
    Paso B: el cliente nos escribe por WhatsApp (así demuestra que el número es
-   suyo) y el bot le responde un código de 6 dígitos que teclea aquí.
+   suyo) y el bot le responde su código fijo (3 letras + 4 números) que teclea aquí.
    Si el servidor no exige código (OTP apagado), el paso A entra directo. */
 const otpEstado = { solicitud: null, pais: null, sondeo: null, directo: false, faltan: 0 };
 
@@ -1243,7 +1243,7 @@ const acceso = { fase: 'doc', solicitud: null, pais: null, cliente: null, codigo
    nadie ajeno puede llegar aquí, porque en demostración solo existen los cinco
    clientes de ejemplo. Con `verificacion.activo: true` este valor no se usa
    nunca: el código lo genera el servidor y viaja por WhatsApp. */
-const CODIGO_DEMO = '123456';
+const CODIGO_DEMO = 'DEM1234';   // mismo formato que el real: 3 letras + 4 números
 
 const PISTA_DIGITOS = 3;
 const PREFIJOS_PAIS = { PE: '51', EC: '593', BO: '591', CL: '56', CO: '57' };
@@ -1438,7 +1438,7 @@ function initGate() {
      Todo en la misma pantalla; el botón dice en cada momento lo que hace. */
   const telInp = $('#gateTel'), codInp = $('#gateCod');
   telInp.oninput = () => { telInp.value = telInp.value.replace(/[^\d+ ]/g, ''); };
-  codInp.oninput = () => { codInp.value = codInp.value.replace(/\D/g, '').slice(0, 6); };
+  codInp.oninput = () => { codInp.value = codInp.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 7); };
 
   const fallo = (campo, html) => {
     setCargando(false);
@@ -1530,8 +1530,8 @@ function initGate() {
   }
 
   async function pasoCodigo() {
-    const codigo = codInp.value.replace(/\D/g, '');
-    if (codigo.length !== 6) return fallo(codInp, 'Escribe los 6 números que te llegaron.');
+    const codigo = codInp.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    if (codigo.length !== 7) return fallo(codInp, 'Escribe tu código completo, como en el mensaje.');
 
     if (acceso.solicitud === 'DEMO') {
       if (codigo === acceso.codigo) { entrar(acceso.cliente); return; }
@@ -1564,11 +1564,11 @@ function initGate() {
 
   // ---- Camino de siempre (el cliente escribe primero por WhatsApp) ----
   const otpForm = $('#otpForm'), otpErr = $('#otpError'), otpInp = $('#otpCodigo');
-  otpInp.oninput = () => { otpInp.value = otpInp.value.replace(/\D/g, '').slice(0, 6); };
+  otpInp.oninput = () => { otpInp.value = otpInp.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 7); };
   otpForm.onsubmit = async (e) => {
     e.preventDefault(); limpiarError(otpInp, otpErr);
-    const codigo = otpInp.value.replace(/\D/g, '');
-    if (codigo.length !== 6) { otpErr.hidden = false; otpErr.textContent = 'Escribe los 6 números que te llegaron por WhatsApp.'; marcarError(otpInp, otpErr); return; }
+    const codigo = otpInp.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    if (codigo.length !== 7) { otpErr.hidden = false; otpErr.textContent = 'Escribe tu código completo, como llegó por WhatsApp.'; marcarError(otpInp, otpErr); return; }
     const boton = otpForm.querySelector('button');
     boton.disabled = true; boton.textContent = 'Entrando…';
     const r = await apiPost('/api/otp/verificar', { solicitud: otpEstado.solicitud, codigo });
