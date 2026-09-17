@@ -1142,6 +1142,16 @@ async function verificarCliente({ pais, doc }) {
     const cli = buscarClientePorDocumento(doc);
     return cli ? { estado: 'ok', cliente: cli } : { estado: 'no_encontrado' };
   }
+  // Documento de ejemplo: ni siquiera en producción real llama al backend.
+  // Sale de window.__SEED__ (data.js) directo, no de state.db: en producción
+  // real el backend NO manda clientes de ejemplo mezclados con los reales.
+  if (doc === DOC_DEMO) {
+    const cli = (window.__SEED__?.clientes || []).find(c => normalizarDoc(c.documento) === doc) || null;
+    if (cli && !state.db.clientes.some(c => c.id === cli.id)) {
+      inyectarCliente(cli, (window.__SEED__?.maquinas || []).filter(m => m.cliente_id === cli.id));
+    }
+    return cli ? { estado: 'ok', cliente: cli, demo: true } : { estado: 'no_encontrado' };
+  }
   // PII: el documento viaja en el BODY de un POST (no en la URL → no queda en
   // logs/proxies/historial). El backend rate-limita por IP; la decisión sobre
   // OTP (INTEGRACION_ODOO.md §9 SEGURIDAD) es de producto, previa a producción.
@@ -1244,6 +1254,13 @@ const acceso = { fase: 'doc', solicitud: null, pais: null, cliente: null, codigo
    clientes de ejemplo. Con `verificacion.activo: true` este valor no se usa
    nunca: el código lo genera el servidor y viaja por WhatsApp. */
 const CODIGO_DEMO = 'DEM1234';   // mismo formato que el real: 3 letras + 4 números
+
+/* Documento de ejemplo: aunque el portal esté en producción real, si alguien
+   escribe este DNI entra por el recorrido de siempre pero SIN backend ni
+   WhatsApp — para mostrar el flujo (a un cliente nuevo, en una demo) sin
+   depender de que llegue un mensaje real. Vive también como cliente en
+   data.js (cli-006), con el mismo documento y teléfono. */
+const DOC_DEMO = '72925258';
 
 const PISTA_DIGITOS = 3;
 const PREFIJOS_PAIS = { PE: '51', EC: '593', BO: '591', CL: '56', CO: '57' };
@@ -1461,7 +1478,7 @@ function initGate() {
     const sinTelefono = `No tenemos tu WhatsApp registrado, así que no podemos enviarte el código. <a href="${waLink('Hola, quiero entrar a mi Central de Postventa C4V pero no tienen mi WhatsApp registrado. ¿Me ayudan?')}" target="_blank" rel="noopener">Escríbenos y lo actualizamos</a> en un minuto.`;
 
     // Demostración: el mismo recorrido, sin backend ni WhatsApp.
-    if (res.estado === 'ok' && modoDemo() && res.cliente?.telefono) {
+    if (res.estado === 'ok' && (modoDemo() || res.demo) && res.cliente?.telefono) {
       acceso.cliente = res.cliente; acceso.codigo = null; acceso.solicitud = 'DEMO'; acceso.pais = pais;
       pistaEnCampo(numeroNacional(res.cliente.telefono, pais).slice(-PISTA_DIGITOS));
       setCargando(false); faseAcceso('tel');
