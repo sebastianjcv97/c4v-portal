@@ -689,7 +689,8 @@ const views = {
            de escanear. Se agrupan por tema (dato que ya traían y no se usaba).
            "Instalación"/"Envío e instalación" y "Garantía"/"Garantía y soporte"
            son el mismo tema con dos nombres en los datos: se fusionan aquí,
-           en la vista, sin tocar la fuente. */
+           en la vista, sin tocar la fuente. -->
+
       <h2 class="section-h">Preguntas frecuentes</h2>
       <button type="button" class="btn ghost" id="verFaqs" aria-expanded="false" aria-controls="faqTodas">Ver las ${faqs.length} preguntas</button>
       <div id="faqTodas" hidden>
