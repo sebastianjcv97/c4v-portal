@@ -1481,7 +1481,7 @@ function initGate() {
      Todo en la misma pantalla; el botón dice en cada momento lo que hace. */
   const telInp = $('#gateTel'), codInp = $('#gateCod');
   telInp.oninput = () => { telInp.value = telInp.value.replace(/[^\d+ ]/g, ''); };
-  codInp.oninput = () => { codInp.value = codInp.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 7); };
+  codInp.oninput = () => { codInp.value = codInp.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8); };
 
   const fallo = (campo, html) => {
     setCargando(false);
@@ -1559,7 +1559,8 @@ function initGate() {
     const r = await apiPost('/api/acceso/enviar', { solicitud: acceso.solicitud, telefono: escrito });
     setCargando(false);
     if (r.json.ok) {
-      $('#gateCodAviso').textContent = `Te lo mandamos por WhatsApp al número que termina en ${r.json.pista || ''}. Llega en unos segundos.`;
+      const via = r.json.canal === 'sms' ? 'un SMS' : 'WhatsApp';
+      $('#gateCodAviso').textContent = `Te lo mandamos por ${via} al número que termina en ${r.json.pista || ''}. Llega en unos segundos.`;
       faseAcceso('cod'); return;
     }
     const motivos = {
@@ -1574,7 +1575,9 @@ function initGate() {
 
   async function pasoCodigo() {
     const codigo = codInp.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
-    if (codigo.length !== 7) return fallo(codInp, 'Escribe tu código completo, como en el mensaje.');
+    // Sin largo fijo: el código de WhatsApp tiene 7 caracteres, el de SMS
+    // (Twilio Verify) suele ser más corto — el backend valida cuál toca.
+    if (codigo.length < 4) return fallo(codInp, 'Escribe tu código completo, como en el mensaje.');
 
     if (acceso.solicitud === 'DEMO') {
       if (codigo === acceso.codigo) { entrar(acceso.cliente); return; }

@@ -67,7 +67,7 @@
           <!-- Aparecen en esta misma pantalla, uno tras otro. No hay páginas nuevas:
                la persona ve siempre lo que ya escribió. -->
           <div id="gateTelBloque" hidden>
-            <label class="gate-paso" for="gateTel">Escribe tu WhatsApp completo</label>
+            <label class="gate-paso" for="gateTel">Escribe tu número de celular completo</label>
             <div class="gate-row gate-row-tel">
               <span class="gate-tel-ic" aria-hidden="true">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="3"/><path d="M10.5 18.5h3"/></svg>
@@ -81,7 +81,7 @@
             <label class="gate-paso" for="gateCod">Escribe el código que te llegó</label>
             <div class="gate-row">
               <input id="gateCod" type="text" inputmode="text" autocomplete="one-time-code"
-                     maxlength="7" placeholder="ABC1234" aria-describedby="gateCodAviso" style="text-transform:uppercase" />
+                     maxlength="8" placeholder="ABC1234" aria-describedby="gateCodAviso" style="text-transform:uppercase" />
             </div>
             <p class="gate-doc-ej" id="gateCodAviso"></p>
           </div>
@@ -126,7 +126,7 @@
               <p id="otpEstado" class="otp-estado" role="status" aria-live="polite">Esperando tu mensaje…</p>
               <form id="otpForm" class="otp-form" novalidate>
                 <input id="otpCodigo" type="text" inputmode="text" autocomplete="one-time-code"
-                       maxlength="7" placeholder="ABC1234" aria-label="Tu código C4V" style="text-transform:uppercase" />
+                       maxlength="8" placeholder="ABC1234" aria-label="Tu código C4V" style="text-transform:uppercase" />
                 <button class="btn primary" type="submit">Entrar</button>
               </form>
               <div class="gate-error" id="otpError" role="alert" tabindex="-1" hidden></div>
