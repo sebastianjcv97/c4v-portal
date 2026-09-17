@@ -684,14 +684,31 @@ const views = {
 
       ${faqs.length ? `
       <!-- Las 32 preguntas dejaban la pantalla con 40 botones. Ahora van
-           detrás de uno solo: quien las necesita las abre. -->
+           detrás de uno solo: quien las necesita las abre.
+           Y ya adentro, sueltas eran 32 títulos parecidos en fila — imposible
+           de escanear. Se agrupan por tema (dato que ya traían y no se usaba).
+           "Instalación"/"Envío e instalación" y "Garantía"/"Garantía y soporte"
+           son el mismo tema con dos nombres en los datos: se fusionan aquí,
+           en la vista, sin tocar la fuente. */
       <h2 class="section-h">Preguntas frecuentes</h2>
       <button type="button" class="btn ghost" id="verFaqs" aria-expanded="false" aria-controls="faqTodas">Ver las ${faqs.length} preguntas</button>
       <div id="faqTodas" hidden>
-        ${faqs.map(f => `<div class="faq-item">
-          <button type="button" class="faq-q" aria-expanded="false"><span>${esc(f.pregunta)}</span><span class="chev" aria-hidden="true">+</span></button>
-          <div class="faq-a">${esc(f.respuesta)}</div>
-        </div>`).join('')}
+        ${(() => {
+          const ALIAS_TEMA = { 'Instalación': 'Envío e instalación', 'Garantía': 'Garantía y soporte' };
+          const grupos = [];
+          faqs.forEach(f => {
+            const tema = ALIAS_TEMA[f.categoria] || f.categoria || 'Otras preguntas';
+            let g = grupos.find(x => x.tema === tema);
+            if (!g) { g = { tema, items: [] }; grupos.push(g); }
+            g.items.push(f);
+          });
+          return grupos.map(g => `
+            <h3 class="faq-tema">${esc(g.tema)}</h3>
+            ${g.items.map(f => `<div class="faq-item">
+              <button type="button" class="faq-q" aria-expanded="false"><span>${esc(f.pregunta)}</span><span class="chev" aria-hidden="true">+</span></button>
+              <div class="faq-a">${esc(f.respuesta)}</div>
+            </div>`).join('')}`).join('');
+        })()}
       </div>` : ''}
 `;
   },
@@ -1257,10 +1274,11 @@ const CODIGO_DEMO = 'DEM1234';   // mismo formato que el real: 3 letras + 4 núm
 
 /* Documento de ejemplo: aunque el portal esté en producción real, si alguien
    escribe este DNI entra por el recorrido de siempre pero SIN backend ni
-   WhatsApp — para mostrar el flujo (a un cliente nuevo, en una demo) sin
-   depender de que llegue un mensaje real. Vive también como cliente en
-   data.js (cli-006), con el mismo documento y teléfono. */
-const DOC_DEMO = '72925258';
+   WhatsApp — para mostrar el flujo sin depender de que llegue un mensaje
+   real. Inventado a propósito (no existe en Odoo ni en la base real), para
+   no ocupar el documento de ningún cliente de verdad. Vive también como
+   cliente en data.js (cli-006), con el mismo documento y teléfono. */
+const DOC_DEMO = '00000000';
 
 const PISTA_DIGITOS = 3;
 const PREFIJOS_PAIS = { PE: '51', EC: '593', BO: '591', CL: '56', CO: '57' };

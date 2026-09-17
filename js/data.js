@@ -35,10 +35,10 @@ window.__SEED__ = {
     { id: "cli-003", nombre: "Rosa Quispe", tipo: "persona", documento: "7894561", empresa: "Detalles Andinos", pais: "BO", ciudad: "La Paz", email: "rosa@detallesandinos.bo", telefono: "+591 7 123 4567" },
     { id: "cli-004", nombre: "Acrílicos Andinos SpA", tipo: "empresa", documento: "76.543.210-5", empresa: "Acrílicos Andinos SpA", pais: "CL", ciudad: "Santiago", email: "contacto@acrilicosandinos.cl", telefono: "+56 9 8765 4321" },
     { id: "cli-005", nombre: "Creativa Publicidad S.A.S.", tipo: "empresa", documento: "901234567", empresa: "Creativa Publicidad S.A.S.", pais: "CO", ciudad: "Bogotá", email: "hola@creativapublicidad.co", telefono: "+57 310 123 4567" },
-    /* Cuenta de prueba de Sebastián (mismo documento y WhatsApp que su registro
-       real en c4v.portal_contacts), para poder demostrar el portal sin depender
-       del backend ni de un envío real por WhatsApp. */
-    { id: "cli-006", nombre: "Martín Velasco", tipo: "persona", documento: "72925258", empresa: "C4V Láser (demo)", pais: "PE", ciudad: "Lima", email: "demo@c4vlaser.com", telefono: "+51 995 547 575" }
+    /* Cuenta inventada, sin relación con ningún cliente real (no existe en
+       Odoo ni en c4v.portal_contacts) — solo para mostrar el flujo del portal
+       sin depender del backend ni de un envío real por WhatsApp. */
+    { id: "cli-006", nombre: "Cliente Demo", tipo: "persona", documento: "00000000", empresa: "C4V Láser (demo)", pais: "PE", ciudad: "Lima", email: "demo@c4vlaser.com", telefono: "+51 900 000 000" }
   ],
   maquinas: [
     { serie: "C4V-6040-PE-00123", modelo: "6040", tipo: "CO2", area: "600 x 400 mm", pais: "PE", cliente_id: "cli-001", fecha_entrega: "2026-03-12", certificado: { estado: "certificada", fecha: "2026-03-10", tecnico: "Josafat" } },
@@ -145,21 +145,37 @@ window.__SEED__ = {
         id: "c0", img: "c0.png", icono: "bienvenida", titulo: "Bienvenida a C4V: Tus Primeros Pasos", nivel: "Empieza aquí", estado: "disponible",
         descripcion: "Todo lo que necesitas apenas compras tu máquina: tus accesos, tu código, tu certificado y cómo prepararte. (~10 min)",
         modulos: [
-          { titulo: "Tu compra y tus accesos", lecciones: ["Qué incluye tu compra C4V", "Cómo entrar a tu plataforma", "Tu código de máquina (Nº de serie): guárdalo bien"], quizzes: 3, preguntas: [
+          { titulo: "Tu compra y tus accesos", lecciones: [
+            "Tu compra incluye capacitación de por vida, soporte por WhatsApp, garantía y una comunidad de +60.000 emprendedores.",
+            "Entras a tu portal con tu documento y tu WhatsApp: te llega un código para confirmar que eres tú.",
+            "El Nº de serie identifica tu máquina y tu Certificado de Calidad. Guárdalo bien."
+          ], quizzes: 3, preguntas: [
             { q: "Además de la máquina, ¿qué incluye tu compra C4V?", opciones: ["Solo la máquina", "Capacitación de por vida, soporte en español, garantía y comunidad", "Únicamente el software"], ok: 1, ex: "Tu compra incluye capacitación de por vida, soporte por WhatsApp, garantía y una comunidad de +60.000 emprendedores." },
             { q: "¿Cuánto cuesta el acceso a la Academia C4V?", opciones: ["Una suscripción mensual", "Es gratis de por vida, incluido con tu máquina", "Solo el primer mes"], ok: 1, ex: "Tu academia está aquí en tu portal: acceso gratuito de por vida, incluido con tu máquina." },
             { q: "Tu código de máquina (Nº de serie)…", opciones: ["Da igual si lo pierdes", "Identifica tu máquina y tu certificado: guárdalo bien", "Sirve solo para redes sociales"], ok: 1, ex: "El Nº de serie identifica tu máquina y tu Certificado de Calidad. Guárdalo bien." }
           ]},
-          { titulo: "Tu Certificado de Calidad", lecciones: ["Qué es y qué garantiza tu máquina", "Cómo ver el estado de tu certificado", "«Probada antes de ser tuya»"], quizzes: 3, preguntas: [
+          { titulo: "Tu Certificado de Calidad", lecciones: [
+            "Antes de llegar a ti, un técnico certificado la enciende, confirma que cada pieza sea original y la calibra: eso es lo que garantiza tu máquina.",
+            "Revisa el estado de tu certificado en la sección «Certificado» de tu portal, o por el sello con tu Nº de serie que trae el equipo.",
+            "«Probada antes de ser tuya»: no te entregamos una caja, sino una máquina lista para producir."
+          ], quizzes: 3, preguntas: [
             { q: "¿Qué es el Certificado de Calidad C4V?", opciones: ["La garantía de 12 meses", "La revisión, prueba y calibración de tu máquina antes de entregártela", "Un cupón de descuento"], ok: 1, ex: "Es la revisión: un técnico la prueba, confirma piezas originales y la calibra antes de que llegue a ti." },
             { q: "¿El certificado es lo mismo que la garantía?", opciones: ["Verdadero", "Falso"], ok: 1, ex: "No: el certificado es la revisión previa a la entrega; la garantía cubre fallas después." },
             { q: "El lema del Certificado de Calidad C4V es…", opciones: ["«Probada antes de ser tuya»", "«Compra sin miedo»", "«Garantía para siempre»"], ok: 0, ex: "«Probada antes de ser tuya»: no te entregamos una caja, sino una máquina lista para producir." }
           ]},
-          { titulo: "Prepara tu espacio", lecciones: ["Lista de compras antes de que llegue", "Instalación eléctrica y pozo a tierra", "Ambiente y seguridad"], quizzes: 3, preguntas: [
+          { titulo: "Prepara tu espacio", lecciones: [
+            "Antes de que llegue, ten listo: 220V dedicado, pozo a tierra, extractor con salida al exterior, agua destilada para el chiller y el kit de consumibles.",
+            "Pide a un electricista un punto de 220V solo para la máquina, con cable de cobre número 12, más su pozo a tierra: es la causa #1 de retrasos si falta.",
+            "Un ambiente limpio y ventilado, con el extractor hacia afuera, protege tu salud y el corte."
+          ], quizzes: 3, preguntas: [
             { q: "¿Qué debes tener listo ANTES de que llegue tu máquina?", opciones: ["Nada, se instala sola", "Todo el kit y la instalación eléctrica lista", "Solo el diseño"], ok: 1, ex: "Ten el espacio, el eléctrico y el kit listos para poder cortar el mismo día." },
             { q: "¿Se puede instalar sin pozo a tierra?", opciones: ["Sí, si hay apuro", "No: el pozo a tierra es obligatorio"], ok: 1, ex: "El pozo a tierra te protege a ti, a la electrónica y a la calidad del corte. Es la causa #1 de retrasos." }
           ]},
-          { titulo: "Tu primera capacitación", lecciones: ["Continúa con 'Domina tu Láser: Primeros Pasos'", "Únete a la comunidad de +60.000", "Cómo pedir soporte cuando lo necesites"], quizzes: 3, preguntas: [
+          { titulo: "Tu primera capacitación", lecciones: [
+            "Sigue con el curso «Domina tu Láser: Primeros Pasos»: te lleva desde la preparación hasta tu primer corte.",
+            "Eres parte de una comunidad de +60.000 emprendedores que ya usan su láser C4V.",
+            "Escríbenos por WhatsApp al +51 924 662 205, en español los 365 días del año: es el único número oficial de soporte."
+          ], quizzes: 3, preguntas: [
             { q: "Después de esta bienvenida, ¿cuál es el siguiente curso?", opciones: ["«Domina tu Láser: Primeros Pasos»", "«Seguridad y Mantenimiento»", "Ninguno, ya sabes todo"], ok: 0, ex: "Sigue con «Domina tu Láser: Primeros Pasos»: te lleva desde la preparación hasta tu primer corte." },
             { q: "¿Cómo pides soporte cuando lo necesitas?", opciones: ["Por WhatsApp, en español los 365 días", "Solo por correo postal", "No hay soporte"], ok: 0, ex: "Escríbenos por WhatsApp: te responde una persona del equipo C4V, en español, todo el año." },
             { q: "La comunidad de emprendedores C4V tiene…", opciones: ["+60.000 emprendedores", "Menos de 100 personas", "No existe"], ok: 0, ex: "Eres parte de una comunidad de +60.000 emprendedores que ya usan su láser C4V." }
@@ -263,7 +279,7 @@ window.__SEED__ = {
             { img: "rieles-limpiar.jpg", t: "Limpia las vías plateadas de los ejes X e Y con paño de microfibra." },
             { img: "rieles-aceite.jpg", t: "Unas gotas de aceite 3-EN-UNO sobre la vía. La cinta de goma no se lubrica." },
             { img: "rieles-mover.jpg", t: "Mueve el cabezal de lado a lado para repartir el aceite." },
-            "Cada semana si la usas a diario."
+            "Repite esta limpieza y lubricación de rieles cada semana si usas la máquina a diario."
           ], quizzes: 3, preguntas: [
             { q: "¿Qué aceite se usa en los rieles?", opciones: ["De oliva", "3-EN-UNO", "De motor"], ok: 1, ex: "Aceite 3-EN-UNO en gotas, sobre el riel limpio." },
             { q: "Después de aplicar el aceite, ¿qué haces?", opciones: ["Enciendes a cortar de inmediato", "Mueves el cabezal para distribuirlo", "Lo dejas secar 24 h"], ok: 1, ex: "Mover el cabezal distribuye el aceite por todo el riel." },

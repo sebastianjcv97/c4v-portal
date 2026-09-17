@@ -789,6 +789,14 @@ body{background:var(--mesa)}
 .faq-a{padding:0 0 var(--s-4)}
 .chev{color:var(--grafito);font-size:var(--t-lg)}
 
+/* El tema agrupa las preguntas: 32 títulos sueltos en fila no se pueden
+   escanear, ocho grupos con nombre sí. La primera pregunta de cada grupo ya
+   no necesita el filete grueso de ".faq-item:first-of-type": el propio
+   título del tema hace de separador. */
+.faq-tema{margin:var(--s-6) 0 var(--s-1);font-size:var(--t-sm);font-weight:700;color:var(--grafito)}
+.faq-tema:first-child{margin-top:0}
+.faq-tema + .faq-item{border-top:none}
+
 /* El pie dejo de estar sobre negro cuando la vista paso a ser una hoja blanca:
    estos colores venian de ahi y quedaban en 1.96:1 sobre papel. */
 .me{color:var(--grafito);font-size:var(--t-xs)}
