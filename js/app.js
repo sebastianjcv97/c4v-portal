@@ -2645,7 +2645,7 @@ function pintarPieLegal() {
       <a href="terminos.html" target="_blank" rel="noopener">Términos</a>
       <a href="privacidad.html#derechos" target="_blank" rel="noopener">Mis datos</a>
     </nav>
-    <p class="pie-empresa">${esc(e.razon_social || '')}${e.ruc ? `, RUC ${esc(e.ruc)}` : ''}${e.domicilio ? `. ${esc(e.domicilio)}` : ''}</p>`;
+    <p class="pie-empresa">C4V Láser</p>`;
 }
 
 // ---------- init ----------
