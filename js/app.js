@@ -177,7 +177,9 @@ const ICONS = {
   reclamo: '<path d="M4 5.5h6a2 2 0 0 1 2 2v11a2 2 0 0 0-2-2H4z"/><path d="M20 5.5h-6a2 2 0 0 0-2 2v11a2 2 0 0 1 2-2h6z"/><path d="M15 9.5h3M15 12.5h3"/>',
   inicio: '<path d="M3.5 10.5L12 3.5l8.5 7"/><path d="M5.5 9.5v10h13v-10"/><path d="M9.5 19.5v-6h5v6"/>',
   // Signo de pregunta: dudas.
-  help: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9.3a2.5 2.5 0 1 1 3.3 2.4c-.8.3-1.2.9-1.2 1.7"/><path d="M11.6 16.6h.8"/>'
+  help: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9.3a2.5 2.5 0 1 1 3.3 2.4c-.8.3-1.2.9-1.2 1.7"/><path d="M11.6 16.6h.8"/>',
+  // Candado: un curso que todavía no se puede abrir.
+  candado: '<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7.5a4 4 0 0 1 8 0V11"/>'
 };
 
 const icon = (n) => `<svg class="ic" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS[n] || ''}</svg>`;
@@ -471,11 +473,11 @@ const views = {
         <p>Ahora aprende a usar tu máquina.</p>
         <span class="prep-cta-btn">Ir a la Academia</span>
       </a>` : `
-      <a class="prep-cta" href="#/preparacion">
+      <a class="prep-cta" href="#/academia/prep">
         <div class="prep-cta-top"><strong>Empieza por aquí</strong><span>${prep.n} de ${prep.total}</span></div>
         <div class="bar"><i style="width:${prep.total ? Math.round(prep.n / prep.total * 100) : 0}%"></i></div>
-        <p>Cinco pasos para dejar tu espacio listo.</p>
-        <span class="prep-cta-btn">Ver mis primeros pasos</span>
+        <p>Cinco pasos para dejar tu espacio listo. Es el primer curso de tu Academia.</p>
+        <span class="prep-cta-btn">Empezar en la Academia</span>
       </a>`}
 
       <div class="bigs">
@@ -491,10 +493,12 @@ const views = {
      Los parámetros y las guías eran secciones sueltas que nadie relacionaba con
      nada, así que se metieron dentro del curso al que pertenecen. Las preguntas
      se fueron a «Necesito ayuda», que es donde se buscan. Aquí quedan los
-     cursos: cuatro botones con su icono. */
+     cursos: cuatro botones con su icono, más el candado del primero. */
   academia(ruta) {
     const a = state.db.academia;
     const [sec, id, modo, n] = String(ruta || '').split('/');
+    // «Prepara tu espacio» es el primer curso, siempre abierto: es el candado.
+    if (sec === 'prep') return views.preparacion();
     if (sec === 'curso' && id) {
       const c = (a.cursos || []).find(x => x.id === id);
       if (c && modo === 'p') return vistaLeccion(a, c, Math.max(0, parseInt(n, 10) || 0));
@@ -517,10 +521,34 @@ const views = {
     };
     const disponibles = (a.cursos || []).filter(c => c.estado === 'disponible');
     const pronto = (a.cursos || []).filter(c => c.estado !== 'disponible');
+    const pe = prepEstado();
+
+    // La tarjeta de «Prepara tu espacio»: nunca tiene candado, es el candado.
+    const tarjetaPrep = `
+      <a class="destino destino-curso destino-prep" href="#/academia/prep">
+        ${cursoIcono('prep')}
+        <span class="destino-txt"><strong>Prepara tu espacio</strong>
+          <small>${pe.total} pasos antes de que llegue tu máquina</small>
+          <small class="destino-avance${pe.completo ? ' completo' : ''}">${pe.n} de ${pe.total} hechos</small></span>
+        <span class="destino-flecha" aria-hidden="true">›</span>
+      </a>`;
+
     return `
       <div class="destinos">
+        ${tarjetaPrep}
         ${disponibles.map(c => {
           const g = nGuias(c);
+          if (!pe.completo) {
+            // Bloqueado: se ve el curso (para que sepas que existe y qué trae),
+            // pero no se puede tocar hasta terminar el primero.
+            return `<div class="destino destino-curso bloqueado" aria-disabled="true">
+              ${c.img ? `<span class="destino-dibujo" aria-hidden="true"><img src="assets/academia/${esc(c.img)}" alt="" loading="lazy" onerror="this.parentElement.remove()"></span>` : cursoIcono(c.icono)}
+              <span class="destino-txt"><strong>${esc(c.titulo)}</strong>
+                <small>${nLec(c)} lecciones${g ? ` · ${g} guía${g > 1 ? 's' : ''}` : ''}</small>
+                <small class="destino-candado-nota">Termina «Prepara tu espacio» primero</small></span>
+              <span class="destino-candado" aria-hidden="true">${icon('candado')}</span>
+            </div>`;
+          }
           return `<a class="destino destino-curso" href="#/academia/curso/${esc(c.id)}">
             ${c.img ? `<span class="destino-dibujo" aria-hidden="true"><img src="assets/academia/${esc(c.img)}" alt="" loading="lazy" onerror="this.parentElement.remove()"></span>` : cursoIcono(c.icono)}
             <span class="destino-txt"><strong>${esc(c.titulo)}</strong>
@@ -548,8 +576,9 @@ const views = {
         <div class="paso-fin">
           <img class="fin-toro" src="assets/cevi/gracias.png" width="200" height="186" loading="lazy" alt="" aria-hidden="true" decoding="async">
           <h2>Tu espacio está listo</h2>
-          <p>Ya puedes recibir tu máquina con confianza.</p>
-          <button type="button" class="btn primary" id="verGuia">Volver a ver la guía</button>
+          <p>Ya puedes recibir tu máquina con confianza. El resto de la Academia ya está destrabado.</p>
+          <a class="btn primary" href="#/academia">Ver los cursos de la Academia</a>
+          <button type="button" class="paso-link" id="verGuia">Volver a ver la guía</button>
           ${modoDemo() ? '<button type="button" class="paso-link" id="reiniciarPasos">Empezar la guía de cero (demostración)</button>' : ''}
         </div>`;
     }
@@ -874,7 +903,13 @@ function bind(route) {
   }
   const salir = $('#salirCuenta');
   if (salir) salir.onclick = () => { const b = $('#logoutBtn'); if (b) b.click(); };
-  if (route === 'preparacion') {
+  /* "Prepara tu espacio" vive en dos sitios con el mismo HTML y el mismo
+     cableado: la ruta vieja `#/preparacion` (por si alguien la tiene guardada)
+     y la nueva, dentro de Academia (`#/academia/prep`, primer curso). */
+  if (route === 'preparacion' || (route === 'academia' && state.sub === 'prep')) {
+    // `route` aquí ya viene sin su subruta (render() lo recorta a la base):
+    // hay que reconstruir la ruta completa o el siguiente render() pierde el "prep".
+    const rutaProp = route === 'academia' ? 'academia/prep' : 'preparacion';
     /* La marca se puede poner y quitar: alguien que se equivocó tiene que poder
        corregirlo sin empezar de cero. Al marcar el último que faltaba, se cierra
        la guía; en cualquier otro caso avanza al siguiente. */
@@ -891,23 +926,23 @@ function bind(route) {
         if (hechos === total) { state.paso = null; state.revisando = false; }
         else state.paso = Math.min(state.paso + 1, total - 1);
       }
-      render('preparacion'); window.scrollTo(0, 0);
+      render(rutaProp); window.scrollTo(0, 0);
     });
     view.querySelectorAll('[data-ir]').forEach(b => b.onclick = () => {
       state.paso = Number(b.dataset.ir);
-      render('preparacion'); window.scrollTo(0, 0);
+      render(rutaProp); window.scrollTo(0, 0);
     });
     /* Repasar la guía después de terminarla: se entra en modo revisión, que es
        lo único que permite ver los pasos con todo marcado. Antes el enlace no
        hacía nada visible y parecía roto. */
     const ver = $('#verGuia');
-    if (ver) ver.onclick = () => { state.revisando = true; state.paso = 0; render('preparacion'); window.scrollTo(0, 0); };
+    if (ver) ver.onclick = () => { state.revisando = true; state.paso = 0; render(rutaProp); window.scrollTo(0, 0); };
     // Solo en demostración: deja la cuenta como recién llegada, para poder probar.
     const cero = $('#reiniciarPasos');
     if (cero) cero.onclick = () => {
       state.db.preparacion.checklist.forEach(c => { try { localStorage.removeItem('c4v_prep_' + state.ctx + '_' + c.id); } catch {} });
       state.revisando = false; state.paso = 0;
-      render('preparacion'); window.scrollTo(0, 0);
+      render(rutaProp); window.scrollTo(0, 0);
       toast('Avance borrado. La guía vuelve a empezar.');
     };
   }
@@ -1084,11 +1119,16 @@ function render(route) {
   const [base, ...resto] = String(route).split('/');
   route = views[base] ? base : 'inicio';
   state.sub = route === base ? resto.join('/') : '';
-  /* Ya no se desvía a nadie. Antes, tocar "Academia" sin la guía terminada te
-     dejaba en otra pantalla sin avisar: tocabas una cosa y aparecías en otra.
-     Además la Academia es justo donde están las reglas de seguridad, así que
-     cerrarla era al revés de lo que conviene. La guía sigue siendo lo primero
-     que se ve al entrar, pero invita en vez de bloquear. */
+  /* Candado de Academia: mientras «Prepara tu espacio» no esté al 100%, los
+     demás cursos no se abren aunque se llegue por un enlace directo o el
+     historial del navegador — se cae de vuelta a la lista, con la tarjeta
+     bloqueada explicando por qué. El curso de preparación en sí nunca se
+     bloquea: es el candado, no puede depender de sí mismo. */
+  if (route === 'academia' && state.sub.startsWith('curso/') && !prepEstado().completo) {
+    toast('Primero termina «Prepara tu espacio»');
+    state.sub = '';
+    if (location.hash !== '#/academia') location.hash = '#/academia';
+  }
   document.querySelectorAll('.menu a').forEach(a => a.setAttribute('aria-current', a.dataset.nav === route ? 'page' : 'false'));
   // El título ya lo dice el menú; dentro solo hace falta el nombre de la página.
   let titulo = TITLES[route];
@@ -1096,6 +1136,7 @@ function render(route) {
     const c = (state.db.academia.cursos || []).find(x => x.id === state.sub.split('/')[1]);
     if (c) titulo = c.titulo;
   }
+  if (route === 'academia' && state.sub === 'prep') titulo = 'Prepara tu espacio';
   if (route === 'cuenta' && state.sub === 'certificado') titulo = TITLES.certificado;
   // Dentro de una lección la cabecera sobra: la pantalla ya dice dónde estás.
   const enLeccion = route === 'academia' && /^curso\/[^/]+\/p\//.test(state.sub);
@@ -1241,21 +1282,21 @@ async function entrar(cliente) {
   pintarPieLegal();   // ahora sabemos con qué empresa contrató
   const info = docInfo(cliente.pais, cliente.tipo || 'persona');
   $('#me').innerHTML = `<a class="me-link" href="#/cuenta"><span class="me-txt"><strong>${esc(nombrePropio(cliente.nombre))}</strong><span>${esc(info.doc)} ${esc(cliente.documento)}</span></span></a>`;
-  // El cliente nuevo aterriza en la guía de preparación: es lo que necesita hoy.
-  // Ya no es un candado — puede ir a donde quiera desde el inicio.
+  // El cliente nuevo aterriza en «Prepara tu espacio», el primer curso de la
+  // Academia: es lo que necesita hoy, y es el candado que abre el resto.
   let primeraVez = false;
   try {
     if (!localStorage.getItem('c4v_hola_' + cliente.id)) { localStorage.setItem('c4v_hola_' + cliente.id, '1'); primeraVez = true; }
   } catch {}
   const pe = prepEstado();
   // Mientras la guía no esté completa, siempre se entra por ella: es lo que el
-  // cliente necesita hoy y lo que abre el resto del portal.
+  // cliente necesita hoy y lo que abre el resto de la Academia.
   if (!pe.completo) {
-    location.hash = '#/preparacion';
+    location.hash = '#/academia/prep';
     setTimeout(() => toast(primeraVez
       ? `👋 ¡Hola${cliente.nombre ? ', ' + primerNombre(cliente.nombre) : ''}! Empieza por dejar tu espacio listo`
       : `📋 Vas ${pe.n} de ${pe.total} en tu preparación`), 500);
-    render('preparacion');
+    render('academia/prep');
     return;
   }
   render(currentRoute());

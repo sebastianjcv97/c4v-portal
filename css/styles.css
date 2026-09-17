@@ -1178,6 +1178,18 @@ body{background:var(--mesa)}
 .destino.peligro{border-color:var(--rojo-tinta)}
 .destino.peligro strong{color:var(--rojo-tinta)}
 
+/* «Prepara tu espacio»: el primer curso, el que abre a todos los demás. Un
+   borde de marca para que se note que es distinto, no una tarjeta más. */
+.destino-prep{border-color:var(--rojo-tinta)}
+
+/* Cursos bloqueados: se ven (para que se sepa que existen), pero no se tocan.
+   Es un <div>, no un <a> — nada que fingir que lleva a algún lado. */
+.destino.bloqueado{cursor:default;opacity:.55}
+.destino.bloqueado:hover{border-color:var(--regla)}
+.destino-candado{flex-shrink:0;color:var(--grafito)}
+.destino-candado svg{width:22px;height:22px}
+.destino-txt small.destino-candado-nota{color:var(--rojo-tinta);font-weight:700}
+
 /* Las tres reglas: una debajo de otra, sin caja de aviso ni adornos. */
 .reglas{list-style:none;margin:0;padding:0;border-top:2px solid var(--tinta)}
 .reglas li{display:flex;flex-direction:column;gap:4px;padding:var(--s-4) 0;
