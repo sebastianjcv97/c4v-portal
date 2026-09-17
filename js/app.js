@@ -414,7 +414,12 @@ const views = {
   /* Mi cuenta. Antes la tarjeta de la máquina ocupaba el inicio, donde nadie la
      busca. Aquí sí: se llega tocando tu nombre, que es lo que uno hace cuando
      quiere ver "lo mío". */
-  cuenta() {
+  cuenta(sub) {
+    // El certificado se veía desde el nombre, pero como ruta independiente: no
+    // tenía cómo volver a Mi cuenta salvo con el botón atrás del navegador. Al
+    // pasar a ser una subruta de cuenta, el "← Mi cuenta" sale solo (mismo
+    // mecanismo que ya usa Academia para sus cursos).
+    if (sub === 'certificado') return views.certificado();
     const d = state.db, cli = currentClient();
     if (!cli) return '<p class="muted">Entra con tu documento para ver tus datos.</p>';
     const maqs = d.maquinas.filter(m => m.cliente_id === cli.id);
@@ -427,7 +432,7 @@ const views = {
 
       <h2 class="section-h">${maqs.length > 1 ? 'Tus máquinas' : 'Tu máquina'}</h2>
       ${maqs.length ? maqs.map(m => `
-        <a class="maq" href="#/certificado">
+        <a class="maq" href="#/cuenta/certificado">
           <div class="maq-seal">${SEAL}</div>
           <div class="maq-txt">
             <strong>Láser ${esc(m.modelo)}</strong>
@@ -906,7 +911,7 @@ function bind(route) {
       toast('Avance borrado. La guía vuelve a empezar.');
     };
   }
-  if (route === 'certificado') {
+  if (route === 'certificado' || (route === 'cuenta' && state.sub === 'certificado')) {
     bindAccordions('.faq-item');
     // Copiar el Nº de serie (llave de verificación del certificado)
     view.querySelectorAll('[data-copy]').forEach(b => b.onclick = async () => {
@@ -1091,6 +1096,7 @@ function render(route) {
     const c = (state.db.academia.cursos || []).find(x => x.id === state.sub.split('/')[1]);
     if (c) titulo = c.titulo;
   }
+  if (route === 'cuenta' && state.sub === 'certificado') titulo = TITLES.certificado;
   // Dentro de una lección la cabecera sobra: la pantalla ya dice dónde estás.
   const enLeccion = route === 'academia' && /^curso\/[^/]+\/p\//.test(state.sub);
   // Toda subpágina vuelve a la portada de su sección: un solo camino de vuelta.
@@ -1102,7 +1108,8 @@ function render(route) {
      cuando la barra del paso se pega abajo. */
   document.getElementById('app')?.setAttribute('data-ruta', route);
   view.innerHTML = cabecera + views[route](state.sub);
-  if (route === 'certificado' || route === 'soporte') { try { localStorage.setItem('c4v_visto_' + route + '_' + state.ctx, '1'); } catch {} }
+  const rutaVisto = (route === 'cuenta' && state.sub === 'certificado') ? 'certificado' : route;
+  if (rutaVisto === 'certificado' || rutaVisto === 'soporte') { try { localStorage.setItem('c4v_visto_' + rutaVisto + '_' + state.ctx, '1'); } catch {} }
   bind(route); window.scrollTo(0, 0);
 }
 const currentRoute = () => (location.hash.replace('#/', '') || 'inicio');
