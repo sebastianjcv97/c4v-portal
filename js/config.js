@@ -89,14 +89,11 @@ window.C4V_CONFIG = {
        su propio servicio. */
     apiBase: /^(localhost|127\.0\.0\.1)$/.test(location.hostname)
       ? '' : 'https://portal-api-general.up.railway.app',
-    /* ⚠️ INTERRUPTOR DE SALIDA A PRODUCCIÓN — hoy en false A PROPÓSITO.
-       El backend, el código por WhatsApp y la base (232 contactos de Odoo) están
-       listos y probados. Falta UN paso que solo se hace en el panel de ManyChat:
-       que el bot responda el código cuando el cliente escribe "C4V PORTAL xxxxx"
-       (instrucciones exactas en ../../ACTIVAR_ACCESO.md).
-       Si se pone `true` ANTES de ese paso, los clientes verán la pantalla del
-       código y NUNCA lo recibirán: nadie podría entrar. Por eso queda en false. */
-    activo: false
+    /* INTERRUPTOR DE SALIDA A PRODUCCIÓN — activado el 2026-09-16.
+       El código de acceso ya sale por WhatsApp de verdad (ManyChat, plantilla
+       c4v_welcome, canal WA_MODO=manychat en portal-api) — probado de punta a
+       punta con un cliente real antes de este cambio. */
+    activo: true
   },
 
   /* En demo mostramos los documentos de ejemplo para poder entrar (validación

@@ -34,14 +34,19 @@ window.__SEED__ = {
     { id: "cli-002", nombre: "Diego Salazar", tipo: "persona", documento: "0912345678", empresa: "TallerMaker", pais: "EC", ciudad: "Quito", email: "diego@tallermaker.ec", telefono: "+593 99 123 4567" },
     { id: "cli-003", nombre: "Rosa Quispe", tipo: "persona", documento: "7894561", empresa: "Detalles Andinos", pais: "BO", ciudad: "La Paz", email: "rosa@detallesandinos.bo", telefono: "+591 7 123 4567" },
     { id: "cli-004", nombre: "Acrílicos Andinos SpA", tipo: "empresa", documento: "76.543.210-5", empresa: "Acrílicos Andinos SpA", pais: "CL", ciudad: "Santiago", email: "contacto@acrilicosandinos.cl", telefono: "+56 9 8765 4321" },
-    { id: "cli-005", nombre: "Creativa Publicidad S.A.S.", tipo: "empresa", documento: "901234567", empresa: "Creativa Publicidad S.A.S.", pais: "CO", ciudad: "Bogotá", email: "hola@creativapublicidad.co", telefono: "+57 310 123 4567" }
+    { id: "cli-005", nombre: "Creativa Publicidad S.A.S.", tipo: "empresa", documento: "901234567", empresa: "Creativa Publicidad S.A.S.", pais: "CO", ciudad: "Bogotá", email: "hola@creativapublicidad.co", telefono: "+57 310 123 4567" },
+    /* Cuenta de prueba de Sebastián (mismo documento y WhatsApp que su registro
+       real en c4v.portal_contacts), para poder demostrar el portal sin depender
+       del backend ni de un envío real por WhatsApp. */
+    { id: "cli-006", nombre: "Martín Velasco", tipo: "persona", documento: "72925258", empresa: "C4V Láser (demo)", pais: "PE", ciudad: "Lima", email: "demo@c4vlaser.com", telefono: "+51 995 547 575" }
   ],
   maquinas: [
     { serie: "C4V-6040-PE-00123", modelo: "6040", tipo: "CO2", area: "600 x 400 mm", pais: "PE", cliente_id: "cli-001", fecha_entrega: "2026-03-12", certificado: { estado: "certificada", fecha: "2026-03-10", tecnico: "Josafat" } },
     { serie: "C4V-9060-EC-00210", modelo: "9060", tipo: "CO2", area: "900 x 600 mm", pais: "EC", cliente_id: "cli-002", fecha_entrega: "2026-05-02", certificado: { estado: "certificada", fecha: "2026-04-30", tecnico: "Equipo EC" } },
     { serie: "C4V-1390-BO-00078", modelo: "1390", tipo: "CO2", area: "1300 x 900 mm", pais: "BO", cliente_id: "cli-003", fecha_entrega: "2026-06-20", certificado: { estado: "en_proceso", fecha: null, tecnico: "Aldo" } },
     { serie: "C4V-9060-CL-00042", modelo: "9060", tipo: "CO2", area: "900 x 600 mm", pais: "CL", cliente_id: "cli-004", fecha_entrega: "2026-05-18", certificado: { estado: "certificada", fecha: "2026-05-15", tecnico: "Equipo CL" } },
-    { serie: "C4V-6040-CO-00101", modelo: "6040", tipo: "CO2", area: "600 x 400 mm", pais: "CO", cliente_id: "cli-005", fecha_entrega: "2026-06-01", certificado: { estado: "certificada", fecha: "2026-05-29", tecnico: "Equipo CO" } }
+    { serie: "C4V-6040-CO-00101", modelo: "6040", tipo: "CO2", area: "600 x 400 mm", pais: "CO", cliente_id: "cli-005", fecha_entrega: "2026-06-01", certificado: { estado: "certificada", fecha: "2026-05-29", tecnico: "Equipo CO" } },
+    { serie: "C4V-6040-PE-00999", modelo: "6040", tipo: "CO2", area: "600 x 400 mm", pais: "PE", cliente_id: "cli-006", fecha_entrega: "2026-09-01", certificado: { estado: "certificada", fecha: "2026-09-01", tecnico: "Josafat" } }
   ],
   certificado_info: {
     nombre: "Certificado de Calidad C4V", duracion: "",
