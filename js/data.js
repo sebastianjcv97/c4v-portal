@@ -191,7 +191,7 @@ window.__SEED__ = {
           ], quizzes: 7, preguntas: [
             { q: "¿Qué voltaje necesita tu máquina C4V?", opciones: ["110V", "220V", "380V"], ok: 1, ex: "220V, en un circuito independiente y con cable a tierra." },
             { q: "¿La máquina puede compartir enchufe con otros equipos?", opciones: ["Sí, mientras haya espacio", "No: necesita circuito independiente", "Solo si el cable es grueso"], ok: 1, ex: "Una línea eléctrica independiente evita sobrecargas y fallas." },
-            { q: "¿Es opcional tener extintor antes de instalar la máquina?", opciones: ["Verdadero", "Falso"], ok: 1, ex: "La prevención es parte del estándar profesional C4V." },
+            { q: "Mientras cortas, el material empieza a arder con una llama pequeña. Lo que ya debía estar a la mano desde antes de instalar es…", opciones: ["El extintor", "El manual impreso", "El número de serie"], ok: 0, ex: "El láser trabaja con calor sobre materiales que sí pueden arder. Ten el extintor a la mano desde el primer día, no lo compres después de un susto." },
             { q: "¿Se puede mirar el punto del láser directamente?", opciones: ["Sí, si es rápido", "Nunca: usa tus gafas de seguridad", "Solo con la tapa cerrada"], ok: 1, ex: "Nunca mires el láser. Las gafas de seguridad son obligatorias." },
             { q: "¿Con qué se limpian los lentes?", opciones: ["Agua con jabón", "Thinner", "Alcohol isopropílico"], ok: 2, ex: "Alcohol isopropílico con hisopos de alta calidad." },
             { q: "El agua destilada de tu kit sirve para…", opciones: ["El chiller (enfriamiento)", "Limpiar la mesa", "El compresor"], ok: 0, ex: "El agua destilada protege el tubo láser en el chiller." },
@@ -203,10 +203,9 @@ window.__SEED__ = {
             { img: "04.jpg", t: "El enfriador con agua destilada. La del caño daña el tubo." },
             { img: "05.jpg", t: "Con todo listo, ahora sí: enciende." },
             { img: "16.jpg", t: "El éxito no empieza cuando cortas. Empieza cuando verificas." }
-          ], quizzes: 3, preguntas: [
+          ], quizzes: 2, preguntas: [
             { q: "¿Qué tipo de agua debe usar el chiller?", opciones: ["Agua del caño", "Agua hervida", "Agua destilada", "Agua mineral"], ok: 2, ex: "El agua destilada protege el tubo láser." },
-            { q: "Antes de encender, el extractor debe estar…", opciones: ["Guardado", "Conectado y listo", "Da igual"], ok: 1, ex: "Sin extracción, el humo regresa al cabezal y lo daña." },
-            { q: "¿El agua común daña el tubo láser?", opciones: ["Verdadero", "Falso"], ok: 0, ex: "Sus minerales obstruyen y dañan el tubo. Solo destilada." }
+            { q: "Antes de encender, el extractor debe estar…", opciones: ["Guardado", "Conectado y listo", "Da igual"], ok: 1, ex: "Sin extracción, el humo regresa al cabezal y lo daña." }
           ]},
           { titulo: "Primer encendido seguro", lecciones: [
             { img: "06.jpg", t: "Primer encendido, con calma." },
@@ -216,8 +215,8 @@ window.__SEED__ = {
             { img: "10.jpg", t: "Sistema listo." }
           ], quizzes: 3, preguntas: [
             { q: "¿Cuál es el orden correcto de encendido?", opciones: ["Máquina → Chiller → Estabilizador", "Estabilizador → Chiller → Máquina", "Chiller → Máquina → Estabilizador"], ok: 1, ex: "1) Estabilizador · 2) Chiller · 3) Máquina. Siempre." },
-            { q: "Si el panel muestra una alarma, ¿qué haces?", opciones: ["Sigo trabajando", "Apago todo y reviso las conexiones", "Subo la potencia"], ok: 1, ex: "Revisar primero es actuar como profesional." },
-            { q: "¿El chiller se enciende antes que el láser?", opciones: ["Verdadero", "Falso"], ok: 0, ex: "El tubo necesita enfriamiento desde el primer segundo." }
+            { q: "Si el panel muestra una alarma, ¿qué haces?", opciones: ["Sigo trabajando", "Apago todo y reviso las conexiones", "Subo la potencia"], ok: 1, ex: "Apaga la máquina de inmediato y revisa las conexiones eléctricas, el chiller y el agua. Si la alarma sigue después de reiniciar, contacta a soporte con el código exacto." },
+            { q: "Si enciendes el láser antes que el chiller, ¿qué arriesgas?", opciones: ["Nada, el chiller alcanza después", "Sobrecalentar el tubo en los primeros segundos", "Que el corte salga más rápido"], ok: 1, ex: "El tubo necesita enfriamiento desde el primer segundo: encenderlo sin chiller es la falla más cara y más fácil de evitar." }
           ]},
           { titulo: "Tu primer corte real", lecciones: [
             { img: "17.jpg", t: "Ahora sí: tu primer corte simple." },
