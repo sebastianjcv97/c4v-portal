@@ -167,8 +167,7 @@ window.__SEED__ = {
             "Antes de que llegue, ten listo: 220V dedicado, pozo a tierra, extractor con salida al exterior, agua destilada para el chiller y el kit de consumibles.",
             "Pide a un electricista un punto de 220V solo para la máquina, con cable de cobre número 12, más su pozo a tierra: es la causa #1 de retrasos si falta.",
             "Un ambiente limpio y ventilado, con el extractor hacia afuera, protege tu salud y el corte."
-          ], quizzes: 3, preguntas: [
-            { q: "¿Qué debes tener listo ANTES de que llegue tu máquina?", opciones: ["Nada, se instala sola", "Todo el kit y la instalación eléctrica lista", "Solo el diseño"], ok: 1, ex: "Ten el espacio, el eléctrico y el kit listos para poder cortar el mismo día." },
+          ], quizzes: 1, preguntas: [
             { q: "¿Se puede instalar sin pozo a tierra?", opciones: ["Sí, si hay apuro", "No: el pozo a tierra es obligatorio"], ok: 1, ex: "El pozo a tierra te protege a ti, a la electrónica y a la calidad del corte. Es la causa #1 de retrasos." }
           ]},
           { titulo: "Tu primera capacitación", lecciones: [
