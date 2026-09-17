@@ -149,8 +149,7 @@ window.__SEED__ = {
             "Tu compra incluye capacitación de por vida, soporte por WhatsApp, garantía y una comunidad de +60.000 emprendedores.",
             "Entras a tu portal con tu documento y tu WhatsApp: te llega un código para confirmar que eres tú.",
             "El Nº de serie identifica tu máquina y tu Certificado de Calidad. Guárdalo bien."
-          ], quizzes: 3, preguntas: [
-            { q: "Además de la máquina, ¿qué incluye tu compra C4V?", opciones: ["Solo la máquina", "Capacitación de por vida, soporte en español, garantía y comunidad", "Únicamente el software"], ok: 1, ex: "Tu compra incluye capacitación de por vida, soporte por WhatsApp, garantía y una comunidad de +60.000 emprendedores." },
+          ], quizzes: 2, preguntas: [
             { q: "¿Cuánto cuesta el acceso a la Academia C4V?", opciones: ["Una suscripción mensual", "Es gratis de por vida, incluido con tu máquina", "Solo el primer mes"], ok: 1, ex: "Tu academia está aquí en tu portal: acceso gratuito de por vida, incluido con tu máquina." },
             { q: "Tu código de máquina (Nº de serie)…", opciones: ["Da igual si lo pierdes", "Identifica tu máquina y tu certificado: guárdalo bien", "Sirve solo para redes sociales"], ok: 1, ex: "El Nº de serie identifica tu máquina y tu Certificado de Calidad. Guárdalo bien." }
           ]},
@@ -158,10 +157,9 @@ window.__SEED__ = {
             "Antes de llegar a ti, un técnico certificado la enciende, confirma que cada pieza sea original y la calibra: eso es lo que garantiza tu máquina.",
             "Revisa el estado de tu certificado en la sección «Certificado» de tu portal, o por el sello con tu Nº de serie que trae el equipo.",
             "«Probada antes de ser tuya»: no te entregamos una caja, sino una máquina lista para producir."
-          ], quizzes: 3, preguntas: [
+          ], quizzes: 2, preguntas: [
             { q: "¿Qué es el Certificado de Calidad C4V?", opciones: ["La garantía de 12 meses", "La revisión, prueba y calibración de tu máquina antes de entregártela", "Un cupón de descuento"], ok: 1, ex: "Es la revisión: un técnico la prueba, confirma piezas originales y la calibra antes de que llegue a ti." },
-            { q: "¿El certificado es lo mismo que la garantía?", opciones: ["Verdadero", "Falso"], ok: 1, ex: "No: el certificado es la revisión previa a la entrega; la garantía cubre fallas después." },
-            { q: "El lema del Certificado de Calidad C4V es…", opciones: ["«Probada antes de ser tuya»", "«Compra sin miedo»", "«Garantía para siempre»"], ok: 0, ex: "«Probada antes de ser tuya»: no te entregamos una caja, sino una máquina lista para producir." }
+            { q: "¿El certificado es lo mismo que la garantía?", opciones: ["Verdadero", "Falso"], ok: 1, ex: "No: el certificado es la revisión previa a la entrega; la garantía cubre fallas después." }
           ]},
           { titulo: "Prepara tu espacio", lecciones: [
             "Antes de que llegue, ten listo: 220V dedicado, pozo a tierra, extractor con salida al exterior, agua destilada para el chiller y el kit de consumibles.",
@@ -174,10 +172,8 @@ window.__SEED__ = {
             "Sigue con el curso «Domina tu Láser: Primeros Pasos»: te lleva desde la preparación hasta tu primer corte.",
             "Eres parte de una comunidad de +60.000 emprendedores que ya usan su láser C4V.",
             "Escríbenos por WhatsApp al +51 924 662 205, en español los 365 días del año: es el único número oficial de soporte."
-          ], quizzes: 3, preguntas: [
-            { q: "Después de esta bienvenida, ¿cuál es el siguiente curso?", opciones: ["«Domina tu Láser: Primeros Pasos»", "«Seguridad y Mantenimiento»", "Ninguno, ya sabes todo"], ok: 0, ex: "Sigue con «Domina tu Láser: Primeros Pasos»: te lleva desde la preparación hasta tu primer corte." },
-            { q: "¿Cómo pides soporte cuando lo necesitas?", opciones: ["Por WhatsApp, en español los 365 días", "Solo por correo postal", "No hay soporte"], ok: 0, ex: "Escríbenos por WhatsApp: te responde una persona del equipo C4V, en español, todo el año." },
-            { q: "La comunidad de emprendedores C4V tiene…", opciones: ["+60.000 emprendedores", "Menos de 100 personas", "No existe"], ok: 0, ex: "Eres parte de una comunidad de +60.000 emprendedores que ya usan su láser C4V." }
+          ], quizzes: 1, preguntas: [
+            { q: "¿Cómo pides soporte cuando lo necesitas?", opciones: ["Por WhatsApp, en español los 365 días", "Solo por correo postal", "No hay soporte"], ok: 0, ex: "Escríbenos por WhatsApp: te responde una persona del equipo C4V, en español, todo el año." }
           ]}
         ]
       },
@@ -258,10 +254,9 @@ window.__SEED__ = {
             { img: "lente-limpiar.jpg", t: "Alcohol isopropílico en el paño o el hisopo, en círculos y sin presionar. Las dos caras." },
             { img: "espejos.jpg", t: "La misma técnica en los tres espejos, con paño de microfibra." },
             { img: "espejos-frecuencia.jpg", t: "Como mínimo cada dos semanas si la usas a diario. Si trabajas jornadas largas, cada semana." }
-          ], quizzes: 4, preguntas: [
+          ], quizzes: 3, preguntas: [
             { q: "¿Con qué líquido se limpia la lente?", opciones: ["Agua con jabón", "Alcohol isopropílico", "Thinner"], ok: 1, ex: "Alcohol isopropílico (o alcohol 98% como alternativa)." },
             { q: "¿Cómo debe ser el movimiento al limpiar?", opciones: ["Circular, suave y sin presión", "De arriba a abajo, con fuerza", "En zigzag rápido"], ok: 0, ex: "Circular y suave: la presión daña el recubrimiento." },
-            { q: "¿Cuántos espejos tiene tu máquina?", opciones: ["1", "2", "3"], ok: 2, ex: "Son 3 espejos, y se limpian con la misma técnica." },
             { q: "¿Una lente sucia hace perder potencia?", opciones: ["Verdadero", "Falso"], ok: 0, ex: "Los residuos absorben la energía del láser." }
           ]},
           { titulo: "Agua del enfriador (chiller)", lecciones: [
