@@ -269,7 +269,14 @@ window.__SEED__ = {
             { q: "Después de aplicar el aceite, ¿qué haces?", opciones: ["Enciendes a cortar de inmediato", "Mueves el cabezal para distribuirlo", "Lo dejas secar 24 h"], ok: 1, ex: "Mover el cabezal distribuye el aceite por todo el riel." },
             { q: "¿Lubricar cada 6 meses es suficiente?", opciones: ["Verdadero", "Falso"], ok: 1, ex: "Con uso diario, la lubricación es semanal." }
           ]},
-          { titulo: "6 errores que destruyen tu máquina", lecciones: ["Encender sin chiller → tubo quemado", "Agua del grifo → residuos minerales", "No limpiar la lente → pierde potencia", "Cortar PVC → gas tóxico", "Máquina sin supervisión", "Calendario de mantenimiento"], quizzes: 4, preguntas: [
+          { titulo: "6 errores que destruyen tu máquina", lecciones: [
+            "Nunca enciendas el láser sin el chiller funcionando: el tubo se sobrecalienta y se quema. Es la falla más cara y la más fácil de evitar.",
+            "Nunca uses agua del grifo en el chiller: sus minerales obstruyen y dañan el tubo. Siempre agua destilada.",
+            "Si no limpias la lente, pierde potencia poco a poco: la suciedad absorbe energía y el corte sale débil y disparejo.",
+            "Nunca cortes PVC: libera gas cloro tóxico y corroe la máquina por dentro.",
+            "Nunca la dejes cortando sola: quédate cerca mientras trabaja.",
+            "Un calendario simple evita casi todo: superficie a diario, rieles cada semana, lente y espejos cada dos semanas, agua del chiller cada mes."
+          ], quizzes: 4, preguntas: [
             { q: "¿Qué pasa si enciendes el láser sin chiller?", opciones: ["Nada, si es poco tiempo", "El tubo se quema por sobrecalentamiento", "Corta más rápido"], ok: 1, ex: "El tubo láser es la pieza más valiosa: nunca sin chiller." },
             { q: "¿Se puede cortar PVC con tu láser?", opciones: ["Sí, a baja potencia", "Nunca: genera gas cloro tóxico", "Solo con extractor"], ok: 1, ex: "El PVC libera cloro tóxico y daña la máquina. Prohibido." },
             { q: "¿Qué pasa si no limpias la lente?", opciones: ["Nada", "Pierde potencia gradualmente", "Corta mejor"], ok: 1, ex: "La suciedad absorbe energía: cortes débiles y disparejos." },
