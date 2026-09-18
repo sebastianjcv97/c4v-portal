@@ -1069,16 +1069,24 @@ function bindLeccion() {
   view.querySelectorAll('.lec-video-caja').forEach(caja => {
     const archivo = caja.dataset.video, box = caja.querySelector('.lv-player');
     box.hidden = false;
-    box.innerHTML = `<video controls playsinline preload="metadata" controlsList="nodownload">
-        <source src="videos/c4vtech/${esc(archivo)}" type="video/mp4">
-        Tu navegador no puede reproducir este video.
-      </video>`;
-    const vid = box.querySelector('video');
-    vid.ontimeupdate = () => {
-      if (vid.duration && vid.currentTime / vid.duration > 0.8) {
-        try { localStorage.setItem('c4v_video_' + state.ctx + '_' + archivo, '1'); } catch {}
-      }
-    };
+    box.innerHTML = '<p class="muted">Cargando video…</p>';
+    /* Los 20 videos son contenido pagado, igual que las guías: solo salen con
+       enlace firmado y sesión real (caduca a las 2 horas). La demo no tiene
+       sesión que firmar, así que aquí se dice la verdad en vez de mostrar un
+       reproductor vacío. */
+    enlaceMedio('videos', archivo).then((url) => {
+      if (!url) { box.innerHTML = '<p class="muted">Este video se ve con tu cuenta real — en la demo no hay video de verdad.</p>'; return; }
+      box.innerHTML = `<video controls playsinline preload="metadata" controlsList="nodownload">
+          <source src="${esc(url)}" type="video/mp4">
+          Tu navegador no puede reproducir este video.
+        </video>`;
+      const vid = box.querySelector('video');
+      vid.ontimeupdate = () => {
+        if (vid.duration && vid.currentTime / vid.duration > 0.8) {
+          try { localStorage.setItem('c4v_video_' + state.ctx + '_' + archivo, '1'); } catch {}
+        }
+      };
+    });
   });
   // La evaluación en su propia pantalla arranca sola, sin botón previo.
   // Si ya la aprobaste, se queda escondida: no tiene sentido gastar trabajo
