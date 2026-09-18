@@ -262,11 +262,13 @@ function vistaLeccion(a, c, idx) {
   const base = `#/academia/curso/${esc(c.id)}`;
   const nLec = seq.filter(x => x.tipo === 'leccion').length;
   const nAqui = seq.slice(0, idx + 1).filter(x => x.tipo === 'leccion').length;
-  const cabecera = (texto) => `
-    <p class="paso-cuenta">${texto}</p>
-    <div class="paso-barra"><i style="width:${Math.round((idx + 1) / total * 100)}%"></i></div>`;
+  // Barra segmentada tipo Duolingo, un solo patrón para lección o quiz: se ve
+  // cuánto falta de un vistazo, sin un renglón de texto ("Lección 7 de 12")
+  // compitiendo por espacio arriba del contenido. El conteo se conserva como
+  // aria-label, para quien usa lector de pantalla.
+  const cabecera = (label) => `<div aria-label="${esc(label)}">${segbar(total, idx)}</div>`;
   const pie = (siguiente) => `
-    <div class="paso-pie">
+    <div class="paso-pie paso-nav">
       ${siguiente}
       ${idx > 0 ? `<a class="paso-link" href="${base}/p/${idx - 1}">Atrás</a>` : `<a class="paso-link" href="${base}">Volver al curso</a>`}
     </div>`;
@@ -280,7 +282,7 @@ function vistaLeccion(a, c, idx) {
     const yaAprobado = quizAprobado(c.id, p.mi);
     return `<section class="paso paso-quiz">
       ${cabecera(p.examen ? 'Evaluación final' : `Evaluación del módulo ${p.mi + 1}`)}
-      <h2 class="paso-titulo">${esc(p.examen ? 'Evaluación final' : p.m.titulo)}</h2>
+      <p class="lec-modulo">${esc(p.examen ? 'Evaluación final' : `${p.mi + 1}. ${p.m.titulo}`)}</p>
       <div class="quiz-hecho" data-siguiente="${base}/p/${idx + 1}"${yaAprobado ? '' : ' hidden'}>
         <p class="quiz-hecho-nota">Ya aprobaste esta evaluación${mejor ? `: ${mejor.b} de ${mejor.n}` : ''}.</p>
         <a class="btn primary" href="${base}/p/${idx + 1}">Siguiente</a>
@@ -1036,6 +1038,21 @@ function bindLeccion() {
 // Fisher-Yates: el orden de las opciones cambia en cada intento, así la respuesta
 // correcta no queda siempre en la misma posición (varios módulos la tenían fija).
 function barajar(arr) { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+// Barra segmentada tipo Duolingo: un tramo por pantalla, no una barra continua.
+// `hechos` es cuántos tramos ya se pasaron (se pintan llenos junto con el actual).
+function segbar(total, hechos) {
+  let out = '<div class="paso-segbar">';
+  for (let i = 0; i < total; i++) out += `<i${i < hechos ? ' class="hecho"' : ''}></i>`;
+  return out + '</div>';
+}
+// Sube el scroll al tope del contenido del paso, no de toda la ventana: en el
+// quiz cada pregunta reemplaza el DOM en el mismo lugar (no hay cambio de ruta
+// que dispare el reset normal de render()), así que si no se hace a mano la
+// pantalla se queda donde estaba con la pregunta nueva fuera de vista.
+function subirAlPaso() {
+  const s = view.querySelector('.paso') || view;
+  s.scrollIntoView({ block: 'start' });
+}
 function bindQuizzes() {
   view.querySelectorAll('.quiz-box').forEach(box => {
     const curso = state.db.academia.cursos.find(c => c.id === box.dataset.curso);
@@ -1046,19 +1063,19 @@ function bindQuizzes() {
     if (!preguntas.length) return;
     const area = box.querySelector('.qz-area'), start = box.querySelector('.qz-start');
     const total = preguntas.length;
-    let idx = 0, puntos = 0;
+    let idx = 0, puntos = 0, fallas = [];
 
     const preguntar = () => {
       const p = preguntas[idx];
       area.innerHTML = `
-        <div class="qz-prog">Pregunta ${idx + 1} de ${total}</div>
-        <div class="qz-barra"><i style="width:${Math.round((idx + 1) / total * 100)}%"></i></div>
+        ${segbar(total, idx)}
         <div class="qz-q">${esc(p.q)}</div>
         <div class="qz-opts">${barajar(p.opciones.map((_, i) => i)).map(i => `<button type="button" class="qz-opt" data-i="${i}">${esc(p.opciones[i])}</button>`).join('')}</div>
         <div class="qz-ex" hidden></div>`;
       area.querySelectorAll('.qz-opt').forEach(b => b.onclick = () => {
         const elegido = Number(b.dataset.i), acierto = elegido === p.ok;
         if (acierto) puntos++;
+        else fallas.push({ q: p.q, tuya: p.opciones[elegido], correcta: p.opciones[p.ok], ex: p.ex });
         area.querySelectorAll('.qz-opt').forEach(x => {
           x.disabled = true;
           if (Number(x.dataset.i) === p.ok) x.classList.add('ok');
@@ -1068,10 +1085,11 @@ function bindQuizzes() {
         ex.hidden = false;
         ex.className = 'qz-ex ' + (acierto ? 'bien' : 'mal');
         ex.innerHTML = `<strong>${acierto ? 'Correcto' : 'No era esa'}</strong><span>${esc(p.ex)}</span>
-          <button type="button" class="btn primary qz-next">${idx + 1 < total ? 'Siguiente pregunta' : 'Ver mi resultado'}</button>`;
-        ex.querySelector('.qz-next').onclick = () => { idx++; idx < total ? preguntar() : terminar(); };
+          <div class="paso-nav qz-nav"><button type="button" class="btn primary qz-next">${idx + 1 < total ? 'Siguiente pregunta' : 'Ver mi resultado'}</button></div>`;
+        ex.querySelector('.qz-next').onclick = () => { idx++; idx < total ? preguntar() : terminar(); subirAlPaso(); };
         ex.querySelector('.qz-next').focus();
       });
+      subirAlPaso();
     };
 
     const terminar = () => {
@@ -1081,10 +1099,26 @@ function bindQuizzes() {
         const prev = JSON.parse(localStorage.getItem(k) || 'null');
         if (!prev || puntos > prev.b) localStorage.setItem(k, JSON.stringify({ b: puntos, n: total, p: pct }));
       } catch {}
+      // Sin el detalle de qué se falló, repasar es adivinar. Se muestra tu
+      // respuesta junto a la correcta y la explicación, una por una.
+      const repaso = fallas.length ? `
+        <div class="qz-repaso">
+          <p class="qz-repaso-tit">Repasa lo que fallaste:</p>
+          ${fallas.map(f => `
+            <div class="qz-repaso-item">
+              <p class="qz-repaso-q">${esc(f.q)}</p>
+              <p class="qz-repaso-tuya">Marcaste: ${esc(f.tuya)}</p>
+              <p class="qz-repaso-ok">Era: ${esc(f.correcta)}</p>
+              <p class="qz-repaso-ex">${esc(f.ex)}</p>
+            </div>`).join('')}
+        </div>` : '';
       area.innerHTML = `
         <div class="qz-fin ${paso ? 'ok' : ''}">
           <div class="qz-nota">${puntos} de ${total}</div>
           <p>${paso ? 'Dominas este módulo.' : 'Repasa las lecciones de arriba y vuelve a probar.'}</p>
+        </div>
+        ${repaso}
+        <div class="paso-nav qz-nav">
           ${box.dataset.siguiente
             ? (paso ? `<a class="btn primary" href="${esc(box.dataset.siguiente)}">Siguiente</a><button type="button" class="paso-link qz-retry">Intentar de nuevo</button>`
                     : `<button type="button" class="btn primary qz-retry">Intentar de nuevo</button><a class="paso-link" href="${esc(box.dataset.siguiente)}">Seguir sin aprobar</a>`)
@@ -1092,7 +1126,8 @@ function bindQuizzes() {
         </div>`;
       const cerrar = area.querySelector('.qz-cerrar');
       if (cerrar) cerrar.onclick = () => { area.hidden = true; render('academia'); location.hash = '#/academia/curso/' + box.dataset.curso; };
-      area.querySelector('.qz-retry').onclick = () => { idx = 0; puntos = 0; preguntar(); };
+      area.querySelector('.qz-retry').onclick = () => { idx = 0; puntos = 0; fallas = []; preguntar(); };
+      subirAlPaso();
     };
 
     start.onclick = () => {

@@ -1090,10 +1090,21 @@ body{background:var(--mesa)}
    «¿Cómo lo hago?» plegado. Ahora se ve un paso, con lo que hay que hacer
    escrito delante, y un solo botón para avanzar.
    ════════════════════════════════════════════════════════════════════════ */
-.paso{display:flex;flex-direction:column;gap:var(--s-4)}
+/* El header del portal es sticky (ocupa la parte de arriba aunque se haga
+   scroll): sin este margen, subirAlPaso() alinea el paso justo debajo del
+   borde de la pantalla mecánicamente, pero ese borde queda tapado por el
+   header, y lo primero que se ve es la pregunta a medias en vez de la barra
+   de progreso. */
+.paso{display:flex;flex-direction:column;gap:var(--s-4);scroll-margin-top:128px}
 .paso-cuenta{margin:0;font-size:var(--t-sm);font-weight:700;color:var(--grafito)}
 .paso-barra{height:6px;border-radius:var(--r-full);background:var(--regla);overflow:hidden;margin:0 0 var(--s-2)}
 .paso-barra i{display:block;height:100%;background:var(--rojo-tinta);transition:width .3s}
+/* Barra segmentada, tipo Duolingo: un tramo por pantalla del curso (o por
+   pregunta del quiz), no una sola barra continua. Se ve de un vistazo cuánto
+   falta sin tener que leer "Lección 7 de 12". */
+.paso-segbar{display:flex;gap:3px;margin:0 0 var(--s-3)}
+.paso-segbar i{flex:1;height:6px;border-radius:var(--r-full);background:var(--regla);min-width:3px}
+.paso-segbar i.hecho{background:var(--rojo-tinta)}
 .paso-titulo{font-family:var(--slab);font-size:var(--t-2xl);line-height:var(--lh-snug);margin:0}
 .paso-dibujo{margin:0;display:grid;place-items:center;padding:var(--s-2) 0}
 .paso-dibujo img{max-width:260px;max-height:220px;width:auto;height:auto;mix-blend-mode:multiply}
@@ -1334,6 +1345,22 @@ body{background:var(--mesa)}
 .qz-fin.ok .qz-nota{color:var(--ok)}
 .qz-fin p{margin:0;color:var(--grafito);font-size:var(--t-md)}
 .qz-fin .btn{width:100%;justify-content:center}
+/* El botón de "siguiente pregunta" / "ver resultado" va en la misma barra fija
+   de abajo que el resto del portal: en preguntas largas se perdía al final del
+   scroll y había que ir a buscarlo. */
+.qz-nav{margin-top:var(--s-4)}
+.qz-nav .btn{width:100%;justify-content:center}
+/* Repaso de lo fallado: sin esto, "3 de 5" no dice qué se equivocó — solo
+   sirve para calificar, no para aprender. */
+.qz-repaso{display:flex;flex-direction:column;gap:var(--s-4);margin-top:var(--s-5);
+  padding-top:var(--s-5);border-top:2px solid var(--tinta);text-align:left}
+.qz-repaso-tit{margin:0;font-family:var(--slab);font-size:var(--t-lg)}
+.qz-repaso-item{padding:var(--s-3) 0;border-bottom:1px solid var(--regla)}
+.qz-repaso-item:last-child{border-bottom:none}
+.qz-repaso-q{margin:0 0 6px;font-weight:700;font-size:var(--t-md)}
+.qz-repaso-tuya{margin:0 0 4px;color:var(--rojo-tinta);font-size:var(--t-sm)}
+.qz-repaso-ok{margin:0 0 6px;color:var(--ok);font-weight:700;font-size:var(--t-sm)}
+.qz-repaso-ex{margin:0;color:var(--grafito);font-size:var(--t-sm);line-height:var(--lh-base)}
 /* Mi cuenta: se llega tocando tu nombre en el pie. */
 .me-link{display:block;text-decoration:none;color:inherit}
 .me-link strong{display:block;color:var(--tinta);font-size:var(--t-sm)}

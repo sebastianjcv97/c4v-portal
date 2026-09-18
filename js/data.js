@@ -142,8 +142,9 @@ window.__SEED__ = {
     ],
     cursos: [
       {
-        id: "c0", img: "c0.png", icono: "bienvenida", titulo: "Bienvenida a C4V: Tus Primeros Pasos", nivel: "Empieza aquí", estado: "disponible",
-        descripcion: "Todo lo que necesitas apenas compras tu máquina: tus accesos, tu código, tu certificado y cómo prepararte. (~10 min)",
+        id: "c1", img: "c1.png", icono: "laser", laminas: true, /* el título va DENTRO de cada lámina de imagen; las lecciones de texto plano (módulos de bienvenida) no se ven afectadas por este flag */ titulo: "Domina tu Láser: Bienvenida y Primeros Pasos", nivel: "Empieza aquí", estado: "disponible",
+        descripcion: "Todo lo que necesitas apenas compras tu máquina, hasta tu primer corte real, sin errores graves. (~35-45 min)",
+        /* preguntas: { q, opciones, ok (índice correcto), ex (explicación de Lumo 🦉) } */
         modulos: [
           { titulo: "Tu compra y tus accesos", lecciones: [
             "Tu compra incluye capacitación de por vida, soporte por WhatsApp, garantía y una comunidad de +60.000 emprendedores.",
@@ -169,19 +170,11 @@ window.__SEED__ = {
             { q: "¿Se puede instalar sin pozo a tierra?", opciones: ["Sí, si hay apuro", "No: el pozo a tierra es obligatorio"], ok: 1, ex: "El pozo a tierra te protege a ti, a la electrónica y a la calidad del corte. Es la causa #1 de retrasos." }
           ]},
           { titulo: "Tu primera capacitación", lecciones: [
-            "Sigue con el curso «Domina tu Láser: Primeros Pasos»: te lleva desde la preparación hasta tu primer corte.",
             "Eres parte de una comunidad de +60.000 emprendedores que ya usan su láser C4V.",
             "Escríbenos por WhatsApp al +51 924 662 205, en español los 365 días del año: es el único número oficial de soporte."
           ], quizzes: 1, preguntas: [
             { q: "¿Cómo pides soporte cuando lo necesitas?", opciones: ["Por WhatsApp, en español los 365 días", "Solo por correo postal", "No hay soporte"], ok: 0, ex: "Escríbenos por WhatsApp: te responde una persona del equipo C4V, en español, todo el año." }
-          ]}
-        ]
-      },
-      {
-        id: "c1", img: "c1.png", icono: "laser", laminas: true, /* el título va DENTRO de cada lámina */ titulo: "Domina tu Láser: Primeros Pasos", nivel: "Básico", estado: "disponible",
-        descripcion: "Desde antes de recibir la máquina hasta tu primer corte real, sin errores graves. (~25-35 min)",
-        /* preguntas: { q, opciones, ok (índice correcto), ex (explicación de Lumo 🦉) } */
-        modulos: [
+          ]},
           { titulo: "Prepárate antes de que llegue tu máquina", lecciones: [
             { img: "18.jpg", t: "Un punto de 220V con circuito independiente y cable a tierra." },
             { img: "02.jpg", t: "Un área limpia y ventilada." },
@@ -533,7 +526,7 @@ window.__SEED__ = {
   onboarding: [
     { id: "espacio", titulo: "Prepara tu espacio", detalle: "Empieza aquí: sigue la guía de preinstalación (eléctrico, pozo a tierra, extracción y agua destilada). Al completarla se desbloquea el resto de tu portal.", href: "#/preparacion", img: "e8-espacio.jpg" },
     { id: "cert", titulo: "Conoce tu Certificado de Calidad", detalle: "Mira el estado de tu máquina y qué garantiza: probada, calibrada y lista antes de llegar a ti.", href: "#/certificado" },
-    { id: "curso", titulo: "Haz el curso «Bienvenida: tus primeros pasos»", detalle: "10 minutos para conocer tu plataforma y arrancar con el pie derecho.", href: "#/academia" },
+    { id: "curso", titulo: "Haz el curso «Bienvenida y Primeros Pasos»", detalle: "Conoce tu plataforma y llega a tu primer corte real, paso a paso.", href: "#/academia" },
     { id: "soporte", titulo: "Ten a mano tu soporte", detalle: "WhatsApp 924 662 205, en español los 365 días. Y descubre la Bolsa de Trabajos gratis para clientes.", href: "#/soporte" }
   ]
 };
