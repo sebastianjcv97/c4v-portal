@@ -17,7 +17,7 @@ window.C4V_CONFIG = {
      Mientras esté vacío, el botón "Habla con CeVi" explica que aún no está
      disponible y ofrece WhatsApp (nunca finge que funciona).
      Se obtiene en: elevenlabs.io → Agents → tu agente → Widget / Embed.   */
-  elevenlabsAgentId: '',   // bloqueado: API key inválida y sin voz es-LATAM en plan gratis
+  elevenlabsAgentId: 'agent_3301m2v4ewgxf3sbrjs695yj3ct0',   // CeVi soporte técnico, voz LATAM, activado 18-set-2026
 
   /* Nombre y descripción del agente (se muestran en el panel) */
   agente: {
