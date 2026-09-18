@@ -179,7 +179,9 @@ const ICONS = {
   // Signo de pregunta: dudas.
   help: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9.3a2.5 2.5 0 1 1 3.3 2.4c-.8.3-1.2.9-1.2 1.7"/><path d="M11.6 16.6h.8"/>',
   // Candado: un curso que todavía no se puede abrir.
-  candado: '<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7.5a4 4 0 0 1 8 0V11"/>'
+  candado: '<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7.5a4 4 0 0 1 8 0V11"/>',
+  // Flechita hacia abajo: abre/cierra un módulo (gira 180° cuando está abierto).
+  chevron: '<path d="M6 9.5 12 15.5 18 9.5"/>'
 };
 
 const icon = (n) => `<svg class="ic" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS[n] || ''}</svg>`;
@@ -262,11 +264,14 @@ function vistaLeccion(a, c, idx) {
   const base = `#/academia/curso/${esc(c.id)}`;
   const nLec = seq.filter(x => x.tipo === 'leccion').length;
   const nAqui = seq.slice(0, idx + 1).filter(x => x.tipo === 'leccion').length;
-  // Barra segmentada tipo Duolingo, un solo patrón para lección o quiz: se ve
-  // cuánto falta de un vistazo, sin un renglón de texto ("Lección 7 de 12")
-  // compitiendo por espacio arriba del contenido. El conteo se conserva como
-  // aria-label, para quien usa lector de pantalla.
-  const cabecera = (label) => `<div aria-label="${esc(label)}">${segbar(total, idx)}</div>`;
+  /* Barra segmentada tipo Duolingo, por MÓDULO y no por curso entero: con un
+     curso de 30-40 pantallas, una barra de todo el curso son puntitos
+     ilegibles. Por módulo son 3-8 tramos, se lee de un vistazo — así se
+     siente una lección de Duolingo, no un índice completo. El conteo se
+     conserva como aria-label para lector de pantalla. */
+  const enModulo = seq.filter(x => x.mi === p.mi);
+  const idxModulo = enModulo.indexOf(p);
+  const cabecera = (label) => `<div aria-label="${esc(label)}">${segbar(enModulo.length, idxModulo)}</div>`;
   const pie = (siguiente) => `
     <div class="paso-pie paso-nav">
       ${siguiente}
@@ -280,8 +285,9 @@ function vistaLeccion(a, c, idx) {
        resultado y un solo camino claro: seguir, o volver a intentarla. */
     const mejor = (() => { try { return JSON.parse(localStorage.getItem('c4v_quiz_' + state.ctx + '_' + c.id + '-' + p.mi) || 'null'); } catch { return null; } })();
     const yaAprobado = quizAprobado(c.id, p.mi);
+    // Sin barra aquí arriba: el quiz pinta la suya propia (pregunta N de M)
+    // dentro de qz-area. Mostrar las dos a la vez era ruido, no información.
     return `<section class="paso paso-quiz">
-      ${cabecera(p.examen ? 'Evaluación final' : `Evaluación del módulo ${p.mi + 1}`)}
       <p class="lec-modulo">${esc(p.examen ? 'Evaluación final' : `${p.mi + 1}. ${p.m.titulo}`)}</p>
       <div class="quiz-hecho" data-siguiente="${base}/p/${idx + 1}"${yaAprobado ? '' : ' hidden'}>
         <p class="quiz-hecho-nota">Ya aprobaste esta evaluación${mejor ? `: ${mejor.b} de ${mejor.n}` : ''}.</p>
@@ -339,7 +345,14 @@ function vistaCurso(a, id) {
     ? `<a class="btn primary paso-listo" href="${base}/p/0">Verlo otra vez</a>`
     : `<a class="btn primary paso-listo" href="${base}/p/${pend}">${vistas ? 'Continuar' : 'Empezar'}</a>`;
 
-  // Cada lección con su ✓ y su flecha: se ve qué falta y se puede saltar a ella.
+  /* Cada módulo es un <details> cerrado, no una lista que se ve entera de
+     entrada: con 9 módulos y 32 lecciones, mostrar cada renglón de texto de
+     una vez eran ~9000px de scroll antes de poder tocar "Empezar" — el
+     curso se sentía como un índice, no como un camino de Duolingo. Abierto
+     por default: solo el módulo donde retoma la persona; el resto, cerrado,
+     con su cuenta de avance a la vista para saber qué falta sin desplegarlo. */
+  const pendEntry = seq[pend];
+  const moduloActivo = pendEntry ? pendEntry.mi : -1;
   let k = -1;
   const modulos = c.modulos.map((m, mi) => {
     const esExamen = !(m.lecciones || []).length && (m.preguntas || []).length;
@@ -357,18 +370,25 @@ function vistaCurso(a, id) {
     }).join('');
     const q = (m.preguntas || []).length;
     const qi = seq.findIndex(x => x.tipo === 'quiz' && x.mi === mi);
-    const evalFila = q ? `<a class="lec-fila lec-eval${quizAprobado(c.id, mi) ? ' vista' : ''}" href="${base}/p/${qi}">
-        <span class="lec-check" aria-hidden="true">${quizAprobado(c.id, mi) ? icon('visto') : icon('prueba')}</span>
+    const modAprobado = q ? quizAprobado(c.id, mi) : false;
+    const evalFila = q ? `<a class="lec-fila lec-eval${modAprobado ? ' vista' : ''}" href="${base}/p/${qi}">
+        <span class="lec-check" aria-hidden="true">${modAprobado ? icon('visto') : icon('prueba')}</span>
         <span class="lec-txt">Evaluación del módulo</span>
         <span class="destino-flecha" aria-hidden="true">›</span>
       </a>` : '';
-    return `<section class="modulo">
-      <h3 class="modulo-tit">
+    const nLecMod = (m.lecciones || []).length;
+    const vistasMod = (m.lecciones || []).reduce((n, l, li) => n + (lecVista(c.id, mi, li) ? 1 : 0), 0);
+    const modCompleto = vistasMod === nLecMod && (!q || modAprobado);
+    return `<details class="modulo"${mi === moduloActivo ? ' open' : ''}>
+      <summary class="modulo-tit">
         <span class="modulo-ico" aria-hidden="true">${icon(iconoModulo(m.titulo, c.icono))}</span>
-        <span class="modulo-n">${mi + 1}</span>${esc(m.titulo)}
-      </h3>
+        <span class="modulo-n">${mi + 1}</span>
+        <span class="modulo-txt">${esc(m.titulo)}</span>
+        <span class="modulo-avance${modCompleto ? ' completo' : ''}" aria-hidden="true">${modCompleto ? icon('visto') : `${vistasMod}/${nLecMod}`}</span>
+        <span class="modulo-chevron" aria-hidden="true">${icon('chevron')}</span>
+      </summary>
       <div class="lec-lista">${filas}${evalFila}</div>
-    </section>`;
+    </details>`;
   }).join('');
 
   const examen = c.modulos.some(m => !(m.lecciones || []).length && (m.preguntas || []).length)
@@ -1146,7 +1166,6 @@ function bindQuizzes() {
 /* Títulos cortos: los largos ("Aprender a usar mi máquina") no cabían en el
    menú ni en la cabecera del móvil. */
 const TITLES = { inicio: 'Inicio', cuenta: 'Mi cuenta', cevi: 'Asistente', academia: 'Academia', preparacion: 'Primeros pasos', soporte: 'Necesito ayuda', bolsa: 'Trabajos para ti', plantillas: 'Diseños para cortar', certificado: 'Tu Certificado de Calidad' };
-// El aviso del candado ya no existe; la preparación se acompaña, no se bloquea.
 function render(route) {
   /* Las secciones pueden tener subpáginas: `#/academia/cursos`. Así cada una es
      una pantalla propia, con su título y su botón de atrás, y el botón «volver»
