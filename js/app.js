@@ -743,12 +743,15 @@ const views = {
     const nombreCurso = (id) => cursos.find(c => c.id === id)?.titulo || '';
     const guias = state.db.academia?.guiasPdf || [];
 
-    const filaCert = maqs.map((m, i) => `
+    /* El índice que va en data-cert-pdf-idx es el de `maqs` completo (así lo
+       espera bindCertificadoPdf), no el de esta lista ya filtrada — por eso
+       se recorre con el índice original y no con el de un .filter() previo. */
+    const filaCert = maqs.map((m, i) => m.certificado?.estado === 'certificada' ? `
       <button type="button" class="destino" data-cert-pdf-idx="${i}">
         <span class="destino-ico" aria-hidden="true">${icon('descarga')}</span>
         <span class="destino-txt"><strong>Certificado de Calidad — Láser ${esc(m.modelo || 'C4V')}</strong>
           <small>PDF con tus datos y los de tu máquina</small></span>
-      </button>`).join('');
+      </button>` : '').join('');
 
     return `
       <div class="page-head">
@@ -813,7 +816,9 @@ const views = {
         ${bloqueSerie}
         ${meta}
         ${publico || (ok && m.serie ? '<p class="cert-verif-note muted">Verifica tu máquina con este Nº de serie ante nuestro equipo por WhatsApp cuando lo necesites.</p>' : '')}
-        <button type="button" class="btn ghost sm cert-pdf-btn" data-cert-pdf-idx="${i}">${icon('descarga')} Descargar en PDF</button>
+        <!-- El PDF dice "Certificado de Calidad": ofrecerlo para una máquina
+             que todavía no está certificada sería mostrar un documento falso. -->
+        ${ok ? `<button type="button" class="btn ghost sm cert-pdf-btn" data-cert-pdf-idx="${i}">${icon('descarga')} Descargar en PDF</button>` : ''}
       </div>`;
     };
 
