@@ -43,7 +43,10 @@ async function enlaceMedio(tipo, archivo) {
   if (!ses?.t) return null;
   try {
     const r = await apiPost('/api/media', { token: ses.t, archivos: [{ tipo, archivo }] });
-    const ruta = r?.urls?.[`${tipo}/${archivo}`];
+    // apiPost() envuelve la respuesta real en `.json` — leer `r.urls` directo
+    // (como estaba) siempre daba undefined, así que TODO el mundo con sesión
+    // real, no solo la demo, veía "esto es con tu cuenta real" sin serlo.
+    const ruta = r?.json?.urls?.[`${tipo}/${archivo}`];
     return ruta ? (VERIF.apiBase || '') + ruta : null;
   } catch { return null; }
 }
