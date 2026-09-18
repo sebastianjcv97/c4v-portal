@@ -686,29 +686,16 @@ const views = {
      sus propias interrupciones — ya no pasa por cevi-backend para la
      conversación (sigue usándolo para las 3 tools, ver TOOLS.md).
 
-     variant="expanded": el panel vive DENTRO de la página (no una burbuja
-     flotante) — es la misma decisión de siempre de sacar los botones
-     flotantes. El orbe animado (el que le gustó a Sebastián) va en degradado
-     rojo/negro de marca en vez del celeste de fábrica. Los textos del widget
-     se traducen acá porque el dashboard de ElevenLabs no trae español. */
+     El aspecto (orbe animado rojo/negro de marca, "full" en vez de burbuja
+     flotante, todos los textos en español) se configuró UNA vez del lado de
+     ElevenLabs (platform_settings.widget del agente, por API) — no se
+     duplica aquí para no tener dos fuentes de verdad que se puedan
+     desalinear. Acá solo va el agent-id y las variables del cliente. */
   ceviElevenLabs() {
     return `
       <section class="chat chat-11labs" id="ceviPagina11">
         <p class="chat-pie" style="margin-top:0">CeVi (soporte técnico) responde con inteligencia artificial. Para temas comerciales te conecta con un asesor.</p>
-        <elevenlabs-convai
-          id="ceviWidget11"
-          agent-id="${esc(CFG.elevenlabsAgentId)}"
-          variant="expanded"
-          avatar-orb-color-1="#F9020B"
-          avatar-orb-color-2="#3A0000"
-          action-text="Habla con CeVi"
-          start-call-text="Iniciar conversación"
-          end-call-text="Terminar"
-          listening-text="Te escucho…"
-          speaking-text="CeVi está hablando"
-          expand-text="Abrir"
-          collapse-text="Cerrar"
-        ></elevenlabs-convai>
+        <elevenlabs-convai id="ceviWidget11" agent-id="${esc(CFG.elevenlabsAgentId)}"></elevenlabs-convai>
       </section>`;
   },
 
