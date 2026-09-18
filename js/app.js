@@ -690,12 +690,19 @@ const views = {
      flotante, todos los textos en español) se configuró UNA vez del lado de
      ElevenLabs (platform_settings.widget del agente, por API) — no se
      duplica aquí para no tener dos fuentes de verdad que se puedan
-     desalinear. Acá solo va el agent-id y las variables del cliente. */
+     desalinear. Acá solo va el agent-id y las variables del cliente.
+
+     18-set-2026, bug real: `dynamic-variables` se ponía DESPUÉS con
+     setAttribute (en ceviElevenLabsIniciar), ya con el elemento insertado —
+     el widget arrancaba sin nada y por eso pedía el teléfono aunque el
+     cliente ya estaba identificado. Ahora va en el HTML inicial, para que
+     el widget la tenga desde su primer render. */
   ceviElevenLabs() {
+    const vars = ceviElevenLabsVars();
     return `
       <section class="chat chat-11labs" id="ceviPagina11">
         <p class="chat-pie" style="margin-top:0">CeVi (soporte técnico) responde con inteligencia artificial. Para temas comerciales te conecta con un asesor.</p>
-        <elevenlabs-convai id="ceviWidget11" agent-id="${esc(CFG.elevenlabsAgentId)}"></elevenlabs-convai>
+        <elevenlabs-convai id="ceviWidget11" agent-id="${esc(CFG.elevenlabsAgentId)}" dynamic-variables="${esc(JSON.stringify(vars))}"></elevenlabs-convai>
       </section>`;
   },
 
@@ -2616,33 +2623,30 @@ function ceviCablear(raiz) {
 }
 
 /* La página de CeVi arranca igual que el panel: saluda y se queda escuchando. */
-/* Widget de voz de ElevenLabs — se le pasa lo que el portal YA sabe del
-   cliente (nombre, máquina, país, teléfono: ya se identificó con documento +
-   WhatsApp para entrar) como "dynamic variables". Así CeVi lo saluda por su
-   nombre y ya conoce su máquina desde la primera palabra, sin preguntarle ni
-   llamar a buscar_cliente — esa tool queda de respaldo para cuando no hay
-   estas variables (por ejemplo, si algún día se usa desde un QR suelto). */
-function ceviElevenLabsIniciar() {
+/* Lo que el portal YA sabe del cliente (nombre, máquina, país, teléfono: ya
+   se identificó con documento + WhatsApp para entrar), listo para pasarle al
+   widget como "dynamic variables" — usado por views.ceviElevenLabs() al
+   armar el HTML (tiene que ir en el atributo inicial, no puesto después). */
+function ceviElevenLabsVars() {
   const cli = currentClient();
   const maq = cli ? state.db.maquinas.find(m => m.cliente_id === cli.id) : null;
-  const vars = {
+  return {
     telefono: state.telefono || '',
     nombre: primerNombre(cli?.nombre) || '',
     maquina: maq?.modelo || '',
     pais: PAISES[cli?.pais]?.replace(/^\S+\s/, '') || cli?.pais || '',
   };
-  const cargar = () => {
-    const el = $('#ceviWidget11');
-    if (el) el.setAttribute('dynamic-variables', JSON.stringify(vars));
-  };
-  if (document.getElementById('script-11labs-convai')) { cargar(); return; }
+}
+
+/* Solo carga el script del widget una vez; las dynamic-variables ya van en
+   el HTML (ver views.ceviElevenLabs), no hace falta setAttribute acá. */
+function ceviElevenLabsIniciar() {
+  if (document.getElementById('script-11labs-convai')) return;
   const s = document.createElement('script');
   s.id = 'script-11labs-convai';
   s.src = 'https://unpkg.com/@elevenlabs/convai-widget-embed';
   s.async = true;
-  s.onload = cargar;
   document.head.appendChild(s);
-  cargar(); // por si el custom element ya está definido (navegación repetida)
 }
 
 function ceviPaginaIniciar() {

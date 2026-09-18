@@ -1189,6 +1189,11 @@ body{background:var(--mesa)}
 .menu a{gap:7px}
 .menu-ic{display:flex;flex-shrink:0}
 .menu-ic .ic{width:18px;height:18px}
+/* El ícono de Asistente va siempre en rojo de marca (pedido 18-set-2026) —
+   sobre negro/hover usa --rojo (la variante pensada para eso); sobre blanco
+   (pestaña activa) cambia a --rojo-tinta, que sí tiene contraste suficiente. */
+.menu a[data-nav="cevi"] .menu-ic .ic{color:var(--rojo)}
+.menu a[data-nav="cevi"][aria-current="page"] .menu-ic .ic{color:var(--rojo-tinta)}
 @media(max-width:620px){
   /* Icono arriba y palabra debajo: así caben los cuatro con el dedo cómodo.
      Una sola línea de texto siempre: si algún rótulo fuera más largo que la
