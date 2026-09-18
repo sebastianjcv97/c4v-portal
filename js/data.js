@@ -53,7 +53,7 @@ window.__SEED__ = {
     promesa: [
       "Probada y calibrada antes de entregarse",
       "Piezas originales instaladas (incluido el tubo láser)",
-      "Garantía C4V + garantía RECI del tubo láser (PE/EC/BO)",
+      "Garantía C4V de 12 meses (PE/EC/BO)",
       "Acompañamiento del ingeniero hasta el primer corte",
       "Entregada con guía de preparación del espacio"
     ],
@@ -73,7 +73,7 @@ window.__SEED__ = {
       { q: "¿Qué significa para ti?", a: "Recibes una máquina lista para producir, no un rompecabezas. Y si algún día algo falla, tienes nuestro nombre y tu garantía detrás." }
     ],
     faq: [
-      { q: "¿Es lo mismo que la garantía?", a: "No. El certificado es la revisión previa a la entrega; la garantía (12 meses + RECI) cubre fallas después." },
+      { q: "¿Es lo mismo que la garantía?", a: "No. El certificado es la revisión previa a la entrega; la garantía de 12 meses cubre fallas después." },
       { q: "¿Dónde se hace la revisión?", a: "Al llegar al país, en nuestro almacén, antes de despachártela." },
       { q: "¿Cómo sé que mi máquina está certificada?", a: "Por el sello con tu código de máquina (Nº de serie) que acompaña a tu equipo." },
       { q: "¿Incluye instalación?", a: "Acompañamiento hasta el primer corte: remoto (6040/9060) o presencial (13100–18120)." }
@@ -483,14 +483,13 @@ window.__SEED__ = {
     { categoria: "Materiales", pregunta: "¿Cómo sé qué potencia y velocidad usar en un material nuevo?", respuesta: "Consulta la tabla oficial de parámetros por material (en «Aprender a usar mi máquina»). Regla de oro: SIEMPRE prueba primero en un retazo del mismo material, porque cada máquina y material varía un poco." },
     { categoria: "Software", pregunta: "¿Con qué programa diseño y corto?", respuesta: "Con C4VTech, el software propio en español, incluido con tu máquina. Tienes el curso completo en video («Domina C4VTech: Diseño y Corte») dentro de tu Academia, de la instalación a tu primer proyecto real." },
     { categoria: "Software", pregunta: "¿Cómo conecto la computadora a la máquina?", respuesta: "Por cable de red (Ethernet) o por USB. Para la conexión por red necesitas la IP de la máquina, que encuentras en el panel Ruida (Controller → Network). El curso de software te muestra cada paso." },
-    { categoria: "Garantía", pregunta: "¿Qué garantía tiene mi máquina?", respuesta: "Garantía C4V de 12 meses por la máquina, más la garantía exclusiva RECI del tubo láser en Perú, Ecuador y Bolivia. La garantía es independiente del Certificado de Calidad: el certificado es la revisión previa a la entrega; la garantía cubre fallas después." },
+    { categoria: "Garantía", pregunta: "¿Qué garantía tiene mi máquina?", respuesta: "Garantía C4V de 12 meses por la máquina, en Perú, Ecuador y Bolivia. La garantía es independiente del Certificado de Calidad: el certificado es la revisión previa a la entrega; la garantía cubre fallas después." },
     { categoria: "Garantía", pregunta: "¿La garantía cubre cualquier falla?", respuesta: "Cubre fallas de fábrica y de piezas en condiciones normales de uso. No cubre daños por mal uso, como cortar PVC, encender el láser sin el chiller, usar agua del grifo o no hacer el mantenimiento. Cuida esos puntos y tu máquina dura muchos años." },
-    { categoria: "Garantía", pregunta: "¿El tubo láser tiene una garantía aparte?", respuesta: "Sí. Además de la garantía de la máquina, el tubo láser tiene la garantía exclusiva RECI en Perú, Ecuador y Bolivia. Es un diferencial de C4V como proveedor oficial." },
     { categoria: "Envío e instalación", pregunta: "¿Cómo se instala mi máquina?", respuesta: "Depende del modelo. Las compactas (6040 / 9060) se instalan de forma remota con acompañamiento del ingeniero hasta tu primer corte. Las grandes (13100–18120) llevan instalación presencial incluida. Tu asesor confirma lo específico de tu equipo." },
     { categoria: "Envío e instalación", pregunta: "¿Qué debo tener listo para poder cortar el mismo día que llega?", respuesta: "Tu espacio preparado según la guía de preinstalación: 220V dedicado, pozo a tierra, extractor con salida al exterior, agua destilada para el chiller y el kit de consumibles. Si preparas todo antes, produces desde el día 1. La causa #1 de retrasos es el pozo a tierra." },
     { categoria: "Envío e instalación", pregunta: "¿La máquina va a pasar por la puerta?", respuesta: "Llega embalada en una caja grande. Antes del despacho, mide el ancho y alto de todas las puertas, pasillos y giros del recorrido; el marco de la puerta se puede retirar para ganar centímetros. Si tienes dudas, mándanos fotos y medidas por WhatsApp y lo revisamos contigo." },
     { categoria: "Garantía y soporte", pregunta: "¿Tengo capacitación incluida?", respuesta: "Sí, acceso gratuito de por vida a la Academia C4V, aquí mismo en tu portal (sección «Aprender a usar mi máquina»). Se activa con tu compra. Todos los cursos, para todos los clientes." },
-    { categoria: "Garantía y soporte", pregunta: "¿Qué incluye mi compra además de la máquina?", respuesta: "Capacitación de por vida, soporte técnico en español por WhatsApp, garantía RECI del tubo láser, comunidad de +60.000 emprendedores y asesora dedicada por país." },
+    { categoria: "Garantía y soporte", pregunta: "¿Qué incluye mi compra además de la máquina?", respuesta: "Capacitación de por vida, soporte técnico en español por WhatsApp, garantía C4V de 12 meses, comunidad de +60.000 emprendedores y asesora dedicada por país." },
     { categoria: "Garantía y soporte", pregunta: "¿Cómo pido soporte y a qué número escribo?", respuesta: "Escríbenos por WhatsApp al +51 924 662 205, en español los 365 días del año. Es el único número oficial: escribe ahí (no al celular personal de un técnico) para que tu caso quede registrado y nunca se pierda." },
     { categoria: "Garantía y soporte", pregunta: "Abrí un caso de soporte, ¿cómo sé cómo va?", respuesta: "Te avisamos por WhatsApp en cada avance: cuando lo recibimos, cuando un técnico lo toma y cuando queda resuelto. No tienes que entrar a revisar nada ni repetir tu problema: el equipo ya tiene todo el contexto de tu máquina." },
     { categoria: "La academia", pregunta: "¿Los cursos tienen algún costo?", respuesta: "No. La Academia C4V es gratuita de por vida y está incluida con tu máquina. Todos los cursos, para todos los clientes, sin suscripciones." },
