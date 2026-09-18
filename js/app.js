@@ -1442,7 +1442,7 @@ const otpEstado = { solicitud: null, pais: null, sondeo: null, directo: false, f
 /* Estado del acceso, que ahora ocurre entero en una sola pantalla.
    En modo demostración no hay backend ni WhatsApp, pero el recorrido se ve
    igual; el código sale en pantalla y se dice que es una prueba. */
-const acceso = { fase: 'doc', solicitud: null, pais: null, cliente: null, codigo: null };
+const acceso = { fase: 'tel', solicitud: null, pais: null, cliente: null, codigo: null };
 
 /* Mientras el portal esté en demostración no hay WhatsApp que enviar, así que el
    código es fijo y conocido. La pantalla se ve exactamente igual que la final:
@@ -1500,24 +1500,20 @@ function pistaEnCampo(cola) {
 
 function faseAcceso(fase) {
   acceso.fase = fase;
-  const tel = $('#gateTelBloque'), cod = $('#gateCodBloque'), btn = $('#gateForm .gate-btn');
-  tel.hidden = fase === 'doc';
+  const cod = $('#gateCodBloque'), btn = $('#gateForm .gate-btn');
   cod.hidden = fase !== 'cod';
-  if (fase === 'tel') {
-    const cod2 = $('#gateTelCod');
-    if (cod2) cod2.textContent = '+' + (PREFIJOS_PAIS[String(acceso.pais || '').toUpperCase()] || '');
-  }
+  const cod2 = $('#gateTelCod');
+  if (cod2) cod2.textContent = '+' + (PREFIJOS_PAIS[String(acceso.pais || '').toUpperCase()] || '');
 
   // Lo anterior se bloquea: ya cumplió su parte.
-  $('#gateDoc').disabled = fase !== 'doc';
   $('#gateTel').disabled = fase !== 'tel';
-  $('#gateTipos').classList.toggle('bloqueado', fase !== 'doc');
-  $('#gatePaises').classList.toggle('bloqueado', fase !== 'doc');
-  // Ya aceptó: las casillas dejan de ocupar sitio en las pantallas siguientes.
-  $('#gateConsentimiento').hidden = fase !== 'doc';
+  $('#gatePaises').classList.toggle('bloqueado', fase !== 'tel');
+  // Ya aceptó: la casilla deja de ocupar sitio en la pantalla del código.
+  $('#gateConsentimiento').hidden = fase !== 'tel';
+  if (fase === 'cod') { const irRegistro = $('#gateIrRegistro'); if (irRegistro) irRegistro.hidden = true; }
 
-  btn.textContent = { doc: 'Ingresar', tel: 'Enviarme el código', cod: 'Entrar' }[fase];
-  const foco = { tel: '#gateTel', cod: '#gateCod' }[fase];
+  btn.textContent = { tel: 'Ingresar', cod: 'Entrar' }[fase];
+  const foco = { cod: '#gateCod' }[fase];
   if (foco) setTimeout(() => $(foco)?.focus(), 80);
 }
 
@@ -1579,30 +1575,23 @@ function limpiarError(campo, caja) {
 }
 
 function initGate() {
-  const gate = $('#gate'), form = $('#gateForm'), inp = $('#gateDoc'), err = $('#gateError');
-  const tiposBox = $('#gateTipos'), paisesBox = $('#gatePaises'), docLabel = $('#gateDocLabel');
+  const gate = $('#gate'), form = $('#gateForm'), err = $('#gateError');
+  const paisesBox = $('#gatePaises');
   const acepta = $('#gateAcepta');
   const paises = CFG.paises || [];
-  let tipo = 'persona', pais = paises[0]?.code || 'PE';
-
-  tiposBox.innerHTML = `
-    <button type="button" role="radio" aria-checked="true" data-tipo="persona"><span class="bandera" aria-hidden="true">👤</span>Persona</button>
-    <button type="button" role="radio" aria-checked="false" data-tipo="empresa"><span class="bandera" aria-hidden="true">🏢</span>Empresa</button>`;
+  let pais = paises[0]?.code || 'PE';
 
   paisesBox.innerHTML = paises.map(p =>
     `<button type="button" role="radio" aria-checked="${p.code === pais}" data-pais="${p.code}">
        <span class="bandera" aria-hidden="true">${p.bandera}</span>${esc(p.nombre)}
      </button>`).join('');
 
-  const actualizar = (enfocar) => {
-    const info = docInfo(pais, tipo);
-    docLabel.textContent = info.doc;
-    inp.placeholder = info.ej;
-      tiposBox.querySelectorAll('button').forEach(b => b.setAttribute('aria-checked', b.dataset.tipo === tipo));
+  const actualizar = () => {
     paisesBox.querySelectorAll('button').forEach(b => b.setAttribute('aria-checked', b.dataset.pais === pais));
-    if (enfocar) inp.focus();
+    const cod2 = $('#gateTelCod');
+    if (cod2) cod2.textContent = '+' + (PREFIJOS_PAIS[pais] || '');
   };
-  // Navegación con flechas dentro de cada grupo (patrón ARIA de radiogroup).
+  // Navegación con flechas dentro del grupo (patrón ARIA de radiogroup).
   const flechas = (caja, aplicar) => {
     caja.querySelectorAll('button').forEach((b, i, todos) => {
       b.tabIndex = b.getAttribute('aria-checked') === 'true' ? 0 : -1;
@@ -1615,26 +1604,12 @@ function initGate() {
       };
     });
   };
-  const aplicarTipo = (b) => { tipo = b.dataset.tipo; actualizar(false); flechas(tiposBox, aplicarTipo); flechas(paisesBox, aplicarPais); };
-  const aplicarPais = (b) => { pais = b.dataset.pais; actualizar(false); flechas(tiposBox, aplicarTipo); flechas(paisesBox, aplicarPais); };
-  tiposBox.querySelectorAll('button').forEach(b => b.onclick = () => aplicarTipo(b));
-  paisesBox.querySelectorAll('button').forEach(b => b.onclick = () => { aplicarPais(b); inp.focus(); });
-  actualizar(false);
-  flechas(tiposBox, aplicarTipo); flechas(paisesBox, aplicarPais);
+  const aplicarPais = (b) => { pais = b.dataset.pais; actualizar(); flechas(paisesBox, aplicarPais); };
+  paisesBox.querySelectorAll('button').forEach(b => b.onclick = () => { aplicarPais(b); $('#gateTel')?.focus(); });
+  actualizar();
+  flechas(paisesBox, aplicarPais);
 
   $('#gateWa').href = waLink('Hola, quiero acceder a mi Central de Postventa C4V pero no puedo entrar.');
-
-  if (CFG.mostrarNumerosDemo) {
-    const box = $('#gateDemo'); box.hidden = false;
-    box.innerHTML = '<h2>Documentos de ejemplo (demostración)</h2>' + state.db.clientes.map(c => {
-      const info = docInfo(c.pais, c.tipo || 'persona');
-      return `<button type="button" data-doc="${esc(c.documento)}">${esc(info.doc)} ${esc(c.documento)}<span>${esc(c.nombre)} · ${c.tipo === 'empresa' ? '🏢 Empresa' : '👤 Persona'} · ${PAISES[c.pais] || c.pais}</span></button>`;
-    }).join('');
-    box.querySelectorAll('button').forEach(b => b.onclick = () => {
-      const cli = buscarClientePorDocumento(normalizarDoc(b.dataset.doc));
-      if (cli) entrar(cli);
-    });
-  }
 
   const btn = form.querySelector('.gate-btn');
   const btnLabel = btn ? btn.textContent : '';
@@ -1645,11 +1620,12 @@ function initGate() {
     btn.setAttribute('aria-busy', on ? 'true' : 'false');
   };
 
-  /* ── Un solo formulario, tres momentos ──────────────────────────────────
-     doc → identificamos y pedimos el WhatsApp completo
-     tel → lo comparamos con Odoo y sale el código
+  /* ── Un solo formulario, dos momentos ────────────────────────────────────
+     tel → país + WhatsApp completo → si lo reconocemos, sale el código
      cod → lo validamos y entra
-     Todo en la misma pantalla; el botón dice en cada momento lo que hace. */
+     Sin documento en este paso: el teléfono YA es lo que hay que confirmar,
+     no hace falta un paso aparte para "confirmarlo" otra vez. Si el número no
+     se reconoce, se ofrece "Regístralo" (ver initRegistro más abajo). */
   const telInp = $('#gateTel'), codInp = $('#gateCod');
   telInp.oninput = () => { telInp.value = telInp.value.replace(/[^\d+ ]/g, ''); };
   codInp.oninput = () => { codInp.value = codInp.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8); };
@@ -1660,86 +1636,30 @@ function initGate() {
     marcarError(campo, err);
   };
 
-  async function pasoDocumento() {
-    const doc = normalizarDoc(inp.value);
-    const info = docInfo(pais, tipo);
-    if (!acepta.checked) return fallo(acepta, 'Marca la casilla para aceptar los Términos y la Política de Privacidad.');
-    if (doc.length < 5) return fallo(inp, `Ese ${esc(info.doc)} está incompleto. Escríbelo completo, así: ${esc(info.ej)}.`);
-
-    setCargando(true);
-    let res;
-    try { res = await verificarCliente({ pais, doc }); }
-    catch { res = { estado: 'error' }; }
-
-    const noAparece = `Ese ${esc(info.doc)} no nos aparece. Revisa que sea el mismo con el que compraste tu máquina. Si está bien, <a href="${waLink('Hola, mi documento no aparece en la Central de Postventa C4V. ¿Me ayudan?')}" target="_blank" rel="noopener">escríbenos por WhatsApp</a>.`;
-    const sinTelefono = `No tenemos tu WhatsApp registrado, así que no podemos enviarte el código. <a href="${waLink('Hola, quiero entrar a mi Central de Postventa C4V pero no tienen mi WhatsApp registrado. ¿Me ayudan?')}" target="_blank" rel="noopener">Escríbenos y lo actualizamos</a> en un minuto.`;
-
-    // Demostración: el mismo recorrido, sin backend ni WhatsApp.
-    if (res.estado === 'ok' && (modoDemo() || res.demo) && res.cliente?.telefono) {
-      acceso.cliente = res.cliente; acceso.codigo = null; acceso.solicitud = 'DEMO'; acceso.pais = pais;
-      pistaEnCampo(numeroNacional(res.cliente.telefono, pais).slice(-PISTA_DIGITOS));
-      setCargando(false); faseAcceso('tel');
-      apiPost('/api/consentimiento', { doc, pais, acepta_datos: true, acepta_marketing: false }).catch(() => {});
-      return;
-    }
-    if (res.estado === 'ok') { setCargando(false); entrar(res.cliente); return; }
-
-    if (res.estado === 'otp') {
-      const d = await apiPost('/api/acceso/identificar', { pais, doc });
-      if (d.status === 429) return fallo(inp, 'Probaste demasiadas veces seguidas. Espera cinco minutos y vuelve a intentar.');
-      if (d.json.ok && d.json.canal === 'whatsapp') {
-        acceso.solicitud = d.json.solicitud; acceso.pais = pais; acceso.cliente = null; acceso.codigo = null;
-        pistaEnCampo(d.json.pista || '');
-        setCargando(false); faseAcceso('tel');
-        apiPost('/api/consentimiento', { doc, pais, acepta_datos: true, acepta_marketing: false }).catch(() => {});
-        return;
-      }
-      if (d.json.ok === false && d.json.motivo === 'sin_telefono') return fallo(inp, sinTelefono);
-
-      // El canal de envío no está listo: se usa el camino de siempre.
-      const r = await apiPost('/api/otp/solicitar', { pais, doc });
-      setCargando(false);
-      if (r.status === 429) return fallo(inp, 'Pediste muchos códigos seguidos. Espera 5 minutos y vuelve a intentar.');
-      if (r.json.ok) {
-        apiPost('/api/consentimiento', { doc, pais, acepta_datos: true, acepta_marketing: false }).catch(() => {});
-        pintarPasoOtp(r.json, pais);
-        return;
-      }
-      return fallo(inp, r.json.motivo === 'sin_telefono' ? sinTelefono : noAparece);
-    }
-
-    if (res.estado === 'limite') return fallo(inp, `Demasiados intentos. Espera 5 minutos y vuelve a probar, o <a href="${waLink('Hola, no puedo entrar a mi Central de Postventa C4V. ¿Me ayudan?')}" target="_blank" rel="noopener">escríbenos por WhatsApp</a>.`);
-    if (res.estado === 'error') return fallo(inp, `No pudimos conectarnos. Revisa tu internet y vuelve a intentar. Si sigue igual, <a href="${waLink('Hola, no puedo entrar a mi Central de Postventa C4V (error al verificar). ¿Me ayudan?')}" target="_blank" rel="noopener">escríbenos por WhatsApp</a>.`);
-    return fallo(inp, noAparece);
-  }
-
   async function pasoTelefono() {
     const escrito = digitosDe(telInp.value);
+    if (!acepta.checked) return fallo(acepta, 'Marca la casilla para aceptar los Términos y la Política de Privacidad.');
     if (escrito.length < 7) return fallo(telInp, 'Escribe tu número de WhatsApp completo.');
 
-    // Demostración: se compara aquí mismo y el código sale en pantalla.
-    if (acceso.solicitud === 'DEMO') {
-      const suyo = numeroNacional(acceso.cliente?.telefono, acceso.pais);
-      if (escrito.slice(-8) !== suyo.slice(-8)) return fallo(telInp, 'Ese número no coincide con el que tenemos.');
-      acceso.codigo = CODIGO_DEMO;
-      $('#gateCodAviso').textContent = `Te lo mandamos por WhatsApp al número que termina en ${suyo.slice(-PISTA_DIGITOS)}. Llega en unos segundos.`;
-      faseAcceso('cod'); return;
-    }
-
     setCargando(true, 'Enviando…');
-    const r = await apiPost('/api/acceso/enviar', { solicitud: acceso.solicitud, telefono: escrito });
+    const r = await apiPost('/api/acceso/entrar-telefono', { pais, telefono: escrito });
     setCargando(false);
     if (r.json.ok) {
+      acceso.solicitud = r.json.solicitud; acceso.pais = pais;
       const via = r.json.canal === 'sms' ? 'un SMS' : 'WhatsApp';
       $('#gateCodAviso').textContent = `Te lo mandamos por ${via} al número que termina en ${r.json.pista || ''}. Llega en unos segundos.`;
+      apiPost('/api/consentimiento', { pais, acepta_datos: true, acepta_marketing: false }).catch(() => {});
       faseAcceso('cod'); return;
     }
+    if (r.json.motivo === 'no_encontrado') {
+      const ir = $('#gateIrRegistro'); if (ir) ir.hidden = false;
+      return fallo(telInp, `No encontramos este número registrado. Si compraste con otro celular o cambiaste de número, dale a "¿No encontramos tu número? Regístralo" aquí abajo.`);
+    }
     const motivos = {
-      telefono_no_coincide: `Ese número no coincide con el que tenemos.${r.json.restantes ? ` Te queda${r.json.restantes === 1 ? '' : 'n'} ${r.json.restantes} intento${r.json.restantes === 1 ? '' : 's'}.` : ''}`,
       demasiados_intentos: 'Se acabaron los intentos. Recarga la página y empieza otra vez.',
-      solicitud_vencida: 'Pasó demasiado tiempo. Recarga la página y empieza otra vez.',
-      no_configurado: 'Todavía no podemos enviarte el código por WhatsApp. Escríbenos y te ayudamos a entrar.',
-      fallo_envio: 'No pudimos enviarte el código ahora. Prueba otra vez en un minuto.'
+      no_configurado: 'Todavía no podemos enviarte el código. Escríbenos y te ayudamos a entrar.',
+      fallo_envio: 'No pudimos enviarte el código ahora. Prueba otra vez en un minuto.',
+      datos_invalidos: 'Revisa el número, algo no cuadra.'
     };
     return fallo(telInp, motivos[r.json.motivo] || (r.status === 429 ? 'Probaste demasiadas veces. Espera unos minutos.' : 'No pudimos enviarte el código. Inténtalo de nuevo.'));
   }
@@ -1751,8 +1671,21 @@ function initGate() {
     if (codigo.length < 4) return fallo(codInp, 'Escribe tu código completo, como en el mensaje.');
 
     if (acceso.solicitud === 'DEMO') {
-      if (codigo === acceso.codigo) { entrar(acceso.cliente); return; }
-      return fallo(codInp, 'Ese código no es el correcto.');
+      if (codigo !== acceso.codigo) return fallo(codInp, 'Ese código no es el correcto.');
+      /* La demo resuelve todo en el navegador (sin Odoo, sin WhatsApp real),
+         así que nunca tenía una sesión de verdad — y sin sesión, los videos y
+         guías firmados (contenido pagado) le decían "esto es con tu cuenta
+         real". Este único paso al backend le consigue un token real para el
+         documento fijo de demostración, nada más: no reabre el acceso público
+         que se cerró hoy, solo hace que la demo se vea completa en pruebas
+         internas. Si falla (sin red, etc.), entra igual — sin video, como
+         antes — para no bloquear la demo por esto. */
+      try {
+        const r = await apiPost('/api/demo/token', { doc: DOC_DEMO, pais: acceso.pais });
+        if (r.json?.ok && r.json.token) guardarSesion({ token: r.json.token, pais: acceso.pais });
+      } catch {}
+      entrar(acceso.cliente);
+      return;
     }
 
     setCargando(true, 'Entrando…');
@@ -1773,10 +1706,9 @@ function initGate() {
   }
 
   form.onsubmit = (e) => {
-    e.preventDefault(); limpiarError(inp, err); limpiarError(telInp, err); limpiarError(codInp, err);
-    if (acceso.fase === 'tel') return pasoTelefono();
+    e.preventDefault(); limpiarError(telInp, err); limpiarError(codInp, err);
     if (acceso.fase === 'cod') return pasoCodigo();
-    return pasoDocumento();
+    return pasoTelefono();
   };
 
   // ---- Camino de siempre (el cliente escribe primero por WhatsApp) ----
@@ -1806,9 +1738,66 @@ function initGate() {
     }[r.json.motivo] || 'No pudimos revisar tu código. Vuelve a intentarlo.';
     marcarError(otpInp, otpErr);
   };
-  $('#otpVolver').onclick = () => { detenerSondeo(); otpEstado.solicitud = null; mostrarPaso('doc'); inp.focus(); };
+  $('#otpVolver').onclick = () => { detenerSondeo(); otpEstado.solicitud = null; mostrarPaso('doc'); $('#gateTel')?.focus(); };
 
-  faseAcceso('doc');
+  /* ---- Registrar un número nuevo (o cambiado) ----
+     Solo aparece cuando el teléfono no se reconoce. Pide el documento de la
+     compra + usa el teléfono que ya escribió arriba; queda pendiente de que
+     alguien del equipo lo apruebe contra el pedido real — ver
+     src/solicitudTelefono.js. */
+  function initRegistro() {
+    const seccionTel = $('#gatePasoDoc'), seccionReg = $('#gatePasoRegistro');
+    const tiposBox = $('#gateTiposReg'), docLabel = $('#gateDocLabelReg'), docInp = $('#gateDocReg');
+    const regForm = $('#gateRegistroForm'), regErr = $('#gateRegistroError'), regOk = $('#gateRegistroOk');
+    let tipoReg = 'persona';
+
+    tiposBox.innerHTML = `
+      <button type="button" role="radio" aria-checked="true" data-tipo="persona"><span class="bandera" aria-hidden="true">👤</span>Persona</button>
+      <button type="button" role="radio" aria-checked="false" data-tipo="empresa"><span class="bandera" aria-hidden="true">🏢</span>Empresa</button>`;
+    const actualizarTipo = () => {
+      docLabel.textContent = docInfo(pais, tipoReg).doc;
+      docInp.placeholder = docInfo(pais, tipoReg).ej;
+      tiposBox.querySelectorAll('button').forEach(b => b.setAttribute('aria-checked', b.dataset.tipo === tipoReg));
+    };
+    tiposBox.querySelectorAll('button').forEach(b => b.onclick = () => { tipoReg = b.dataset.tipo; actualizarTipo(); });
+    actualizarTipo();
+
+    $('#gateIrRegistro').onclick = () => {
+      const escrito = digitosDe(telInp.value);
+      if (escrito.length < 7) { telInp.focus(); return; }
+      $('#gateRegistroTel').textContent = '+' + (PREFIJOS_PAIS[pais] || '') + ' ' + escrito;
+      seccionTel.hidden = true; seccionReg.hidden = false;
+      regOk.hidden = true; regForm.hidden = false; regErr.hidden = true;
+      actualizarTipo(); docInp.focus();
+    };
+    $('#gateRegistroVolver').onclick = () => {
+      seccionReg.hidden = true; seccionTel.hidden = false;
+      telInp.focus();
+    };
+
+    regForm.onsubmit = async (e) => {
+      e.preventDefault();
+      const doc = normalizarDoc(docInp.value);
+      const info = docInfo(pais, tipoReg);
+      regErr.hidden = true;
+      if (doc.length < 5) { regErr.hidden = false; regErr.textContent = `Ese ${info.doc} está incompleto. Escríbelo completo, así: ${info.ej}.`; marcarError(docInp, regErr); return; }
+      const btnReg = regForm.querySelector('.gate-btn');
+      btnReg.disabled = true; btnReg.textContent = 'Enviando…';
+      const escrito = digitosDe(telInp.value);
+      const r = await apiPost('/api/acceso/solicitar-telefono', { doc, pais, telefono: escrito });
+      btnReg.disabled = false; btnReg.textContent = 'Enviar solicitud';
+      if (r.json?.ok) {
+        regForm.hidden = true; regOk.hidden = false;
+        return;
+      }
+      regErr.hidden = false;
+      regErr.textContent = r.status === 429 ? 'Probaste demasiadas veces. Espera unos minutos.' : 'No pudimos enviar la solicitud. Inténtalo de nuevo.';
+      marcarError(docInp, regErr);
+    };
+  }
+  initRegistro();
+
+  faseAcceso('tel');
   mostrarPaso('doc');
   gate.hidden = false; $('#app').hidden = true;
 }

@@ -39,42 +39,30 @@
     <div class="gate-box">
       <img class="gate-logo" src="assets/c4v-wordmark.png" alt="C4V Láser" />
 
-      <!-- ---------- Paso A · ¿Quién eres? ---------- -->
+      <!-- ---------- Paso A · tu WhatsApp ---------- -->
       <section id="gatePasoDoc">
         <div class="gate-wa-ic gate-id-ic" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><circle cx="8.4" cy="11" r="2.1"/><path d="M5.4 16.2c.5-1.6 1.6-2.4 3-2.4s2.5.8 3 2.4"/><path d="M14.5 9.5h4.5M14.5 12.5h4.5M14.5 15.5h2.8"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="3"/><path d="M10.5 18.5h3"/></svg>
         </div>
 
-        <h1>Entra con tu documento</h1>
-        <p class="gate-sub">El mismo con el que compraste tu máquina.<br />Sin contraseñas.</p>
+        <h1>Entra con tu WhatsApp</h1>
+        <p class="gate-sub">El mismo que registraste al comprar tu máquina.<br />Sin contraseñas.</p>
 
         <!-- onsubmit inline: el manejador de verdad se engancha cuando app.js termina
              de cargar los datos. Si alguien pulsa antes (conexión lenta), el navegador
              enviaba el formulario de forma nativa y recargaba la página, perdiendo lo
              que había escrito. Esto lo impide desde el primer instante. -->
         <form class="gate-form" id="gateForm" novalidate onsubmit="return false">
-          <p class="gate-paso" id="gatePasoTipo">¿Compraste como persona o como empresa?</p>
-          <div class="gate-tipos" id="gateTipos" role="radiogroup" aria-labelledby="gatePasoTipo"></div>
-
           <p class="gate-paso" id="gatePasoPais">¿En qué país compraste tu máquina?</p>
           <div class="gate-paises" id="gatePaises" role="radiogroup" aria-labelledby="gatePasoPais"></div>
 
-          <label class="gate-paso" for="gateDoc">Escribe tu <strong id="gateDocLabel">DNI</strong></label>
-          <div class="gate-row">
-            <input id="gateDoc" type="text" inputmode="numeric" autocomplete="off"
-                   placeholder="45678123" required />
-          </div>
-          <!-- Aparecen en esta misma pantalla, uno tras otro. No hay páginas nuevas:
-               la persona ve siempre lo que ya escribió. -->
-          <div id="gateTelBloque" hidden>
-            <label class="gate-paso" for="gateTel">Escribe tu número de celular completo</label>
-            <div class="gate-row gate-row-tel">
-              <span class="gate-tel-ic" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="3"/><path d="M10.5 18.5h3"/></svg>
-              </span>
-              <span class="gate-tel-cod" id="gateTelCod" aria-hidden="true"></span>
-              <input id="gateTel" type="tel" inputmode="numeric" autocomplete="tel" placeholder="" aria-describedby="gateTelCod" />
-            </div>
+          <label class="gate-paso" for="gateTel">Escribe tu número de celular completo</label>
+          <div class="gate-row gate-row-tel">
+            <span class="gate-tel-ic" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="3"/><path d="M10.5 18.5h3"/></svg>
+            </span>
+            <span class="gate-tel-cod" id="gateTelCod" aria-hidden="true"></span>
+            <input id="gateTel" type="tel" inputmode="numeric" autocomplete="tel" placeholder="987654321" aria-describedby="gateTelCod" />
           </div>
 
           <div id="gateCodBloque" hidden>
@@ -97,7 +85,41 @@
           <div class="gate-error" id="gateError" role="alert" tabindex="-1" hidden></div>
         </form>
 
+        <!-- Solo aparece si el teléfono no está en nuestra base. -->
+        <button type="button" class="paso-link" id="gateIrRegistro" hidden>¿No encontramos tu número? Regístralo</button>
+
         <div class="gate-demo" id="gateDemo" hidden></div>
+      </section>
+
+      <!-- ---------- Registrar un número nuevo (o cambiado) ---------- -->
+      <section id="gatePasoRegistro" hidden>
+        <div class="gate-wa-ic gate-id-ic" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><circle cx="8.4" cy="11" r="2.1"/><path d="M5.4 16.2c.5-1.6 1.6-2.4 3-2.4s2.5.8 3 2.4"/><path d="M14.5 9.5h4.5M14.5 12.5h4.5M14.5 15.5h2.8"/></svg>
+        </div>
+
+        <h1>Registra tu número</h1>
+        <p class="gate-sub">Escribe el documento con el que compraste tu máquina. Revisamos tu pedido y te avisamos cuando quede listo.</p>
+
+        <form class="gate-form" id="gateRegistroForm" novalidate onsubmit="return false">
+          <p class="gate-paso" id="gatePasoTipoReg">¿Compraste como persona o como empresa?</p>
+          <div class="gate-tipos" id="gateTiposReg" role="radiogroup" aria-labelledby="gatePasoTipoReg"></div>
+
+          <label class="gate-paso" for="gateDocReg">Escribe tu <strong id="gateDocLabelReg">DNI</strong></label>
+          <div class="gate-row">
+            <input id="gateDocReg" type="text" inputmode="numeric" autocomplete="off" placeholder="45678123" required />
+          </div>
+
+          <p class="gate-doc-ej">Vamos a registrar el número <strong id="gateRegistroTel"></strong> a ese documento.</p>
+
+          <button class="btn primary gate-btn" type="submit">Enviar solicitud</button>
+          <div class="gate-error" id="gateRegistroError" role="alert" tabindex="-1" hidden></div>
+        </form>
+
+        <div class="gate-ok" id="gateRegistroOk" hidden>
+          <p>Listo, la recibimos. La revisamos contra tu pedido y en cuanto quede aprobada, tu número ya te deja entrar.</p>
+        </div>
+
+        <button type="button" class="gate-volver" id="gateRegistroVolver">Volver</button>
       </section>
 
       <!-- ---------- Paso C · Confirma que eres tú ---------- -->
