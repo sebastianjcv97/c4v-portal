@@ -1024,11 +1024,14 @@ function bindGuias() {
       const etiqueta = b.querySelector('.destino-txt small');
       const original = etiqueta.textContent;
       etiqueta.textContent = 'Preparando…';
-      /* Con sesión real, la guía sale firmada y caduca desde la API. Mientras el
-         portal siga en demo no hay sesión que firmar, así que se abre la copia
-         pública. Al activar la verificación real, esto se cierra solo. */
-      const url = await enlaceMedio('guias', b.dataset.guia) || `guias/${b.dataset.guia}`;
+      /* La copia pública de las guías (public/guias/) ya no existe: son
+         contenido pagado y solo salen firmadas, con sesión real, caducas a
+         las 2 horas. La demo no tiene sesión que firmar — antes esto caía a
+         la copia pública; ahora, sin ella, se dice la verdad en vez de
+         ofrecer un enlace que ya no lleva a ningún lado. */
+      const url = await enlaceMedio('guias', b.dataset.guia);
       etiqueta.textContent = original;
+      if (!url) { toast('Esto se descarga con tu cuenta real — en la demo no hay documentos de verdad.'); return; }
       window.open(url, '_blank', 'noopener');
     };
   });
