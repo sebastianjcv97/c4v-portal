@@ -9,7 +9,6 @@ const SESION_DIAS = 90; // A5: sesión recordada 90 días en el dispositivo
 const $ = (s, r = document) => r.querySelector(s);
 const view = $('#view');
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const today = () => new Date().toISOString().slice(0, 10);
 /* Odoo guarda casi todos los nombres EN MAYÚSCULAS. Mostrarlos así se lee como
    un grito y delata el volcado de datos, así que se capitalizan para la pantalla
    (el dato original no se toca). Respeta partículas y siglas cortas. */
@@ -92,33 +91,6 @@ async function loadDB() {
   } catch { state.offline = true; return JSON.parse(JSON.stringify(window.__SEED__)); }
 }
 
-/* Con la verificación real activa, los trabajos de la Bolsa y los tickets TIENEN
-   que venir del backend. Los de data.js son ejemplos con nombres y teléfonos
-   inventados: enseñárselos a un cliente real sería ofrecerle trabajo que no
-   existe. Si el backend no responde, se muestra vacío, nunca los de ejemplo. */
-async function cargarDatosVivos() {
-  if (modoDemo()) return;
-  const base = VERIF.apiBase || '';
-  state.db.leads = [];
-  state.db.tickets = [];
-  state.leadsCargados = false;
-  try {
-    const r = await fetch(`${base}/api/leads`);
-    if (r.ok) { const j = await r.json(); if (Array.isArray(j)) { state.db.leads = j; state.leadsCargados = true; } }
-  } catch { /* sin conexión: la Bolsa se muestra vacía y lo explica */ }
-}
-async function mutate(onlineCall, offlineFn) {
-  if (!state.offline) { await onlineCall(); state.db = await loadDB(); } else { offlineFn(state.db); }
-}
-const post = (url, body) => fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).then(r => { if (!r.ok) throw new Error('err'); });
-// Id = max existente + 1 (length+1 repetiría ids si se borra un registro).
-const nextId = (prefix, list, base) => prefix + '-' + (list.reduce((m, x) => { const n = parseInt(String(x.id || '').replace(/^\D+/, ''), 10); return n > m ? n : m; }, base) + 1);
-const actions = {
-  crearLead: (p) => mutate(() => post('/api/leads', p),
-    (db) => db.leads.unshift({ id: nextId('lead', db.leads, 1000), titulo: p.titulo, descripcion: p.descripcion || '', material: p.material || '', cantidad: p.cantidad || '', pais: p.pais || 'PE', ciudad: p.ciudad || '', contacto: p.contacto, telefono: p.telefono || '', estado: 'nuevo', tomado_por: null, fecha: today() })),
-  tomarLead: (id, cliente_id) => mutate(() => post(`/api/leads/${id}/tomar`, { cliente_id }),
-    (db) => { const l = db.leads.find(x => x.id === id); if (l) { l.estado = 'tomado'; l.tomado_por = cliente_id; } })
-};
 
 // ---------- Ruta de inicio (onboarding en 4 pasos, en el inicio) ----------
 // Cada paso se marca hecho con señales reales: preparación completa, certificado
@@ -162,8 +134,6 @@ const ICONS = {
   tabla: '<rect x="3.5" y="4.5" width="17" height="15" rx="2"/><path d="M3.5 9.5h17"/><path d="M9.5 9.5v10"/>',
   // Globo de conversación con tres puntos: se habla con una persona.
   soporte: '<path d="M20 12.5a7.5 7.5 0 0 1-11 6.6L4 20.5l1.5-4.5A7.5 7.5 0 1 1 20 12.5z"/><path d="M8.5 12.5h.01M12 12.5h.01M15.5 12.5h.01"/>',
-  // Maletín: encargos de trabajo.
-  bolsa: '<rect x="3" y="7.5" width="18" height="12.5" rx="2.5"/><path d="M8.5 7.5V6a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v1.5"/><path d="M3 12.5h18"/>',
   // Tres figuras: un cuadrado, un círculo y un triángulo. Eso es un diseño.
   disenos: '<rect x="3.5" y="3.5" width="8" height="8" rx="1.5"/><circle cx="17" cy="7.5" r="4"/><path d="M7.5 13.5l4.5 7h-9z"/>',
   // Libro abierto: aprender.
@@ -478,10 +448,10 @@ const views = {
        tu máquina, lo único que toca hacer ahora, y dónde pedir ayuda. Antes eran
        seis botones grandes, tres de ellos duplicando el menú, y dos "cerrados"
        que decían cuánto te faltaba en vez de dejarte pasar. */
-    const bigBtn = (href, ic, t, desc) => `<a class="big" href="${href}">
+    const bigBtn = (href, ic, t, desc, externo) => `<a class="big" href="${href}"${externo ? ' target="_blank" rel="noopener"' : ''}>
         <div class="big-ico">${icon(ic)}</div>
         <div class="big-txt"><strong>${t}</strong><span>${desc}</span></div>
-        <div class="big-arrow" aria-hidden="true">›</div></a>`;
+        <div class="big-arrow" aria-hidden="true">${externo ? '↗' : '›'}</div></a>`;
 
     return `
       <div class="saludo-fila">
@@ -505,8 +475,10 @@ const views = {
       <div class="bigs">
         <!-- CeVi no va aquí: vive en el menú, junto a las demás secciones. -->
         ${bigBtn('#/soporte', 'soporte', 'Necesito ayuda', 'Escríbenos por WhatsApp')}
-        ${bigBtn('#/bolsa', 'bolsa', 'Trabajos para ti', 'Encargos de corte, gratis')}
-        ${bigBtn('#/plantillas', 'disenos', 'Diseños para cortar', 'Incluidos con tu máquina')}
+        ${bigBtn('#/descargables', 'descarga', 'Descargables', 'Guías y tu Certificado en PDF')}
+        <!-- El Banco de Diseños ya vive en su propio dominio: aquí es solo la puerta. -->
+        ${bigBtn('https://bancodisenos.c4vlaser.com/', 'disenos', 'Diseños para cortar', 'Incluidos con tu máquina', true)}
+        ${bigBtn('#/cuenta/certificado', 'sello', 'Mi certificado', 'Tu certificado y tus datos')}
       </div>`;
   },
 
@@ -770,44 +742,40 @@ const views = {
 `;
   },
 
-  bolsa() {
-    return `
-      <!-- Sin filtros por país ni botón de publicar: eran ocho controles para
-           una lista que casi siempre está vacía. Cuando haya muchos encargos,
-           el filtro vuelve. -->
-      <div class="page-head">
-        <p>Nos escriben personas buscando quién les corte algo. Sus encargos se publican aquí. Toma el que quieras y verás su contacto.</p></div>
-      ${state.db.leads.length
-        ? `<div class="list" id="leadList">${leadRows(state.db.leads)}</div>`
-        : `<div class="card vacio" id="leadList">
-             <h3>Todavía no hay trabajos publicados</h3>
-             <p>${state.leadsCargados === false && !modoDemo()
-                 ? 'No pudimos cargar los trabajos en este momento. Vuelve a intentarlo en un rato.'
-                 : 'Cuando alguien nos pida un servicio de corte, lo publicamos aquí y podrás tomarlo. Vuelve a mirar en unos días.'}</p>
-             <a class="btn ghost sm" href="${waLink('Hola, quiero que me avisen cuando publiquen trabajos en la Bolsa de C4V.')}" target="_blank" rel="noopener">Avísenme cuando haya trabajos</a>
-           </div>`}
-`;
-  },
-
-  /* Era una página de 3264px con siete tarjetas que decían "Muy pronto" y ni un
-     botón: se entraba desde el inicio y no se podía hacer nada. Ahora es una
-     pantalla honesta, corta, con una sola acción: avisarnos de que lo quieres. */
-  plantillas() {
+  /* Todo lo descargable en un solo sitio: las guías de cada curso (antes
+     sueltas dentro de cada uno) y el Certificado de Calidad en PDF. Un cliente
+     que ya sabe qué máquina tiene y solo quiere el documento no debería tener
+     que entrar a un curso a buscarlo. */
+  descargables() {
     const cli = currentClient();
-    const cats = (state.db.plantillas?.categorias || []).map(c => c.categoria);
-    const wa = waLink(`Hola, soy ${cli ? nombrePropio(cli.nombre) : 'cliente C4V'}. Avísenme cuando esté listo el Banco de Diseños.`);
+    const maqs = cli ? state.db.maquinas.filter(x => x.cliente_id === cli.id) : [];
+    const cursos = state.db.academia?.cursos || [];
+    const nombreCurso = (id) => cursos.find(c => c.id === id)?.titulo || '';
+    const guias = state.db.academia?.guiasPdf || [];
+
+    const filaCert = maqs.map((m, i) => `
+      <button type="button" class="destino" data-cert-pdf-idx="${i}">
+        <span class="destino-ico" aria-hidden="true">${icon('descarga')}</span>
+        <span class="destino-txt"><strong>Certificado de Calidad — Láser ${esc(m.modelo || 'C4V')}</strong>
+          <small>PDF con tus datos y los de tu máquina</small></span>
+      </button>`).join('');
+
     return `
       <div class="page-head">
-        <p>Diseños listos para cortar, incluidos con tu máquina. Todavía los estamos preparando.</p>
+        <p>Todo lo que puedes descargar: tu Certificado de Calidad y las guías de tus cursos.</p>
       </div>
-      ${cats.length ? `
-      <h2 class="section-h">Lo que vas a encontrar</h2>
-      <ul class="proximo">${cats.map(c => `<li>${esc(c)}</li>`).join('')}</ul>` : ''}
-      <div class="help-card" style="margin-top:24px">
-        <div class="grow"><h3>Te avisamos en cuanto estén</h3>
-          <p>Escríbenos y te escribimos el día que los publiquemos.</p></div>
-        <a class="btn primary sm" href="${wa}" target="_blank" rel="noopener">Avísame por WhatsApp</a>
-      </div>`;
+
+      ${filaCert ? `<h2 class="section-h">Tu Certificado</h2><div class="destinos">${filaCert}</div>` : ''}
+
+      ${guias.length ? `
+      <h2 class="section-h">Guías de tus cursos</h2>
+      <div class="destinos">
+        ${guias.map(g => `<button type="button" class="destino" data-guia="${esc(g.archivo)}">
+          <span class="destino-ico" aria-hidden="true">${icon('descarga')}</span>
+          <span class="destino-txt"><strong>${esc(g.titulo)}</strong>
+            <small>${esc(g.tam)}${nombreCurso(g.curso) ? ` · ${esc(nombreCurso(g.curso))}` : ''}</small></span>
+        </button>`).join('')}
+      </div>` : ''}`;
   },
 
   certificado() {
@@ -817,7 +785,7 @@ const views = {
 
     // Verificación por Nº de serie: la serie es la llave del certificado.
     // Si algún día el certificado tiene una URL pública (certificado.url), se enlaza.
-    const certMaq = (m) => {
+    const certMaq = (m, i) => {
       const cert = m.certificado || {};
       const ok = cert.estado === 'certificada';
       // 'desconocido' NO es lo mismo que "en revisión": significa que el dato aún
@@ -855,10 +823,19 @@ const views = {
         ${bloqueSerie}
         ${meta}
         ${publico || (ok && m.serie ? '<p class="cert-verif-note muted">Verifica tu máquina con este Nº de serie ante nuestro equipo por WhatsApp cuando lo necesites.</p>' : '')}
+        <button type="button" class="btn ghost sm cert-pdf-btn" data-cert-pdf-idx="${i}">${icon('descarga')} Descargar en PDF</button>
       </div>`;
     };
 
     return `
+      ${cli ? `
+      <!-- "Mi certificado" es también la pantalla de "mis datos": nombre,
+           documento y ciudad, para no mandar a buscarlos a otra pantalla. -->
+      <div class="cuenta-datos cert-cuenta-datos">
+        <p class="cuenta-nombre">${esc(nombrePropio(cli.nombre))}</p>
+        <p class="muted">${esc(docInfo(cli.pais, cli.tipo || 'persona').doc)} ${esc(cli.documento)}${cli.ciudad ? ' · ' + esc(cli.ciudad) : ''}</p>
+      </div>` : ''}
+
       <div class="cert-hero">
         <div class="cert-seal">${SEAL}</div>
         <div><h2 class="cert-hero-t">${esc(ci.nombre)}</h2>
@@ -875,33 +852,6 @@ const views = {
       ${ci.faq.map(f => `<div class="faq-item"><button type="button" class="faq-q" aria-expanded="false"><span>${esc(f.q)}</span><span class="chev" aria-hidden="true">+</span></button><div class="faq-a">${esc(f.a)}</div></div>`).join('')}`;
   }
 };
-
-function leadRows(leads) {
-  if (!leads.length) return '<div class="empty">No hay solicitudes con ese filtro.</div>';
-  const cli = currentClient();
-  return leads.map(l => {
-    // Privacidad: el contacto solo lo ve el cliente que tomó el trabajo
-    const puedeVer = l.estado === 'tomado' && cli && l.tomado_por === cli.id;
-    const contacto = puedeVer
-      ? `<div class="contact-box"><span class="lbl">Contacto</span><strong>${esc(l.contacto)}</strong>${l.telefono ? `<div class="muted">${esc(l.telefono)}</div>` : ''}</div>`
-      : (l.estado === 'nuevo' ? `<div class="contact-box"><span class="lbl">Contacto</span><span class="muted" style="font-size:12.5px">Se muestra al tomar el trabajo</span></div>` : '');
-    return `<div class="row-card">
-    <div class="grow"><h4>${esc(l.titulo)} ${l.estado === 'nuevo' ? '<span class="badge ok">Disponible</span>' : '<span class="badge grey">Tomado</span>'}</h4>
-      <p style="margin:4px 0;color:var(--muted);font-size:14px">${esc(l.descripcion)}</p>
-      <div class="meta"><span class="pill-pais">${l.pais}</span><span>${esc(l.ciudad)}</span><span>${esc(l.material)}</span><span>${esc(l.cantidad)}</span></div></div>
-    <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end">
-      ${contacto}
-      ${l.estado === 'nuevo' ? `<button class="btn primary sm" data-take="${esc(l.id)}">Tomar trabajo</button>` : ''}
-    </div></div>`;
-  }).join('');
-}
-function bindTake() {
-  view.querySelectorAll('[data-take]').forEach(b => b.onclick = async () => {
-    const cli = currentClient();
-    if (!cli) { toast('Entra con tu documento para tomar este trabajo'); return; }
-    try { await actions.tomarLead(b.dataset.take, cli.id); toast(state.offline ? 'Trabajo tomado (demostración: el contacto es de ejemplo)' : '🎉 ¡Trabajo tomado! Contacta al cliente'); render('bolsa'); } catch { toast('⚠️ Ese trabajo ya fue tomado'); }
-  });
-}
 
 // ---------- interacciones ----------
 function bindAccordions(sel) { view.querySelectorAll(sel).forEach(it => { const q = it.querySelector('.faq-q, .course-head'); if (q) q.onclick = () => { const open = it.classList.toggle('open'); q.setAttribute('aria-expanded', open); }; }); }
@@ -923,6 +873,7 @@ function bind(route) {
   if (route === 'academia' && state.sub.startsWith('curso/')) {
     bindGuias(); bindQuizzes(); bindLeccion();
   }
+  if (route === 'descargables') bindGuias();
   const salir = $('#salirCuenta');
   if (salir) salir.onclick = () => { const b = $('#logoutBtn'); if (b) b.click(); };
   /* "Prepara tu espacio" vive en dos sitios con el mismo HTML y el mismo
@@ -979,7 +930,9 @@ function bind(route) {
         toast('Nº de serie copiado');
       } catch { toast('No se pudo copiar — cópialo manualmente'); }
     });
+    bindCertificadoPdf();
   }
+  if (route === 'descargables') bindCertificadoPdf();
   if (route === 'soporte') {
     bindAccordions('.faq-item');
     const ver = $('#verFaqs'), todas = $('#faqTodas');
@@ -990,10 +943,81 @@ function bind(route) {
       ver.textContent = abierto ? 'Ocultar las preguntas' : `Ver las ${(state.db.faqs || []).length} preguntas`;
     };
   }
-  if (route === 'bolsa') {
-    // Sin filtros ni formulario de publicar: la pantalla solo lista y deja tomar.
-    bindTake();
-  }
+}
+
+// ---------- Certificado en PDF ----------
+// jsPDF se carga bajo demanda: nadie paga ese peso si nunca descarga el PDF.
+let jsPDFCargando = null;
+function cargarJsPDF() {
+  if (window.jspdf?.jsPDF) return Promise.resolve(window.jspdf.jsPDF);
+  if (jsPDFCargando) return jsPDFCargando;
+  jsPDFCargando = new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js';
+    s.onload = () => resolve(window.jspdf.jsPDF);
+    s.onerror = () => reject(new Error('No se pudo cargar el generador de PDF'));
+    document.head.appendChild(s);
+  });
+  return jsPDFCargando;
+}
+
+/* Un PDF de una página con los mismos datos que ya se ven en pantalla: nada
+   que no esté ya verificado en el certificado on-screen. El sello se dibuja
+   con las formas propias de jsPDF (círculo + texto), no depende del SVG. */
+async function descargarCertificadoPDF(cli, m, ci) {
+  const JsPDF = await cargarJsPDF();
+  const doc = new JsPDF({ unit: 'mm', format: 'a4' });
+  const rojo = '#F9020B', tinta = '#141414', grafito = '#5b5b5b';
+  const ancho = 210, cx = ancho / 2;
+
+  doc.setDrawColor(rojo); doc.setLineWidth(1); doc.circle(cx, 38, 22, 'S');
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(6.5); doc.setTextColor(rojo);
+  doc.text('CERTIFICADO', cx, 27, { align: 'center' });
+  doc.text('DE CALIDAD', cx, 32, { align: 'center' });
+  doc.setFontSize(18); doc.text('C4V', cx, 43, { align: 'center' });
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(5.5); doc.setTextColor(tinta);
+  doc.text('PROBADA · CALIBRADA · LISTA', cx, 50, { align: 'center' });
+
+  let y = 74;
+  doc.setFontSize(11); doc.setTextColor(grafito);
+  doc.text(`«${ci.lema}»`, cx, y, { align: 'center' });
+  y += 12;
+  doc.setDrawColor('#dddddd'); doc.line(20, y, ancho - 20, y);
+  y += 10;
+
+  const fila = (etiqueta, valor) => {
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(tinta);
+    doc.text(etiqueta, 20, y);
+    doc.setFont('helvetica', 'normal'); doc.setTextColor(grafito);
+    doc.text(String(valor || '—'), 90, y);
+    y += 9;
+  };
+  const info = docInfo(cli.pais, cli.tipo || 'persona');
+  fila('Cliente', nombrePropio(cli.nombre));
+  fila(info.doc, cli.documento);
+  if (cli.ciudad) fila('Ciudad', cli.ciudad);
+  y += 3;
+  fila('Máquina', `Láser ${m.modelo || 'C4V'}`);
+  if (m.serie) fila('Nº de serie', m.serie);
+  else if (m.pedido) fila('Pedido', m.pedido);
+  if (m.certificado?.fecha) fila('Certificada el', m.certificado.fecha);
+  if (m.certificado?.tecnico) fila('Técnico', nombrePropio(m.certificado.tecnico));
+
+  y += 6;
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(tinta);
+  doc.text('Qué garantiza', 20, y);
+  y += 8;
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor(grafito);
+  (ci.promesa || []).forEach(p => {
+    const lineas = doc.splitTextToSize(`•  ${p}`, ancho - 40);
+    doc.text(lineas, 20, y);
+    y += lineas.length * 6;
+  });
+
+  doc.setFontSize(8); doc.setTextColor('#999999');
+  doc.text(`Emitido desde tu Central de Postventa C4V — ${new Date().toLocaleDateString('es-PE')}`, cx, 282, { align: 'center' });
+
+  doc.save(`Certificado-C4V-${m.serie || m.pedido || cli.documento}.pdf`);
 }
 
 // ---------- lecciones en video (Academia) ----------
@@ -1011,6 +1035,29 @@ function bindGuias() {
       const url = await enlaceMedio('guias', b.dataset.guia) || `guias/${b.dataset.guia}`;
       etiqueta.textContent = original;
       window.open(url, '_blank', 'noopener');
+    };
+  });
+}
+
+// El botón vive en dos pantallas (Certificado y Descargables): un solo
+// cableado, que vuelve a calcular cliente/máquinas al momento del clic.
+function bindCertificadoPdf() {
+  view.querySelectorAll('[data-cert-pdf-idx]').forEach(b => {
+    b.onclick = async () => {
+      const cli = currentClient();
+      if (!cli) return;
+      const maqs = state.db.maquinas.filter(x => x.cliente_id === cli.id);
+      const m = maqs[Number(b.dataset.certPdfIdx)];
+      if (!m) return;
+      const original = b.innerHTML;
+      b.disabled = true; b.textContent = 'Preparando PDF…';
+      try {
+        await descargarCertificadoPDF(cli, m, state.db.certificado_info);
+      } catch {
+        toast('No se pudo generar el PDF. Revisa tu internet e inténtalo otra vez.');
+      } finally {
+        b.disabled = false; b.innerHTML = original;
+      }
     };
   });
 }
@@ -1165,7 +1212,7 @@ function bindQuizzes() {
 // ---------- router ----------
 /* Títulos cortos: los largos ("Aprender a usar mi máquina") no cabían en el
    menú ni en la cabecera del móvil. */
-const TITLES = { inicio: 'Inicio', cuenta: 'Mi cuenta', cevi: 'Asistente', academia: 'Academia', preparacion: 'Primeros pasos', soporte: 'Necesito ayuda', bolsa: 'Trabajos para ti', plantillas: 'Diseños para cortar', certificado: 'Tu Certificado de Calidad' };
+const TITLES = { inicio: 'Inicio', cuenta: 'Mi cuenta', cevi: 'Asistente', academia: 'Academia', preparacion: 'Primeros pasos', soporte: 'Necesito ayuda', descargables: 'Descargables', certificado: 'Tu Certificado de Calidad' };
 function render(route) {
   /* Las secciones pueden tener subpáginas: `#/academia/cursos`. Así cada una es
      una pantalla propia, con su título y su botón de atrás, y el botón «volver»
@@ -1330,7 +1377,6 @@ const docInfo = (paisCode, tipo) => {
 
 async function entrar(cliente) {
   state.ctx = cliente.id;
-  await cargarDatosVivos();
   pedirEstadoGuia();   // sin await: no debe retrasar la entrada
   $('#gate').hidden = true; $('#app').hidden = false;
   pintarPieLegal();   // ahora sabemos con qué empresa contrató
