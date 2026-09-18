@@ -57,16 +57,6 @@ function prepEstado() {
   try { n = lista.filter(c => localStorage.getItem('c4v_prep_' + state.ctx + '_' + c.id) === '1').length; } catch {}
   return { n, total: lista.length, completo: lista.length > 0 && n === lista.length };
 }
-/* Rutas siempre abiertas. El resto (academia y bolsa) se abre cuando el cliente
-   completa su guía: una máquina instalada sin pozo a tierra o sin extractor se
-   daña o hace daño, y esa guía es lo que lo evita.
-   Soporte y el certificado NUNCA se cierran: pedir ayuda no se condiciona.
-   La revisión de experiencia advirtió de tres riesgos del candado, y por eso:
-   - la guía es corta (7 pasos, no 12),
-   - el motivo se explica en la propia pantalla, no con un aviso que se desvanece,
-   - y el canal de ayuda queda siempre a la vista. */
-/* Ya no hay rutas cerradas: nada se bloquea, todo está a un toque. */
-
 // ---------- data layer ----------
 async function loadDB() {
   /* El contenido fijo (cursos, guías, FAQ) sale de data.js; lo que cambia por
