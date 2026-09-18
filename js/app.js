@@ -1502,8 +1502,9 @@ function faseAcceso(fase) {
   acceso.fase = fase;
   const cod = $('#gateCodBloque'), btn = $('#gateForm .gate-btn');
   cod.hidden = fase !== 'cod';
-  const cod2 = $('#gateTelCod');
-  if (cod2) cod2.textContent = '+' + (PREFIJOS_PAIS[String(acceso.pais || '').toUpperCase()] || '');
+  // El prefijo del país (+51) lo mantiene actualizar(), dentro de initGate —
+  // ahí sí conoce el país recién elegido; acceso.pais sigue null hasta el
+  // primer envío, así que escribirlo aquí lo borraba (bug, 18-set-2026).
 
   // Lo anterior se bloquea: ya cumplió su parte.
   $('#gateTel').disabled = fase !== 'tel';

@@ -493,7 +493,7 @@ window.__SEED__ = {
     { categoria: "Garantía y soporte", pregunta: "¿Cómo pido soporte y a qué número escribo?", respuesta: "Escríbenos por WhatsApp al +51 924 662 205, en español los 365 días del año. Es el único número oficial: escribe ahí (no al celular personal de un técnico) para que tu caso quede registrado y nunca se pierda." },
     { categoria: "Garantía y soporte", pregunta: "Abrí un caso de soporte, ¿cómo sé cómo va?", respuesta: "Te avisamos por WhatsApp en cada avance: cuando lo recibimos, cuando un técnico lo toma y cuando queda resuelto. No tienes que entrar a revisar nada ni repetir tu problema: el equipo ya tiene todo el contexto de tu máquina." },
     { categoria: "La academia", pregunta: "¿Los cursos tienen algún costo?", respuesta: "No. La Academia C4V es gratuita de por vida y está incluida con tu máquina. Todos los cursos, para todos los clientes, sin suscripciones." },
-    { categoria: "La academia", pregunta: "¿Por dónde empiezo a aprender?", respuesta: "Sigue la ruta: «Bienvenida: Tus Primeros Pasos», luego «Domina tu Láser: Primeros Pasos», «Seguridad, Limpieza y Mantenimiento» y «Domina C4VTech: Diseño y Corte». Cada curso tiene lecciones, quizzes y una evaluación final para que midas tu avance." }
+    { categoria: "La academia", pregunta: "¿Por dónde empiezo a aprender?", respuesta: "Primero, «Prepara tu espacio» (se desbloquea todo lo demás al terminarlo). Luego sigue la ruta: «Domina tu Láser: Bienvenida y Primeros Pasos», «Seguridad, Limpieza y Mantenimiento» y «Domina C4VTech: Diseño y Corte» (el curso del software, en video). Cada curso tiene lecciones, quizzes y una evaluación final para que midas tu avance." }
   ],
 
   soporte_guia: [
