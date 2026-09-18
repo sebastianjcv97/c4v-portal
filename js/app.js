@@ -1642,6 +1642,22 @@ function initGate() {
     if (!acepta.checked) return fallo(acepta, 'Marca la casilla para aceptar los Términos y la Política de Privacidad.');
     if (escrito.length < 7) return fallo(telInp, 'Escribe tu número de WhatsApp completo.');
 
+    /* Teléfono de ejemplo (900000000, cli-006 en data.js): igual que antes con
+       el documento de ejemplo, se detecta ANTES de tocar el backend real —
+       nunca llama a /api/acceso/entrar-telefono ni gasta un envío. */
+    if (escrito.slice(-9) === '900000000') {
+      // Sale de window.__SEED__ directo, no de state.db: en producción real
+      // el backend no manda clientes de ejemplo mezclados con los reales
+      // (mismo motivo que en verificarCliente() para el documento de ejemplo).
+      let cli = (window.__SEED__?.clientes || []).find(c => normalizarDoc(c.documento) === DOC_DEMO) || null;
+      if (cli && !state.db.clientes.some(c => c.id === cli.id)) {
+        inyectarCliente(cli, (window.__SEED__?.maquinas || []).filter(m => m.cliente_id === cli.id));
+      }
+      acceso.cliente = cli; acceso.codigo = CODIGO_DEMO; acceso.solicitud = 'DEMO'; acceso.pais = pais;
+      $('#gateCodAviso').textContent = `Te lo mandamos por WhatsApp al número que termina en ${escrito.slice(-PISTA_DIGITOS)}. Llega en unos segundos.`;
+      faseAcceso('cod'); return;
+    }
+
     setCargando(true, 'Enviando…');
     const r = await apiPost('/api/acceso/entrar-telefono', { pais, telefono: escrito });
     setCargando(false);
