@@ -630,6 +630,11 @@ const views = {
      conversación ocupa la pantalla y abajo hay una sola barra con el micrófono
      y el campo de texto. */
   cevi() {
+    // Si ya hay un Agent ID de ElevenLabs (agente de voz nativo, solo soporte
+    // técnico), esa es la sección — reemplaza al chat propio de abajo. Hasta
+    // entonces (CFG.elevenlabsAgentId vacío) nada de esto se toca: sigue
+    // corriendo el chat de siempre (cevi-backend + Claude).
+    if (CFG.elevenlabsAgentId) return views.ceviElevenLabs();
     const cli = currentClient();
     const nombre = primerNombre(cli?.nombre);
     return `
@@ -672,6 +677,19 @@ const views = {
             </button>
           </div>
         </div>
+      </section>`;
+  },
+
+  /* Agente de voz nativo de ElevenLabs (solo soporte técnico), cuando
+     CFG.elevenlabsAgentId está puesto. El widget oficial de ElevenLabs
+     reemplaza al chat de arriba entero: su propio micrófono, su propia voz,
+     sus propias interrupciones — ya no pasa por cevi-backend para la
+     conversación (sigue usándolo para las 3 tools, ver TOOLS.md). */
+  ceviElevenLabs() {
+    return `
+      <section class="chat chat-11labs" id="ceviPagina11">
+        <p class="chat-pie" style="margin-top:0">CeVi (soporte técnico) responde con inteligencia artificial. Para temas comerciales te conecta con un asesor.</p>
+        <elevenlabs-convai id="ceviWidget11" agent-id="${esc(CFG.elevenlabsAgentId)}"></elevenlabs-convai>
       </section>`;
   },
 
@@ -859,7 +877,7 @@ function bind(route) {
   // cual sea el teléfono, en vez de restar un número escrito a mano.
   const barra = document.querySelector('.topbar');
   if (barra) document.documentElement.style.setProperty('--alto-menu', barra.offsetHeight + 40 + 'px');
-  if (route === 'cevi') { ceviPaginaIniciar(); }
+  if (route === 'cevi') { CFG.elevenlabsAgentId ? ceviElevenLabsIniciar() : ceviPaginaIniciar(); }
   else {
     // Al salir de la página, CeVi deja de escuchar y de hablar.
     cevi.manosLibres = false; cevi.abierto = false;
@@ -2586,6 +2604,35 @@ function ceviCablear(raiz) {
 }
 
 /* La página de CeVi arranca igual que el panel: saluda y se queda escuchando. */
+/* Widget de voz de ElevenLabs — se le pasa lo que el portal YA sabe del
+   cliente (nombre, máquina, país, teléfono: ya se identificó con documento +
+   WhatsApp para entrar) como "dynamic variables". Así CeVi lo saluda por su
+   nombre y ya conoce su máquina desde la primera palabra, sin preguntarle ni
+   llamar a buscar_cliente — esa tool queda de respaldo para cuando no hay
+   estas variables (por ejemplo, si algún día se usa desde un QR suelto). */
+function ceviElevenLabsIniciar() {
+  const cli = currentClient();
+  const maq = cli ? state.db.maquinas.find(m => m.cliente_id === cli.id) : null;
+  const vars = {
+    telefono: state.telefono || '',
+    nombre: primerNombre(cli?.nombre) || '',
+    maquina: maq?.modelo || '',
+    pais: PAISES[cli?.pais]?.replace(/^\S+\s/, '') || cli?.pais || '',
+  };
+  const cargar = () => {
+    const el = $('#ceviWidget11');
+    if (el) el.setAttribute('dynamic-variables', JSON.stringify(vars));
+  };
+  if (document.getElementById('script-11labs-convai')) { cargar(); return; }
+  const s = document.createElement('script');
+  s.id = 'script-11labs-convai';
+  s.src = 'https://unpkg.com/@elevenlabs/convai-widget-embed';
+  s.async = true;
+  s.onload = cargar;
+  document.head.appendChild(s);
+  cargar(); // por si el custom element ya está definido (navegación repetida)
+}
+
 function ceviPaginaIniciar() {
   const g = $('#ceviPagina');
   if (!g) return;
