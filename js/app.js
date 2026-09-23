@@ -2661,6 +2661,23 @@ function ceviElevenLabsVars() {
    secret__cevi_token: ElevenLabs lo manda en el header de cada tool y nunca
    se lo pasa al modelo; cevi-backend sabe por él quién es el cliente, y así
    las herramientas solo ven SUS casos y SU garantía. */
+/* El agente tiene la autenticación de ElevenLabs activada: para hablar con
+   CeVi hace falta una URL firmada (15 min), que cevi-backend solo entrega a
+   quien trae el token de identidad del portal. La primera va en el atributo
+   `signed-url` (el widget la usa también para leer su configuración); antes de
+   CADA llamada se le cambia por una fresca en el evento
+   `elevenlabs-convai:call`, que el widget dispara justo antes de conectar. */
+const cevi11 = { token: null, url: null, reloj: null };
+
+async function ceviUrlFirmada() {
+  if (!cevi11.token || !CFG.ceviApi) return null;
+  try {
+    const r = await fetch(`${CFG.ceviApi}/voz/url-firmada`, { method: 'POST', headers: { 'X-CeVi-Token': cevi11.token } });
+    if (!r.ok) return null;
+    return (await r.json()).signed_url || null;
+  } catch { return null; }
+}
+
 async function ceviElevenLabsIniciar() {
   if (!document.getElementById('script-11labs-convai')) {
     const s = document.createElement('script');
@@ -2673,17 +2690,32 @@ async function ceviElevenLabsIniciar() {
   if (!host) return;
   const vars = ceviElevenLabsVars();
   const ses = leerSesion();
+  cevi11.token = null;
   if (ses?.t && VERIF.activo) {
     try {
       const r = await apiPost('/api/cevi/token', { token: ses.t });
-      if (r.ok && r.json.cevi_token) vars.secret__cevi_token = r.json.cevi_token;
+      if (r.ok && r.json.cevi_token) cevi11.token = vars.secret__cevi_token = r.json.cevi_token;
     } catch {}
   }
+  cevi11.url = await ceviUrlFirmada();
   if (!host.isConnected) return;   // se fue a otra sección mientras tanto
   const el = document.createElement('elevenlabs-convai');
   el.id = 'ceviWidget11';
-  el.setAttribute('agent-id', CFG.elevenlabsAgentId);
+  // Sin URL firmada se intenta con el agent-id (solo funciona si alguien apagó
+  // la autenticación del agente); con ella, es la vía normal.
+  if (cevi11.url) el.setAttribute('signed-url', cevi11.url);
+  else el.setAttribute('agent-id', CFG.elevenlabsAgentId);
   el.setAttribute('dynamic-variables', JSON.stringify(vars));
+  el.addEventListener('elevenlabs-convai:call', (e) => {
+    const cfg = e.detail && e.detail.config;
+    if (cfg && cevi11.url) { cfg.signedUrl = cevi11.url; delete cfg.agentId; }
+    ceviUrlFirmada().then(u => { if (u) cevi11.url = u; });   // la próxima llamada ya tiene una nueva
+  });
+  clearInterval(cevi11.reloj);
+  cevi11.reloj = setInterval(async () => {
+    if (!el.isConnected) { clearInterval(cevi11.reloj); return; }
+    const u = await ceviUrlFirmada(); if (u) cevi11.url = u;
+  }, 9 * 60e3);
   host.replaceChildren(el);
 }
 
