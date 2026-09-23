@@ -33,23 +33,38 @@ function toast(msg) {
   // El tiempo crece con el largo: 2,6 s no alcanzan para leer quince palabras.
   clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('show'), Math.max(4000, msg.length * 80));
 }
-async function apiGet(url) { const r = await fetch(url); if (!r.ok) throw new Error('http'); return r.json(); }
+// Sin tope, un backend colgado dejaba la pantalla de carga para siempre.
+async function apiGet(url, ms = 15000) {
+  const ctl = new AbortController();
+  const t = setTimeout(() => ctl.abort(), ms);
+  try {
+    const r = await fetch(url, { signal: ctl.signal });
+    if (!r.ok) throw new Error('http');
+    return await r.json();
+  } finally { clearTimeout(t); }
+}
 
 /* Los videos del curso y las guías en PDF ya no cuelgan de una URL pública:
    se piden firmados y con caducidad, y solo se entregan con sesión válida.
-   Antes cualquiera con el enlace se los descargaba sin haber comprado nada. */
+   Antes cualquiera con el enlace se los descargaba sin haber comprado nada.
+   Devuelve { url } o { motivo: 'sesion' | 'red' }: antes cualquier fallo se le
+   mostraba al cliente real como «en la demo no hay video», que era falso. */
 async function enlaceMedio(tipo, archivo) {
   const ses = leerSesion();
-  if (!ses?.t) return null;
+  if (!ses?.t) return { motivo: 'sesion' };
   try {
-    const r = await apiPost('/api/media', { token: ses.t, archivos: [{ tipo, archivo }] });
-    // apiPost() envuelve la respuesta real en `.json` — leer `r.urls` directo
-    // (como estaba) siempre daba undefined, así que TODO el mundo con sesión
-    // real, no solo la demo, veía "esto es con tu cuenta real" sin serlo.
+    const tope = new Promise((_, no) => setTimeout(() => no(new Error('tiempo')), 20000));
+    const r = await Promise.race([apiPost('/api/media', { token: ses.t, archivos: [{ tipo, archivo }] }), tope]);
+    if (r.status === 401) return { motivo: 'sesion' };
+    // apiPost() envuelve la respuesta real en `.json`.
     const ruta = r?.json?.urls?.[`${tipo}/${archivo}`];
-    return ruta ? (VERIF.apiBase || '') + ruta : null;
-  } catch { return null; }
+    return ruta ? { url: (VERIF.apiBase || '') + ruta } : { motivo: 'red' };
+  } catch { return { motivo: 'red' }; }
 }
+const AVISO_MEDIO = {
+  sesion: 'Tu sesión se cerró. Vuelve a entrar con tu celular para verlo.',
+  red: 'No se pudo cargar. Revisa tu internet e inténtalo otra vez.'
+};
 function currentClient() { return state.db.clientes.find(c => c.id === state.ctx) || null; }
 
 /* Preparación del espacio: la puerta de entrada. El resto del portal se
@@ -992,8 +1007,10 @@ function cargarJsPDF() {
   jsPDFCargando = new Promise((resolve, reject) => {
     const s = document.createElement('script');
     s.src = 'https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js';
-    s.onload = () => resolve(window.jspdf.jsPDF);
-    s.onerror = () => reject(new Error('No se pudo cargar el generador de PDF'));
+    // Si falla, se olvida la promesa: si no, el siguiente clic fallaba sin volver a intentar.
+    const fallo = () => { jsPDFCargando = null; s.remove(); reject(new Error('No se pudo cargar el generador de PDF')); };
+    s.onload = () => (window.jspdf?.jsPDF ? resolve(window.jspdf.jsPDF) : fallo());
+    s.onerror = fallo;
     document.head.appendChild(s);
   });
   return jsPDFCargando;
@@ -1064,18 +1081,22 @@ async function descargarCertificadoPDF(cli, m, ci) {
 function bindGuias() {
   view.querySelectorAll('[data-guia]').forEach(b => {
     b.onclick = async () => {
+      if (b.dataset.abriendo) return;
       const etiqueta = b.querySelector('.destino-txt small');
       const original = etiqueta.textContent;
       etiqueta.textContent = 'Preparando…';
-      /* La copia pública de las guías (public/guias/) ya no existe: son
-         contenido pagado y solo salen firmadas, con sesión real, caducas a
-         las 2 horas. La demo no tiene sesión que firmar — antes esto caía a
-         la copia pública; ahora, sin ella, se dice la verdad en vez de
-         ofrecer un enlace que ya no lleva a ningún lado. */
-      const url = await enlaceMedio('guias', b.dataset.guia);
+      b.dataset.abriendo = '1';
+      /* La pestaña se abre YA, dentro del toque: Safari de iPhone bloquea un
+         window.open que llega después de esperar a la red. Luego se le pone la
+         dirección firmada (caduca a las 2 horas, solo con sesión). */
+      const pestana = window.open('', '_blank');
+      if (pestana) pestana.opener = null;
+      const r = await enlaceMedio('guias', b.dataset.guia);
       etiqueta.textContent = original;
-      if (!url) { toast('Esto se descarga con tu cuenta real — en la demo no hay documentos de verdad.'); return; }
-      window.open(url, '_blank', 'noopener');
+      delete b.dataset.abriendo;
+      if (!r.url) { if (pestana) pestana.close(); toast(AVISO_MEDIO[r.motivo]); return; }
+      if (pestana) pestana.location.href = r.url;
+      else location.href = r.url;
     };
   });
 }
@@ -1103,6 +1124,49 @@ function bindCertificadoPdf() {
   });
 }
 
+/* Los 20 videos son contenido pagado: solo salen con enlace firmado y sesión
+   (caduca a las 2 horas). Si el enlace vence con la página abierta, o se corta
+   la red, se pide otro y se sigue donde iba; si tampoco, se dice qué pasó. */
+function montarVideo(box, archivo) {
+  box.innerHTML = '<p class="muted">Cargando video…</p>';
+  enlaceMedio('videos', archivo).then((r) => {
+    if (!box.isConnected) return;
+    if (!r.url) return avisoVideo(box, archivo, r.motivo);
+    box.innerHTML = '<video controls playsinline preload="metadata" controlsList="nodownload">Tu navegador no puede reproducir este video.</video>';
+    const vid = box.querySelector('video');
+    let reintentos = 0;
+    vid.onerror = async () => {
+      if (reintentos++ >= 1) return avisoVideo(box, archivo, 'red');
+      const t = vid.currentTime, seguia = !vid.paused;
+      const n = await enlaceMedio('videos', archivo);
+      if (!box.isConnected) return;
+      if (!n.url) return avisoVideo(box, archivo, n.motivo);
+      vid.addEventListener('loadedmetadata', () => {
+        if (t) vid.currentTime = t;
+        if (seguia) vid.play().catch(() => {});
+      }, { once: true });
+      vid.src = n.url;
+    };
+    vid.addEventListener('playing', () => { reintentos = 0; });
+    vid.ontimeupdate = () => {
+      if (vid.duration && vid.currentTime / vid.duration > 0.8) {
+        try { localStorage.setItem('c4v_video_' + state.ctx + '_' + archivo, '1'); } catch {}
+      }
+    };
+    vid.src = r.url;
+  });
+}
+function avisoVideo(box, archivo, motivo) {
+  const boton = motivo === 'sesion'
+    ? '<button type="button" class="btn ghost sm lv-entrar">Volver a entrar</button>'
+    : '<button type="button" class="btn ghost sm lv-reintentar">Reintentar</button>';
+  box.innerHTML = `<div class="lv-aviso"><p class="muted">${AVISO_MEDIO[motivo]}</p>${boton}</div>`;
+  const reintentar = box.querySelector('.lv-reintentar');
+  if (reintentar) reintentar.onclick = () => montarVideo(box, archivo);
+  const entrar = box.querySelector('.lv-entrar');
+  if (entrar) entrar.onclick = () => { borrarSesion(); location.reload(); };
+}
+
 function bindLeccion() {
   // «Siguiente» marca la lección como vista y avanza.
   view.querySelectorAll('.lec-siguiente[data-vista]').forEach(b => b.addEventListener('click', () => {
@@ -1110,26 +1174,9 @@ function bindLeccion() {
   }));
   // El video se monta de una vez: en una pantalla que ES el video no hay nada que plegar.
   view.querySelectorAll('.lec-video-caja').forEach(caja => {
-    const archivo = caja.dataset.video, box = caja.querySelector('.lv-player');
+    const box = caja.querySelector('.lv-player');
     box.hidden = false;
-    box.innerHTML = '<p class="muted">Cargando video…</p>';
-    /* Los 20 videos son contenido pagado, igual que las guías: solo salen con
-       enlace firmado y sesión real (caduca a las 2 horas). La demo no tiene
-       sesión que firmar, así que aquí se dice la verdad en vez de mostrar un
-       reproductor vacío. */
-    enlaceMedio('videos', archivo).then((url) => {
-      if (!url) { box.innerHTML = '<p class="muted">Este video se ve con tu cuenta real — en la demo no hay video de verdad.</p>'; return; }
-      box.innerHTML = `<video controls playsinline preload="metadata" controlsList="nodownload">
-          <source src="${esc(url)}" type="video/mp4">
-          Tu navegador no puede reproducir este video.
-        </video>`;
-      const vid = box.querySelector('video');
-      vid.ontimeupdate = () => {
-        if (vid.duration && vid.currentTime / vid.duration > 0.8) {
-          try { localStorage.setItem('c4v_video_' + state.ctx + '_' + archivo, '1'); } catch {}
-        }
-      };
-    });
+    montarVideo(box, caja.dataset.video);
   });
   // La evaluación en su propia pantalla arranca sola, sin botón previo.
   // Si ya la aprobaste, se queda escondida: no tiene sentido gastar trabajo
@@ -2947,12 +2994,15 @@ function pintarPieLegal() {
   /* Tres líneas y nada más. Lo que la ley obliga a mostrar sigue todo aquí:
      el Libro de Reclamaciones (Ley 29571), la política de datos (Ley 29733) y
      quién es el proveedor. Solo se quitó el adorno. */
+  // Las páginas legales leen ?empresa=RUC: sin él, la hoja de reclamo salía
+  // a nombre de la empresa por defecto, no de la que le vendió al cliente.
+  const q = state.empresaVendedora && e.ruc ? `?empresa=${encodeURIComponent(e.ruc)}` : '';
   pie.innerHTML = `
     <nav class="pie-enlaces" aria-label="Información legal">
-      <a href="libro-reclamaciones.html" class="pie-lr" target="_blank" rel="noopener">Libro de Reclamaciones</a>
-      <a href="privacidad.html" target="_blank" rel="noopener">Privacidad</a>
-      <a href="terminos.html" target="_blank" rel="noopener">Términos</a>
-      <a href="privacidad.html#derechos" target="_blank" rel="noopener">Mis datos</a>
+      <a href="libro-reclamaciones.html${q}" class="pie-lr" target="_blank" rel="noopener">Libro de Reclamaciones</a>
+      <a href="privacidad.html${q}" target="_blank" rel="noopener">Privacidad</a>
+      <a href="terminos.html${q}" target="_blank" rel="noopener">Términos</a>
+      <a href="privacidad.html${q}#derechos" target="_blank" rel="noopener">Mis datos</a>
     </nav>
     <p class="pie-empresa">C4V Láser</p>`;
 }

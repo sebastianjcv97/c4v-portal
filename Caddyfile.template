@@ -1,0 +1,61 @@
+{
+	admin off
+	persist_config off
+	auto_https off
+
+	log {
+		format json
+	}
+
+	servers {
+		trusted_proxies static private_ranges
+	}
+}
+
+# Plantilla por defecto de Railpack (staticfile) con dos cambios:
+# 1) CSP: blob: en script-src (los AudioWorklet del widget de voz de ElevenLabs
+#    se cargan desde blob:, sin eso la llamada falla al arrancar) y blob:/data:
+#    en media-src (audio de CeVi). wss: explícito para Safari.
+# 2) Cache-Control: sin él los teléfonos seguían con el index.html viejo
+#    durante horas después de cada despliegue.
+:{$PORT:80} {
+	log {
+		format json
+	}
+
+	respond /health 200
+
+	header {
+		X-XSS-Protection "1; mode=block"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Content-Security-Policy "default-src 'self'; img-src 'self' data: blob: https: *; style-src 'self' 'unsafe-inline' https: *; script-src 'self' 'unsafe-inline' https: blob: *; font-src 'self' data: https: *; connect-src 'self' https: wss: *; media-src 'self' https: blob: data: *; object-src 'none'; frame-src 'self' https: *;"
+		-Server
+	}
+
+	@imagenes path /assets/*
+	header @imagenes Cache-Control "public, max-age=86400"
+	@resto not path /assets/*
+	header @resto Cache-Control "no-cache"
+
+	root * {{.StaticFileRoot}}
+
+	file_server {
+		hide .git
+		hide .env*
+		hide Caddyfile
+		hide Caddyfile.template
+	}
+
+	encode {
+		gzip
+		zstd
+	}
+
+	try_files {path} {path}.html {path}/index.html{{if .IndexFallback}} /index.html{{end}}
+
+	handle_errors {
+		rewrite * /{err.status_code}.html
+		file_server
+	}
+}
