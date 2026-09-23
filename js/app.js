@@ -857,7 +857,13 @@ function vistaMantPasos(sec, id, nStr) {
           </form>
         </div>`;
     }).join('');
-    if (!anotar) anotar = '<p class="mant-anotado">Cuando veamos tu máquina en tu cuenta, aquí vas a poder anotarlo.</p>';
+    if (!anotar) {
+      // Con la máquina en la cuenta pero sin fecha de llegada, lo que falta es la fecha.
+      const sinFecha = (state.mant?.maquinas || []).some(m => !m.entrega && m.aplica !== false);
+      anotar = sinFecha
+        ? '<p class="mant-anotado">Para anotarlo, primero dinos en el calendario qué día te llegó la máquina.</p>'
+        : '<p class="mant-anotado">Cuando veamos tu máquina en tu cuenta, aquí vas a poder anotarlo.</p>';
+    }
   }
   return `
     <section class="paso-fin mant-fin">
