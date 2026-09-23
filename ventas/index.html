@@ -15,7 +15,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@700;800&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="../css/styles.css?v=20260924b" />
+  <link rel="stylesheet" href="../css/styles.css?v=20260924c" />
   <style>
     /* Página pública del CeVi comercial: el toro y la burbuja, nada más.
        Colores y letras del portal (styles.css). */
@@ -29,13 +29,32 @@
     /* La escena: el toro arriba y la burbuja del widget abajo. El widget ocupa
        toda la escena (su panel de chat sube y tapa al toro al abrirse). */
     .v-escena{position:relative;flex:1;min-height:520px;max-width:720px;width:100%;margin:0 auto}
-    .v-hola{position:absolute;inset:0 0 110px;display:grid;place-content:center;justify-items:center;gap:10px;text-align:center;padding:0 20px;z-index:0}
-    .v-hola img{width:clamp(150px,30vh,240px);height:auto;filter:drop-shadow(0 14px 28px rgba(80,0,0,.35));animation:v-flota 3.6s ease-in-out infinite}
-    .v-hola h1{font-family:var(--slab);font-weight:800;font-size:clamp(30px,5.5vh,42px);line-height:1.1;margin:6px 0 0;color:#fff}
-    .v-hola p{margin:0;font-size:var(--t-md);color:#fff;opacity:.92}
-    @keyframes v-flota{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
-    @media (prefers-reduced-motion:reduce){.v-hola img{animation:none}}
-    .v-escena elevenlabs-convai{position:absolute;inset:0;display:block;z-index:1;--el-overlay-padding:0px}
+    .v-hola{position:absolute;inset:0 0 104px;display:grid;place-content:center;justify-items:center;gap:14px;text-align:center;padding:0 20px;z-index:0}
+    /* El botón para hablar: el toro en un disco blanco, con micrófono y
+       anillos que laten. En llamada reacciona al volumen (--v de 0 a 1). */
+    .v-hablar{--v:0;position:relative;width:clamp(200px,34vh,270px);aspect-ratio:1;border-radius:50%;border:0;padding:0;cursor:pointer;
+      background:#fff;box-shadow:0 18px 44px rgba(80,0,0,.45);transform:scale(calc(1 + var(--v) * .12));transition:transform .08s linear}
+    .v-hablar:focus-visible{outline:4px solid #fff;outline-offset:6px}
+    .v-hablar img{position:absolute;inset:6% 8% 10%;width:84%;height:84%;object-fit:contain;pointer-events:none}
+    .v-hablar::before,.v-hablar::after{content:"";position:absolute;inset:-14px;border-radius:50%;border:3px solid rgba(255,255,255,.75);
+      animation:v-anillo 2.4s ease-out infinite;pointer-events:none}
+    .v-hablar::after{animation-delay:1.2s}
+    @keyframes v-anillo{0%{transform:scale(.92);opacity:.9}100%{transform:scale(1.28);opacity:0}}
+    .v-mic{position:absolute;right:2%;bottom:4%;width:30%;aspect-ratio:1;border-radius:50%;background:var(--rojo-tinta);color:#fff;
+      display:grid;place-items:center;box-shadow:0 6px 16px rgba(80,0,0,.4);border:4px solid #fff}
+    .v-mic svg{width:52%;height:52%}
+    .v-hola h1{font-family:var(--slab);font-weight:800;font-size:clamp(28px,5vh,40px);line-height:1.1;margin:4px 0 0;color:#fff}
+    .v-hola p{margin:0;font-size:var(--t-md);color:#fff;opacity:.92;max-width:30ch}
+    /* Estados de la llamada */
+    .v-hola[data-estado="conectando"] .v-hablar::before,.v-hola[data-estado="conectando"] .v-hablar::after{animation-duration:1s}
+    .v-hola[data-estado="escuchando"] .v-hablar::before,.v-hola[data-estado="escuchando"] .v-hablar::after,
+    .v-hola[data-estado="hablando"] .v-hablar::before,.v-hola[data-estado="hablando"] .v-hablar::after{animation:none;opacity:calc(.35 + var(--v));transform:scale(calc(1 + var(--v) * .35))}
+    .v-hola[data-estado="escuchando"] .v-mic,.v-hola[data-estado="hablando"] .v-mic,.v-hola[data-estado="conectando"] .v-mic{background:#fff;color:var(--rojo-tinta);border-color:var(--rojo-tinta)}
+    @media (prefers-reduced-motion:reduce){.v-hablar::before,.v-hablar::after{animation:none;opacity:.5}.v-hablar{transition:none}}
+    /* El widget queda encima (su panel de chat tapa al botón al abrirse) pero
+       deja pasar los toques donde no dibuja nada: sus partes visibles ya
+       traen pointer-events:auto. */
+    .v-escena elevenlabs-convai{position:absolute;inset:0;display:block;z-index:1;--el-overlay-padding:0px;pointer-events:none}
     .v-cargando{position:absolute;left:0;right:0;bottom:28px;margin:0;display:grid;justify-items:center;gap:10px;text-align:center;
       font-weight:500;color:#fff;opacity:.9;z-index:2;padding:0 20px}
     .v-cargando .btn{background:#fff;color:var(--rojo-tinta);border:0}
@@ -53,10 +72,13 @@
   </nav>
 
   <main class="v-escena" id="ceviWidgetHost" aria-label="Conversación con CeVi">
-    <div class="v-hola">
-      <img src="../assets/cevi/saluda.png" alt="CeVi, el toro de C4V, saludando" width="240" height="240" />
-      <h1>Habla con CeVi</h1>
-      <p>Te ayuda a elegir tu máquina láser</p>
+    <div class="v-hola" id="ventasHola" data-estado="reposo">
+      <button type="button" class="v-hablar" id="ventasHablar" aria-describedby="ventasEstado" disabled>
+        <img src="../assets/cevi/saluda.png" alt="" width="240" height="240" />
+        <span class="v-mic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></span>
+      </button>
+      <h1 id="ventasTitulo">Toca para hablar</h1>
+      <p id="ventasEstado" aria-live="polite">CeVi, el asesor de C4V con inteligencia artificial, te ayuda a elegir tu máquina láser.</p>
     </div>
     <p class="v-cargando">Preparando a CeVi…</p>
   </main>
@@ -66,7 +88,7 @@
     <p>CeVi responde con inteligencia artificial. <a href="../privacidad.html">Privacidad</a> · <a href="../terminos.html">Términos</a> · <a href="../libro-reclamaciones.html">Libro de Reclamaciones</a></p>
   </footer>
 
-  <script src="../js/config.js?v=20260924b"></script>
+  <script src="../js/config.js?v=20260924c"></script>
   <script>
   /* CeVi comercial en la página pública. Sin login: cevi-backend da URLs
      firmadas a quien viene de este origen (con topes por visitante).
@@ -134,6 +156,56 @@
       host.appendChild(p);
     }
 
+    /* ---------- El botón grande: toca para hablar ---------- */
+    const hola = document.getElementById('ventasHola');
+    const boton = document.getElementById('ventasHablar');
+    const titulo = document.getElementById('ventasTitulo');
+    const estadoTxt = document.getElementById('ventasEstado');
+    const TEXTO_REPOSO = estadoTxt.textContent;
+    const voz = { conv: null, pedida: false, raf: 0, espera: null };
+    const ESTADOS = {
+      reposo: ['Toca para hablar', TEXTO_REPOSO],
+      conectando: ['Conectando…', 'Si el navegador pregunta, permite el micrófono.'],
+      escuchando: ['Te escucho…', 'Háblale como a un asesor. Toca a CeVi para terminar.'],
+      hablando: ['CeVi está hablando', 'Toca a CeVi para terminar.'],
+      sinmic: ['Toca para hablar', 'Para hablar, permite el micrófono. También puedes escribirle con el globito de abajo.'],
+    };
+    function estadoVoz(e) {
+      hola.dataset.estado = e;
+      [titulo.textContent, estadoTxt.textContent] = ESTADOS[e];
+      boton.setAttribute('aria-label', e === 'reposo' || e === 'sinmic' ? 'Hablar con CeVi' : 'Terminar la conversación con CeVi');
+      clearTimeout(voz.espera);
+      // Si pidió hablar y no conecta (micrófono negado, aviso sin aceptar), no queda colgado.
+      if (e === 'conectando') voz.espera = setTimeout(() => { if (!voz.conv) estadoVoz('sinmic'); }, 20000);
+    }
+    function seguirVoz() {
+      cancelAnimationFrame(voz.raf);
+      const paso = () => {
+        const c = voz.conv;
+        if (!c || !c.isOpen || !c.isOpen()) { voz.conv = null; voz.pedida = false; boton.style.setProperty('--v', 0); estadoVoz('reposo'); return; }
+        const sale = c.getOutputVolume ? c.getOutputVolume() : 0;
+        const entra = c.getInputVolume ? c.getInputVolume() : 0;
+        const e = sale > 0.02 ? 'hablando' : 'escuchando';
+        if (hola.dataset.estado !== e) estadoVoz(e);
+        boton.style.setProperty('--v', Math.min(1, (e === 'hablando' ? sale : entra) * 2.5).toFixed(3));
+        voz.raf = requestAnimationFrame(paso);
+      };
+      voz.raf = requestAnimationFrame(paso);
+    }
+    function prepararBoton(el) {
+      // El botón nativo "Iniciar conversación" aparece cuando el widget termina de cargar.
+      const buscar = () => el.shadowRoot?.querySelector('button[aria-label="' + INICIAR + '"]');
+      const listo = setInterval(() => { if (buscar()) { clearInterval(listo); boton.disabled = false; } }, 250);
+      boton.onclick = () => {
+        if (voz.conv) { try { voz.conv.endSession(); } catch {} return; }       // en llamada: terminar
+        const b = buscar();
+        if (!b) return;
+        estadoVoz('conectando');
+        b.click();                                                              // la misma llamada del widget nativo
+      };
+    }
+    const INICIAR = 'Iniciar conversación';   // text_contents.start_call del agente (etiqueta del botón nativo)
+
     async function iniciar() {
       if (!document.getElementById('script-11labs-convai')) {
         const s = document.createElement('script');
@@ -154,10 +226,18 @@
         if (!cfg || !el.isConnected) return;
         const url = tomar();                             // una URL, una llamada
         if (url) { cfg.signedUrl = url; cfg.connectionType = 'websocket'; delete cfg.agentId; }
+        // Llamada de voz: el botón grande muestra el estado con el volumen real.
+        // (onConversationCreated el widget no lo usa: lo deja pasar.)
+        if (!cfg.textOnly) {
+          voz.pedida = true; estadoVoz('conectando');
+          const antes = cfg.onConversationCreated;
+          cfg.onConversationCreated = (c) => { try { antes?.(c); } catch {} voz.conv = c; seguirVoz(); };
+        }
         rellenar();
       });
       host.querySelector('.v-cargando')?.remove();
       host.appendChild(el);
+      prepararBoton(el);
       rellenar();
       setInterval(() => rellenar(), 60e3);
     }
