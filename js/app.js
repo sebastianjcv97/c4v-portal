@@ -601,16 +601,18 @@ function pintarAvisoMant() {
   const mostrar = pend.length > 0 && state.ctx && ruta !== 'mantenimiento' && ruta !== 'cevi';
   el.hidden = !mostrar;
   mantRefrescarSiHaceFalta();
-  if (!mostrar) { el.innerHTML = ''; return; }
+  if (!mostrar) { el.innerHTML = ''; el.dataset.k = ''; return; }
   const modelos = [...new Set(pend.map(x => x.m.modelo).filter(Boolean))];
   const maquina = modelos.length === 1 ? `tu ${modelos[0]}` : 'tu máquina';
   const cosas = [...new Set(pend.map(x => x.d.corto))];
-  const html = `
+  // Solo si cambió: es role="status" y el lector de pantalla lo relee en cada cambio.
+  const k = `${maquina}|${cosas.join('|')}`;
+  if (el.dataset.k === k) return;
+  el.dataset.k = k;
+  el.innerHTML = `
     <span class="aviso-mant-ic" aria-hidden="true">${icon('llave')}</span>
     <p class="aviso-mant-txt"><strong>No te olvides del mantenimiento de ${esc(maquina)}.</strong> Toca ${esc(mantLista(cosas))}.</p>
     <a class="btn primary sm" href="#/mantenimiento">Ver qué toca</a>`;
-  // Solo si cambió: es role="status" y el lector de pantalla lo relee en cada cambio.
-  if (el.innerHTML !== html) el.innerHTML = html;
 }
 
 function mantFilaTarea(m, t, varias) {
@@ -641,20 +643,30 @@ function mantFilaTarea(m, t, varias) {
     </article>`;
 }
 
+const MANT_TIPO_TXT = { diodo: 'un láser de diodo', fibra: 'un láser de fibra', soldadora: 'una soldadora' };
 function mantBloqueMaquina(m, varias) {
   const plan = mantPlan();
+  if (m.aplica === false) {
+    const tipo = MANT_TIPO_TXT[String(m.tipo || '').toLowerCase()] || 'otro tipo de máquina';
+    return `
+    <div class="mant-maquina">
+      ${varias ? `<h2 class="section-h">Tu ${esc(m.modelo || 'máquina')}</h2>` : ''}
+      <p class="mant-resumen">Tu ${esc(m.modelo || 'máquina')} es ${esc(tipo)}: este calendario es el de las máquinas CO2, así que no le corresponde. Para saber cómo cuidarla, pregúntale a CeVi o escríbenos.</p>
+    </div>`;
+  }
   const orden = { toca: 0, pronto: 1, aun_no: 2, al_dia: 3, sin_fecha: 4 };
   const pos = (id) => plan.tareas.findIndex(x => x.id === id);
   const tareas = [...(m.tareas || [])].sort((a, b) => ((orden[a.estado] ?? 9) - (orden[b.estado] ?? 9)) || (pos(a.id) - pos(b.id)));
   const pend = tareas.filter(t => t.estado === 'toca');
   let resumen;
-  if (!m.entrega) resumen = 'Aún no sabemos qué día te llegó la máquina. Dinos la fecha y armamos tu calendario.';
+  if (!m.entrega && m.entrega_fuente === 'en_camino') resumen = 'Cuando te llegue la máquina, dinos qué día y armamos tu calendario.';
+  else if (!m.entrega) resumen = 'Aún no sabemos qué día te llegó la máquina. Dinos la fecha y armamos tu calendario.';
   else if (pend.length) resumen = `Hoy toca ${mantLista(pend.map(t => mantTarea(t.id)?.corto).filter(Boolean))}.`;
   else {
     const sig = tareas.filter(t => t.proxima).sort((a, b) => (mantDia(a.proxima) - mantDia(b.proxima)))[0];
     resumen = sig ? `Estás al día. Lo próximo: ${mantTarea(sig.id)?.corto} el ${mantFecha(sig.proxima)}.` : 'Estás al día.';
   }
-  const fuente = { cliente: 'el día que nos dijiste que te llegó', pedido: 'la fecha de tu pedido', certificado: 'la fecha de tu certificado' }[m.entrega_fuente] || '';
+  const fuente = { cliente: 'el día que nos dijiste que te llegó', despacho: 'el día que salió de nuestro almacén', pedido: 'la fecha de tu pedido', certificado: 'la fecha de tu certificado' }[m.entrega_fuente] || '';
   const hoy = mantYmd(mantHoy());
   return `
     <div class="mant-maquina">
@@ -662,7 +674,7 @@ function mantBloqueMaquina(m, varias) {
       <p class="mant-resumen ${pend.length ? 'toca' : 'ok'}">${esc(resumen)}</p>
       <p class="mant-desde">
         ${m.entrega ? `Contamos desde el ${esc(mantFecha(m.entrega))}, ${esc(fuente)}.` : ''}
-        <button type="button" class="paso-link" data-mant-cambiar="${esc(m.ref)}">${m.entrega ? '¿Te llegó otro día?' : 'Poner la fecha en que me llegó'}</button>
+        <button type="button" class="paso-link" data-mant-cambiar="${esc(m.ref)}">${m.entrega ? '¿Te llegó otro día?' : m.entrega_fuente === 'en_camino' ? 'Ya me llegó: poner la fecha' : 'Poner la fecha en que me llegó'}</button>
       </p>
       <form class="mant-fecha" data-mant-entrega="${esc(m.ref)}" hidden>
         <label for="mantEnt-${esc(m.ref)}">¿Qué día te llegó la máquina?</label>
@@ -685,6 +697,18 @@ function mantCalendarioGenerico() {
     </article>`).join('')}</div>`;
 }
 
+function mantContactoTecnico(texto) {
+  const hayCevi = Boolean(CFG.elevenlabsAgentId || CFG.ceviApi);
+  return `
+    <div class="mant-tecnico">
+      ${texto ? `<p>${esc(texto)}</p>` : ''}
+      <div class="mant-tecnico-acc">
+        ${hayCevi ? '<a class="btn ghost sm" href="#/cevi">Pedírselo a CeVi</a>' : ''}
+        <a class="btn ghost sm" href="${esc(waLink('Hola, necesito que un técnico revise mi máquina'))}" target="_blank" rel="noopener">Escribir por WhatsApp</a>
+      </div>
+    </div>`;
+}
+
 function mantSecciones() {
   const plan = mantPlan();
   /* Lo que solo se MUESTRA sale de la copia de data.js del propio portal, que
@@ -697,7 +721,6 @@ function mantSecciones() {
   const errores = (c2?.modulos || []).find(mo => /errores/i.test(mo.titulo))?.lecciones
     ?.filter(l => l && l.img && l.img !== 'error-calendario.png') || [];
   const guias = (acad.guiasPdf || []).filter(g => g.curso === 'c2');
-  const hayCevi = Boolean(CFG.elevenlabsAgentId || CFG.ceviApi);
   return `
     <h2 class="section-h">Cada vez que la usas</h2>
     <div class="lista mant-uso">${(plan.cadaUso || []).map(x => `
@@ -729,13 +752,7 @@ function mantSecciones() {
       </article>`).join('')}</div>
 
     <h2 class="section-h">Esto lo hace un técnico</h2>
-    <div class="mant-tecnico">
-      <p>${esc(plan.tecnico || '')}</p>
-      <div class="mant-tecnico-acc">
-        ${hayCevi ? '<a class="btn ghost sm" href="#/cevi">Pedírselo a CeVi</a>' : ''}
-        <a class="btn ghost sm" href="${esc(waLink('Hola, necesito que un técnico revise mi máquina'))}" target="_blank" rel="noopener">Escribir por WhatsApp</a>
-      </div>
-    </div>
+    ${mantContactoTecnico(plan.tecnico)}
 
     ${errores.length ? `
     <h2 class="section-h">Lo que daña tu máquina</h2>
@@ -770,11 +787,13 @@ function vistaMantPortada() {
   } else {
     bloques = est.maquinas.map(m => mantBloqueMaquina(m, est.maquinas.length > 1)).join('');
   }
+  // Solo diodo o soldadora: lo de abajo (enfriador, espejos, tubo) no es para su máquina.
+  const sinPlan = (est?.maquinas || []).length > 0 && est.maquinas.every(m => m.aplica === false);
   return `
     <section class="mant">
-      <p class="bajada">Tu máquina rinde y dura más si la cuidas. Aquí está qué toca y cuándo, contado desde el día que te llegó.</p>
+      ${sinPlan ? '' : '<p class="bajada">Tu máquina rinde y dura más si la cuidas. Aquí está qué toca y cuándo, contado desde el día que te llegó.</p>'}
       ${bloques}
-      ${mantSecciones()}
+      ${sinPlan ? mantContactoTecnico() : mantSecciones()}
     </section>`;
 }
 
@@ -853,9 +872,14 @@ function vistaMantPasos(sec, id, nStr) {
 
 function bindMantenimiento() {
   bindGuias();
+  mantRefrescarSiHaceFalta();
+  // Si la respuesta llega cuando la persona ya se fue a otra pantalla, se avisa
+  // con el toast y nada más: no se la saca de donde está.
+  const ruta0 = currentRoute();
   const tras = (msg, volver) => {
     pintarAvisoMant();
     if (msg) toast(msg);
+    if (currentRoute() !== ruta0) return;
     if (volver && location.hash !== '#/mantenimiento') location.hash = '#/mantenimiento';
     else render(currentRoute());
   };

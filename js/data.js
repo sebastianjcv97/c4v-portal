@@ -393,7 +393,7 @@ window.__SEED__ = {
     guiasPdf: [
       { curso: "c1", archivo: "instalacion-9060-6040.pdf", titulo: "Instalación de tu máquina (9060 / 6040)", desc: "Armado de la base, ruedas y montaje, paso a paso con fotos", tam: "0.5 MB" },
       { curso: "c1", archivo: "parametros.pdf", titulo: "Parámetros por material", desc: "La tabla oficial de potencia y velocidad + tutorial RDWorks", tam: "4.4 MB" },
-      { curso: "c2", archivo: "mantenimiento.pdf", titulo: "Mantenimiento completo", desc: "Normas de uso, limpieza de lente y espejos, chiller y rieles", tam: "1.4 MB" },
+      { curso: "c2", archivo: "mantenimiento.pdf", titulo: "Mantenimiento completo", desc: "El manual de fábrica. Cada cuánto y qué haces tú es lo de la pestaña Mantenimiento: la fuente y el AC-DC los ve un técnico", tam: "1.4 MB" },
       { curso: "c2", archivo: "limpieza.pdf", titulo: "Materiales de limpieza", desc: "Los 5 materiales que necesitas para el mantenimiento", tam: "0.2 MB" },
       { curso: "c3", archivo: "instalar-rdworks.pdf", titulo: "Instalar RDWorks", desc: "Cómo instalar el software de corte en tu computadora", tam: "0.4 MB" },
       { curso: "c3", archivo: "cable-red.pdf", titulo: "Conexión por cable de red", desc: "Conecta la máquina a tu computadora por red", tam: "0.6 MB" },
@@ -414,7 +414,7 @@ window.__SEED__ = {
 
     compras: [
       { item: "Agua destilada", img: "agua.png", para: "Para el enfriador",
-        spec: "Dos galones. En las tiendas se pide como «agua de batería». No uses agua del caño ni hervida.",
+        spec: "Tres galones: cada llenado lleva 8 litros en la 6040 y la 9060. En las tiendas se pide como «agua de batería». No uses agua del caño ni hervida.",
         donde: "Grifos, lubricentros y ferreterías" },
       { item: "Alcohol isopropílico, hisopos y paño de microfibra", img: "alcohol.png", para: "Para limpiar el lente y los espejos",
         spec: "Alcohol al 99%. El de farmacia tiene agua y mancha el lente.",
@@ -468,8 +468,10 @@ window.__SEED__ = {
      de portal-api: el servidor lee su propia copia de este archivo.
      - Frecuencias decididas con Sebastián: cada tarea a su ritmo, contado desde
        la fecha de entrega de cada máquina. Rieles cada 7 días, lente y espejos
-       cada 15, agua del enfriador cada 30. Son las del calendario del curso c2 y
-       del manual mantenimiento.pdf.
+       cada 15, agua del enfriador cada 30. El agua es la del manual
+       (mantenimiento.pdf, una vez al mes); los 15 días de lente y espejos los
+       decidió C4V (el manual pide espejos cada semana). El PDF también le pide al
+       cliente limpiar la fuente y el AC-DC: eso aquí no va (ver `tecnico`).
      - Pasos: los del manual, en palabras simples. No se inventa nada que no diga
        el manual (por eso no hay pasos para la superficie ni para el panal).
      - Lo eléctrico NO está aquí: fuente de poder, AC-DC, cableado, tubo y
@@ -486,11 +488,11 @@ window.__SEED__ = {
         porque: "El polvo y el humo del corte se pegan a los rieles. La máquina vibra y los cortes salen desfasados.",
         materiales: ["Paño de microfibra que no suelte pelusa", "Aceite 3-EN-UNO"],
         pasos: [
-          { t: "Apaga la máquina antes de empezar." },
+          { t: "Apaga y desenchufa la máquina antes de empezar." },
           { t: "Limpia con el paño de microfibra la parte plateada de los rieles X e Y, y sus costados, hasta que no quede polvo.", img: "academia/c2/rieles-limpiar.jpg" },
           { t: "Pon unas gotas de aceite 3-EN-UNO en el paño y pásalo por todo el riel, de un extremo al otro.", img: "academia/c2/rieles-aceite.jpg" },
           { t: "Mueve el cabezal con la mano de un extremo al otro, para que el aceite se reparta.", img: "academia/c2/rieles-mover.jpg" },
-          { t: "La cinta de goma no se aceita. Nunca limpies los rieles con agua, porque se oxidan, ni uses aceite de motor o WD-40." }
+          { t: "La cinta de goma no se aceita. Nunca limpies los rieles con agua, porque se oxidan, ni con aceite de máquina. Para aceitarlos, solo 3-EN-UNO: nada de aceite de motor ni WD-40." }
         ]
       },
       {
@@ -499,21 +501,22 @@ window.__SEED__ = {
         corto: "limpiar el lente y los espejos",
         porque: "La suciedad en el lente y en los espejos se come la fuerza del láser. El corte sale débil y disparejo.",
         nota: "Si trabajas jornadas largas todos los días, hazlo cada semana.",
-        materiales: ["Alcohol isopropílico", "Hisopos de buena calidad (los baratos rayan el lente)", "Paño de microfibra", "La llave Allen que viene con la máquina"],
+        materiales: ["Alcohol isopropílico", "Hisopos de buena calidad (los baratos rayan el lente)", "Paño de microfibra", "La llave Allen que viene con la máquina", "La llave plana del anillo del lente (la de la foto del paso)"],
         pasos: [
           { t: "Apaga y desenchufa la máquina. Todo esto se hace con la máquina apagada." },
           { t: "Primer espejo: humedece el paño con alcohol isopropílico y límpialo en círculos, suave y sin presionar, hasta que no quede suciedad.", img: "academia/c2/espejos-frecuencia.jpg" },
           { t: "Segundo espejo: igual, con el paño humedecido en alcohol.", img: "mantenimiento/espejo-2.jpg" },
           { t: "Tercer espejo: envuelve un hisopo con el paño, humedécelo con alcohol y límpialo.", img: "academia/c2/espejos.jpg" },
-          { t: "Los tornillos dorados de los espejos no se mueven: solo se limpian. Moverlos desalinea el láser." },
+          { t: "Los tornillos dorados de los espejos no se mueven: solo se limpian. Moverlos desalinea el láser. Y el tubo láser no se toca: si para llegar a un espejo tienes que sacar una tapa con tornillos, para ahí y escríbenos." },
           { t: "Ahora el lente. Presiona hacia adentro el anillo azul y saca la manguera del aire.", img: "mantenimiento/lente-1-aire.jpg" },
-          { t: "Afloja la perilla dorada, girándola hacia la izquierda, y saca el cabezal.", img: "mantenimiento/lente-2-perilla.jpg" },
-          { t: "Con la llave Allen, afloja girando hacia la izquierda.", img: "mantenimiento/lente-4-llave.jpg" },
+          { t: "Sostén con una mano el tubo negro de abajo del cabezal. Con la otra, afloja la perilla dorada de su costado (la de la foto, no las del espejo de arriba), girándola hacia la izquierda.", img: "mantenimiento/lente-2-perilla.jpg" },
+          { t: "Saca el tubo negro hacia abajo.", img: "mantenimiento/lente-3-cabezal.jpg" },
+          { t: "Con la llave Allen, afloja un poco el tornillito de la foto, girando hacia la izquierda. No lo saques del todo.", img: "mantenimiento/lente-4-llave.jpg" },
           { t: "Envuelve con el paño de microfibra el tubo negro donde va el lente.", img: "mantenimiento/lente-5-pano.jpg" },
-          { t: "Con la llave, gira hacia la izquierda y saca el anillo negro. Cuida de no golpear el lente.", img: "mantenimiento/lente-6-anillo.jpg" },
-          { t: "Saca el lente con ayuda del paño.", img: "mantenimiento/lente-7-sacar.jpg" },
+          { t: "Con la llave plana de la foto, gira el anillo negro hacia la izquierda y sácalo. Cuida de no golpear el lente.", img: "mantenimiento/lente-6-anillo.jpg" },
+          { t: "Saca el lente con ayuda del paño, sin tocarlo con los dedos. Fíjate qué cara mira hacia arriba.", img: "mantenimiento/lente-7-sacar.jpg" },
           { t: "Pon alcohol isopropílico en el paño y limpia las dos caras del lente, en círculos y sin presionar.", img: "academia/c2/lente-limpiar.jpg" },
-          { t: "Vuelve a armar todo en el mismo orden, con el lente en la misma posición en que salió." }
+          { t: "Vuelve a armar todo en el mismo orden, con el lente en la misma posición en que salió. Si no recuerdas cómo iba, o después corta peor, no lo pruebes al azar: escríbenos." }
         ]
       },
       {
@@ -524,14 +527,15 @@ window.__SEED__ = {
         nota: "Solo agua destilada, la que venden como «agua de batería». Nunca del caño.",
         materiales: ["Agua destilada: en la 6040 y la 9060 cada cambio lleva 8 litros (un poco más de dos galones)"],
         pasos: [
-          { t: "Apaga la máquina antes de empezar." },
+          { t: "Apaga la máquina y el enfriador, y desenchufa los dos." },
           { t: "Desconecta la manguera que está en OUTLET.", img: "mantenimiento/chiller-outlet.jpg" },
           { t: "Sube esa manguera a la altura de tu cintura por 15 segundos, tapando la punta con el pulgar.", img: "mantenimiento/chiller-cintura.jpg" },
           { t: "Desenrosca la tapa plateada del enfriador y mete por ahí esa manguera.", img: "academia/c2/chiller-cambio.jpg" },
           { t: "Desconecta la manguera de INLET y sopla por ella, para sacar el agua que queda en el tubo.", img: "academia/c2/chiller-temperatura.jpg" },
           { t: "Destapa el orificio de desagüe que está atrás del enfriador y deja salir toda el agua." },
           { t: "Tapa el orificio y llena el enfriador con agua destilada. En la 6040 y la 9060 son 8 litros; si tu máquina es otro modelo, pregúntanos cuánto lleva." },
-          { t: "Vuelve a conectar las dos mangueras donde estaban, en INLET y en OUTLET.", img: "academia/c2/chiller-agua.jpg" }
+          { t: "Saca la manguera de la boca del enfriador y enrosca otra vez la tapa plateada. Vuelve a conectar las dos mangueras donde estaban, en INLET y en OUTLET.", img: "academia/c2/chiller-agua.jpg" },
+          { t: "Enchufa y prende solo el enfriador. Al llenarse el tubo, el nivel del agua baja: complétalo con agua destilada. Recién después, prende la máquina." }
         ]
       }
     ],
@@ -540,7 +544,7 @@ window.__SEED__ = {
        sería una lista más para llenar, no una ayuda). */
     cadaUso: [
       { t: "Enciende siempre en este orden: estabilizador, enfriador y recién la máquina.", icono: "encendido" },
-      { t: "El enfriador encendido, con agua destilada y marcando entre 15 y 25 grados.", icono: "gota" },
+      { t: "El enfriador encendido, con agua destilada hasta su nivel, las mangueras en INLET y OUTLET, y marcando entre 15 y 25 grados.", icono: "gota" },
       { t: "Revisa que sale aire por la punta del cabezal y que el extractor está encendido.", icono: "lupa" },
       { t: "Corta con la tapa cerrada y nunca dejes la máquina cortando sola.", icono: "alerta" },
       { t: "Al terminar, deja limpia la mesa de trabajo.", icono: "visto" }
@@ -551,14 +555,15 @@ window.__SEED__ = {
       {
         id: "vaciar", cuando: "Si no vas a usar la máquina 5 días o más", titulo: "Sácale el agua al tubo",
         pasos: [
-          { t: "Apaga la máquina y desconecta la manguera que está en OUTLET.", img: "mantenimiento/chiller-outlet.jpg" },
+          { t: "Apaga la máquina y el enfriador, y desenchufa los dos. Desconecta la manguera que está en OUTLET.", img: "mantenimiento/chiller-outlet.jpg" },
           { t: "Sube esa manguera a la altura de tu cintura por 15 segundos, tapando la punta con el pulgar.", img: "mantenimiento/chiller-cintura.jpg" },
           { t: "Desenrosca la tapa plateada del enfriador y mete por ahí esa manguera.", img: "academia/c2/chiller-cambio.jpg" },
           { t: "Desconecta la manguera de INLET y sopla por ella, para sacar el agua que queda en el tubo.", img: "academia/c2/chiller-temperatura.jpg" },
-          { t: "Tapa las puntas de las mangueras con cinta aislante hasta que vuelvas a usarla." }
+          { t: "Tapa las puntas de las mangueras con cinta aislante hasta que vuelvas a usarla." },
+          { t: "Cuando vuelvas a usarla: quita la cinta, saca la manguera de la boca del enfriador, enrosca la tapa plateada y conecta cada manguera en su lugar, INLET y OUTLET. Prende el enfriador, completa el agua destilada si bajó, y recién después la máquina." }
         ]
       },
-      { id: "aire", cuando: "Si ya no sale aire por la punta del cabezal", titulo: "Revisa el regulador del aire", t: "Revisa la manguera del aire de punta a punta. Si está bien conectada, el regulador (la perilla por donde sale el aire) puede estar tapado con impurezas: límpialo, y si sigue igual, escríbenos.", img: "mantenimiento/regulador-aire.jpg" },
+      { id: "aire", cuando: "Si ya no sale aire por la punta del cabezal", titulo: "Revisa el regulador del aire", t: "Apaga la máquina y el compresor. Revisa la manguera del aire de punta a punta. Si está bien conectada, el regulador (la perilla por donde sale el aire) puede estar tapado con impurezas: límpialo, y si sigue igual, escríbenos.", img: "mantenimiento/regulador-aire.jpg" },
       { id: "calor", cuando: "Si el enfriador pasa de 25 grados", titulo: "Deja que se enfríe", t: "Apaga la máquina y espera a que baje. Revisa el nivel del agua y que sea destilada. Si vuelve a pasar, escríbenos." },
       { id: "ducto", cuando: "Si el humo se queda en la mesa", titulo: "Limpia el ducto del extractor", t: "Quítale el polvo de adentro con una sopladora o un cepillo seco. No subas el ducto más de un metro: el humo regresa a la mesa y la máquina deja de cortar." },
       { id: "mover", cuando: "Si cambias la máquina de lugar", titulo: "Vuelve a nivelarla", t: "Antes de cortar, déjala pareja otra vez sobre un piso firme." }
