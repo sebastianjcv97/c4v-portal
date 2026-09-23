@@ -3260,13 +3260,30 @@ function ceviElevenLabsVars() {
    `elevenlabs-convai:call`, que el widget dispara justo antes de conectar.
    user-id: seudónimo estable del cliente (HMAC del documento, nunca el DNI ni
    el teléfono) que da cevi-backend. Agrupa sus conversaciones en ElevenLabs y
-   evita que el widget cargue FingerprintJS para inventarle uno. */
-const cevi11 = { token: null, url: null, userId: null, reloj: null };
+   evita que el widget cargue FingerprintJS para inventarle uno.
+   El token de CeVi vence a las 2 h (CEVI_TOKEN_HORAS en portal-api) y la
+   pestaña puede quedar abierta más: se renueva pasada 1 h 30 min o si
+   cevi-backend lo rechaza, y el vigente entra al iniciar cada llamada. */
+const cevi11 = { token: null, tokenEn: 0, url: null, userId: null, reloj: null };
+
+async function ceviRenovarToken() {
+  const ses = leerSesion();
+  if (!ses?.t || !VERIF.activo) return false;
+  try {
+    const r = await apiPost('/api/cevi/token', { token: ses.t });
+    if (r.ok && r.json.cevi_token) { cevi11.token = r.json.cevi_token; cevi11.tokenEn = Date.now(); return true; }
+  } catch {}
+  return false;
+}
 
 async function ceviUrlFirmada() {
-  if (!cevi11.token || !CFG.ceviApi) return null;
+  if (!CFG.ceviApi) return null;
+  if (cevi11.token && Date.now() - cevi11.tokenEn > 90 * 60e3) await ceviRenovarToken();
+  if (!cevi11.token) return null;
+  const pedir = () => fetch(`${CFG.ceviApi}/voz/url-firmada`, { method: 'POST', headers: { 'X-CeVi-Token': cevi11.token } });
   try {
-    const r = await fetch(`${CFG.ceviApi}/voz/url-firmada`, { method: 'POST', headers: { 'X-CeVi-Token': cevi11.token } });
+    let r = await pedir();
+    if (r.status === 401 && await ceviRenovarToken()) r = await pedir();
     if (!r.ok) return null;
     const j = await r.json();
     if (j.user_id) cevi11.userId = j.user_id;
@@ -3287,14 +3304,8 @@ async function ceviElevenLabsIniciar() {
   const host = $('#ceviWidgetHost');
   if (!host) return;
   const vars = ceviElevenLabsVars();
-  const ses = leerSesion();
   cevi11.token = null;
-  if (ses?.t && VERIF.activo) {
-    try {
-      const r = await apiPost('/api/cevi/token', { token: ses.t });
-      if (r.ok && r.json.cevi_token) cevi11.token = vars.secret__cevi_token = r.json.cevi_token;
-    } catch {}
-  }
+  if (await ceviRenovarToken()) vars.secret__cevi_token = cevi11.token;
   cevi11.url = await ceviUrlFirmada();
   if (!host.isConnected) return;   // se fue a otra sección mientras tanto
   const el = document.createElement('elevenlabs-convai');
@@ -3308,6 +3319,8 @@ async function ceviElevenLabsIniciar() {
   el.addEventListener('elevenlabs-convai:call', (e) => {
     const cfg = e.detail && e.detail.config;
     if (cfg && cevi11.url) { cfg.signedUrl = cevi11.url; delete cfg.agentId; }
+    // El evento es síncrono: el token ya está pedido; aquí solo se pone el vigente.
+    if (cfg && cevi11.token) cfg.dynamicVariables = { ...(cfg.dynamicVariables || {}), secret__cevi_token: cevi11.token };
     ceviUrlFirmada().then(u => { if (u) cevi11.url = u; });   // la próxima llamada ya tiene una nueva
   });
   clearInterval(cevi11.reloj);
