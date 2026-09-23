@@ -1402,10 +1402,16 @@ body{background:var(--mesa)}
   filter:drop-shadow(0 4px 10px rgba(0,0,0,.25))}
 .cevi11-hola-txt h1{font-family:var(--slab);font-size:var(--t-xl);line-height:var(--lh-tight);margin:0;color:#fff}
 .cevi11-hola-txt p{margin:var(--s-1) 0 0;font-size:var(--t-sm);line-height:var(--lh-snug);color:#fff;opacity:.95}
-.cevi11-marco{position:relative;flex:1;min-height:520px;border-radius:var(--r-lg);overflow:hidden;
-  background:var(--rojo-suave);border:1px solid #f6cfd0}
+/* El widget abre su panel "compacto": alto = caja − 80 px (deja lugar a su
+   botón flotante) y tope de 550 px, pegado abajo. Por eso la caja del widget
+   sobresale 80 px por arriba (recortados por el marco) y el marco no pasa de
+   550 px: el panel llena el marco exacto. El botón de agrandar se apaga en la
+   config del agente (show_resize_button), porque en pantalla completa su
+   cabecera caería en la franja recortada. */
+.cevi11-marco{position:relative;flex:1;min-height:420px;max-height:550px;border-radius:var(--r-lg);overflow:hidden;
+  background:#fff;border:1px solid #f3c7c8;box-shadow:0 10px 30px rgba(196,3,9,.10)}
 .cevi11-marco elevenlabs-convai{
-  position:absolute; inset:0; display:block; z-index:1;
+  position:absolute; inset:-80px 0 0 0; display:block; z-index:1;
   --el-overlay-padding:0px;
 }
 .cevi11-cargando{margin:0;position:absolute;inset:0;display:grid;place-items:center;
@@ -1414,7 +1420,7 @@ body{background:var(--mesa)}
 @media (max-width:640px){
   .cevi11-toro{width:60px;height:60px}
   .cevi11-hola-txt h1{font-size:var(--t-lg)}
-  .cevi11-marco{min-height:calc(100dvh - var(--alto-menu, 176px) - 150px)}
+  .cevi11-marco{min-height:min(550px, calc(100dvh - var(--alto-menu, 176px) - 170px))}
 }
 
 .chat-hilo{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:var(--s-3);
