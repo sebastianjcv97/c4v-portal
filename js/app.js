@@ -1245,6 +1245,11 @@ const views = {
           </div>
         </header>
         <div class="cevi11-marco" id="ceviWidgetHost">
+          <div class="cevi11-invita" aria-hidden="true">
+            <p class="cevi11-invita-t">Habla con CeVi</p>
+            <p>Toca «Iniciar conversación» y cuéntale qué le pasa a tu máquina, como a un técnico.</p>
+            <p>¿Hay mucho ruido? Toca el globito y escríbele.</p>
+          </div>
           <p class="cevi11-cargando">Preparando a CeVi…</p>
         </div>
         <p class="cevi11-pie">CeVi responde con inteligencia artificial. Lo comercial te lo resuelve un asesor.</p>
@@ -3256,8 +3261,8 @@ function ceviElevenLabsVars() {
    CeVi hace falta una URL firmada (15 min), que cevi-backend solo entrega a
    quien trae el token de identidad del portal. La del atributo `signed-url`
    solo le sirve al widget para leer su configuración; antes de CADA llamada
-   se le pone otra, sin usar, en el evento `elevenlabs-convai:call`, que el
-   widget dispara justo antes de conectar (ver más abajo por qué).
+   se le pone otra de reserva, sin usar, en el evento `elevenlabs-convai:call`,
+   que el widget dispara justo antes de conectar (ver más abajo por qué).
    user-id: seudónimo estable del cliente (HMAC del documento, nunca el DNI ni
    el teléfono) que da cevi-backend. Agrupa sus conversaciones en ElevenLabs y
    evita que el widget cargue FingerprintJS para inventarle uno.
@@ -3268,40 +3273,44 @@ function ceviElevenLabsVars() {
    `signed-url` al leer su configuración (GET /agents/{id}/widget con esa
    firma). Cuando la primera llamada usaba esa misma URL, fallaba siempre con
    "Conversation_signature is either invalid or has expired" (23-set-2026,
-   verificado contra la API). Por eso son dos: la del atributo, solo para la
-   configuración, y `cevi11.url`, de repuesto y nunca usada, que es la que
-   entra en `elevenlabs-convai:call`; al usarla se descarta y se pide otra.
-   El repuesto también vence a los 15 min sin usarse: el reloj lo renueva cada
-   9, y al volver a la pestaña (el navegador frena los relojes de pestañas en
-   segundo plano y de la laptop suspendida) se renueva si pasó de 10.
+   verificado contra la API y en el widget real). Por eso:
+   - la URL del atributo es solo para la configuración, y NO se toca después
+     de montar (cambiarla o mover #ceviWidget11 hace que el widget vuelva a
+     pedir la configuración con una firma ya gastada);
+   - cada llamada toma una URL de reserva sin usar (`pool`, se mantienen 2),
+     que se descarta a los 12 min porque la firma vence a los 15;
+   - si pedir una falla, se reintenta con espera creciente, y se revisa también
+     al volver a la pestaña, al recuperar la red o el foco (el navegador frena
+     los relojes en segundo plano y con la laptop suspendida).
    `gen` descarta lo que termine tarde de una visita anterior a la sección. */
-const cevi11 = { token: null, tokenEn: 0, url: null, urlEn: 0, userId: null, reloj: null, gen: 0 };
-
-async function ceviRepuesto(gen) {
-  const u = await ceviUrlFirmada();
-  if (u && gen === cevi11.gen) { cevi11.url = u; cevi11.urlEn = Date.now(); }
-}
-
-document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible' && document.getElementById('ceviWidget11')
-      && Date.now() - cevi11.urlEn > 10 * 60e3) ceviRepuesto(cevi11.gen);
-});
+const CEVI_URL_VIDA = 12 * 60e3;
+const cevi11 = { token: null, tokenEn: 0, ses: null, renovando: null, pool: [], pidiendo: false,
+                 reintento: null, userId: null, reloj: null, gen: 0 };
 
 async function ceviRenovarToken() {
-  const ses = leerSesion();
-  if (!ses?.t || !VERIF.activo) return false;
-  try {
-    const r = await apiPost('/api/cevi/token', { token: ses.t });
-    if (r.ok && r.json.cevi_token) { cevi11.token = r.json.cevi_token; cevi11.tokenEn = Date.now(); return true; }
-  } catch {}
-  return false;
+  if (cevi11.renovando) return cevi11.renovando;   // una sola renovación a la vez
+  cevi11.renovando = (async () => {
+    const ses = leerSesion();
+    if (!ses?.t || !VERIF.activo) return false;
+    try {
+      const r = await apiPost('/api/cevi/token', { token: ses.t });
+      if (r.ok && r.json.cevi_token) {
+        cevi11.token = r.json.cevi_token; cevi11.tokenEn = Date.now(); cevi11.ses = ses.t;
+        return true;
+      }
+    } catch {}
+    return false;
+  })();
+  try { return await cevi11.renovando; } finally { cevi11.renovando = null; }
 }
 
 async function ceviUrlFirmada() {
   if (!CFG.ceviApi) return null;
-  if (cevi11.token && Date.now() - cevi11.tokenEn > 90 * 60e3) await ceviRenovarToken();
+  if (!cevi11.token || Date.now() - cevi11.tokenEn > 90 * 60e3) await ceviRenovarToken();
   if (!cevi11.token) return null;
-  const pedir = () => fetch(`${CFG.ceviApi}/voz/url-firmada`, { method: 'POST', headers: { 'X-CeVi-Token': cevi11.token } });
+  const pedir = () => fetch(`${CFG.ceviApi}/voz/url-firmada`, {
+    method: 'POST', headers: { 'X-CeVi-Token': cevi11.token },
+    signal: AbortSignal.timeout ? AbortSignal.timeout(12000) : undefined });
   try {
     let r = await pedir();
     if (r.status === 401 && await ceviRenovarToken()) r = await pedir();
@@ -3310,6 +3319,46 @@ async function ceviUrlFirmada() {
     if (j.user_id) cevi11.userId = j.user_id;
     return j.signed_url || null;
   } catch { return null; }
+}
+
+/* La reserva más nueva que no esté por vencer (y la saca de la reserva). */
+function ceviTomarUrl() {
+  cevi11.pool = cevi11.pool.filter(x => Date.now() - x.en < CEVI_URL_VIDA);
+  return cevi11.pool.pop()?.url || null;
+}
+
+/* Completa la reserva hasta 2 URLs. Si falla, reintenta a los 2, 4, 8… s
+   (máximo 1 min) mientras el widget de esta visita siga en pantalla. */
+async function ceviRellenar(gen, espera = 1000) {
+  if (gen !== cevi11.gen || cevi11.pidiendo || !document.getElementById('ceviWidget11')) return;
+  cevi11.pool = cevi11.pool.filter(x => Date.now() - x.en < CEVI_URL_VIDA);
+  if (cevi11.pool.length >= 2) return;
+  cevi11.pidiendo = true;
+  let u = null;
+  try { u = await ceviUrlFirmada(); } finally { cevi11.pidiendo = false; }
+  if (gen !== cevi11.gen) return;
+  clearTimeout(cevi11.reintento);
+  if (u) { cevi11.pool.push({ url: u, en: Date.now() }); ceviRellenar(gen); return; }
+  const prox = Math.min(espera * 2, 60e3);
+  cevi11.reintento = setTimeout(() => ceviRellenar(gen, prox), prox);
+}
+
+const ceviRevisarReserva = () => {
+  if (document.visibilityState === 'visible') ceviRellenar(cevi11.gen);
+};
+document.addEventListener('visibilitychange', ceviRevisarReserva);
+['online', 'focus', 'pageshow'].forEach(ev => window.addEventListener(ev, ceviRevisarReserva));
+
+function ceviNoDisponible(host) {
+  host.innerHTML = `<div class="cevi11-cargando cevi11-error">
+      <p>CeVi no está disponible en este momento.</p>
+      <button type="button" class="btn primary" id="ceviReintentar">Reintentar</button>
+      <a href="https://wa.me/${esc(CFG.whatsapp.numero)}" target="_blank" rel="noopener">o escríbenos por WhatsApp</a>
+    </div>`;
+  host.querySelector('#ceviReintentar').onclick = () => {
+    host.innerHTML = '<p class="cevi11-cargando">Preparando a CeVi…</p>';
+    ceviElevenLabsIniciar();
+  };
 }
 
 async function ceviElevenLabsIniciar() {
@@ -3326,33 +3375,51 @@ async function ceviElevenLabsIniciar() {
   if (!host) return;
   const vars = ceviElevenLabsVars();
   const gen = ++cevi11.gen;
-  cevi11.token = null; cevi11.url = null;
-  if (await ceviRenovarToken()) vars.secret__cevi_token = cevi11.token;
-  const [urlConfig, urlLlamada] = await Promise.all([ceviUrlFirmada(), ceviUrlFirmada()]);
+  clearTimeout(cevi11.reintento); cevi11.pool = [];
+  // El token se reusa si es de esta misma sesión y no está por vencer.
+  const ses = leerSesion();
+  if (!cevi11.token || cevi11.ses !== ses?.t || Date.now() - cevi11.tokenEn > 90 * 60e3) {
+    cevi11.token = null;
+    await ceviRenovarToken();
+  }
+  if (gen !== cevi11.gen) return;
+  if (cevi11.token) vars.secret__cevi_token = cevi11.token;
+  const urls = (await Promise.all([ceviUrlFirmada(), ceviUrlFirmada()])).filter(Boolean);
   if (gen !== cevi11.gen || !host.isConnected) return;   // se fue a otra sección, o volvió a entrar
-  cevi11.url = urlLlamada; cevi11.urlEn = Date.now();
+  // Sin URL firmada no hay CeVi: con la autenticación activada, el agent-id
+  // solo deja el widget en blanco. Mejor decirlo y ofrecer reintentar.
+  if (!urls.length) { ceviNoDisponible(host); return; }
+  if (urls[1]) cevi11.pool.push({ url: urls[1], en: Date.now() });
   const el = document.createElement('elevenlabs-convai');
   el.id = 'ceviWidget11';
-  // Sin URL firmada se intenta con el agent-id (solo funciona si alguien apagó
-  // la autenticación del agente); con ella, es la vía normal.
-  if (urlConfig) el.setAttribute('signed-url', urlConfig);
-  else el.setAttribute('agent-id', CFG.elevenlabsAgentId);
+  el.setAttribute('signed-url', urls[0]);   // solo para leer la configuración
   el.setAttribute('dynamic-variables', JSON.stringify(vars));
   if (cevi11.userId) el.setAttribute('user-id', cevi11.userId);
   el.addEventListener('elevenlabs-convai:call', (e) => {
     const cfg = e.detail && e.detail.config;
-    const url = cevi11.url; cevi11.url = null;   // una URL, una llamada
-    if (cfg && url) { cfg.signedUrl = url; delete cfg.agentId; }
+    if (!cfg || gen !== cevi11.gen || !el.isConnected) return;
+    const url = ceviTomarUrl();   // una URL, una llamada
+    if (url) { cfg.signedUrl = url; cfg.connectionType = 'websocket'; delete cfg.agentId; }
+    else toast('Conectando con CeVi… si no responde, inténtalo de nuevo en unos segundos.');
     // El evento es síncrono: el token ya está pedido; aquí solo se pone el vigente.
-    if (cfg && cevi11.token) cfg.dynamicVariables = { ...(cfg.dynamicVariables || {}), secret__cevi_token: cevi11.token };
-    ceviRepuesto(gen);   // la próxima llamada ya tiene una nueva
+    if (cevi11.token) cfg.dynamicVariables = { ...(cfg.dynamicVariables || {}), secret__cevi_token: cevi11.token };
+    // Si la persona se fue de la sección mientras conectaba, no queda una
+    // llamada viva (con el micrófono abierto) sin pantalla.
+    const alCrear = cfg.onConversationCreated;
+    cfg.onConversationCreated = (c) => {
+      try { alCrear?.(c); } catch {}
+      if (gen !== cevi11.gen || !el.isConnected) c.endSession?.();
+    };
+    ceviRellenar(gen);
   });
+  host.querySelector('.cevi11-cargando')?.remove();
+  host.appendChild(el);
+  ceviRellenar(gen);
   clearInterval(cevi11.reloj);
   cevi11.reloj = setInterval(() => {
-    if (!el.isConnected) { clearInterval(cevi11.reloj); return; }
-    ceviRepuesto(gen);
-  }, 9 * 60e3);
-  host.replaceChildren(el);
+    if (!el.isConnected) { clearInterval(cevi11.reloj); clearTimeout(cevi11.reintento); return; }
+    ceviRellenar(gen);   // descarta las que están por vencer y completa
+  }, 60e3);
 }
 
 function ceviPaginaIniciar() {

@@ -1418,6 +1418,17 @@ body{background:var(--mesa)}
 }
 .cevi11-cargando{margin:0;position:absolute;inset:0;display:grid;place-items:center;
   color:var(--rojo-tinta);font-weight:700}
+.cevi11-error{place-content:center;gap:var(--s-2);text-align:center;padding:var(--s-4)}
+.cevi11-error p{margin:0}
+.cevi11-error a{font-weight:400;color:var(--rojo-tinta)}
+/* Burbuja (variante compact del widget): la píldora con el orbe queda abajo
+   y, detrás, esta invitación. Cuando se abre el chat, su panel la tapa. */
+.cevi11-invita{position:absolute;inset:0 0 96px;z-index:0;display:grid;place-content:center;
+  gap:var(--s-2);padding:var(--s-4) var(--s-5);text-align:center;color:var(--grafito);
+  font-size:var(--t-sm);line-height:var(--lh-snug)}
+.cevi11-invita p{margin:0;max-width:34ch}
+.cevi11-invita .cevi11-invita-t{font-family:var(--slab);font-size:var(--t-lg);color:var(--rojo-tinta)}
+.cevi11-marco:has(.cevi11-cargando) .cevi11-invita{display:none}
 .cevi11-pie{margin:0 0 var(--s-2);font-size:var(--t-xs);color:var(--grafito);text-align:center}
 @media (max-width:640px){
   .cevi11-toro{width:60px;height:60px}
