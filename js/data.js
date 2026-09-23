@@ -253,10 +253,10 @@ window.__SEED__ = {
           ]},
           { titulo: "Agua del enfriador (chiller)", lecciones: [
             { img: "chiller-agua.jpg", t: "Solo agua destilada. La del grifo deja minerales que arruinan el tubo." },
-            { img: "chiller-cambio.jpg", t: "Cámbiala cada dos a cuatro semanas: desconecta la manguera, vacía y vuelve a llenar." },
+            { img: "chiller-cambio.jpg", t: "Cámbiala cada mes: desconecta la manguera, vacía y vuelve a llenar." },
             { img: "chiller-temperatura.jpg", t: "La pantalla debe marcar entre 15 y 25 grados. Si no vas a usarla en cinco días, sácale el agua." }
           ], quizzes: 4, preguntas: [
-            { q: "¿Cada cuánto se cambia el agua del chiller?", opciones: ["Cada 6 meses", "Cada 2-4 semanas según el uso", "Nunca"], ok: 1, ex: "Cada 2 a 4 semanas, dependiendo de cuánto uses la máquina." },
+            { q: "¿Cada cuánto se cambia el agua del chiller?", opciones: ["Cada 6 meses", "Cada mes", "Nunca"], ok: 1, ex: "Una vez al mes, como pide el manual de mantenimiento." },
             { q: "¿Por qué NO usar agua del grifo?", opciones: ["Es muy cara", "Sus minerales obstruyen y dañan el tubo", "Se evapora rápido"], ok: 1, ex: "Los residuos minerales dañan el tubo láser." },
             { q: "¿Cuál es la temperatura ideal del agua?", opciones: ["5-10 °C", "15-25 °C", "30-40 °C"], ok: 1, ex: "Entre 15 y 25 grados protege el tubo." },
             { q: "El agua del chiller debe ser…", opciones: ["Destilada", "Potable", "Con anticongelante casero"], ok: 0, ex: "Siempre destilada. Es la regla de oro del chiller." }
@@ -394,7 +394,7 @@ window.__SEED__ = {
       { curso: "c1", archivo: "instalacion-9060-6040.pdf", titulo: "Instalación de tu máquina (9060 / 6040)", desc: "Armado de la base, ruedas y montaje, paso a paso con fotos", tam: "0.5 MB" },
       { curso: "c1", archivo: "parametros.pdf", titulo: "Parámetros por material", desc: "La tabla oficial de potencia y velocidad + tutorial RDWorks", tam: "4.4 MB" },
       { curso: "c2", archivo: "mantenimiento.pdf", titulo: "Mantenimiento completo", desc: "Normas de uso, limpieza de lente y espejos, chiller y rieles", tam: "1.4 MB" },
-      { curso: "c2", archivo: "limpieza.pdf", titulo: "Limpieza rápida", desc: "La rutina corta de limpieza de óptica", tam: "0.2 MB" },
+      { curso: "c2", archivo: "limpieza.pdf", titulo: "Materiales de limpieza", desc: "Los 5 materiales que necesitas para el mantenimiento", tam: "0.2 MB" },
       { curso: "c3", archivo: "instalar-rdworks.pdf", titulo: "Instalar RDWorks", desc: "Cómo instalar el software de corte en tu computadora", tam: "0.4 MB" },
       { curso: "c3", archivo: "cable-red.pdf", titulo: "Conexión por cable de red", desc: "Conecta la máquina a tu computadora por red", tam: "0.6 MB" },
       { curso: "c3", archivo: "modulo-rotacion.pdf", titulo: "Módulo de rotación", desc: "Instala y usa el rotativo para vasos y cilindros", tam: "0.4 MB" },
@@ -461,6 +461,113 @@ window.__SEED__ = {
     modelos: "Las máquinas compactas (4040, 6040, 6090 y 9060) se instalan de forma remota: un ingeniero te acompaña por videollamada hasta tu primer corte. Las grandes (1390 y 1610) llevan instalación presencial incluida y necesitan más espacio y más capacidad eléctrica."
   },
 
+  /* ---------- Mantenimiento de la máquina (sección propia, 23-set-2026) ----------
+     Fuente ÚNICA del calendario: la pintan la sección Mantenimiento del portal y
+     el servidor (src/mantenimiento.js valida `id` y calcula con `cada` qué le toca
+     a cada cliente). Si cambias un `id` o un `cada`, hay que hacer `railway up`
+     de portal-api: el servidor lee su propia copia de este archivo.
+     - Frecuencias decididas con Sebastián: cada tarea a su ritmo, contado desde
+       la fecha de entrega de cada máquina. Rieles cada 7 días, lente y espejos
+       cada 15, agua del enfriador cada 30. Son las del calendario del curso c2 y
+       del manual mantenimiento.pdf.
+     - Pasos: los del manual, en palabras simples. No se inventa nada que no diga
+       el manual (por eso no hay pasos para la superficie ni para el panal).
+     - Lo eléctrico NO está aquí: fuente de poder, AC-DC, cableado, tubo y
+       alineación de espejos los ve un técnico (así lo decidió Sebastián, y así
+       lo repite CeVi en el Asistente).
+     - Las fotos: assets/academia/c2/ (las del curso) y assets/mantenimiento/
+       (sacadas del mismo manual). Rutas relativas a assets/. */
+  mantenimiento: {
+    tareas: [
+      {
+        id: "rieles", cada: 7, cadaTxt: "Cada semana", icono: "aceite",
+        titulo: "Limpia y aceita los rieles",
+        corto: "aceitar los rieles",
+        porque: "El polvo y el humo del corte se pegan a los rieles. La máquina vibra y los cortes salen desfasados.",
+        materiales: ["Paño de microfibra que no suelte pelusa", "Aceite 3-EN-UNO"],
+        pasos: [
+          { t: "Apaga la máquina antes de empezar." },
+          { t: "Limpia con el paño de microfibra la parte plateada de los rieles X e Y, y sus costados, hasta que no quede polvo.", img: "academia/c2/rieles-limpiar.jpg" },
+          { t: "Pon unas gotas de aceite 3-EN-UNO en el paño y pásalo por todo el riel, de un extremo al otro.", img: "academia/c2/rieles-aceite.jpg" },
+          { t: "Mueve el cabezal con la mano de un extremo al otro, para que el aceite se reparta.", img: "academia/c2/rieles-mover.jpg" },
+          { t: "La cinta de goma no se aceita. Nunca limpies los rieles con agua, porque se oxidan, ni uses aceite de motor o WD-40." }
+        ]
+      },
+      {
+        id: "optica", cada: 15, cadaTxt: "Cada 15 días", icono: "lupa",
+        titulo: "Limpia el lente y los tres espejos",
+        corto: "limpiar el lente y los espejos",
+        porque: "La suciedad en el lente y en los espejos se come la fuerza del láser. El corte sale débil y disparejo.",
+        nota: "Si trabajas jornadas largas todos los días, hazlo cada semana.",
+        materiales: ["Alcohol isopropílico", "Hisopos de buena calidad (los baratos rayan el lente)", "Paño de microfibra", "La llave Allen que viene con la máquina"],
+        pasos: [
+          { t: "Apaga y desenchufa la máquina. Todo esto se hace con la máquina apagada." },
+          { t: "Primer espejo: humedece el paño con alcohol isopropílico y límpialo en círculos, suave y sin presionar, hasta que no quede suciedad.", img: "academia/c2/espejos-frecuencia.jpg" },
+          { t: "Segundo espejo: igual, con el paño humedecido en alcohol.", img: "mantenimiento/espejo-2.jpg" },
+          { t: "Tercer espejo: envuelve un hisopo con el paño, humedécelo con alcohol y límpialo.", img: "academia/c2/espejos.jpg" },
+          { t: "Los tornillos dorados de los espejos no se mueven: solo se limpian. Moverlos desalinea el láser." },
+          { t: "Ahora el lente. Presiona hacia adentro el anillo azul y saca la manguera del aire.", img: "mantenimiento/lente-1-aire.jpg" },
+          { t: "Afloja la perilla dorada, girándola hacia la izquierda, y saca el cabezal.", img: "mantenimiento/lente-2-perilla.jpg" },
+          { t: "Con la llave Allen, afloja girando hacia la izquierda.", img: "mantenimiento/lente-4-llave.jpg" },
+          { t: "Envuelve con el paño de microfibra el tubo negro donde va el lente.", img: "mantenimiento/lente-5-pano.jpg" },
+          { t: "Con la llave, gira hacia la izquierda y saca el anillo negro. Cuida de no golpear el lente.", img: "mantenimiento/lente-6-anillo.jpg" },
+          { t: "Saca el lente con ayuda del paño.", img: "mantenimiento/lente-7-sacar.jpg" },
+          { t: "Pon alcohol isopropílico en el paño y limpia las dos caras del lente, en círculos y sin presionar.", img: "academia/c2/lente-limpiar.jpg" },
+          { t: "Vuelve a armar todo en el mismo orden, con el lente en la misma posición en que salió." }
+        ]
+      },
+      {
+        id: "agua", cada: 30, cadaTxt: "Cada mes", icono: "gota",
+        titulo: "Cambia el agua del enfriador",
+        corto: "cambiar el agua del enfriador",
+        porque: "El agua del enfriador es la que protege al tubo láser, la pieza más valiosa de tu máquina. El manual pide cambiarla una vez al mes.",
+        nota: "Solo agua destilada, la que venden como «agua de batería». Nunca del caño.",
+        materiales: ["Agua destilada: en la 6040 y la 9060 cada cambio lleva 8 litros (un poco más de dos galones)"],
+        pasos: [
+          { t: "Apaga la máquina antes de empezar." },
+          { t: "Desconecta la manguera que está en OUTLET.", img: "mantenimiento/chiller-outlet.jpg" },
+          { t: "Sube esa manguera a la altura de tu cintura por 15 segundos, tapando la punta con el pulgar.", img: "mantenimiento/chiller-cintura.jpg" },
+          { t: "Desenrosca la tapa plateada del enfriador y mete por ahí esa manguera.", img: "academia/c2/chiller-cambio.jpg" },
+          { t: "Desconecta la manguera de INLET y sopla por ella, para sacar el agua que queda en el tubo.", img: "academia/c2/chiller-temperatura.jpg" },
+          { t: "Destapa el orificio de desagüe que está atrás del enfriador y deja salir toda el agua." },
+          { t: "Tapa el orificio y llena el enfriador con agua destilada. En la 6040 y la 9060 son 8 litros; si tu máquina es otro modelo, pregúntanos cuánto lleva." },
+          { t: "Vuelve a conectar las dos mangueras donde estaban, en INLET y en OUTLET.", img: "academia/c2/chiller-agua.jpg" }
+        ]
+      }
+    ],
+
+    /* Lo de todos los días: se muestra, pero no se marca (marcar algo a diario
+       sería una lista más para llenar, no una ayuda). */
+    cadaUso: [
+      { t: "Enciende siempre en este orden: estabilizador, enfriador y recién la máquina.", icono: "encendido" },
+      { t: "El enfriador encendido, con agua destilada y marcando entre 15 y 25 grados.", icono: "gota" },
+      { t: "Revisa que sale aire por la punta del cabezal y que el extractor está encendido.", icono: "lupa" },
+      { t: "Corta con la tapa cerrada y nunca dejes la máquina cortando sola.", icono: "alerta" },
+      { t: "Al terminar, deja limpia la mesa de trabajo.", icono: "visto" }
+    ],
+
+    // Cuando pasa algo. Las que tienen `pasos` abren su propio paso a paso.
+    siPasa: [
+      {
+        id: "vaciar", cuando: "Si no vas a usar la máquina 5 días o más", titulo: "Sácale el agua al tubo",
+        pasos: [
+          { t: "Apaga la máquina y desconecta la manguera que está en OUTLET.", img: "mantenimiento/chiller-outlet.jpg" },
+          { t: "Sube esa manguera a la altura de tu cintura por 15 segundos, tapando la punta con el pulgar.", img: "mantenimiento/chiller-cintura.jpg" },
+          { t: "Desenrosca la tapa plateada del enfriador y mete por ahí esa manguera.", img: "academia/c2/chiller-cambio.jpg" },
+          { t: "Desconecta la manguera de INLET y sopla por ella, para sacar el agua que queda en el tubo.", img: "academia/c2/chiller-temperatura.jpg" },
+          { t: "Tapa las puntas de las mangueras con cinta aislante hasta que vuelvas a usarla." }
+        ]
+      },
+      { id: "aire", cuando: "Si ya no sale aire por la punta del cabezal", titulo: "Revisa el regulador del aire", t: "Revisa la manguera del aire de punta a punta. Si está bien conectada, el regulador (la perilla por donde sale el aire) puede estar tapado con impurezas: límpialo, y si sigue igual, escríbenos.", img: "mantenimiento/regulador-aire.jpg" },
+      { id: "calor", cuando: "Si el enfriador pasa de 25 grados", titulo: "Deja que se enfríe", t: "Apaga la máquina y espera a que baje. Revisa el nivel del agua y que sea destilada. Si vuelve a pasar, escríbenos." },
+      { id: "ducto", cuando: "Si el humo se queda en la mesa", titulo: "Limpia el ducto del extractor", t: "Quítale el polvo de adentro con una sopladora o un cepillo seco. No subas el ducto más de un metro: el humo regresa a la mesa y la máquina deja de cortar." },
+      { id: "mover", cuando: "Si cambias la máquina de lugar", titulo: "Vuelve a nivelarla", t: "Antes de cortar, déjala pareja otra vez sobre un piso firme." }
+    ],
+
+    // Lo que NO hace el cliente.
+    tecnico: "La fuente de poder, el AC-DC, el cableado, el tubo láser y la alineación de los espejos los revisa un técnico de C4V. No abras esas partes: tienen alta tensión aunque la máquina esté apagada."
+  },
+
 
   faqs: [
     { categoria: "Instalación", pregunta: "¿Qué voltaje y conexión eléctrica necesita la máquina?", respuesta: "220 V en circuito independiente con cable de tierra. No la conectes en zapatillas con otros equipos. El estabilizador de voltaje es obligatorio." },
@@ -471,7 +578,7 @@ window.__SEED__ = {
     { categoria: "Operación", pregunta: "¿Y para acrílico de 5 mm?", respuesta: "Potencia ~60 %, velocidad ~8 mm/s. Empieza en 50 y ajusta según el resultado." },
     { categoria: "Operación", pregunta: "¿Qué hago si el panel muestra una alarma?", respuesta: "Apaga la máquina de inmediato. Revisa conexiones eléctricas, el chiller y las conexiones de agua. Si la alarma persiste tras reiniciar, contacta soporte con el código exacto." },
     { categoria: "Mantenimiento", pregunta: "¿Cómo limpio la lente y los espejos?", respuesta: "Retira la lente con cuidado y aplica alcohol isopropílico con un hisopo de alta calidad, en movimiento circular suave y sin presión. Misma técnica para los 3 espejos. Cada 2 semanas si usas la máquina a diario." },
-    { categoria: "Mantenimiento", pregunta: "¿Qué agua va en el enfriador (chiller) y cada cuánto se cambia?", respuesta: "Solo agua destilada (nunca del grifo: los minerales obstruyen y dañan el tubo). Cambio cada 2-4 semanas según uso." },
+    { categoria: "Mantenimiento", pregunta: "¿Qué agua va en el enfriador (chiller) y cada cuánto se cambia?", respuesta: "Solo agua destilada (nunca del grifo: los minerales obstruyen y dañan el tubo). Se cambia una vez al mes: en la 6040 y la 9060 lleva 8 litros." },
     { categoria: "Mantenimiento", pregunta: "¿Cuál es la temperatura ideal del enfriador (chiller)?", respuesta: "Entre 15 y 25 °C. Si sube de 25, apaga y deja enfriar antes de seguir cortando." },
     { categoria: "Mantenimiento", pregunta: "¿Cómo lubrico los rieles y cada cuánto?", respuesta: "Limpia con paño de microfibra, aplica unas gotas de aceite 3-EN-UNO y mueve el cabezal a mano para distribuir. Semanal si usas la máquina a diario." },
     { categoria: "Mantenimiento", pregunta: "¿Cada cuánto hago mantenimiento?", respuesta: "Diario: limpieza de superficie. Semanal: lubricar rieles. Cada 2 semanas: limpiar lente y espejos. Mensual: cambiar agua del chiller." },

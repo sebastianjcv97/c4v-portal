@@ -410,6 +410,460 @@ function vistaCurso(a, id) {
     ${modulos}${examen}${bloqueParams}${bloqueGuias}`;
 }
 
+/* ============================================================================
+   Mantenimiento de la máquina (23-set-2026, pedido de Sebastián)
+   Cada máquina tiene su calendario contado desde su fecha de entrega: rieles
+   cada 7 días, lente y espejos cada 15, agua del enfriador cada 30 (data.js →
+   mantenimiento.tareas, la misma fuente que usa el servidor). Con cuenta real,
+   el estado y el «Ya lo hice» viven en el servidor (src/mantenimiento.js): se
+   ven igual en cualquier celular. La cuenta de demostración no tiene ficha,
+   así que guarda sus marcas en este navegador.
+   La sección NO pasa por la Academia: el curso c2 está detrás del candado de
+   «Prepara tu espacio», y un cliente con su máquina ya andando no puede
+   quedarse sin ver cómo cuidarla.
+   ============================================================================ */
+const mantPlan = () => (state.db?.mantenimiento || window.__SEED__?.mantenimiento || null);
+const mantTarea = (id) => (mantPlan()?.tareas || []).find(t => t.id === id) || null;
+
+// Misma regla que el servidor (refMaquina): la serie casi nunca llega desde
+// Odoo, pero «pedido:modelo» es única dentro de cada cliente.
+function maqRef(m) {
+  if (!m) return '';
+  const serie = String(m.serie || '').trim();
+  if (serie) return serie.slice(0, 80);
+  const pedido = String(m.pedido || '').trim(), modelo = String(m.modelo || '').trim();
+  return (pedido ? `${pedido}:${modelo}` : modelo).slice(0, 80);
+}
+
+/* Fechas como días enteros (UTC, sin horas). `new Date('2026-09-01')` se lee en
+   UTC y en Perú da el 31 de agosto: por eso nunca se usa directo. */
+function mantDia(ymd) {
+  const s = String(ymd || '');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return null;
+  const [y, m, d] = s.split('-').map(Number);
+  const t = Date.UTC(y, m - 1, d), f = new Date(t);
+  if (f.getUTCFullYear() !== y || f.getUTCMonth() !== m - 1 || f.getUTCDate() !== d) return null;
+  return Math.round(t / 864e5);
+}
+const mantYmd = (n) => (n == null ? null : new Date(n * 864e5).toISOString().slice(0, 10));
+function mantHoy() { const d = new Date(); return Math.round(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 864e5); }
+const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+function mantFecha(ymd) {
+  const n = mantDia(ymd); if (n == null) return '';
+  const f = new Date(n * 864e5);
+  const anio = f.getUTCFullYear() !== new Date().getFullYear() ? ` de ${f.getUTCFullYear()}` : '';
+  return `${f.getUTCDate()} de ${MESES[f.getUTCMonth()]}${anio}`;
+}
+
+/* El cálculo es el MISMO que el del servidor (src/mantenimiento.js →
+   estadoTarea): si cambias uno, cambia el otro. El ciclo k vence el día
+   entrega + k·cada; un «Ya lo hice» cuenta para la ventana donde cae (desde
+   un cuarto del intervalo antes de vencer), nunca para dos ciclos, y los
+   atrasos no se acumulan. */
+const mantMargen = (cada) => Math.max(1, Math.round(cada / 4));
+function mantEstadoTarea({ entrega, cada, hechos, hoy }) {
+  const ordenados = (hechos || []).filter(d => d != null && d <= hoy).sort((a, b) => b - a);
+  const ultima = ordenados[0] ?? null;
+  if (entrega == null || !cada) return { estado: 'sin_fecha', ultima };
+  const m = mantMargen(cada);
+  const k = Math.floor((hoy - entrega + m) / cada);
+  if (k < 1) return { estado: 'aun_no', proxima: entrega + cada, ultima };
+  const vence = entrega + k * cada;
+  const desde = vence - m, hasta = vence + cada - m;
+  const enVentana = (a, b) => ordenados.find(d => d >= a && d < b);
+  const hecho = enVentana(desde, hasta);
+  if (hecho != null) return { estado: 'al_dia', vence, proxima: vence + cada, ultima: hecho, desde };
+  if (hoy >= vence) return { estado: 'toca', vence, proxima: vence, ultima, desde };
+  if (k >= 2 && enVentana(desde - cada, desde) == null) {
+    return { estado: 'toca', vence: vence - cada, proxima: vence - cada, ultima, desde: desde - cada };
+  }
+  return { estado: 'pronto', vence, proxima: vence, ultima, desde };
+}
+
+// --- La cuenta de demostración: su calendario vive en este navegador ---------
+const mantEsLocal = () => modoDemo() || normalizarDoc(currentClient()?.documento || '') === DOC_DEMO;
+function mantLeerLocal() {
+  try { return JSON.parse(localStorage.getItem('c4v_mant_' + state.ctx) || 'null') || { h: {}, e: {} }; } catch { return { h: {}, e: {} }; }
+}
+function mantGuardarLocal(d) { try { localStorage.setItem('c4v_mant_' + state.ctx, JSON.stringify(d)); } catch {} }
+function mantCalcularLocal() {
+  const plan = mantPlan(), cli = currentClient();
+  if (!plan || !cli) return null;
+  const hoy = mantHoy(), loc = mantLeerLocal();
+  const maquinas = (state.db.maquinas || []).filter(m => m.cliente_id === cli.id && maqRef(m)).map(m => {
+    const ref = maqRef(m);
+    const conf = mantDia(loc.e?.[ref]);
+    const ped = mantDia(String(m.fecha_entrega || '').slice(0, 10));
+    const cert = mantDia(String(m.certificado?.fecha || '').slice(0, 10));
+    const entrega = conf ?? ped ?? cert ?? null;
+    const fuente = conf != null ? 'cliente' : ped != null ? 'pedido' : cert != null ? 'certificado' : null;
+    const tareas = plan.tareas.map(t => {
+      const r = mantEstadoTarea({ entrega, cada: t.cada, hechos: (loc.h?.[ref]?.[t.id] || []).map(mantDia), hoy });
+      return { id: t.id, estado: r.estado, vence: mantYmd(r.vence), proxima: mantYmd(r.proxima), ultima: mantYmd(r.ultima), desde: mantYmd(r.desde) };
+    });
+    return { ref, modelo: m.modelo || '', pedido: m.pedido || '', entrega: mantYmd(entrega), entrega_fuente: fuente, tareas, pendientes: tareas.filter(t => t.estado === 'toca').length };
+  });
+  return { local: true, hoy: mantYmd(hoy), maquinas, pendientes: maquinas.reduce((n, x) => n + x.pendientes, 0) };
+}
+
+// Se pide al entrar, sin await: nunca debe retrasar la entrada al portal.
+async function pedirEstadoMantenimiento() {
+  if (!mantPlan() || !state.ctx) return;
+  if (mantEsLocal()) { state.mant = mantCalcularLocal(); mantRepintar(); return; }
+  const ses = leerSesion();
+  if (!ses?.t) return;
+  try {
+    const r = await apiPost('/api/mantenimiento/estado', { token: ses.t });
+    if (r.ok && r.json.ok) state.mant = r.json.demo ? mantCalcularLocal() : r.json;
+    else state.mant = { error: true, maquinas: [], pendientes: 0 };
+  } catch { state.mant = { error: true, maquinas: [], pendientes: 0 }; }
+  mantRepintar();
+}
+function mantRepintar() {
+  pintarAvisoMant();
+  if (currentRoute().split('/')[0] === 'mantenimiento') render(currentRoute());
+}
+
+// tipo: 'hecho' | 'deshacer' | 'entrega'. Devuelve { ok, error? } y deja state.mant al día.
+async function mantAccion(tipo, datos) {
+  if (mantEsLocal() || state.mant?.local) {
+    const loc = mantLeerLocal();
+    loc.h = loc.h || {}; loc.e = loc.e || {};
+    if (tipo === 'hecho') {
+      const l = ((loc.h[datos.maquina_ref] ||= {})[datos.tarea_id] ||= []);
+      const f = datos.fecha || mantYmd(mantHoy());
+      if (!l.includes(f)) l.push(f);
+    }
+    if (tipo === 'deshacer') { const l = loc.h[datos.maquina_ref]?.[datos.tarea_id]; if (l?.length) { l.sort(); l.pop(); } }
+    if (tipo === 'entrega') loc.e[datos.maquina_ref] = datos.fecha;
+    mantGuardarLocal(loc);
+    state.mant = mantCalcularLocal();
+    return { ok: true };
+  }
+  const ses = leerSesion();
+  if (!ses?.t) return { ok: false, error: 'Tu sesión venció. Vuelve a entrar.' };
+  try {
+    const r = await apiPost('/api/mantenimiento/' + tipo, { token: ses.t, ...datos });
+    if (r.ok && r.json.ok) { state.mant = r.json; return { ok: true }; }
+    return { ok: false, error: r.json.error || 'No pudimos guardarlo. Revisa tu conexión e intenta de nuevo.' };
+  } catch {
+    return { ok: false, error: 'No pudimos guardarlo. Revisa tu conexión e intenta de nuevo.' };
+  }
+}
+
+const mantLista = (xs) => (xs.length <= 1 ? (xs[0] || '') : xs.slice(0, -1).join(', ') + ' y ' + xs[xs.length - 1]);
+function mantPendientes() {
+  return (state.mant?.maquinas || []).flatMap(m => (m.tareas || [])
+    .filter(t => t.estado === 'toca').map(t => ({ m, t, d: mantTarea(t.id) }))).filter(x => x.d);
+}
+
+/* El aviso al entrar: una franja arriba del contenido, en todas las pantallas
+   (también en «Prepara tu espacio», donde entrar() deja a quien no terminó la
+   guía). No es un toast: hay uno solo y entrar() ya usa el suyo. Se calla en
+   la propia sección y en el Asistente. */
+function pintarAvisoMant() {
+  const pend = mantPendientes();
+  document.querySelector('.menu a[data-nav="mantenimiento"]')?.classList.toggle('con-pendiente', pend.length > 0);
+  const el = document.getElementById('avisoMant');
+  if (!el) return;
+  const ruta = currentRoute().split('/')[0];
+  const mostrar = pend.length > 0 && state.ctx && ruta !== 'mantenimiento' && ruta !== 'cevi';
+  el.hidden = !mostrar;
+  if (!mostrar) { el.innerHTML = ''; return; }
+  const modelos = [...new Set(pend.map(x => x.m.modelo).filter(Boolean))];
+  const maquina = modelos.length === 1 ? `tu ${modelos[0]}` : 'tu máquina';
+  const cosas = [...new Set(pend.map(x => x.d.corto))];
+  el.innerHTML = `
+    <span class="aviso-mant-ic" aria-hidden="true">${icon('llave')}</span>
+    <p class="aviso-mant-txt"><strong>No te olvides del mantenimiento de ${esc(maquina)}.</strong> Toca ${esc(mantLista(cosas))}.</p>
+    <a class="btn primary sm" href="#/mantenimiento">Ver qué toca</a>`;
+}
+
+function mantFilaTarea(m, t, varias) {
+  const d = mantTarea(t.id); if (!d) return '';
+  const cuando = {
+    toca: `Toca desde el ${mantFecha(t.vence)}`,
+    pronto: `Toca el ${mantFecha(t.vence)}`,
+    al_dia: `Hecho el ${mantFecha(t.ultima)}. La próxima, el ${mantFecha(t.proxima)}`,
+    aun_no: `La primera vez, el ${mantFecha(t.proxima)}`
+  }[t.estado] || '';
+  const datos = `data-tarea="${esc(d.id)}" data-ref="${esc(m.ref)}"`;
+  let accion = '';
+  if (t.estado === 'toca') accion = `<button type="button" class="btn primary sm" data-mant-hecho ${datos}>Ya lo hice</button>`;
+  else if (t.estado === 'pronto') accion = `<button type="button" class="btn ghost sm" data-mant-hecho ${datos}>Ya lo hice</button>`;
+  else if (t.estado === 'al_dia') accion = `<span class="mant-hecho">${icon('visto')} Hecho</span><button type="button" class="paso-link" data-mant-deshacer ${datos}>Deshacer</button>`;
+  return `
+    <article class="mant-fila ${esc(t.estado)}">
+      <span class="mant-ic" aria-hidden="true">${icon(d.icono || 'llave')}</span>
+      <div class="mant-txt">
+        <h3>${esc(d.titulo)}</h3>
+        <p class="mant-cada">${esc(d.cadaTxt)}</p>
+        ${cuando ? `<p class="mant-cuando">${esc(cuando)}</p>` : ''}
+      </div>
+      <div class="mant-acc">
+        <a class="btn ghost sm" href="#/mantenimiento/tarea/${esc(d.id)}">Cómo se hace</a>
+        ${accion}
+      </div>
+    </article>`;
+}
+
+function mantBloqueMaquina(m, varias) {
+  const plan = mantPlan();
+  const orden = { toca: 0, pronto: 1, aun_no: 2, al_dia: 3, sin_fecha: 4 };
+  const pos = (id) => plan.tareas.findIndex(x => x.id === id);
+  const tareas = [...(m.tareas || [])].sort((a, b) => ((orden[a.estado] ?? 9) - (orden[b.estado] ?? 9)) || (pos(a.id) - pos(b.id)));
+  const pend = tareas.filter(t => t.estado === 'toca');
+  let resumen;
+  if (!m.entrega) resumen = 'Aún no sabemos qué día te llegó la máquina. Dinos la fecha y armamos tu calendario.';
+  else if (pend.length) resumen = `Hoy toca ${mantLista(pend.map(t => mantTarea(t.id)?.corto).filter(Boolean))}.`;
+  else {
+    const sig = tareas.filter(t => t.proxima).sort((a, b) => (mantDia(a.proxima) - mantDia(b.proxima)))[0];
+    resumen = sig ? `Estás al día. Lo próximo: ${mantTarea(sig.id)?.corto} el ${mantFecha(sig.proxima)}.` : 'Estás al día.';
+  }
+  const fuente = { cliente: 'el día que nos dijiste que te llegó', pedido: 'la fecha de tu pedido', certificado: 'la fecha de tu certificado' }[m.entrega_fuente] || '';
+  const hoy = mantYmd(mantHoy());
+  return `
+    <div class="mant-maquina">
+      ${varias ? `<h2 class="section-h">Tu ${esc(m.modelo || 'máquina')}</h2>` : ''}
+      <p class="mant-resumen ${pend.length ? 'toca' : 'ok'}">${esc(resumen)}</p>
+      <p class="mant-desde">
+        ${m.entrega ? `Contamos desde el ${esc(mantFecha(m.entrega))}, ${esc(fuente)}.` : ''}
+        <button type="button" class="paso-link" data-mant-cambiar="${esc(m.ref)}">${m.entrega ? '¿Te llegó otro día?' : 'Poner la fecha en que me llegó'}</button>
+      </p>
+      <form class="mant-fecha" data-mant-entrega="${esc(m.ref)}" hidden>
+        <label for="mantEnt-${esc(m.ref)}">¿Qué día te llegó la máquina?</label>
+        <div class="mant-fecha-fila">
+          <input type="date" id="mantEnt-${esc(m.ref)}" name="fecha" min="2020-01-01" max="${hoy}" value="${esc(m.entrega || '')}" required>
+          <button type="submit" class="btn primary sm">Guardar</button>
+        </div>
+      </form>
+      ${m.entrega ? `<div class="mant-lista">${tareas.map(t => mantFilaTarea(m, t, varias)).join('')}</div>` : mantCalendarioGenerico()}
+    </div>`;
+}
+
+// Sin máquina o sin fecha: el calendario igual se muestra, sin fechas ni marcas.
+function mantCalendarioGenerico() {
+  return `<div class="mant-lista">${(mantPlan()?.tareas || []).map(d => `
+    <article class="mant-fila">
+      <span class="mant-ic" aria-hidden="true">${icon(d.icono || 'llave')}</span>
+      <div class="mant-txt"><h3>${esc(d.titulo)}</h3><p class="mant-cada">${esc(d.cadaTxt)}</p></div>
+      <div class="mant-acc"><a class="btn ghost sm" href="#/mantenimiento/tarea/${esc(d.id)}">Cómo se hace</a></div>
+    </article>`).join('')}</div>`;
+}
+
+function mantSecciones() {
+  const plan = mantPlan();
+  /* Lo que solo se MUESTRA sale de la copia de data.js del propio portal, que
+     siempre viaja con este código; la de /api/bootstrap puede ir un despliegue
+     atrás. El plan (mantPlan) sí sale del servidor, que es quien valida. */
+  const seed = window.__SEED__ || {};
+  const kit = ((seed.preparacion || state.db.preparacion)?.compras || []).filter(x => /agua|alcohol|aceite/i.test(x.item));
+  const acad = seed.academia || state.db.academia || {};
+  const c2 = (acad.cursos || []).find(c => c.id === 'c2');
+  const errores = (c2?.modulos || []).find(mo => /errores/i.test(mo.titulo))?.lecciones
+    ?.filter(l => l && l.img && l.img !== 'error-calendario.png') || [];
+  const guias = (acad.guiasPdf || []).filter(g => g.curso === 'c2');
+  const hayCevi = Boolean(CFG.elevenlabsAgentId || CFG.ceviApi);
+  return `
+    <h2 class="section-h">Cada vez que la usas</h2>
+    <div class="lista mant-uso">${(plan.cadaUso || []).map(x => `
+      <article class="lista-fila">
+        <div class="lista-dibujo"><span class="mant-uso-ic">${icon(x.icono || 'visto')}</span></div>
+        <div class="lista-txt"><p class="spec">${esc(x.t)}</p></div>
+      </article>`).join('')}</div>
+
+    ${kit.length ? `
+    <h2 class="section-h">Lo que necesitas tener</h2>
+    <div class="lista mant-kit">${kit.map(x => `
+      <article class="lista-fila">
+        <div class="lista-dibujo">${x.img ? `<img src="assets/compras/${esc(x.img)}" alt="Dibujo de ${esc(x.item)}" loading="lazy" onerror="this.remove()">` : ''}</div>
+        <div class="lista-txt">
+          <h3>${esc(x.item)}</h3>
+          <p class="para">${esc(x.para)}</p>
+          <p class="spec">${esc(x.spec)}</p>
+        </div>
+      </article>`).join('')}</div>` : ''}
+
+    <h2 class="section-h">Si pasa algo</h2>
+    <div class="mant-casos">${(plan.siPasa || []).map(x => `
+      <article class="mant-caso">
+        <p class="mant-caso-cuando">${esc(x.cuando)}</p>
+        <h3>${esc(x.titulo)}</h3>
+        ${x.t ? `<p>${esc(x.t)}</p>` : ''}
+        ${x.img && !x.pasos ? `<figure class="mant-caso-foto"><img src="assets/${esc(x.img)}" alt="" loading="lazy" onerror="this.closest('figure').remove()"></figure>` : ''}
+        ${x.pasos ? `<a class="btn ghost sm" href="#/mantenimiento/guia/${esc(x.id)}">Cómo se hace</a>` : ''}
+      </article>`).join('')}</div>
+
+    <h2 class="section-h">Esto lo hace un técnico</h2>
+    <div class="mant-tecnico">
+      <p>${esc(plan.tecnico || '')}</p>
+      <div class="mant-tecnico-acc">
+        ${hayCevi ? '<a class="btn ghost sm" href="#/cevi">Pedírselo a CeVi</a>' : ''}
+        <a class="btn ghost sm" href="${esc(waLink('Hola, necesito que un técnico revise mi máquina'))}" target="_blank" rel="noopener">Escribir por WhatsApp</a>
+      </div>
+    </div>
+
+    ${errores.length ? `
+    <h2 class="section-h">Lo que daña tu máquina</h2>
+    <div class="lista mant-errores">${errores.map(l => `
+      <article class="lista-fila">
+        <div class="lista-dibujo"><img src="assets/academia/c2/${esc(l.img)}" alt="" loading="lazy" onerror="this.remove()"></div>
+        <div class="lista-txt"><p class="spec">${esc(l.t)}</p></div>
+      </article>`).join('')}</div>` : ''}
+
+    ${guias.length ? `
+    <h2 class="section-h">Para descargar</h2>
+    <div class="destinos">${guias.map(g => `
+      <button type="button" class="destino" data-guia="${esc(g.archivo)}">
+        <span class="destino-ico" aria-hidden="true">${icon('descarga')}</span>
+        <span class="destino-txt"><strong>${esc(g.titulo)}</strong><small>${esc(g.desc || g.tam || '')}</small></span>
+      </button>`).join('')}</div>` : ''}`;
+}
+
+function vistaMantPortada() {
+  const cli = currentClient();
+  const maqs = cli ? (state.db.maquinas || []).filter(m => m.cliente_id === cli.id && maqRef(m)) : [];
+  const est = state.mant;
+  let bloques;
+  if (!maqs.length && !(est?.maquinas || []).length) {
+    bloques = `<p class="mant-resumen">Todavía no vemos tu máquina en tu cuenta. En cuanto la registremos, aquí aparece tu calendario con fechas. Mientras, esto es lo que toca cuidar:</p>${mantCalendarioGenerico()}`;
+  } else if (!est) {
+    bloques = '<p class="mant-resumen">Cargando tu calendario…</p>';
+  } else if (est.error) {
+    bloques = `<p class="mant-resumen">No pudimos cargar tu calendario ahora. Revisa tu conexión y vuelve a abrir esta pestaña.</p>${mantCalendarioGenerico()}`;
+  } else if (!(est.maquinas || []).length) {
+    bloques = `<p class="mant-resumen">Todavía no vemos tu máquina en tu cuenta. En cuanto la registremos, aquí aparece tu calendario con fechas. Mientras, esto es lo que toca cuidar:</p>${mantCalendarioGenerico()}`;
+  } else {
+    bloques = est.maquinas.map(m => mantBloqueMaquina(m, est.maquinas.length > 1)).join('');
+  }
+  return `
+    <section class="mant">
+      <p class="bajada">Tu máquina rinde y dura más si la cuidas. Aquí está qué toca y cuándo, contado desde el día que te llegó.</p>
+      ${bloques}
+      ${mantSecciones()}
+    </section>`;
+}
+
+/* Un paso por pantalla, como la Academia: 0 es la portada de la tarea (por qué
+   y qué necesitas), 1..N los pasos, N+1 el final con el «Ya lo hice». */
+function vistaMantPasos(sec, id, nStr) {
+  const plan = mantPlan();
+  const d = sec === 'tarea' ? mantTarea(id) : (plan.siPasa || []).find(x => x.id === id && x.pasos);
+  if (!d) return '<p class="bajada">Esa guía ya no está. <a href="#/mantenimiento">Volver al calendario</a></p>';
+  const base = `#/mantenimiento/${sec}/${esc(d.id)}`;
+  const total = d.pasos.length;
+  const n = Math.max(0, Math.min(total + 1, parseInt(nStr || '0', 10) || 0));
+  const pie = (principal, atras) => `<div class="paso-pie paso-nav">${principal}${atras}</div>`;
+
+  if (n === 0) {
+    return `
+      <section class="paso mant-paso">
+        <p class="lec-modulo">${esc(sec === 'tarea' ? d.cadaTxt : d.cuando)}</p>
+        <h2 class="paso-titulo">${esc(d.titulo)}</h2>
+        ${d.porque ? `<p class="mant-porque">${esc(d.porque)}</p>` : ''}
+        ${d.nota ? `<p class="mant-nota">${esc(d.nota)}</p>` : ''}
+        ${(d.materiales || []).length ? `<h3 class="mant-sub">Lo que necesitas</h3><ul class="paso-detalle">${d.materiales.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}
+        ${pie(`<a class="btn primary" href="${base}/1">Empezar</a>`, '<a class="paso-link" href="#/mantenimiento">Volver al calendario</a>')}
+      </section>`;
+  }
+
+  if (n <= total) {
+    const p = d.pasos[n - 1];
+    return `
+      <section class="paso mant-paso">
+        <div aria-label="Paso ${n} de ${total}">${segbar(total, n)}</div>
+        <p class="lec-modulo">${esc(d.titulo)}</p>
+        <h2 class="paso-titulo lec-instruccion">${esc(p.t)}</h2>
+        ${p.img ? `<figure class="lec-foto"><img src="assets/${esc(p.img)}" alt="" onerror="this.closest('.lec-foto').remove()"></figure>` : ''}
+        ${pie(`<a class="btn primary" href="${base}/${n + 1}">${n === total ? 'Terminé' : 'Siguiente'}</a>`, `<a class="paso-link" href="${base}/${n - 1}">Atrás</a>`)}
+      </section>`;
+  }
+
+  // Final. Solo las tareas del calendario se anotan; «si pasa algo» no se lleva la cuenta.
+  let anotar = '';
+  if (sec === 'tarea') {
+    const maqs = (state.mant?.maquinas || []).filter(m => m.entrega);
+    const hoy = mantYmd(mantHoy());
+    anotar = maqs.map(m => {
+      const t = (m.tareas || []).find(x => x.id === d.id);
+      if (!t) return '';
+      const nombre = maqs.length > 1 ? ` en tu ${esc(m.modelo || 'máquina')}` : '';
+      if (t.estado === 'al_dia') return `<p class="mant-anotado">${icon('visto')} Ya está anotado${nombre}: lo hiciste el ${esc(mantFecha(t.ultima))}. La próxima, el ${esc(mantFecha(t.proxima))}.</p>`;
+      if (t.estado !== 'toca' && t.estado !== 'pronto') return `<p class="mant-anotado">${nombre ? `En tu ${esc(m.modelo)}: ` : ''}la primera vez que toca es el ${esc(mantFecha(t.proxima))}. Ese día anótalo aquí.</p>`;
+      const min = t.desde && t.desde > (m.entrega || '') ? t.desde : m.entrega;
+      return `
+        <div class="mant-anotar">
+          <button type="button" class="btn primary" data-mant-hecho data-tarea="${esc(d.id)}" data-ref="${esc(m.ref)}" data-volver="1">Ya lo hice${nombre}</button>
+          <button type="button" class="paso-link" data-mant-otrodia="${esc(m.ref)}">¿Lo hiciste otro día?</button>
+          <form class="mant-fecha" data-mant-otro="${esc(m.ref)}" data-tarea="${esc(d.id)}" hidden>
+            <label for="mantOtro-${esc(m.ref)}">¿Qué día lo hiciste?</label>
+            <div class="mant-fecha-fila">
+              <input type="date" id="mantOtro-${esc(m.ref)}" name="fecha" min="${esc(min || '')}" max="${hoy}" value="${hoy}" required>
+              <button type="submit" class="btn primary sm">Anotar</button>
+            </div>
+          </form>
+        </div>`;
+    }).join('');
+    if (!anotar) anotar = '<p class="mant-anotado">Cuando veamos tu máquina en tu cuenta, aquí vas a poder anotarlo.</p>';
+  }
+  return `
+    <section class="paso-fin mant-fin">
+      <img class="fin-toro" src="assets/cevi/gracias.png" width="200" height="186" loading="lazy" alt="" aria-hidden="true" decoding="async">
+      <h2>¡Listo!</h2>
+      ${sec === 'tarea' ? '<p>Anótalo, así te recordamos cuando toque otra vez.</p>' : ''}
+      ${anotar}
+      ${sec === 'guia' ? '<p>Si algo no salió como esperabas, escríbenos o pregúntale a CeVi.</p>' : ''}
+      <a class="paso-link" href="#/mantenimiento">Volver al calendario</a>
+    </section>`;
+}
+
+function bindMantenimiento() {
+  bindGuias();
+  const tras = (msg, volver) => {
+    pintarAvisoMant();
+    if (msg) toast(msg);
+    if (volver && location.hash !== '#/mantenimiento') location.hash = '#/mantenimiento';
+    else render(currentRoute());
+  };
+  const proximaDe = (ref, tareaId) => {
+    const t = (state.mant?.maquinas || []).find(m => m.ref === ref)?.tareas?.find(x => x.id === tareaId);
+    return t?.estado === 'al_dia' && t.proxima ? ` La próxima, el ${mantFecha(t.proxima)}.` : '';
+  };
+  view.querySelectorAll('[data-mant-hecho]').forEach(b => b.onclick = async () => {
+    b.disabled = true; const txt = b.textContent; b.textContent = 'Anotando…';
+    const r = await mantAccion('hecho', { maquina_ref: b.dataset.ref, tarea_id: b.dataset.tarea });
+    if (!r.ok) { b.disabled = false; b.textContent = txt; toast(r.error); return; }
+    tras('Anotado.' + proximaDe(b.dataset.ref, b.dataset.tarea), b.dataset.volver === '1');
+  });
+  view.querySelectorAll('[data-mant-deshacer]').forEach(b => b.onclick = async () => {
+    b.disabled = true;
+    const r = await mantAccion('deshacer', { maquina_ref: b.dataset.ref, tarea_id: b.dataset.tarea });
+    if (!r.ok) { b.disabled = false; toast(r.error); return; }
+    tras('Listo, lo quitamos.', false);
+  });
+  view.querySelectorAll('[data-mant-cambiar]').forEach(b => b.onclick = () => {
+    const f = view.querySelector(`form[data-mant-entrega="${CSS.escape(b.dataset.mantCambiar)}"]`);
+    if (f) { f.hidden = !f.hidden; if (!f.hidden) f.querySelector('input')?.focus(); }
+  });
+  view.querySelectorAll('[data-mant-otrodia]').forEach(b => b.onclick = () => {
+    const f = view.querySelector(`form[data-mant-otro="${CSS.escape(b.dataset.mantOtrodia)}"]`);
+    if (f) { f.hidden = !f.hidden; if (!f.hidden) f.querySelector('input')?.focus(); }
+  });
+  view.querySelectorAll('form[data-mant-entrega]').forEach(f => f.onsubmit = async (e) => {
+    e.preventDefault();
+    const fecha = f.fecha.value;
+    const r = await mantAccion('entrega', { maquina_ref: f.dataset.mantEntrega, fecha });
+    if (!r.ok) { toast(r.error); return; }
+    tras(`Guardado. Tu calendario cuenta desde el ${mantFecha(fecha)}.`, false);
+  });
+  view.querySelectorAll('form[data-mant-otro]').forEach(f => f.onsubmit = async (e) => {
+    e.preventDefault();
+    const r = await mantAccion('hecho', { maquina_ref: f.dataset.mantOtro, tarea_id: f.dataset.tarea, fecha: f.fecha.value });
+    if (!r.ok) { toast(r.error); return; }
+    tras(`Anotado el ${mantFecha(f.fecha.value)}.` + proximaDe(f.dataset.mantOtro, f.dataset.tarea), true);
+  });
+}
+
 const views = {
   /* Pantalla única: saludo + tu máquina + 5 botones grandes. Nada más.
      Todo lo demás vive DENTRO de esos botones. */
@@ -733,6 +1187,15 @@ const views = {
       </section>`;
   },
 
+  // Mantenimiento de la máquina: portada con el calendario, y un paso por
+  // pantalla en #/mantenimiento/tarea/<id>/<n> y #/mantenimiento/guia/<id>/<n>.
+  mantenimiento(sub) {
+    if (!mantPlan()) return '<p class="bajada">El calendario de mantenimiento no está disponible ahora.</p>';
+    const [sec, id, n] = String(sub || '').split('/');
+    if (sec === 'tarea' || sec === 'guia') return vistaMantPasos(sec, id, n);
+    return vistaMantPortada();
+  },
+
   soporte() {
     const d = state.db, cli = currentClient(), sop = d.soporte, faqs = d.faqs || [];
     const maq = cli ? d.maquinas.find(x => x.cliente_id === cli.id) : null;
@@ -927,6 +1390,7 @@ function bind(route) {
     bindGuias(); bindQuizzes(); bindLeccion();
   }
   if (route === 'descargables') bindGuias();
+  if (route === 'mantenimiento') bindMantenimiento();
   const salir = $('#salirCuenta');
   if (salir) salir.onclick = () => { const b = $('#logoutBtn'); if (b) b.click(); };
   /* "Prepara tu espacio" vive en dos sitios con el mismo HTML y el mismo
@@ -1308,7 +1772,7 @@ function bindQuizzes() {
 // ---------- router ----------
 /* Títulos cortos: los largos ("Aprender a usar mi máquina") no cabían en el
    menú ni en la cabecera del móvil. */
-const TITLES = { inicio: 'Inicio', cuenta: 'Mi cuenta', cevi: 'Asistente', academia: 'Academia', preparacion: 'Primeros pasos', soporte: 'Necesito ayuda', descargables: 'Descargables', certificado: 'Tu Certificado de Calidad' };
+const TITLES = { inicio: 'Inicio', cuenta: 'Mi cuenta', cevi: 'Asistente', academia: 'Academia', preparacion: 'Primeros pasos', soporte: 'Necesito ayuda', descargables: 'Descargables', certificado: 'Tu Certificado de Calidad', mantenimiento: 'Mantenimiento de tu máquina' };
 function render(route) {
   /* Las secciones pueden tener subpáginas: `#/academia/cursos`. Así cada una es
      una pantalla propia, con su título y su botón de atrás, y el botón «volver»
@@ -1336,7 +1800,8 @@ function render(route) {
   if (route === 'academia' && state.sub === 'prep') titulo = 'Prepara tu espacio';
   if (route === 'cuenta' && state.sub === 'certificado') titulo = TITLES.certificado;
   // Dentro de una lección la cabecera sobra: la pantalla ya dice dónde estás.
-  const enLeccion = route === 'academia' && /^curso\/[^/]+\/p\//.test(state.sub);
+  const enLeccion = (route === 'academia' && /^curso\/[^/]+\/p\//.test(state.sub))
+    || (route === 'mantenimiento' && /^(tarea|guia)\//.test(state.sub));
   // Toda subpágina vuelve a la portada de su sección: un solo camino de vuelta.
   const atras = state.sub
     ? `<a class="volver" href="#/${route}"><span aria-hidden="true">←</span> ${esc(TITLES[route])}</a>`
@@ -1348,7 +1813,7 @@ function render(route) {
   view.innerHTML = cabecera + views[route](state.sub);
   const rutaVisto = (route === 'cuenta' && state.sub === 'certificado') ? 'certificado' : route;
   if (rutaVisto === 'certificado' || rutaVisto === 'soporte') { try { localStorage.setItem('c4v_visto_' + rutaVisto + '_' + state.ctx, '1'); } catch {} }
-  bind(route); window.scrollTo(0, 0);
+  bind(route); pintarAvisoMant(); window.scrollTo(0, 0);
 }
 const currentRoute = () => (location.hash.replace('#/', '') || 'inicio');
 window.addEventListener('hashchange', () => render(currentRoute()));
@@ -1391,7 +1856,8 @@ function inyectarCliente(cliente, maquinas) {
   if (i >= 0) state.db.clientes[i] = cliente; else state.db.clientes.push(cliente);
   state.db.maquinas = state.db.maquinas || [];
   (maquinas || []).forEach(m => {
-    const j = state.db.maquinas.findIndex(x => x.serie === m.serie);
+    // Con la serie vacía (casi siempre, desde Odoo) la 2ª máquina pisaba a la 1ª.
+    const j = state.db.maquinas.findIndex(x => maqRef(x) === maqRef(m) && x.cliente_id === m.cliente_id);
     if (j >= 0) state.db.maquinas[j] = m; else state.db.maquinas.push(m);
   });
   return cliente;
@@ -1474,6 +1940,7 @@ const docInfo = (paisCode, tipo) => {
 async function entrar(cliente) {
   state.ctx = cliente.id;
   pedirEstadoGuia();   // sin await: no debe retrasar la entrada
+  pedirEstadoMantenimiento();   // idem; antes de la salida temprana a la guía, para que el aviso se vea igual
   $('#gate').hidden = true; $('#app').hidden = false;
   pintarPieLegal();   // ahora sabemos con qué empresa contrató
   const info = docInfo(cliente.pais, cliente.tipo || 'persona');

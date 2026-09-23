@@ -1651,3 +1651,124 @@ body.cevi-en-voz{overflow:hidden}
   padding:var(--s-5)}
 .quiz-hecho-nota{margin:0;font-size:var(--t-lg);font-weight:700;color:var(--ok)}
 .quiz-hecho .btn{width:100%;justify-content:center}
+
+/* ════════════════════════════════════════════════════════════════════════
+   MANTENIMIENTO DE LA MÁQUINA (23-set-2026)
+   Pestaña propia con el calendario de cada máquina, un paso por pantalla
+   para cada tarea (reusa .paso / .paso-nav / .lec-foto de la Academia) y el
+   aviso «No te olvides» arriba del contenido. Tono tranquilo: sin cuentas
+   regresivas ni «atrasado N días»; solo la fecha que toca.
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* Menú con cuatro pestañas: menos aire entre ellas para que «Mantenimiento»
+   quepa entero en los Android de 360 px (antes se cortaba en «Mantenimien…»). */
+@media(max-width:620px){
+  .menu{gap:2px}
+  .menu a{padding:6px 1px}
+}
+@media(max-width:380px){
+  .menu a{font-size:11px;letter-spacing:-.1px}
+}
+/* Punto rojo en la pestaña cuando algo toca. */
+.menu a .menu-ic{position:relative}
+.menu a.con-pendiente .menu-ic::after{content:"";position:absolute;top:-2px;right:-5px;width:9px;height:9px;
+  border-radius:50%;background:var(--rojo);box-shadow:0 0 0 2px var(--black)}
+.menu a.con-pendiente[aria-current="page"] .menu-ic::after{box-shadow:0 0 0 2px #fff;background:var(--rojo-tinta)}
+
+/* La franja «No te olvides»: arriba de la hoja, con su mismo ancho. */
+.aviso-mant{display:flex;align-items:center;gap:var(--s-3);max-width:860px;margin:var(--s-4) auto 0;
+  padding:var(--s-3) var(--s-4);background:var(--rojo-suave);border-left:4px solid var(--rojo-tinta);
+  border-radius:var(--r-lg);color:var(--tinta)}
+.aviso-mant[hidden]{display:none}
+.aviso-mant-ic{flex-shrink:0;display:grid;place-items:center;width:40px;height:40px;border-radius:50%;
+  background:#fff;color:var(--rojo-tinta)}
+.aviso-mant-ic .ic{width:22px;height:22px}
+.aviso-mant-txt{flex:1;margin:0;font-size:var(--t-sm);line-height:var(--lh-snug)}
+.aviso-mant-txt strong{display:block;font-size:var(--t-md)}
+.aviso-mant .btn{flex-shrink:0;white-space:nowrap}
+@media(max-width:620px){
+  .aviso-mant{margin:0;border-radius:0;flex-wrap:wrap;padding:var(--s-3) var(--s-4)}
+  .aviso-mant-txt{min-width:calc(100% - 56px)}
+  .aviso-mant .btn{width:100%;justify-content:center}
+}
+
+/* Portada */
+.mant-resumen{margin:0 0 var(--s-2);font-family:var(--slab);font-weight:700;font-size:var(--t-lg);
+  line-height:var(--lh-snug);padding:var(--s-4);border-radius:var(--r-lg);background:var(--alt)}
+.mant-resumen.toca{background:var(--rojo-suave)}
+.mant-resumen.ok{background:var(--ok-50);color:var(--ok)}
+.mant-desde{margin:0 0 var(--s-3);font-size:var(--t-sm);color:var(--grafito);line-height:var(--lh-snug)}
+.mant-desde .paso-link{margin-left:4px}
+.mant-fecha{display:flex;flex-direction:column;gap:var(--s-2);margin:0 0 var(--s-4);padding:var(--s-4);
+  border:2px solid var(--regla);border-radius:var(--r-lg)}
+.mant-fecha[hidden]{display:none}
+.mant-fecha label{font-weight:700;font-size:var(--t-md)}
+.mant-fecha-fila{display:flex;gap:var(--s-2);flex-wrap:wrap}
+.mant-fecha input[type="date"]{flex:1;min-width:160px;min-height:var(--tap);padding:8px 12px;font:inherit;
+  font-size:var(--t-md);border:2px solid var(--regla);border-radius:var(--r);background:#fff;color:var(--tinta)}
+.mant-fecha input[type="date"]:focus{border-color:var(--tinta);outline:none}
+
+.mant-lista{border-top:2px solid var(--tinta);margin:0 0 var(--s-5)}
+.mant-fila{display:grid;grid-template-columns:48px 1fr auto;gap:var(--s-2) var(--s-4);align-items:center;
+  padding:var(--s-4) 0;border-bottom:1px solid var(--regla)}
+.mant-ic{display:grid;place-items:center;width:48px;height:48px;border-radius:50%;background:var(--mesa);color:var(--tinta)}
+.mant-ic .ic{width:24px;height:24px}
+.mant-fila.toca .mant-ic{background:var(--rojo-suave);color:var(--rojo-tinta)}
+.mant-fila.al_dia .mant-ic{background:var(--ok-50);color:var(--ok)}
+.mant-txt h3{margin:0;font-family:var(--slab);font-size:var(--t-lg);line-height:var(--lh-tight)}
+.mant-cada{margin:4px 0 0;font-size:var(--t-sm);font-weight:700;color:var(--grafito)}
+.mant-cuando{margin:2px 0 0;font-size:var(--t-sm);line-height:var(--lh-snug)}
+.mant-fila.toca .mant-cuando{color:var(--rojo-tinta);font-weight:700}
+.mant-fila.al_dia .mant-cuando{color:var(--ok)}
+.mant-acc{display:flex;flex-direction:column;align-items:stretch;gap:var(--s-2);min-width:150px}
+.mant-acc .btn{justify-content:center}
+.mant-hecho{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:var(--tap);
+  font-weight:700;color:var(--ok)}
+.mant-hecho .ic{width:20px;height:20px}
+.mant-acc .paso-link{align-self:center}
+@media(max-width:620px){
+  .mant-fila{grid-template-columns:44px 1fr;align-items:start}
+  .mant-ic{width:44px;height:44px}
+  .mant-acc{grid-column:1 / -1;flex-direction:row;flex-wrap:wrap;min-width:0}
+  .mant-acc .btn{flex:1 1 140px}
+  .mant-acc .paso-link{flex:1 1 100%;text-align:center}
+}
+
+/* Secciones de abajo */
+.mant-uso-ic{display:grid;place-items:center;width:56px;height:56px;border-radius:50%;background:var(--mesa)}
+.mant-uso-ic .ic{width:28px;height:28px}
+.mant-uso .lista-fila{align-items:center}
+.mant-uso .lista-dibujo{width:64px;height:64px}
+.mant-uso .lista-fila{grid-template-columns:64px 1fr}
+.mant-uso .lista-txt .spec{margin:0;font-size:var(--t-md)}
+.mant-errores .lista-fila,.mant-kit .lista-fila{grid-template-columns:104px 1fr;align-items:center}
+.mant-errores .lista-txt .spec{margin:0}
+@media(max-width:620px){
+  .mant-uso .lista-fila{grid-template-columns:56px 1fr}
+  .mant-uso .lista-dibujo{width:56px;height:56px}
+  .mant-errores .lista-fila,.mant-kit .lista-fila{grid-template-columns:92px 1fr}
+}
+.mant-casos{border-top:2px solid var(--tinta);margin:0 0 var(--s-5)}
+.mant-caso{padding:var(--s-4) 0;border-bottom:1px solid var(--regla);display:flex;flex-direction:column;
+  align-items:flex-start;gap:var(--s-2)}
+.mant-caso-cuando{margin:0;font-size:var(--t-sm);font-weight:700;color:var(--grafito)}
+.mant-caso h3{margin:0;font-family:var(--slab);font-size:var(--t-lg);line-height:var(--lh-tight)}
+.mant-caso p{margin:0;line-height:var(--lh-base);max-width:var(--medida)}
+.mant-caso-foto{margin:0}
+.mant-caso-foto img{display:block;max-width:220px;width:100%;height:auto;border-radius:var(--r-lg)}
+.mant-tecnico{padding:var(--s-4);border:2px solid var(--regla);border-radius:var(--r-lg);margin:0 0 var(--s-5)}
+.mant-tecnico p{margin:0 0 var(--s-3);line-height:var(--lh-base)}
+.mant-tecnico-acc{display:flex;gap:var(--s-2);flex-wrap:wrap}
+.mant-tecnico-acc .btn{flex:1 1 180px;justify-content:center}
+
+/* Paso a paso */
+.mant-porque{margin:0;font-size:var(--t-lg);line-height:var(--lh-base)}
+.mant-nota{margin:0;padding:var(--s-3) var(--s-4);background:var(--alt);border-radius:var(--r);
+  font-size:var(--t-md);line-height:var(--lh-snug)}
+.mant-sub{margin:var(--s-2) 0 0;font-family:var(--slab);font-size:var(--t-md)}
+.mant-paso .lec-foto img{max-height:62vh;width:auto;max-width:100%;margin:0 auto}
+.mant-fin .mant-anotar{display:flex;flex-direction:column;align-items:stretch;gap:var(--s-3);width:100%;max-width:420px}
+.mant-fin .mant-anotar .btn{justify-content:center;font-size:var(--t-lg);padding:16px 20px}
+.mant-fin .mant-anotar .paso-link{align-self:center}
+.mant-anotado{display:flex;align-items:flex-start;gap:8px;margin:0;font-size:var(--t-md);line-height:var(--lh-snug);color:var(--ok)}
+.mant-anotado .ic{flex-shrink:0;width:22px;height:22px}
