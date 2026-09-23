@@ -3298,6 +3298,7 @@ async function ceviElevenLabsIniciar() {
   if (cevi11.url) el.setAttribute('signed-url', cevi11.url);
   else el.setAttribute('agent-id', CFG.elevenlabsAgentId);
   el.setAttribute('dynamic-variables', JSON.stringify(vars));
+  if (cevi11.userId) el.setAttribute('user-id', cevi11.userId);
   el.addEventListener('elevenlabs-convai:call', (e) => {
     const cfg = e.detail && e.detail.config;
     if (cfg && cevi11.url) { cfg.signedUrl = cevi11.url; delete cfg.agentId; }
@@ -3322,7 +3323,6 @@ function ceviPaginaIniciar() {
   ceviEstado('reposo');
   orbeArrancar();
   ceviDespertarBackend();
-  if (cevi11.userId) el.setAttribute('user-id', cevi11.userId);
   ceviPrecargarRelleno();
 
   const cli = currentClient();
