@@ -3227,15 +3227,20 @@ function ceviElevenLabsVars() {
    quien trae el token de identidad del portal. La primera va en el atributo
    `signed-url` (el widget la usa también para leer su configuración); antes de
    CADA llamada se le cambia por una fresca en el evento
-   `elevenlabs-convai:call`, que el widget dispara justo antes de conectar. */
-const cevi11 = { token: null, url: null, reloj: null };
+   `elevenlabs-convai:call`, que el widget dispara justo antes de conectar.
+   user-id: seudónimo estable del cliente (HMAC del documento, nunca el DNI ni
+   el teléfono) que da cevi-backend. Agrupa sus conversaciones en ElevenLabs y
+   evita que el widget cargue FingerprintJS para inventarle uno. */
+const cevi11 = { token: null, url: null, userId: null, reloj: null };
 
 async function ceviUrlFirmada() {
   if (!cevi11.token || !CFG.ceviApi) return null;
   try {
     const r = await fetch(`${CFG.ceviApi}/voz/url-firmada`, { method: 'POST', headers: { 'X-CeVi-Token': cevi11.token } });
     if (!r.ok) return null;
-    return (await r.json()).signed_url || null;
+    const j = await r.json();
+    if (j.user_id) cevi11.userId = j.user_id;
+    return j.signed_url || null;
   } catch { return null; }
 }
 
@@ -3243,7 +3248,9 @@ async function ceviElevenLabsIniciar() {
   if (!document.getElementById('script-11labs-convai')) {
     const s = document.createElement('script');
     s.id = 'script-11labs-convai';
-    s.src = 'https://unpkg.com/@elevenlabs/convai-widget-embed';
+    // Versión fija: el widget cambia seguido y cada versión mueve el layout.
+    // Subirla a mano después de probarla con la cuenta de Martín.
+    s.src = 'https://unpkg.com/@elevenlabs/convai-widget-embed@0.18.2';
     s.async = true;
     document.head.appendChild(s);
   }
@@ -3291,6 +3298,7 @@ function ceviPaginaIniciar() {
   ceviEstado('reposo');
   orbeArrancar();
   ceviDespertarBackend();
+  if (cevi11.userId) el.setAttribute('user-id', cevi11.userId);
   ceviPrecargarRelleno();
 
   const cli = currentClient();
