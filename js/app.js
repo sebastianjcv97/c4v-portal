@@ -1,7 +1,7 @@
 /* Central de Postventa C4V — SPA (vanilla JS). Sin login (modo local).
    Funciona con servidor (npm start) o en modo DEMO con datos embebidos (data.js). */
 
-const state = { db: null, ctx: null, offline: false, telefono: null, guiaPorCorreo: null, empresaVendedora: null };
+const state = { db: null, ctx: null, offline: false, telefono: null, guiaPorCorreo: null, empresaVendedora: null, acceso: null };
 const CFG = window.C4V_CONFIG || {};
 const SESION_DIAS = 90; // A5: sesión recordada 90 días en el dispositivo
 
@@ -24,6 +24,10 @@ function nombrePropio(s) {
   }).join(' ');
 }
 const primerNombre = (s) => nombrePropio(s).split(' ')[0];
+/* Quién entró: el comprador, o alguien a quien el equipo le dio acceso (su
+   esposa, su técnico…; ver src/identidad.js del API). Para saludar se usa SU
+   nombre; las máquinas y el certificado siguen siendo los del comprador. */
+const nombreSaludo = (cli) => primerNombre(state.acceso?.tipo === 'tercero' && state.acceso.nombre ? state.acceso.nombre : cli?.nombre);
 const PAISES = { PE: '🇵🇪 Perú', EC: '🇪🇨 Ecuador', BO: '🇧🇴 Bolivia', CL: '🇨🇱 Chile', CO: '🇨🇴 Colombia' };
 
 function toast(msg) {
@@ -425,15 +429,18 @@ function vistaCurso(a, id) {
 const mantPlan = () => (state.db?.mantenimiento || window.__SEED__?.mantenimiento || null);
 const mantTarea = (id) => (mantPlan()?.tareas || []).find(t => t.id === id) || null;
 
-// Misma regla que el servidor (refMaquina): la serie casi nunca llega desde
-// Odoo, pero «pedido:modelo» es única dentro de cada cliente.
+// Misma regla que el servidor (refMaquina): «pedido:modelo», con «:2», «:3»…
+// para las unidades iguales del mismo pedido. Va antes que la serie porque la
+// serie suele llegar a Odoo después, y la clave no debe cambiar con ella.
 function maqRef(m) {
   if (!m) return '';
-  const serie = String(m.serie || '').trim();
-  if (serie) return serie.slice(0, 80);
   const pedido = String(m.pedido || '').trim(), modelo = String(m.modelo || '').trim();
-  return (pedido ? `${pedido}:${modelo}` : modelo).slice(0, 80);
+  const unidad = Number(m.unidad) > 1 ? `:${Number(m.unidad)}` : '';
+  if (pedido) return `${pedido}:${modelo}${unidad}`.slice(0, 80);
+  return (String(m.serie || '').trim() || modelo).slice(0, 80);
 }
+// El plan es de las CO2 (tubo, espejos, enfriador): igual que el servidor (tienePlan).
+const mantTienePlan = (m) => !['diodo', 'fibra', 'soldadora'].includes(String(m?.tipo || '').trim().toLowerCase());
 
 /* Fechas como días enteros (UTC, sin horas). `new Date('2026-09-01')` se lee en
    UTC y en Perú da el 31 de agosto: por eso nunca se usa directo. */
@@ -446,7 +453,17 @@ function mantDia(ymd) {
   return Math.round(t / 864e5);
 }
 const mantYmd = (n) => (n == null ? null : new Date(n * 864e5).toISOString().slice(0, 10));
-function mantHoy() { const d = new Date(); return Math.round(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 864e5); }
+/* «Hoy» es el de Lima, como en el servidor: con la fecha del celular, en
+   Bolivia entre las 00:00 y la 01:00 el servidor rechazaba «hoy» por futuro. */
+function mantHoy() {
+  try {
+    const p = Object.fromEntries(new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Lima', year: 'numeric', month: '2-digit', day: '2-digit' })
+      .formatToParts(new Date()).map(x => [x.type, x.value]));
+    const n = mantDia(`${p.year}-${p.month}-${p.day}`);
+    if (n != null) return n;
+  } catch {}
+  const d = new Date(); return Math.round(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 864e5);
+}
 const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
 function mantFecha(ymd) {
   const n = mantDia(ymd); if (n == null) return '';
@@ -491,17 +508,22 @@ function mantCalcularLocal() {
   if (!plan || !cli) return null;
   const hoy = mantHoy(), loc = mantLeerLocal();
   const maquinas = (state.db.maquinas || []).filter(m => m.cliente_id === cli.id && maqRef(m)).map(m => {
-    const ref = maqRef(m);
+    const ref = maqRef(m), aplica = mantTienePlan(m);
+    // Mismo orden que el servidor (fechaEntrega): cliente, salida de almacén,
+    // certificado, y el pedido solo si ya pasaron 60 días.
     const conf = mantDia(loc.e?.[ref]);
-    const ped = mantDia(String(m.fecha_entrega || '').slice(0, 10));
+    const desp = mantDia(String(m.despacho || '').slice(0, 10));
     const cert = mantDia(String(m.certificado?.fecha || '').slice(0, 10));
-    const entrega = conf ?? ped ?? cert ?? null;
-    const fuente = conf != null ? 'cliente' : ped != null ? 'pedido' : cert != null ? 'certificado' : null;
-    const tareas = plan.tareas.map(t => {
+    const ped = mantDia(String(m.fecha_entrega || '').slice(0, 10));
+    const pedViejo = ped != null && hoy - ped >= 60 ? ped : null;
+    const entrega = conf ?? desp ?? cert ?? pedViejo ?? null;
+    const fuente = conf != null ? 'cliente' : desp != null ? 'despacho' : cert != null ? 'certificado'
+      : pedViejo != null ? 'pedido' : ped != null ? 'en_camino' : null;
+    const tareas = (aplica ? plan.tareas : []).map(t => {
       const r = mantEstadoTarea({ entrega, cada: t.cada, hechos: (loc.h?.[ref]?.[t.id] || []).map(mantDia), hoy });
       return { id: t.id, estado: r.estado, vence: mantYmd(r.vence), proxima: mantYmd(r.proxima), ultima: mantYmd(r.ultima), desde: mantYmd(r.desde) };
     });
-    return { ref, modelo: m.modelo || '', pedido: m.pedido || '', entrega: mantYmd(entrega), entrega_fuente: fuente, tareas, pendientes: tareas.filter(t => t.estado === 'toca').length };
+    return { ref, modelo: m.modelo || '', pedido: m.pedido || '', tipo: m.tipo || '', aplica, entrega: mantYmd(entrega), entrega_fuente: fuente, tareas, pendientes: tareas.filter(t => t.estado === 'toca').length };
   });
   return { local: true, hoy: mantYmd(hoy), maquinas, pendientes: maquinas.reduce((n, x) => n + x.pendientes, 0) };
 }
@@ -512,6 +534,7 @@ async function pedirEstadoMantenimiento() {
   if (mantEsLocal()) { state.mant = mantCalcularLocal(); mantRepintar(); return; }
   const ses = leerSesion();
   if (!ses?.t) return;
+  state.mantPedido = Date.now();
   try {
     const r = await apiPost('/api/mantenimiento/estado', { token: ses.t });
     if (r.ok && r.json.ok) state.mant = r.json.demo ? mantCalcularLocal() : r.json;
@@ -522,6 +545,14 @@ async function pedirEstadoMantenimiento() {
 function mantRepintar() {
   pintarAvisoMant();
   if (currentRoute().split('/')[0] === 'mantenimiento') render(currentRoute());
+}
+/* Vuelve a pedir el estado si falló la vez anterior o si cambió el día (la app
+   abierta de un día para otro). Como mucho una vez cada 30 s, para que un
+   error persistente no quede pidiendo en bucle. */
+function mantRefrescarSiHaceFalta() {
+  const e = state.mant;
+  if (!e || !state.ctx || Date.now() - (state.mantPedido || 0) < 30e3) return;
+  if (e.error || (e.hoy && e.hoy !== mantYmd(mantHoy()))) { state.mantPedido = Date.now(); pedirEstadoMantenimiento(); }
 }
 
 // tipo: 'hecho' | 'deshacer' | 'entrega'. Devuelve { ok, error? } y deja state.mant al día.
@@ -569,14 +600,17 @@ function pintarAvisoMant() {
   const ruta = currentRoute().split('/')[0];
   const mostrar = pend.length > 0 && state.ctx && ruta !== 'mantenimiento' && ruta !== 'cevi';
   el.hidden = !mostrar;
+  mantRefrescarSiHaceFalta();
   if (!mostrar) { el.innerHTML = ''; return; }
   const modelos = [...new Set(pend.map(x => x.m.modelo).filter(Boolean))];
   const maquina = modelos.length === 1 ? `tu ${modelos[0]}` : 'tu máquina';
   const cosas = [...new Set(pend.map(x => x.d.corto))];
-  el.innerHTML = `
+  const html = `
     <span class="aviso-mant-ic" aria-hidden="true">${icon('llave')}</span>
     <p class="aviso-mant-txt"><strong>No te olvides del mantenimiento de ${esc(maquina)}.</strong> Toca ${esc(mantLista(cosas))}.</p>
     <a class="btn primary sm" href="#/mantenimiento">Ver qué toca</a>`;
+  // Solo si cambió: es role="status" y el lector de pantalla lo relee en cada cambio.
+  if (el.innerHTML !== html) el.innerHTML = html;
 }
 
 function mantFilaTarea(m, t, varias) {
@@ -918,7 +952,7 @@ const views = {
     return `
       <div class="saludo-fila">
         <img class="saludo-toro" src="assets/cevi/saluda.png" width="124" height="160" loading="lazy" alt="" aria-hidden="true" decoding="async">
-        <h1 class="saludo">${cli ? `Hola, ${esc(primerNombre(cli.nombre))}` : 'Hola'}</h1>
+        <h1 class="saludo">${cli ? `Hola, ${esc(nombreSaludo(cli))}` : 'Hola'}</h1>
       </div>
 
       ${prep.completo ? `
@@ -1108,7 +1142,7 @@ const views = {
     // corriendo el chat de siempre (cevi-backend + Claude).
     if (CFG.elevenlabsAgentId) return views.ceviElevenLabs();
     const cli = currentClient();
-    const nombre = primerNombre(cli?.nombre);
+    const nombre = nombreSaludo(cli);
     return `
       <section class="chat" id="ceviPagina" data-cevi-estado="reposo">
         <div class="chat-hilo" id="ceviMsgs" role="log" aria-live="polite" aria-label="Conversación con CeVi"></div>
@@ -1829,11 +1863,6 @@ window.toast = toast;
 function normalizarDoc(raw) {
   return String(raw || '').toUpperCase().replace(/[^0-9K]/g, '');
 }
-function buscarClientePorDocumento(doc) {
-  // Modo demo: busca en los datos locales (data.js). En producción se usa el
-  // endpoint de verificación (ver verificarCliente).
-  return state.db.clientes.find(c => normalizarDoc(c.documento) === doc) || null;
-}
 
 /* ---------- Verificación de cliente (demo local ↔ endpoint real) ----------
    Config en config.js → `verificacion` { activo, apiBase, endpoint } y
@@ -1861,42 +1890,6 @@ function inyectarCliente(cliente, maquinas) {
     if (j >= 0) state.db.maquinas[j] = m; else state.db.maquinas.push(m);
   });
   return cliente;
-}
-
-/* Devuelve { estado:'ok', cliente } · { estado:'no_encontrado' } · { estado:'limite' } · { estado:'error' }.
-   - modoDemo → valida contra data.js (comportamiento actual).
-   - producción → llama al endpoint; existe:false = no_encontrado; red/503 = error. */
-async function verificarCliente({ pais, doc }) {
-  if (modoDemo()) {
-    const cli = buscarClientePorDocumento(doc);
-    return cli ? { estado: 'ok', cliente: cli } : { estado: 'no_encontrado' };
-  }
-  // Documento de ejemplo: ni siquiera en producción real llama al backend.
-  // Sale de window.__SEED__ (data.js) directo, no de state.db: en producción
-  // real el backend NO manda clientes de ejemplo mezclados con los reales.
-  if (doc === DOC_DEMO) {
-    const cli = (window.__SEED__?.clientes || []).find(c => normalizarDoc(c.documento) === doc) || null;
-    if (cli && !state.db.clientes.some(c => c.id === cli.id)) {
-      inyectarCliente(cli, (window.__SEED__?.maquinas || []).filter(m => m.cliente_id === cli.id));
-    }
-    return cli ? { estado: 'ok', cliente: cli, demo: true } : { estado: 'no_encontrado' };
-  }
-  // PII: el documento viaja en el BODY de un POST (no en la URL → no queda en
-  // logs/proxies/historial). El backend rate-limita por IP; la decisión sobre
-  // OTP (INTEGRACION_ODOO.md §9 SEGURIDAD) es de producto, previa a producción.
-  const base = VERIF.apiBase || '';
-  const ep = VERIF.endpoint || '/api/cliente';
-  let r;
-  try {
-    r = await fetch(`${base}${ep}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pais: pais || '', doc }) });
-  } catch { return { estado: 'error' }; }
-  if (r.status === 429) return { estado: 'limite' };
-  if (!r.ok) return { estado: 'error' };          // 400/503/… → no distinguir para el usuario
-  let j;
-  try { j = await r.json(); } catch { return { estado: 'error' }; }
-  if (!j || !j.existe) return { estado: 'no_encontrado' };
-  if (j.requiere_otp) return { estado: 'otp' };   // hace falta el código de WhatsApp
-  return { estado: 'ok', cliente: inyectarCliente(j.cliente, j.maquinas) };
 }
 
 /* ---------- Sesión ----------
@@ -1927,6 +1920,7 @@ async function entrarConToken(token) {
     if (!r.ok) { if (r.status === 401) borrarSesion(); return { estado: 'error' }; }
     const j = await r.json();
     if (!j || !j.existe) { borrarSesion(); return { estado: 'no_encontrado' }; }
+    state.acceso = j.acceso || null;
     return { estado: 'ok', cliente: inyectarCliente(j.cliente, j.maquinas) };
   } catch { return { estado: 'error' }; }
 }
@@ -1957,7 +1951,7 @@ async function entrar(cliente) {
   if (!pe.completo) {
     location.hash = '#/academia/prep';
     setTimeout(() => toast(primeraVez
-      ? `👋 ¡Hola${cliente.nombre ? ', ' + primerNombre(cliente.nombre) : ''}! Empieza por dejar tu espacio listo`
+      ? `👋 ¡Hola${cliente.nombre ? ', ' + nombreSaludo(cliente) : ''}! Empieza por dejar tu espacio listo`
       : `📋 Vas ${pe.n} de ${pe.total} en tu preparación`), 500);
     render('academia/prep');
     return;
@@ -1965,43 +1959,41 @@ async function entrar(cliente) {
   render(currentRoute());
 }
 
-/* ---------- Acceso en dos pasos ----------
-   Paso A: documento + país + consentimiento.
-   Paso B: el cliente nos escribe por WhatsApp (así demuestra que el número es
-   suyo) y el bot le responde su código fijo (3 letras + 4 números) que teclea aquí.
-   Si el servidor no exige código (OTP apagado), el paso A entra directo. */
-const otpEstado = { solicitud: null, pais: null, sondeo: null, directo: false, faltan: 0 };
+/* ---------- Acceso con el celular ----------
+   Tres pantallas dentro de #gate, una a la vez:
+     tel        país + celular + casilla  → POST /api/acceso/entrar-telefono
+     cod        el código de 6 números del SMS → POST /api/otp/verificar
+     solicitud  si el número no está en la lista de clientes: nombre + número
+                de cotización o factura → POST /api/acceso/solicitar
+   El servidor guarda la constancia del consentimiento al verificar el código,
+   así que ya no hay una llamada aparte a /api/consentimiento. */
+const acceso = { paso: 'tel', solicitud: null, pais: null, telefono: '', pista: '', enviadoA: '', cliente: null, reloj: null };
 
-/* Estado del acceso, que ahora ocurre entero en una sola pantalla.
-   En modo demostración no hay backend ni WhatsApp, pero el recorrido se ve
-   igual; el código sale en pantalla y se dice que es una prueba. */
-const acceso = { fase: 'tel', solicitud: null, pais: null, cliente: null, codigo: null };
-
-/* Mientras el portal esté en demostración no hay WhatsApp que enviar, así que el
-   código es fijo y conocido. La pantalla se ve exactamente igual que la final:
-   nadie ajeno puede llegar aquí, porque en demostración solo existen los cinco
-   clientes de ejemplo. Con `verificacion.activo: true` este valor no se usa
-   nunca: el código lo genera el servidor y viaja por WhatsApp. */
-const CODIGO_DEMO = 'DEM1234';   // mismo formato que el real: 3 letras + 4 números
-
-/* Documento de ejemplo: aunque el portal esté en producción real, si alguien
-   escribe este DNI entra por el recorrido de siempre pero SIN backend ni
-   WhatsApp — para mostrar el flujo sin depender de que llegue un mensaje
-   real. Inventado a propósito (no existe en Odoo ni en la base real), para
-   no ocupar el documento de ningún cliente de verdad. Vive también como
-   cliente en data.js (cli-006), con el mismo documento y teléfono. */
+/* Número de demostración (+51 900 000 000, cli-006 en data.js): recorre las
+   mismas pantallas pero SIN backend ni SMS, para mostrar el portal sin gastar
+   un envío. Inventado a propósito, no es de ningún cliente. El código tiene el
+   mismo formato que el real (6 números) para que la pantalla sea la misma. */
+const TEL_DEMO = '900000000';
+const CODIGO_DEMO = '123456';
+/* Documento del cliente de demostración: con él se lo busca en data.js y se
+   pide su token a /api/demo/token. */
 const DOC_DEMO = '00000000';
 
-const PISTA_DIGITOS = 3;
 const PREFIJOS_PAIS = { PE: '51', EC: '593', BO: '591', CL: '56', CO: '57' };
+const LARGOS_PAIS = { PE: [9], EC: [9, 8], BO: [8], CL: [9], CO: [10] };
 
 const digitosDe = (s) => String(s || '').replace(/\D/g, '');
 
-// Número sin el prefijo del país: es el que la persona conoce de memoria.
-function numeroNacional(tel, pais) {
-  const d = digitosDe(tel);
-  const p = PREFIJOS_PAIS[String(pais || '').toUpperCase()];
-  return p && d.length > p.length && d.startsWith(p) ? d.slice(p.length) : d;
+/* El número como se lee en voz alta: +51 995 547 575. Quita el prefijo si la
+   persona lo escribió pegado y el 0 de larga distancia, igual que el servidor
+   (src/telefono.js), para que lo que se ve sea lo que se guarda. */
+function telLegible(pais, tel) {
+  const p = PREFIJOS_PAIS[pais] || '';
+  let d = digitosDe(tel);
+  if (d.startsWith('00')) d = d.slice(2);
+  if (p && d.startsWith(p) && (LARGOS_PAIS[pais] || []).includes(d.length - p.length)) d = d.slice(p.length);
+  if (d.startsWith('0')) d = d.slice(1);
+  return `+${p} ${d.replace(/(\d{3})(?=\d)/g, '$1 ')}`.trim();
 }
 
 async function apiPost(ruta, cuerpo) {
@@ -2013,119 +2005,63 @@ async function apiPost(ruta, cuerpo) {
   try { j = await r.json(); } catch {}
   return { ok: r.ok, status: r.status, json: j || {} };
 }
-
-function mostrarPaso(cual) {
-  $('#gatePasoDoc').hidden = cual !== 'doc';
-  $('#gatePasoOtp').hidden = cual !== 'otp';
-  if (cual === 'otp') setTimeout(() => $('#otpCodigo')?.focus(), 80);
-}
-
-/* ── El acceso, todo en una sola pantalla ───────────────────────────────────
-   El formulario crece: primero el documento, después el WhatsApp completo,
-   después el código. Lo ya escrito se queda a la vista pero bloqueado, para que
-   la persona no pierda de vista dónde está. Sin pantallas nuevas. */
-/* La pista se ve dentro del campo, como marca de agua: ••••••321. Mostrar un
-   número de ejemplo completo confundía, porque parecía el suyo ya escrito. */
-function pistaEnCampo(cola) {
-  const el = $('#gateTel');
-  if (el) el.placeholder = '•'.repeat(6) + (cola || '');
-}
-
-function faseAcceso(fase) {
-  acceso.fase = fase;
-  const cod = $('#gateCodBloque'), btn = $('#gateForm .gate-btn');
-  cod.hidden = fase !== 'cod';
-  // El prefijo del país (+51) lo mantiene actualizar(), dentro de initGate —
-  // ahí sí conoce el país recién elegido; acceso.pais sigue null hasta el
-  // primer envío, así que escribirlo aquí lo borraba (bug, 18-set-2026).
-
-  // Lo anterior se bloquea: ya cumplió su parte.
-  $('#gateTel').disabled = fase !== 'tel';
-  $('#gatePaises').classList.toggle('bloqueado', fase !== 'tel');
-  // Ya aceptó: la casilla deja de ocupar sitio en la pantalla del código.
-  $('#gateConsentimiento').hidden = fase !== 'tel';
-  if (fase === 'cod') { const irRegistro = $('#gateIrRegistro'); if (irRegistro) irRegistro.hidden = true; }
-
-  btn.textContent = { tel: 'Ingresar', cod: 'Entrar' }[fase];
-  const foco = { cod: '#gateCod' }[fase];
-  if (foco) setTimeout(() => $(foco)?.focus(), 80);
-}
-
-function detenerSondeo() {
-  if (otpEstado.sondeo) { clearInterval(otpEstado.sondeo); otpEstado.sondeo = null; }
-}
-
-// Pregunta al servidor si el bot ya respondió con el código (para guiar al cliente).
-function sondearEstado() {
-  detenerSondeo();
-  const base = VERIF.apiBase || '';
-  let intentos = 0;
-  otpEstado.sondeo = setInterval(async () => {
-    intentos++;
-    if (!otpEstado.solicitud || intentos > 60) return detenerSondeo();   // ~3 minutos
-    try {
-      const r = await fetch(`${base}/api/otp/estado?solicitud=${encodeURIComponent(otpEstado.solicitud)}`);
-      const j = await r.json();
-      const el = $('#otpEstado');
-      if (!el) return detenerSondeo();
-      if (j.estado === 'enviado') {
-        el.textContent = '✅ Ya te enviamos el código por WhatsApp. Escríbelo aquí.';
-        el.classList.add('ok');
-        detenerSondeo();
-      } else if (j.estado === 'vencida') {
-        el.textContent = '⌛ Pasaron más de 3 minutos. Pide un código nuevo.';
-        detenerSondeo();
-      }
-    } catch { /* reintenta en el siguiente tic */ }
-  }, 3000);
-}
-
-function pintarPasoOtp(datos, pais) {
-  otpEstado.solicitud = datos.solicitud;
-  otpEstado.pais = pais;
-  $('#otpPista').textContent = datos.telefono_pista || '';
-  $('#otpWa').href = datos.wa_link;
-  $('#otpTextoManual').textContent = datos.texto || '';
-  $('#otpNumero').textContent = CFG.whatsapp?.visible || '';
-  $('#otpCodigo').value = '';
-  $('#otpError').hidden = true;
-  const est = $('#otpEstado');
-  est.textContent = 'Esperando tu mensaje…'; est.classList.remove('ok');
-  mostrarPaso('otp');
-  sondearEstado();
+// Igual que apiPost, pero sin red no lanza: devuelve motivo 'red' para mostrarlo.
+async function apiAcceso(ruta, cuerpo) {
+  try { return await apiPost(ruta, cuerpo); }
+  catch { return { ok: false, status: 0, json: { ok: false, motivo: 'red' } }; }
 }
 
 // Marca el campo como erróneo y lo enlaza con el mensaje, para que un lector de
 // pantalla lo anuncie al volver al campo (no solo una vez al aparecer).
-function marcarError(campo, caja) {
+function marcarError(campo, caja, foco = true) {
   if (!campo || !caja) return;
   campo.setAttribute('aria-invalid', 'true');
-  campo.setAttribute('aria-describedby', caja.id);
-  campo.focus();
+  const ids = (campo.getAttribute('aria-describedby') || '').split(/\s+/).filter(Boolean);
+  if (!ids.includes(caja.id)) campo.setAttribute('aria-describedby', [...ids, caja.id].join(' '));
+  if (foco) campo.focus();
 }
 function limpiarError(campo, caja) {
-  if (caja) caja.hidden = true;
-  if (campo) campo.removeAttribute('aria-invalid');
+  if (caja) { caja.hidden = true; caja.textContent = ''; }
+  if (!campo) return;
+  campo.removeAttribute('aria-invalid');
+  if (caja) {
+    const ids = (campo.getAttribute('aria-describedby') || '').split(/\s+/).filter(x => x && x !== caja.id);
+    if (ids.length) campo.setAttribute('aria-describedby', ids.join(' ')); else campo.removeAttribute('aria-describedby');
+  }
 }
 
 function initGate() {
-  const gate = $('#gate'), form = $('#gateForm'), err = $('#gateError');
+  const gate = $('#gate');
   const paisesBox = $('#gatePaises');
-  const acepta = $('#gateAcepta');
   const paises = CFG.paises || [];
   let pais = paises[0]?.code || 'PE';
 
+  const telForm = $('#gateForm'), telInp = $('#gateTel'), acepta = $('#gateAcepta');
+  const telErr = $('#gateError'), telBtn = $('#gateEnviar'), irSolicitud = $('#gateIrSolicitud');
+  const codForm = $('#gateCodForm'), codInp = $('#gateCod'), codErr = $('#gateCodError');
+  const codBtn = $('#gateEntrar'), codEstado = $('#gateCodEstado'), reenviar = $('#gateReenviar');
+  const solForm = $('#gateSolForm'), solErr = $('#gateSolError'), solBtn = $('#gateSolEnviar');
+  const solCampos = {
+    nombre: [$('#gateSolNombre'), $('#gateSolNombreError')],
+    referencia: [$('#gateSolRef'), $('#gateSolRefError')],
+    comentario: [$('#gateSolCom'), $('#gateSolComError')]
+  };
+  const pasos = { tel: $('#gatePasoTel'), cod: $('#gatePasoCod'), solicitud: $('#gatePasoSolicitud') };
+  let ultimoProbado = '';   // el último código enviado a revisar (no se reintenta solo)
+
+  // ---- País: botones con patrón ARIA de radiogroup ----
   paisesBox.innerHTML = paises.map(p =>
     `<button type="button" role="radio" aria-checked="${p.code === pais}" data-pais="${p.code}">
        <span class="bandera" aria-hidden="true">${p.bandera}</span>${esc(p.nombre)}
      </button>`).join('');
 
+  /* El prefijo (+51) se escribe aquí, que es donde se conoce el país recién
+     elegido. Escribirlo desde otro lado lo borraba (bug del 18-set-2026). */
   const actualizar = () => {
     paisesBox.querySelectorAll('button').forEach(b => b.setAttribute('aria-checked', b.dataset.pais === pais));
     const cod2 = $('#gateTelCod');
     if (cod2) cod2.textContent = '+' + (PREFIJOS_PAIS[pais] || '');
   };
-  // Navegación con flechas dentro del grupo (patrón ARIA de radiogroup).
   const flechas = (caja, aplicar) => {
     caja.querySelectorAll('button').forEach((b, i, todos) => {
       b.tabIndex = b.getAttribute('aria-checked') === 'true' ? 0 : -1;
@@ -2138,217 +2074,328 @@ function initGate() {
       };
     });
   };
-  const aplicarPais = (b) => { pais = b.dataset.pais; actualizar(); flechas(paisesBox, aplicarPais); };
-  paisesBox.querySelectorAll('button').forEach(b => b.onclick = () => { aplicarPais(b); $('#gateTel')?.focus(); });
+  const aplicarPais = (b) => { pais = b.dataset.pais; actualizar(); flechas(paisesBox, aplicarPais); quitarNoEsta(); };
+  paisesBox.querySelectorAll('button').forEach(b => b.onclick = () => { aplicarPais(b); telInp.focus(); });
   actualizar();
   flechas(paisesBox, aplicarPais);
 
-  $('#gateWa').href = waLink('Hola, quiero acceder a mi Central de Postventa C4V pero no puedo entrar.');
+  $('#gateWa').href = waLink('Hola, quiero entrar a mi Central de Postventa C4V pero no puedo.');
 
-  const btn = form.querySelector('.gate-btn');
-  const btnLabel = btn ? btn.textContent : '';
-  const setCargando = (on, texto) => {
+  // ---- Utilidades de pantalla ----
+  function irA(paso, foco) {
+    acceso.paso = paso;
+    Object.entries(pasos).forEach(([k, el]) => { el.hidden = k !== paso; });
+    if (paso !== 'cod') pararReloj();
+    gate.scrollTop = 0;
+    if (foco) setTimeout(() => foco.focus(), 60);
+  }
+  // Botón ocupado: se desactiva, dice qué está pasando y lo anuncia (aria-busy).
+  function ocupado(btn, on, texto) {
     if (!btn) return;
+    if (!btn.dataset.txt) btn.dataset.txt = btn.textContent;
     btn.disabled = on;
-    btn.textContent = on ? (texto || 'Verificando…') : btnLabel;
     btn.setAttribute('aria-busy', on ? 'true' : 'false');
-  };
+    btn.textContent = on ? texto : btn.dataset.txt;
+  }
+  /* aviso: no es un error de la persona (p. ej. "no está en la lista"). Se ve
+     en gris, se enlaza igual al campo, pero no lo marca como inválido. */
+  function mostrarError(caja, campo, html, { aviso = false, foco = true } = {}) {
+    caja.innerHTML = html;
+    caja.classList.toggle('aviso', aviso);
+    caja.hidden = false;
+    if (!campo) return;
+    marcarError(campo, caja, foco);
+    if (aviso) campo.removeAttribute('aria-invalid');
+  }
+  const waAyuda = (texto, etiqueta = 'Escríbenos por WhatsApp') =>
+    `<a href="${esc(waLink(texto))}" target="_blank" rel="noopener">${etiqueta}</a>`;
+  const RED = 'No pudimos conectarnos. Revisa tu internet y vuelve a intentarlo.';
+  const PIDE_OTRO = 'Pide uno nuevo con "Reenviar código".';
 
-  /* ── Un solo formulario, dos momentos ────────────────────────────────────
-     tel → país + WhatsApp completo → si lo reconocemos, sale el código
-     cod → lo validamos y entra
-     Sin documento en este paso: el teléfono YA es lo que hay que confirmar,
-     no hace falta un paso aparte para "confirmarlo" otra vez. Si el número no
-     se reconoce, se ofrece "Regístralo" (ver initRegistro más abajo). */
-  const telInp = $('#gateTel'), codInp = $('#gateCod');
-  telInp.oninput = () => { telInp.value = telInp.value.replace(/[^\d+ ]/g, ''); };
-  codInp.oninput = () => { codInp.value = codInp.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8); };
-
-  const fallo = (campo, html) => {
-    setCargando(false);
-    err.hidden = false; err.innerHTML = html;
-    marcarError(campo, err);
-  };
-
-  async function pasoTelefono() {
-    const escrito = digitosDe(telInp.value);
-    if (!acepta.checked) return fallo(acepta, 'Marca la casilla para aceptar los Términos y la Política de Privacidad.');
-    if (escrito.length < 7) return fallo(telInp, 'Escribe tu número de WhatsApp completo.');
-
-    /* Teléfono de ejemplo (900000000, cli-006 en data.js): igual que antes con
-       el documento de ejemplo, se detecta ANTES de tocar el backend real —
-       nunca llama a /api/acceso/entrar-telefono ni gasta un envío. */
-    if (escrito.slice(-9) === '900000000') {
-      // Sale de window.__SEED__ directo, no de state.db: en producción real
-      // el backend no manda clientes de ejemplo mezclados con los reales
-      // (mismo motivo que en verificarCliente() para el documento de ejemplo).
-      let cli = (window.__SEED__?.clientes || []).find(c => normalizarDoc(c.documento) === DOC_DEMO) || null;
-      if (cli && !state.db.clientes.some(c => c.id === cli.id)) {
-        inyectarCliente(cli, (window.__SEED__?.maquinas || []).filter(m => m.cliente_id === cli.id));
+  // Lo que responde /api/acceso/entrar-telefono cuando no manda el código.
+  function motivoEnvio(r) {
+    const j = r.json || {};
+    switch (j.motivo) {
+      case 'datos_invalidos': return 'Revisa el número: parece que le falta o le sobra un dígito.';
+      case 'espera': return `Ya te enviamos un código hace un momento. Espera ${Number(j.espera_s) || 30} segundos para pedir otro.`;
+      case 'limite': return 'Pediste varios códigos seguidos. Espera unos minutos y vuelve a intentarlo.';
+      case 'fallo_envio': return 'No pudimos enviarte el SMS en este momento. Vuelve a intentarlo en un minuto.';
+      case 'no_configurado': return `Por ahora no podemos enviar el código por SMS. ${waAyuda('Hola, quiero entrar a mi Central de Postventa C4V y no me llega el código.')} y te ayudamos a entrar.`;
+      case 'no_encontrado': return 'Este número no está en nuestra lista de clientes.';
+      case 'red': return RED;
+    }
+    if (r.status === 429) return 'Pediste varios códigos seguidos. Espera unos minutos y vuelve a intentarlo.';
+    return 'Algo falló de nuestro lado. Vuelve a intentarlo en un momento.';
+  }
+  // Lo que responde /api/otp/verificar cuando el código no sirve.
+  function motivoCodigo(r) {
+    const j = r.json || {};
+    switch (j.motivo) {
+      case 'incorrecto': {
+        const n = Number(j.intentos_restantes);
+        if (j.intentos_restantes != null && n <= 0) return `Ese código no es el correcto y ya no quedan intentos. ${PIDE_OTRO}`;
+        const quedan = j.intentos_restantes == null ? '' : n === 1 ? ' Te queda 1 intento.' : ` Te quedan ${n} intentos.`;
+        return `Ese código no es el correcto. Revisa el SMS y vuelve a escribirlo.${quedan}`;
       }
-      acceso.cliente = cli; acceso.codigo = CODIGO_DEMO; acceso.solicitud = 'DEMO'; acceso.pais = pais;
-      $('#gateCodAviso').textContent = `Te lo mandamos por WhatsApp al número que termina en ${escrito.slice(-PISTA_DIGITOS)}. Llega en unos segundos.`;
-      faseAcceso('cod'); return;
+      case 'vencido': return `Ese código ya venció. ${PIDE_OTRO}`;
+      case 'usado': return `Ese código ya se usó. ${PIDE_OTRO}`;
+      case 'bloqueado': return `Se acabaron los intentos con este código. ${PIDE_OTRO}`;
+      case 'invalido': return `Algo no cuadró con este código. ${PIDE_OTRO}`;
+      case 'sin_acceso': return `Este número ya no tiene acceso. ${waAyuda('Hola, mi número ya no tiene acceso a la Central de Postventa C4V.')}.`;
+      case 'datos_invalidos': return 'Escribe los 6 números del código.';
+      case 'espera': case 'limite': return 'Probaste varias veces seguidas. Espera unos minutos y vuelve a intentarlo.';
+      case 'red': return RED;
     }
-
-    setCargando(true, 'Enviando…');
-    const r = await apiPost('/api/acceso/entrar-telefono', { pais, telefono: escrito });
-    setCargando(false);
-    if (r.json.ok) {
-      acceso.solicitud = r.json.solicitud; acceso.pais = pais;
-      const via = r.json.canal === 'sms' ? 'un SMS' : 'WhatsApp';
-      $('#gateCodAviso').textContent = `Te lo mandamos por ${via} al número que termina en ${r.json.pista || ''}. Llega en unos segundos.`;
-      apiPost('/api/consentimiento', { pais, acepta_datos: true, acepta_marketing: false }).catch(() => {});
-      faseAcceso('cod'); return;
-    }
-    if (r.json.motivo === 'no_encontrado') {
-      const ir = $('#gateIrRegistro'); if (ir) ir.hidden = false;
-      return fallo(telInp, `No encontramos este número registrado. Si compraste con otro celular o cambiaste de número, dale a "¿No encontramos tu número? Regístralo" aquí abajo.`);
-    }
-    const motivos = {
-      demasiados_intentos: 'Se acabaron los intentos. Recarga la página y empieza otra vez.',
-      no_configurado: 'Todavía no podemos enviarte el código. Escríbenos y te ayudamos a entrar.',
-      fallo_envio: 'No pudimos enviarte el código ahora. Prueba otra vez en un minuto.',
-      datos_invalidos: 'Revisa el número, algo no cuadra.'
-    };
-    return fallo(telInp, motivos[r.json.motivo] || (r.status === 429 ? 'Probaste demasiadas veces. Espera unos minutos.' : 'No pudimos enviarte el código. Inténtalo de nuevo.'));
+    if (r.status === 429) return 'Probaste varias veces seguidas. Espera unos minutos y vuelve a intentarlo.';
+    return 'No pudimos revisar tu código. Vuelve a intentarlo.';
   }
 
-  async function pasoCodigo() {
-    const codigo = codInp.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
-    // Sin largo fijo: el código de WhatsApp tiene 7 caracteres, el de SMS
-    // (Twilio Verify) suele ser más corto — el backend valida cuál toca.
-    if (codigo.length < 4) return fallo(codInp, 'Escribe tu código completo, como en el mensaje.');
+  // ---- Reenviar: cuenta regresiva visible ----
+  function pararReloj() { clearInterval(acceso.reloj); acceso.reloj = null; }
+  function arrancarReloj(seg) {
+    pararReloj();
+    let quedan = Math.max(0, Math.round(Number(seg) || 0));
+    const pintar = () => {
+      reenviar.disabled = quedan > 0;
+      reenviar.textContent = quedan > 0 ? `Reenviar código en ${quedan} s` : 'Reenviar código';
+    };
+    pintar();
+    if (!quedan) return;
+    acceso.reloj = setInterval(() => { quedan--; pintar(); if (quedan <= 0) pararReloj(); }, 1000);
+  }
+
+  // ==== Paso 1: el celular ====
+  // "No está en la lista" deja de valer en cuanto cambian el número o el país.
+  function quitarNoEsta() {
+    if (irSolicitud.hidden) return;
+    irSolicitud.hidden = true;
+    limpiarError(telInp, telErr);
+  }
+  telInp.oninput = () => {
+    const limpio = telInp.value.replace(/[^\d+ ]/g, '');
+    if (limpio !== telInp.value) telInp.value = limpio;
+    quitarNoEsta();
+  };
+  // Al marcar la casilla, su aviso ya sobra.
+  acepta.onchange = () => { if (acepta.checked && acepta.hasAttribute('aria-invalid')) limpiarError(acepta, telErr); };
+
+  function mostrarCodigo(j, demo = false) {
+    acceso.solicitud = j.solicitud;
+    acceso.pista = String(j.pista || acceso.telefono.slice(-3));
+    acceso.enviadoA = acceso.pais + ':' + acceso.telefono;
+    $('#gateCodAviso').textContent = `Escribe el código de 6 números que te enviamos por SMS al número que termina en ${acceso.pista}.`;
+    codInp.value = ''; ultimoProbado = '';
+    limpiarError(codInp, codErr);
+    codEstado.textContent = '';
+    $('#gateDemo').hidden = !demo;
+    arrancarReloj(j.reenviar_en_s ?? 30);
+    irA('cod', codInp);
+  }
+
+  function empezarDemo() {
+    // Sale de window.__SEED__ directo, no de state.db: en producción el backend
+    // no manda clientes de ejemplo mezclados con los reales.
+    const cli = (window.__SEED__?.clientes || []).find(c => normalizarDoc(c.documento) === DOC_DEMO) || null;
+    if (cli && !(state.db.clientes || []).some(c => c.id === cli.id)) {
+      inyectarCliente(cli, (window.__SEED__?.maquinas || []).filter(m => m.cliente_id === cli.id));
+    }
+    acceso.cliente = cli;
+    mostrarCodigo({ solicitud: 'DEMO', pista: acceso.telefono.slice(-3), reenviar_en_s: 30 }, true);
+  }
+
+  telForm.onsubmit = async (e) => {
+    e.preventDefault();
+    if (telBtn.disabled) return;
+    limpiarError(telInp, telErr); limpiarError(acepta, telErr);
+    irSolicitud.hidden = true;
+    const tel = digitosDe(telInp.value);
+    if (tel.length < 7) return mostrarError(telErr, telInp, 'Escribe tu número de celular completo.');
+    if (!acepta.checked) return mostrarError(telErr, acepta, 'Marca la casilla para aceptar los Términos de Uso y la Política de Privacidad.');
+    acceso.pais = pais; acceso.telefono = tel;
+
+    // El número de demostración nunca toca el backend ni gasta un SMS.
+    if (tel.endsWith(TEL_DEMO)) return empezarDemo();
+
+    ocupado(telBtn, true, 'Enviando…');
+    const r = await apiAcceso('/api/acceso/entrar-telefono', { pais, telefono: tel });
+    ocupado(telBtn, false);
+    if (r.json.ok) return mostrarCodigo(r.json);
+    if (r.json.motivo === 'no_encontrado') {
+      mostrarError(telErr, telInp,
+        '<strong>Este número no está en nuestra lista de clientes.</strong> ' +
+        'Solo entran los números registrados en la compra de una máquina. ' +
+        'Si compraste o usas la máquina de alguien que compró, pide acceso y lo revisamos.',
+        { aviso: true, foco: false });
+      irSolicitud.hidden = false;
+      irSolicitud.focus();
+      return;
+    }
+    /* Volvió con "Cambiar número" y pidió el mismo número antes de los 30 s:
+       el código anterior sigue valiendo, así que se le lleva de vuelta a él. */
+    if (r.json.motivo === 'espera' && acceso.solicitud && acceso.solicitud !== 'DEMO' && acceso.enviadoA === pais + ':' + tel) {
+      codInp.value = '';
+      limpiarError(codInp, codErr);
+      $('#gateDemo').hidden = true;
+      arrancarReloj(r.json.espera_s || 30);
+      irA('cod', codInp);
+      codEstado.textContent = 'Ya te enviamos un código hace un momento. Escríbelo aquí.';
+      return;
+    }
+    mostrarError(telErr, telInp, motivoEnvio(r));
+  };
+
+  // ==== Paso 2: el código ====
+  codInp.oninput = () => {
+    const limpio = digitosDe(codInp.value).slice(0, 6);
+    if (limpio !== codInp.value) codInp.value = limpio;
+    if (!codErr.hidden) limpiarError(codInp, codErr);
+    // Con los 6 números se entra solo; no se reintenta el mismo código fallido.
+    if (limpio.length === 6 && limpio !== ultimoProbado) verificar();
+  };
+
+  async function verificar() {
+    if (codBtn.disabled) return;
+    limpiarError(codInp, codErr);
+    codEstado.textContent = '';
+    const codigo = digitosDe(codInp.value);
+    if (codigo.length !== 6) return mostrarError(codErr, codInp, 'Escribe los 6 números del código.');
+    ultimoProbado = codigo;
 
     if (acceso.solicitud === 'DEMO') {
-      if (codigo !== acceso.codigo) return fallo(codInp, 'Ese código no es el correcto.');
-      /* La demo resuelve todo en el navegador (sin Odoo, sin WhatsApp real),
-         así que nunca tenía una sesión de verdad — y sin sesión, los videos y
-         guías firmados (contenido pagado) le decían "esto es con tu cuenta
-         real". Este único paso al backend le consigue un token real para el
-         documento fijo de demostración, nada más: no reabre el acceso público
-         que se cerró hoy, solo hace que la demo se vea completa en pruebas
-         internas. Si falla (sin red, etc.), entra igual — sin video, como
-         antes — para no bloquear la demo por esto. */
+      if (codigo !== CODIGO_DEMO) { mostrarError(codErr, codInp, `Ese código no es el correcto. En la demostración es ${CODIGO_DEMO}.`); codInp.select(); return; }
+      if (!acceso.cliente) return mostrarError(codErr, codInp, 'La demostración no está disponible en este momento.');
+      /* La demo se resuelve en el navegador, pero los videos y guías firmados
+         piden una sesión real: este único paso al backend consigue un token
+         para el cliente de demostración, nada más. Si falla, entra igual. */
+      ocupado(codBtn, true, 'Entrando…');
       try {
         const r = await apiPost('/api/demo/token', { doc: DOC_DEMO, pais: acceso.pais });
         if (r.json?.ok && r.json.token) guardarSesion({ token: r.json.token, pais: acceso.pais });
       } catch {}
+      ocupado(codBtn, false);
+      pararReloj();
       entrar(acceso.cliente);
       return;
     }
 
-    setCargando(true, 'Entrando…');
-    const r = await apiPost('/api/otp/verificar', { solicitud: acceso.solicitud, codigo });
-    setCargando(false);
+    ocupado(codBtn, true, 'Entrando…');
+    const r = await apiAcceso('/api/otp/verificar', { solicitud: acceso.solicitud, codigo, acepta_datos: true, acepta_marketing: false });
+    ocupado(codBtn, false);
     if (r.json.ok && r.json.token) {
+      pararReloj();
       guardarSesion({ token: r.json.token, pais: acceso.pais });
+      state.acceso = r.json.acceso || null;
       entrar(inyectarCliente(r.json.cliente, r.json.maquinas));
       return;
     }
-    const motivos = {
-      incorrecto: `Ese código no es el correcto.${r.json.intentos_restantes ? ` Te queda${r.json.intentos_restantes === 1 ? '' : 'n'} ${r.json.intentos_restantes}.` : ''}`,
-      vencido: 'Tu código venció. Recarga la página y pide uno nuevo.',
-      usado: 'Ese código ya se usó. Recarga la página y pide uno nuevo.',
-      bloqueado: 'Demasiados intentos. Recarga la página y empieza otra vez.'
-    };
-    return fallo(codInp, motivos[r.json.motivo] || 'No pudimos revisar tu código. Inténtalo otra vez.');
+    mostrarError(codErr, codInp, motivoCodigo(r));
+    codInp.select();
   }
+  codForm.onsubmit = (e) => { e.preventDefault(); verificar(); };
 
-  form.onsubmit = (e) => {
-    e.preventDefault(); limpiarError(telInp, err); limpiarError(codInp, err);
-    if (acceso.fase === 'cod') return pasoCodigo();
-    return pasoTelefono();
-  };
-
-  // ---- Camino de siempre (el cliente escribe primero por WhatsApp) ----
-  const otpForm = $('#otpForm'), otpErr = $('#otpError'), otpInp = $('#otpCodigo');
-  otpInp.oninput = () => { otpInp.value = otpInp.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 7); };
-  otpForm.onsubmit = async (e) => {
-    e.preventDefault(); limpiarError(otpInp, otpErr);
-    const codigo = otpInp.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
-    if (codigo.length !== 7) { otpErr.hidden = false; otpErr.textContent = 'Escribe tu código completo, como llegó por WhatsApp.'; marcarError(otpInp, otpErr); return; }
-    const boton = otpForm.querySelector('button');
-    boton.disabled = true; boton.textContent = 'Entrando…';
-    const r = await apiPost('/api/otp/verificar', { solicitud: otpEstado.solicitud, codigo });
-    boton.disabled = false; boton.textContent = 'Entrar';
-    if (r.json.ok && r.json.token) {
-      detenerSondeo();
-      guardarSesion({ token: r.json.token, pais: otpEstado.pais });
-      entrar(inyectarCliente(r.json.cliente, r.json.maquinas));
+  reenviar.onclick = async () => {
+    if (reenviar.disabled) return;
+    limpiarError(codInp, codErr);
+    codEstado.textContent = '';
+    if (acceso.solicitud === 'DEMO') {
+      arrancarReloj(30);
+      codEstado.textContent = `Listo. En la demostración el código es siempre ${CODIGO_DEMO}.`;
+      codInp.focus();
       return;
     }
-    otpErr.hidden = false;
-    otpErr.textContent = {
-      incorrecto: `Ese código no es el correcto.${r.json.intentos_restantes ? ` Te queda${r.json.intentos_restantes === 1 ? '' : 'n'} ${r.json.intentos_restantes}.` : ''}`,
-      vencido: 'Tu código venció. Vuelve y pide uno nuevo.',
-      usado: 'Ese código ya se usó. Pide uno nuevo.',
-      bloqueado: 'Demasiados intentos. Vuelve y pide otro código.',
-      no_enviado: 'Todavía no nos llegó tu mensaje de WhatsApp. Envíalo y espera unos segundos.'
-    }[r.json.motivo] || 'No pudimos revisar tu código. Vuelve a intentarlo.';
-    marcarError(otpInp, otpErr);
+    reenviar.disabled = true; reenviar.textContent = 'Enviando…';
+    const r = await apiAcceso('/api/acceso/entrar-telefono', { pais: acceso.pais, telefono: acceso.telefono });
+    if (r.json.ok) {
+      acceso.solicitud = r.json.solicitud;
+      acceso.pista = String(r.json.pista || acceso.pista);
+      codInp.value = ''; ultimoProbado = '';
+      arrancarReloj(r.json.reenviar_en_s ?? 30);
+      codEstado.textContent = `Te enviamos un código nuevo al número que termina en ${acceso.pista}.`;
+      codInp.focus();
+      return;
+    }
+    arrancarReloj(r.json.motivo === 'espera' ? (r.json.espera_s || 30) : 0);
+    mostrarError(codErr, null, motivoEnvio(r));
+    codInp.focus();
   };
-  $('#otpVolver').onclick = () => { detenerSondeo(); otpEstado.solicitud = null; mostrarPaso('doc'); $('#gateTel')?.focus(); };
 
-  /* ---- Registrar un número nuevo (o cambiado) ----
-     Solo aparece cuando el teléfono no se reconoce. Pide el documento de la
-     compra + usa el teléfono que ya escribió arriba; queda pendiente de que
-     alguien del equipo lo apruebe contra el pedido real — ver
-     src/solicitudTelefono.js. */
-  function initRegistro() {
-    const seccionTel = $('#gatePasoDoc'), seccionReg = $('#gatePasoRegistro');
-    const tiposBox = $('#gateTiposReg'), docLabel = $('#gateDocLabelReg'), docInp = $('#gateDocReg');
-    const regForm = $('#gateRegistroForm'), regErr = $('#gateRegistroError'), regOk = $('#gateRegistroOk');
-    let tipoReg = 'persona';
+  $('#gateCambiar').onclick = () => irA('tel', telInp);
 
-    tiposBox.innerHTML = `
-      <button type="button" role="radio" aria-checked="true" data-tipo="persona"><span class="bandera" aria-hidden="true">👤</span>Persona</button>
-      <button type="button" role="radio" aria-checked="false" data-tipo="empresa"><span class="bandera" aria-hidden="true">🏢</span>Empresa</button>`;
-    const actualizarTipo = () => {
-      docLabel.textContent = docInfo(pais, tipoReg).doc;
-      docInp.placeholder = docInfo(pais, tipoReg).ej;
-      tiposBox.querySelectorAll('button').forEach(b => b.setAttribute('aria-checked', b.dataset.tipo === tipoReg));
-    };
-    tiposBox.querySelectorAll('button').forEach(b => b.onclick = () => { tipoReg = b.dataset.tipo; actualizarTipo(); });
-    actualizarTipo();
-
-    $('#gateIrRegistro').onclick = () => {
-      const escrito = digitosDe(telInp.value);
-      if (escrito.length < 7) { telInp.focus(); return; }
-      $('#gateRegistroTel').textContent = '+' + (PREFIJOS_PAIS[pais] || '') + ' ' + escrito;
-      seccionTel.hidden = true; seccionReg.hidden = false;
-      regOk.hidden = true; regForm.hidden = false; regErr.hidden = true;
-      actualizarTipo(); docInp.focus();
-    };
-    $('#gateRegistroVolver').onclick = () => {
-      seccionReg.hidden = true; seccionTel.hidden = false;
-      telInp.focus();
-    };
-
-    regForm.onsubmit = async (e) => {
-      e.preventDefault();
-      const doc = normalizarDoc(docInp.value);
-      const info = docInfo(pais, tipoReg);
-      regErr.hidden = true;
-      if (doc.length < 5) { regErr.hidden = false; regErr.textContent = `Ese ${info.doc} está incompleto. Escríbelo completo, así: ${info.ej}.`; marcarError(docInp, regErr); return; }
-      const btnReg = regForm.querySelector('.gate-btn');
-      btnReg.disabled = true; btnReg.textContent = 'Enviando…';
-      const escrito = digitosDe(telInp.value);
-      const r = await apiPost('/api/acceso/solicitar-telefono', { doc, pais, telefono: escrito });
-      btnReg.disabled = false; btnReg.textContent = 'Enviar solicitud';
-      if (r.json?.ok) {
-        regForm.hidden = true; regOk.hidden = false;
-        return;
-      }
-      regErr.hidden = false;
-      regErr.textContent = r.status === 429 ? 'Probaste demasiadas veces. Espera unos minutos.' : 'No pudimos enviar la solicitud. Inténtalo de nuevo.';
-      marcarError(docInp, regErr);
-    };
+  // ==== Paso 3: pedir acceso ====
+  const solPedir = $('#gateSolPedir'), solOk = $('#gateSolOk');
+  function limpiarSolicitud() {
+    Object.values(solCampos).forEach(([campo, caja]) => limpiarError(campo, caja));
+    limpiarError(null, solErr);
   }
-  initRegistro();
+  irSolicitud.onclick = () => {
+    $('#gateSolTel').textContent = telLegible(acceso.pais, acceso.telefono);
+    limpiarSolicitud();
+    solPedir.hidden = false; solOk.hidden = true;
+    irA('solicitud', solCampos.nombre[0]);
+  };
+  $('#gateSolCambiar').onclick = () => irA('tel', telInp);
 
-  faseAcceso('tel');
-  mostrarPaso('doc');
+  // Cada error junto a su campo (y enlazado a él); arriba del botón, un resumen.
+  function pintarErrores(errores) {
+    let primero = null;
+    Object.entries(errores || {}).forEach(([k, msg]) => {
+      const par = solCampos[k];
+      if (!par) return;
+      const [campo, caja] = par;
+      caja.textContent = String(msg || 'Revisa este dato.');
+      caja.hidden = false;
+      marcarError(campo, caja, false);
+      if (!primero) primero = campo;
+    });
+    const partes = [];
+    if (primero) partes.push('Revisa los datos marcados.');
+    if (errores?.telefono) partes.push('El número de celular no es válido: toca "Cambiar" para corregirlo.');
+    mostrarError(solErr, null, esc(partes.join(' ') || 'Revisa los datos.'));
+    (primero || $('#gateSolCambiar')).focus();
+  }
+
+  solForm.onsubmit = async (e) => {
+    e.preventDefault();
+    if (solBtn.disabled) return;
+    limpiarSolicitud();
+    const datos = {
+      pais: acceso.pais, telefono: acceso.telefono,
+      nombre: solCampos.nombre[0].value.trim(),
+      referencia: solCampos.referencia[0].value.trim(),
+      comentario: solCampos.comentario[0].value.trim(),
+      sitio: $('#gateSolSitio').value   // trampa para robots: una persona nunca la ve
+    };
+    // Aquí solo lo que falta; el resto de reglas las revisa el servidor.
+    const faltan = {};
+    if (!datos.nombre) faltan.nombre = 'Escribe tu nombre completo.';
+    if (!datos.referencia) faltan.referencia = 'Escribe el número de tu cotización, factura o boleta.';
+    if (Object.keys(faltan).length) return pintarErrores(faltan);
+
+    ocupado(solBtn, true, 'Enviando…');
+    const r = await apiAcceso('/api/acceso/solicitar', datos);
+    ocupado(solBtn, false);
+    if (r.json.ok) {
+      $('#gateSolOkTel').textContent = telLegible(acceso.pais, acceso.telefono);
+      solPedir.hidden = true; solOk.hidden = false;
+      gate.scrollTop = 0;
+      setTimeout(() => $('#gateSolOkTitulo').focus(), 60);
+      return;
+    }
+    if (r.json.errores) return pintarErrores(r.json.errores);
+    mostrarError(solErr, null,
+      r.json.motivo === 'red' ? RED
+      : (r.json.motivo === 'limite' || r.status === 429) ? 'Enviaste varias solicitudes seguidas. Espera unos minutos y vuelve a intentarlo.'
+      : `No pudimos enviar tu solicitud. Vuelve a intentarlo o ${waAyuda('Hola, quiero pedir acceso a la Central de Postventa C4V.', 'escríbenos por WhatsApp')}.`);
+  };
+
+  $('#gateSolVolver').onclick = () => {
+    solForm.reset();
+    limpiarSolicitud();
+    quitarNoEsta();
+    irA('tel', paisesBox.querySelector('[aria-checked="true"]') || telInp);
+  };
+
+  irA('tel');
   gate.hidden = false; $('#app').hidden = true;
 }
 
@@ -2529,7 +2576,7 @@ function ceviContexto() {
   const maq = cli ? state.db.maquinas.find(m => m.cliente_id === cli.id) : null;
   const idOdoo = parseInt(String(cli?.id || '').replace(/\D/g, ''), 10);
   return {
-    customer_name: primerNombre(cli?.nombre) || 'Cliente',
+    customer_name: nombreSaludo(cli) || 'Cliente',
     customer_city: cli?.ciudad || '',
     customer_country: PAISES[cli?.pais]?.replace(/^\S+\s/, '') || cli?.pais || 'Perú',
     machine_id: maq?.serie || (maq?.modelo ? `modelo ${maq.modelo} (sin serie registrada)` : 'sin registrar'),
@@ -3156,7 +3203,7 @@ function ceviCablear(raiz) {
 function ceviElevenLabsVars() {
   const cli = currentClient();
   const maq = cli ? state.db.maquinas.find(m => m.cliente_id === cli.id) : null;
-  const nombre = primerNombre(cli?.nombre) || '';
+  const nombre = nombreSaludo(cli) || '';
   const maquina = maq?.modelo || '';
   return {
     telefono: state.telefono || '',
@@ -3255,7 +3302,7 @@ function ceviPaginaIniciar() {
       /* Corto y en pregunta. El saludo largo tardaba ocho segundos en decirse y
          la persona no podía hablar hasta el final; además una pregunta invita a
          contestar, que es justo lo que hace falta en un asistente de voz. */
-      content: `Hola${cli ? ' ' + primerNombre(cli.nombre) : ''}, soy CeVi. ¿En qué te ayudo con tu ${maq?.modelo || 'máquina'}?`
+      content: `Hola${cli ? ' ' + nombreSaludo(cli) : ''}, soy CeVi. ¿En qué te ayudo con tu ${maq?.modelo || 'máquina'}?`
     });
   }
   ceviPintar();

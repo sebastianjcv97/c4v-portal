@@ -33,6 +33,14 @@
 		-Server
 	}
 
+	# Panel del equipo: nunca dentro de un marco de otra página (clics engañados)
+	# y fuera de los buscadores.
+	@admin path /admin /admin/*
+	header @admin {
+		X-Frame-Options "DENY"
+		X-Robots-Tag "noindex, nofollow"
+	}
+
 	@imagenes path /assets/*
 	header @imagenes Cache-Control "public, max-age=86400"
 	@resto not path /assets/*

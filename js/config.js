@@ -140,5 +140,5 @@ window.C4V_CONFIG = {
 
   /* Versión de los documentos legales. Súbela cuando cambie el texto: obliga a
      volver a pedir la aceptación al cliente. */
-  versionLegal: '2026-09-1'
+  versionLegal: '2026-09-2'
 };

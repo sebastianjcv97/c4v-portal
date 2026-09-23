@@ -22,7 +22,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@700;800&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/styles.css?v=20260923r" />
+  <link rel="stylesheet" href="css/styles.css?v=20260923t" />
 </head>
 <body>
   <a class="skip" href="#view">Saltar al contenido</a>
@@ -34,19 +34,19 @@
     <p>Abriendo tu portal C4V…</p>
   </div>
 
-  <!-- ============ Acceso en dos pasos: documento + código por WhatsApp ============ -->
+  <!-- ============ Acceso con el celular: número, código por SMS y, si el número no está, «Pide acceso» ============ -->
   <div class="gate" id="gate" hidden>
     <div class="gate-box">
       <img class="gate-logo" src="assets/c4v-wordmark.png" alt="C4V Láser" />
 
-      <!-- ---------- Paso A · tu WhatsApp ---------- -->
-      <section id="gatePasoDoc">
+      <!-- ---------- 1. Tu celular ---------- -->
+      <section id="gatePasoTel" aria-labelledby="gateTelTitulo">
         <div class="gate-wa-ic gate-id-ic" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="3"/><path d="M10.5 18.5h3"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="3"/><path d="M10.5 18.5h3"/></svg>
         </div>
 
-        <h1>Entra con tu WhatsApp</h1>
-        <p class="gate-sub">El mismo que registraste al comprar tu máquina.<br />Sin contraseñas.</p>
+        <h1 id="gateTelTitulo" tabindex="-1">Entra con tu celular</h1>
+        <p class="gate-sub">Te enviamos un código por SMS.</p>
 
         <!-- onsubmit inline: el manejador de verdad se engancha cuando app.js termina
              de cargar los datos. Si alguien pulsa antes (conexión lenta), el navegador
@@ -56,107 +56,111 @@
           <p class="gate-paso" id="gatePasoPais">¿En qué país compraste tu máquina?</p>
           <div class="gate-paises" id="gatePaises" role="radiogroup" aria-labelledby="gatePasoPais"></div>
 
-          <label class="gate-paso" for="gateTel">Escribe tu número de celular completo</label>
+          <label class="gate-paso" for="gateTel">Tu número de celular</label>
           <div class="gate-row gate-row-tel">
             <span class="gate-tel-ic" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="3"/><path d="M10.5 18.5h3"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="3"/><path d="M10.5 18.5h3"/></svg>
             </span>
             <span class="gate-tel-cod" id="gateTelCod" aria-hidden="true"></span>
-            <input id="gateTel" type="tel" inputmode="numeric" autocomplete="tel" placeholder="987654321" aria-describedby="gateTelCod" />
+            <input id="gateTel" type="tel" inputmode="numeric" autocomplete="tel-national" placeholder="987654321" aria-describedby="gateTelCod" />
           </div>
 
-          <div id="gateCodBloque" hidden>
-            <label class="gate-paso" for="gateCod">Escribe el código que te llegó</label>
-            <div class="gate-row">
-              <input id="gateCod" type="text" inputmode="text" autocomplete="one-time-code"
-                     maxlength="8" placeholder="ABC1234" aria-describedby="gateCodAviso" style="text-transform:uppercase" />
-            </div>
-            <p class="gate-doc-ej" id="gateCodAviso"></p>
-          </div>
-
-          <div id="gateConsentimiento">
           <label class="gate-consent">
             <input type="checkbox" id="gateAcepta" required />
-            <span>He leído y acepto los <a href="terminos.html" target="_blank" rel="noopener">Términos de Uso</a> y la <a href="privacidad.html" target="_blank" rel="noopener">Política de Privacidad</a>.</span>
+            <span>He leído y acepto los <a href="terminos.html" target="_blank" rel="noopener">Términos de Uso<span class="sr-only"> (se abre en otra pestaña)</span></a> y la <a href="privacidad.html" target="_blank" rel="noopener">Política de Privacidad<span class="sr-only"> (se abre en otra pestaña)</span></a>.</span>
           </label>
-          </div>
 
-          <button class="btn primary gate-btn" type="submit">Ingresar</button>
-          <div class="gate-error" id="gateError" role="alert" tabindex="-1" hidden></div>
+          <button class="btn primary gate-btn" type="submit" id="gateEnviar">Enviarme el código</button>
+          <div class="gate-error" id="gateError" role="alert" hidden></div>
+          <!-- Solo aparece si el número no está en la lista de clientes. -->
+          <button type="button" class="btn gate-sec" id="gateIrSolicitud" hidden>Pedir acceso</button>
         </form>
-
-        <!-- Solo aparece si el teléfono no está en nuestra base. -->
-        <button type="button" class="paso-link" id="gateIrRegistro" hidden>¿No encontramos tu número? Regístralo</button>
-
-        <div class="gate-demo" id="gateDemo" hidden></div>
       </section>
 
-      <!-- ---------- Registrar un número nuevo (o cambiado) ---------- -->
-      <section id="gatePasoRegistro" hidden>
+      <!-- ---------- 2. El código del SMS ---------- -->
+      <section id="gatePasoCod" aria-labelledby="gateCodTitulo" hidden>
         <div class="gate-wa-ic gate-id-ic" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><circle cx="8.4" cy="11" r="2.1"/><path d="M5.4 16.2c.5-1.6 1.6-2.4 3-2.4s2.5.8 3 2.4"/><path d="M14.5 9.5h4.5M14.5 12.5h4.5M14.5 15.5h2.8"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4.5h16v11.5H10l-4.5 3.5V16H4z"/><path d="M8.5 10.3h.01M12 10.3h.01M15.5 10.3h.01"/></svg>
         </div>
 
-        <h1>Registra tu número</h1>
-        <p class="gate-sub">Escribe el documento con el que compraste tu máquina. Revisamos tu pedido y te avisamos cuando quede listo.</p>
+        <h1 id="gateCodTitulo" tabindex="-1">Revisa tus mensajes</h1>
+        <p class="gate-sub" id="gateCodAviso">Escribe el código de 6 números que te enviamos por SMS.</p>
 
-        <form class="gate-form" id="gateRegistroForm" novalidate onsubmit="return false">
-          <p class="gate-paso" id="gatePasoTipoReg">¿Compraste como persona o como empresa?</p>
-          <div class="gate-tipos" id="gateTiposReg" role="radiogroup" aria-labelledby="gatePasoTipoReg"></div>
-
-          <label class="gate-paso" for="gateDocReg">Escribe tu <strong id="gateDocLabelReg">DNI</strong></label>
-          <div class="gate-row">
-            <input id="gateDocReg" type="text" inputmode="numeric" autocomplete="off" placeholder="45678123" required />
-          </div>
-
-          <p class="gate-doc-ej">Vamos a registrar el número <strong id="gateRegistroTel"></strong> a ese documento.</p>
-
-          <button class="btn primary gate-btn" type="submit">Enviar solicitud</button>
-          <div class="gate-error" id="gateRegistroError" role="alert" tabindex="-1" hidden></div>
+        <form class="gate-form" id="gateCodForm" novalidate onsubmit="return false">
+          <label class="gate-paso" for="gateCod">Código del SMS</label>
+          <input id="gateCod" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]*"
+                 maxlength="6" placeholder="123456" aria-describedby="gateCodAviso" />
+          <button class="btn primary gate-btn" type="submit" id="gateEntrar">Entrar</button>
+          <div class="gate-error" id="gateCodError" role="alert" hidden></div>
+          <p class="gate-estado" id="gateCodEstado" role="status" aria-live="polite"></p>
         </form>
 
-        <div class="gate-ok" id="gateRegistroOk" hidden>
-          <p>Listo, la recibimos. La revisamos contra tu pedido y en cuanto quede aprobada, tu número ya te deja entrar.</p>
-        </div>
+        <!-- Solo con el número de demostración (900 000 000): no hay SMS. -->
+        <p class="gate-demo" id="gateDemo" hidden>Número de demostración: no se envía ningún SMS. El código es <strong>123456</strong>.</p>
 
-        <button type="button" class="gate-volver" id="gateRegistroVolver">Volver</button>
+        <div class="gate-acciones">
+          <button type="button" class="gate-link" id="gateReenviar">Reenviar código</button>
+          <button type="button" class="gate-link" id="gateCambiar">Cambiar número</button>
+        </div>
       </section>
 
-      <!-- ---------- Paso C · Confirma que eres tú ---------- -->
-      <section id="gatePasoOtp" hidden>
-        <div class="gate-wa-ic gate-otp-ic" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2.5" width="16" height="19" rx="3"/><path d="M10 5.5h4"/><path d="M8.5 12.5l2.5 2.5 4.5-4.5"/></svg>
+      <!-- ---------- 3. Pide acceso (el número no está en la lista) ---------- -->
+      <section id="gatePasoSolicitud" hidden>
+        <div id="gateSolPedir">
+          <div class="gate-wa-ic gate-id-ic" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2.5h8.5L19 7v14.5H6z"/><path d="M14 2.5V7h5"/><path d="M9 12h7M9 15.5h7M9 19h4"/></svg>
+          </div>
+
+          <h1 id="gateSolTitulo" tabindex="-1">Pide acceso</h1>
+          <p class="gate-sub">Cuéntanos de qué compra se trata. Lo revisamos y te avisamos.</p>
+
+          <div class="gate-tel-fijo">
+            <p><span>Tu celular</span> <strong id="gateSolTel"></strong></p>
+            <button type="button" class="gate-link" id="gateSolCambiar" aria-label="Cambiar el número de celular">Cambiar</button>
+          </div>
+
+          <form class="gate-form" id="gateSolForm" novalidate onsubmit="return false">
+            <div class="gate-campo">
+              <label for="gateSolNombre">Tu nombre completo</label>
+              <input class="gate-input" id="gateSolNombre" type="text" autocomplete="name" autocapitalize="words" maxlength="120" required />
+              <p class="gate-campo-error" id="gateSolNombreError" hidden></p>
+            </div>
+
+            <div class="gate-campo">
+              <label for="gateSolRef">Número de cotización o factura</label>
+              <p class="gate-ayuda" id="gateSolRefAyuda">Lo encuentras en tu cotización (por ejemplo S102612) o en tu factura o boleta (por ejemplo E001-669).</p>
+              <input class="gate-input" id="gateSolRef" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="40" required aria-describedby="gateSolRefAyuda" />
+              <p class="gate-campo-error" id="gateSolRefError" hidden></p>
+            </div>
+
+            <div class="gate-campo">
+              <label for="gateSolCom">Comentario (opcional)</label>
+              <textarea class="gate-input" id="gateSolCom" rows="3" maxlength="500" placeholder="Por ejemplo: soy la esposa de quien compró, tenemos una 9060."></textarea>
+              <p class="gate-campo-error" id="gateSolComError" hidden></p>
+            </div>
+
+            <!-- Trampa para robots: fuera de la pantalla, fuera del tabulador y
+                 oculta a los lectores de pantalla. Una persona nunca la llena. -->
+            <div class="gate-trampa" aria-hidden="true">
+              <label for="gateSolSitio">Tu sitio web</label>
+              <input id="gateSolSitio" name="sitio" type="text" tabindex="-1" autocomplete="off" />
+            </div>
+
+            <p class="gate-nota">Usamos estos datos solo para revisar tu acceso. <a href="privacidad.html" target="_blank" rel="noopener">Política de Privacidad<span class="sr-only"> (se abre en otra pestaña)</span></a></p>
+
+            <button class="btn primary gate-btn" type="submit" id="gateSolEnviar">Enviar solicitud</button>
+            <div class="gate-error" id="gateSolError" role="alert" hidden></div>
+          </form>
         </div>
 
-        <h1>Confirma que eres tú</h1>
-        <p class="gate-sub">Solo falta un paso: confirma que este WhatsApp es tuyo <strong id="otpPista"></strong>.</p>
-
-        <ol class="otp-pasos">
-          <li>
-            <span class="otp-num">1</span>
-            <div>
-              <strong>Envíanos este mensaje por WhatsApp</strong>
-              <p>WhatsApp se abre con el mensaje ya escrito. Tú solo dale enviar.</p>
-              <a class="btn primary otp-wa" id="otpWa" href="#" target="_blank" rel="noopener">Abrir WhatsApp y enviar</a>
-              <p class="otp-codigo-manual">¿No se abrió? Escríbenos <strong id="otpTextoManual"></strong> al <span id="otpNumero"></span>.</p>
-            </div>
-          </li>
-          <li>
-            <span class="otp-num">2</span>
-            <div>
-              <strong>Escribe el código que te llegue</strong>
-              <p id="otpEstado" class="otp-estado" role="status" aria-live="polite">Esperando tu mensaje…</p>
-              <form id="otpForm" class="otp-form" novalidate>
-                <input id="otpCodigo" type="text" inputmode="text" autocomplete="one-time-code"
-                       maxlength="8" placeholder="ABC1234" aria-label="Tu código C4V" style="text-transform:uppercase" />
-                <button class="btn primary" type="submit">Entrar</button>
-              </form>
-              <div class="gate-error" id="otpError" role="alert" tabindex="-1" hidden></div>
-            </div>
-          </li>
-        </ol>
-
-        <button type="button" class="gate-volver" id="otpVolver">Volver y cambiar mi documento</button>
+        <div id="gateSolOk" hidden>
+          <div class="gate-wa-ic gate-ok-ic" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.5"/><path d="M7.5 12.5l3 3 6-6.5"/></svg>
+          </div>
+          <h1 id="gateSolOkTitulo" tabindex="-1">Recibimos tu solicitud.</h1>
+          <p class="gate-sub">Nuestro equipo la revisa y te escribe al <strong class="gate-num" id="gateSolOkTel"></strong>, normalmente en un día hábil.</p>
+          <button type="button" class="btn gate-sec" id="gateSolVolver">Volver al inicio</button>
+        </div>
       </section>
 
       <p class="gate-foot">
@@ -209,8 +213,8 @@
     </div>
   </div>
 
-  <script src="js/config.js?v=20260923r"></script>
-  <script src="js/data.js?v=20260923r"></script>
-  <script src="js/app.js?v=20260923r"></script>
+  <script src="js/config.js?v=20260923t"></script>
+  <script src="js/data.js?v=20260923t"></script>
+  <script src="js/app.js?v=20260923t"></script>
 </body>
 </html>

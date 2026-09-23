@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="es-PE">
+<head>
+<meta charset="UTF-8" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https://portal-api-general.up.railway.app; img-src 'self' data:; base-uri 'none'; form-action 'none'; object-src 'none'" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="robots" content="noindex,nofollow" />
+<meta name="referrer" content="no-referrer" />
+<meta name="theme-color" content="#141414" />
+<title>Panel C4V</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23141414'/%3E%3Ctext x='32' y='43' text-anchor='middle' font-family='Arial,sans-serif' font-size='23' font-weight='800' fill='%23F9020B'%3EC4V%3C/text%3E%3C/svg%3E" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@700;800&family=Roboto:wght@400;500;700&display=swap" />
+<link rel="stylesheet" href="/css/admin.css?v=20260923a" />
+<script src="/js/config.js?v=20260923a" defer></script>
+<script src="/js/admin.js?v=20260923a" defer></script>
+</head>
+<body>
+<a class="saltar" href="#principal">Saltar al contenido</a>
+
+<noscript><p class="sin-js">El panel necesita JavaScript activado.</p></noscript>
+
+<!-- Mientras se revisa si hay una sesión abierta -->
+<div class="arranque" id="vistaArranque" role="status" aria-live="polite">
+  <p>Abriendo el panel…</p>
+</div>
+
+<!-- ============ Entrar ============ -->
+<main class="acceso" id="vistaLogin" hidden>
+  <div class="acceso-caja">
+    <img class="acceso-logo" src="/assets/c4v-wordmark.png" alt="C4V Láser" width="173" height="36" />
+    <form class="acceso-hoja" id="formLogin" method="post" novalidate>
+      <h1>Panel del equipo</h1>
+      <p class="acceso-sub">Solicitudes, accesos, tickets y reclamos del portal de postventa.</p>
+      <p class="aviso-linea" id="loginAviso" role="status" hidden></p>
+      <div class="campo">
+        <label for="loginUsuario">Usuario</label>
+        <input class="input" id="loginUsuario" name="username" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" required />
+      </div>
+      <div class="campo">
+        <label for="loginClave">Contraseña</label>
+        <input class="input" id="loginClave" name="password" type="password" autocomplete="current-password" required />
+      </div>
+      <p class="error" id="loginError" role="alert" hidden></p>
+      <button class="btn btn-primario btn-ancho" id="loginBoton" type="submit">Entrar</button>
+    </form>
+  </div>
+</main>
+
+<!-- ============ Cambiar contraseña (obligatorio en el primer ingreso) ============ -->
+<main class="acceso" id="vistaClave" hidden>
+  <div class="acceso-caja">
+    <img class="acceso-logo" src="/assets/c4v-wordmark.png" alt="C4V Láser" width="173" height="36" />
+    <form class="acceso-hoja" id="formClave" method="post" novalidate>
+      <h1>Cambia tu contraseña</h1>
+      <p class="acceso-sub" id="claveIntro"></p>
+      <input class="sr" id="claveUsuario" type="text" name="username" autocomplete="username" tabindex="-1" aria-hidden="true" readonly />
+      <div class="campo">
+        <label for="claveActual">Contraseña actual</label>
+        <input class="input" id="claveActual" type="password" autocomplete="current-password" required />
+      </div>
+      <div class="campo">
+        <label for="claveNueva">Contraseña nueva</label>
+        <input class="input" id="claveNueva" type="password" autocomplete="new-password" minlength="10" required aria-describedby="claveNuevaAyuda" />
+        <p class="ayuda" id="claveNuevaAyuda">Al menos 10 caracteres. Mejor una frase que solo tú recuerdes.</p>
+      </div>
+      <div class="campo">
+        <label for="claveRepite">Repite la contraseña nueva</label>
+        <input class="input" id="claveRepite" type="password" autocomplete="new-password" minlength="10" required />
+      </div>
+      <p class="error" id="claveError" role="alert" hidden></p>
+      <button class="btn btn-primario btn-ancho" id="claveBoton" type="submit">Guardar contraseña</button>
+      <button class="btn btn-ancho" id="claveCancelar" type="button">Volver al panel</button>
+      <button class="btn btn-texto btn-ancho" id="claveSalir" type="button">Salir</button>
+    </form>
+  </div>
+</main>
+
+<!-- ============ Panel ============ -->
+<div class="panel" id="vistaPanel" hidden>
+  <header class="barra">
+    <div class="barra-in">
+      <img class="barra-logo" src="/assets/c4v-wordmark.png" alt="C4V Láser" width="115" height="24" />
+      <span class="barra-titulo">Panel C4V</span>
+      <span class="barra-usuario" id="barraUsuario"></span>
+      <button class="barra-btn" id="btnCambiarClave" type="button">Cambiar contraseña</button>
+      <button class="barra-btn" id="btnSalir" type="button">Salir</button>
+    </div>
+  </header>
+
+  <div class="marco">
+    <section class="resumen" aria-label="Resumen del día">
+      <a class="res-item" href="#solicitudes">
+        <span class="res-num" id="resSolicitudes">…</span>
+        <span class="res-et">solicitudes pendientes</span>
+      </a>
+      <a class="res-item" href="#accesos">
+        <span class="res-num" id="resAccesos">…</span>
+        <span class="res-et">accesos aprobados activos</span>
+      </a>
+      <a class="res-item" href="#clientes">
+        <span class="res-num" id="resElegibles">…</span>
+        <span class="res-et" id="resElegiblesEt">clientes con acceso automático</span>
+      </a>
+      <a class="res-item" href="#reclamos" id="resReclamosItem">
+        <span class="res-num" id="resReclamos">…</span>
+        <span class="res-et" id="resReclamosEt">reclamos por responder</span>
+      </a>
+      <div class="res-item res-sync">
+        <span class="res-num res-num-texto" id="resSync">…</span>
+        <span class="res-et">último sync con Odoo</span>
+      </div>
+      <p class="res-error" id="resError" role="status" hidden></p>
+    </section>
+
+    <nav class="pestanas" aria-label="Secciones del panel">
+      <a href="#solicitudes" data-tab="solicitudes">Solicitudes <span class="contador" id="contSolicitudes" hidden></span></a>
+      <a href="#accesos" data-tab="accesos">Accesos</a>
+      <a href="#clientes" data-tab="clientes">Clientes</a>
+      <a href="#tickets" data-tab="tickets">Tickets</a>
+      <a href="#reclamos" data-tab="reclamos"><span class="solo-ancho">Libro de Reclamaciones</span><span class="solo-angosto">Reclamos</span> <span class="contador contador-urgente" id="contReclamos" hidden></span></a>
+      <a href="#actividad" data-tab="actividad">Actividad</a>
+      <a href="#equipo" data-tab="equipo" id="tabEquipo" hidden>Equipo</a>
+    </nav>
+
+    <main id="principal" tabindex="-1">
+
+      <!-- ---------- Solicitudes ---------- -->
+      <section class="hoja" data-panel="solicitudes" aria-labelledby="hSolicitudes" hidden>
+        <div class="hoja-cab">
+          <h2 id="hSolicitudes" tabindex="-1">Solicitudes de acceso</h2>
+          <p class="hoja-nota">Personas cuyo número no está en la base y pidieron entrar al portal. Revisa la referencia, elige el cliente y aprueba o rechaza.</p>
+        </div>
+        <div class="herramientas">
+          <fieldset class="segmento">
+            <legend class="sr">Mostrar solicitudes</legend>
+            <label><input type="radio" name="solEstado" value="pendiente" checked /><span>Pendientes</span></label>
+            <label><input type="radio" name="solEstado" value="aprobada" /><span>Aprobadas</span></label>
+            <label><input type="radio" name="solEstado" value="rechazada" /><span>Rechazadas</span></label>
+            <label><input type="radio" name="solEstado" value="todas" /><span>Todas</span></label>
+          </fieldset>
+          <button class="btn btn-chico" type="button" data-recargar="solicitudes">Actualizar</button>
+        </div>
+        <div class="lista-info" id="infoSolicitudes" role="status" aria-live="polite"></div>
+        <ol class="filas" id="listaSolicitudes"></ol>
+      </section>
+
+      <!-- ---------- Accesos ---------- -->
+      <section class="hoja" data-panel="accesos" aria-labelledby="hAccesos" hidden>
+        <div class="hoja-cab hoja-cab-accion">
+          <div>
+            <h2 id="hAccesos" tabindex="-1">Accesos aprobados</h2>
+            <p class="hoja-nota">Números que entran al portal en nombre de un cliente: familiares, socios, operarios. Ven lo mismo que el comprador, con su documento enmascarado.</p>
+          </div>
+          <button class="btn btn-oscuro" type="button" id="btnDarAcceso">Dar acceso</button>
+        </div>
+        <div class="herramientas">
+          <fieldset class="segmento">
+            <legend class="sr">Mostrar accesos</legend>
+            <label><input type="radio" name="accEstado" value="activos" checked /><span>Activos</span></label>
+            <label><input type="radio" name="accEstado" value="revocados" /><span>Revocados</span></label>
+          </fieldset>
+          <button class="btn btn-chico" type="button" data-recargar="accesos">Actualizar</button>
+        </div>
+        <div class="lista-info" id="infoAccesos" role="status" aria-live="polite"></div>
+        <ol class="filas" id="listaAccesos"></ol>
+      </section>
+
+      <!-- ---------- Clientes ---------- -->
+      <section class="hoja" data-panel="clientes" aria-labelledby="hClientes" hidden>
+        <div class="hoja-cab">
+          <h2 id="hClientes" tabindex="-1">Clientes</h2>
+          <p class="hoja-nota">La copia de Odoo que usa el portal. Entran solos los clientes con acceso automático: compraron una máquina y hay prueba de compra.</p>
+        </div>
+        <div class="sync" id="bloqueSync" hidden>
+          <div class="sync-texto">
+            <p class="sync-titulo">Sincronizar con Odoo</p>
+            <p class="ayuda">Trae los cambios de Odoo ahora mismo en vez de esperar al sync automático. Tarda hasta un minuto.</p>
+            <p class="sync-estado" id="syncEstado" role="status" aria-live="polite"></p>
+            <p class="sync-reloj" id="syncReloj" aria-hidden="true"></p>
+          </div>
+          <button class="btn" type="button" id="btnSync">Sincronizar con Odoo ahora</button>
+        </div>
+        <form class="buscador" id="formClientes" method="post" novalidate role="search">
+          <label class="sr" for="cliQ">Buscar cliente</label>
+          <input class="input" id="cliQ" type="search" placeholder="Nombre, DNI/RUC, teléfono, pedido o comprobante" autocomplete="off" spellcheck="false" />
+          <button class="btn btn-oscuro" type="submit" id="cliBuscar">Buscar</button>
+          <label class="check"><input type="checkbox" id="cliSoloElegibles" /><span>Solo con acceso automático</span></label>
+        </form>
+        <div class="lista-info" id="infoClientes" role="status" aria-live="polite"></div>
+        <ol class="filas" id="listaClientes"></ol>
+      </section>
+
+      <!-- ---------- Tickets ---------- -->
+      <section class="hoja" data-panel="tickets" aria-labelledby="hTickets" hidden>
+        <div class="hoja-cab">
+          <h2 id="hTickets" tabindex="-1">Tickets de soporte</h2>
+          <p class="hoja-nota">Vista de solo lectura de la mesa de ayuda de Odoo. Para responder, asignar o cerrar, ábrelo en Odoo.</p>
+        </div>
+        <div class="herramientas">
+          <fieldset class="segmento">
+            <legend class="sr">Vista de tickets</legend>
+            <label><input type="radio" name="tkVista" value="abiertos" checked /><span>Abiertos</span></label>
+            <label><input type="radio" name="tkVista" value="sin_asignar" /><span>Sin asignar</span></label>
+            <label><input type="radio" name="tkVista" value="todos" /><span>Todos</span></label>
+          </fieldset>
+          <label class="select-et">
+            <span class="sr">Equipo</span>
+            <select class="input input-chico" id="tkEquipo">
+              <option value="">Todos los equipos</option>
+            </select>
+          </label>
+          <button class="btn btn-chico" type="button" data-recargar="tickets">Actualizar</button>
+        </div>
+        <div class="lista-info" id="infoTickets" role="status" aria-live="polite"></div>
+        <ol class="filas" id="listaTickets"></ol>
+      </section>
+
+      <!-- ---------- Libro de Reclamaciones ---------- -->
+      <section class="hoja" data-panel="reclamos" aria-labelledby="hReclamos" hidden>
+        <div class="hoja-cab">
+          <h2 id="hReclamos" tabindex="-1">Libro de Reclamaciones</h2>
+          <p class="hoja-nota">Cada hoja tiene un plazo legal de respuesta. Las vencidas y las que vencen pronto van primero.</p>
+        </div>
+        <div class="herramientas">
+          <fieldset class="segmento">
+            <legend class="sr">Mostrar reclamos</legend>
+            <label><input type="radio" name="recEstado" value="pendientes" checked /><span>Por responder</span></label>
+            <label><input type="radio" name="recEstado" value="todos" /><span>Todos</span></label>
+          </fieldset>
+          <button class="btn btn-chico" type="button" data-recargar="reclamos">Actualizar</button>
+        </div>
+        <div class="lista-info" id="infoReclamos" role="status" aria-live="polite"></div>
+        <ol class="filas" id="listaReclamos"></ol>
+      </section>
+
+      <!-- ---------- Actividad ---------- -->
+      <section class="hoja" data-panel="actividad" aria-labelledby="hActividad" hidden>
+        <div class="hoja-cab">
+          <h2 id="hActividad" tabindex="-1">Actividad</h2>
+          <p class="hoja-nota">Los últimos 200 movimientos: ingresos al portal y lo que hizo cada persona del equipo.</p>
+        </div>
+        <div class="herramientas">
+          <fieldset class="segmento">
+            <legend class="sr">Tipo de actividad</legend>
+            <label><input type="radio" name="actTipo" value="accesos" /><span>Accesos</span></label>
+            <label><input type="radio" name="actTipo" value="equipo" /><span>Equipo</span></label>
+            <label><input type="radio" name="actTipo" value="todo" checked /><span>Todo</span></label>
+          </fieldset>
+          <button class="btn btn-chico" type="button" data-recargar="actividad">Actualizar</button>
+        </div>
+        <div class="lista-info" id="infoActividad" role="status" aria-live="polite"></div>
+        <div class="tabla-caja" id="cajaActividad"></div>
+      </section>
+
+      <!-- ---------- Equipo (solo rol admin) ---------- -->
+      <section class="hoja" data-panel="equipo" aria-labelledby="hEquipo" hidden>
+        <div class="hoja-cab hoja-cab-accion">
+          <div>
+            <h2 id="hEquipo" tabindex="-1">Equipo</h2>
+            <p class="hoja-nota">Quiénes pueden entrar a este panel. Cada acción queda registrada con su nombre.</p>
+          </div>
+          <button class="btn btn-oscuro" type="button" id="btnNuevoUsuario">Nuevo usuario</button>
+        </div>
+        <div class="lista-info" id="infoEquipo" role="status" aria-live="polite"></div>
+        <ol class="filas" id="listaEquipo"></ol>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<!-- Un solo diálogo para todo: aprobar, rechazar, revocar, responder… -->
+<dialog class="dlg" id="dlg" aria-labelledby="dlgTitulo">
+  <div class="dlg-cab">
+    <h2 id="dlgTitulo"></h2>
+    <button class="btn btn-texto dlg-cerrar" type="button" id="dlgCerrar">Cerrar</button>
+  </div>
+  <div class="dlg-cuerpo" id="dlgCuerpo"></div>
+</dialog>
+
+<div class="nota-flotante" id="notaFlotante" role="status" aria-live="polite" hidden></div>
+</body>
+</html>
