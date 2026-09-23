@@ -15,7 +15,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@700;800&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="../css/styles.css?v=20260924d" />
+  <link rel="stylesheet" href="../css/styles.css?v=20260924e" />
   <style>
     /* Página pública del CeVi comercial: el toro y la burbuja, nada más.
        Colores y letras del portal (styles.css). */
@@ -29,7 +29,7 @@
     /* La escena: el toro arriba y la burbuja del widget abajo. El widget ocupa
        toda la escena (su panel de chat sube y tapa al toro al abrirse). */
     .v-escena{position:relative;flex:1;min-height:520px;max-width:720px;width:100%;margin:0 auto}
-    .v-hola{position:absolute;inset:0 0 104px;display:grid;place-content:center;justify-items:center;gap:10px;text-align:center;padding:0 20px;z-index:0}
+    .v-hola{position:absolute;inset:0 0 24px;display:grid;place-content:center;justify-items:center;gap:10px;text-align:center;padding:0 20px;z-index:0}
     /* La burbuja grande (el orbe de la demo de CeVi Voice). En llamada, --v (0 a 1)
        es el volumen real: agranda el orbe y su resplandor. */
     .v-hablar{background:none;border:0;padding:8px;cursor:pointer;display:grid;justify-items:center;gap:18px;color:#fff;font:inherit}
@@ -56,8 +56,13 @@
     /* El widget queda encima (su panel de chat tapa al botón al abrirse) pero
        deja pasar los toques donde no dibuja nada: sus partes visibles ya
        traen pointer-events:auto. */
-    .v-escena elevenlabs-convai{position:absolute;inset:0;display:block;z-index:1;--el-overlay-padding:0px;pointer-events:none}
-    .v-cargando{position:absolute;left:0;right:0;bottom:28px;margin:0;display:grid;justify-items:center;gap:10px;text-align:center;
+    .v-escena elevenlabs-convai{position:absolute;inset:0;display:block;z-index:1;--el-overlay-padding:0px;pointer-events:none;visibility:hidden}
+    /* Solo se ve cuando hace falta: el aviso de grabación o el chat escrito abierto.
+       Plegado queda invisible (la llamada la manejan el orbe grande y sus estados). */
+    .v-escena elevenlabs-convai.v-visible{visibility:visible}
+    .v-escribir{background:none;border:0;padding:6px 10px;color:#fff;font:inherit;font-size:var(--t-sm);text-decoration:underline;cursor:pointer;opacity:.85}
+    .v-escribir:hover,.v-escribir:focus-visible{opacity:1}
+    .v-cargando{position:absolute;left:0;right:0;bottom:8px;margin:0;display:grid;justify-items:center;gap:10px;text-align:center;
       font-weight:500;color:#fff;opacity:.9;z-index:2;padding:0 20px}
     .v-cargando .btn{background:#fff;color:var(--rojo-tinta);border:0}
     .v-cargando a{color:#fff}
@@ -80,6 +85,7 @@
         <span class="v-etiqueta" id="ventasTitulo">Toca para hablar</span>
       </button>
       <p id="ventasEstado" aria-live="polite">CeVi, el asesor de C4V con inteligencia artificial, te ayuda a elegir tu máquina láser.</p>
+      <button type="button" class="v-escribir" id="ventasEscribir" disabled>o escríbele</button>
     </div>
     <p class="v-cargando">Preparando a CeVi…</p>
   </main>
@@ -89,7 +95,7 @@
     <p>CeVi responde con inteligencia artificial. <a href="../privacidad.html">Privacidad</a> · <a href="../terminos.html">Términos</a> · <a href="../libro-reclamaciones.html">Libro de Reclamaciones</a></p>
   </footer>
 
-  <script src="../js/config.js?v=20260924d"></script>
+  <script src="../js/config.js?v=20260924e"></script>
   <script>
   /* CeVi comercial en la página pública. Sin login: cevi-backend da URLs
      firmadas a quien viene de este origen (con topes por visitante).
@@ -197,7 +203,20 @@
     function prepararBoton(el) {
       // El botón nativo "Iniciar conversación" aparece cuando el widget termina de cargar.
       const buscar = () => el.shadowRoot?.querySelector('button[aria-label="' + INICIAR + '"]');
-      const listo = setInterval(() => { if (buscar()) { clearInterval(listo); boton.disabled = false; } }, 250);
+      const escribir = document.getElementById('ventasEscribir');
+      const listo = setInterval(() => {
+        if (!buscar()) return;
+        clearInterval(listo); boton.disabled = false; escribir.disabled = false;
+        // El widget se muestra solo con el aviso de grabación o el chat escrito abierto.
+        const mirar = () => {
+          const sr = el.shadowRoot;
+          const aviso = [...sr.querySelectorAll('button')].some(b => b.textContent.trim() === ACEPTO);
+          el.classList.toggle('v-visible', aviso || !!sr.querySelector('textarea'));
+        };
+        new MutationObserver(mirar).observe(el.shadowRoot, { subtree: true, childList: true });
+        mirar();
+      }, 250);
+      escribir.onclick = () => el.shadowRoot?.querySelector('button[aria-label="' + ESCRIBIR + '"]')?.click();
       boton.onclick = () => {
         if (voz.conv) { try { voz.conv.endSession(); } catch {} return; }       // en llamada: terminar
         const b = buscar();
@@ -206,7 +225,8 @@
         b.click();                                                              // la misma llamada del widget nativo
       };
     }
-    const INICIAR = 'Iniciar conversación';   // text_contents.start_call del agente (etiqueta del botón nativo)
+    // Etiquetas de los botones nativos (text_contents del agente en ElevenLabs).
+    const INICIAR = 'Iniciar conversación', ESCRIBIR = 'Escribir', ACEPTO = 'Acepto';
 
     async function iniciar() {
       if (!document.getElementById('script-11labs-convai')) {
