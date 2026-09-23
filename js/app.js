@@ -701,11 +701,20 @@ const views = {
      cliente ya estaba identificado. Ahora va en el HTML inicial, para que
      el widget la tenga desde su primer render. */
   ceviElevenLabs() {
-    const vars = ceviElevenLabsVars();
+    const v = ceviElevenLabsVars();
     return `
-      <section class="chat chat-11labs" id="ceviPagina11">
-        <p class="chat-pie" style="margin-top:0">CeVi (soporte técnico) responde con inteligencia artificial. Para temas comerciales te conecta con un asesor.</p>
-        <elevenlabs-convai id="ceviWidget11" agent-id="${esc(CFG.elevenlabsAgentId)}" dynamic-variables="${esc(JSON.stringify(vars))}"></elevenlabs-convai>
+      <section class="cevi11" id="ceviPagina11">
+        <header class="cevi11-hola">
+          <img class="cevi11-toro" src="assets/cevi/saluda.png" alt="" width="76" height="76">
+          <div class="cevi11-hola-txt">
+            <h1>Hola${v.nombre ? ', ' + esc(v.nombre) : ''}</h1>
+            <p>Soy CeVi, tu soporte técnico. Cuéntame qué le pasa a tu ${esc(v.maquina || 'máquina')}, o pregúntame por tus casos y tu garantía.</p>
+          </div>
+        </header>
+        <div class="cevi11-marco" id="ceviWidgetHost">
+          <p class="cevi11-cargando">Preparando a CeVi…</p>
+        </div>
+        <p class="cevi11-pie">CeVi responde con inteligencia artificial. Lo comercial te lo resuelve un asesor.</p>
       </section>`;
   },
 
@@ -2633,23 +2642,49 @@ function ceviCablear(raiz) {
 function ceviElevenLabsVars() {
   const cli = currentClient();
   const maq = cli ? state.db.maquinas.find(m => m.cliente_id === cli.id) : null;
+  const nombre = primerNombre(cli?.nombre) || '';
+  const maquina = maq?.modelo || '';
   return {
     telefono: state.telefono || '',
-    nombre: primerNombre(cli?.nombre) || '',
-    maquina: maq?.modelo || '',
+    nombre, maquina,
+    serie: maq?.serie || '',
     pais: PAISES[cli?.pais]?.replace(/^\S+\s/, '') || cli?.pais || '',
+    // Primer mensaje del agente ({{saludo}}): corto y en pregunta, ya con su nombre y su máquina.
+    saludo: `¡Hola${nombre ? ' ' + nombre : ''}! Soy CeVi, tu soporte técnico. ¿Qué le pasa a tu ${maquina || 'máquina'}?`,
   };
 }
 
-/* Solo carga el script del widget una vez; las dynamic-variables ya van en
-   el HTML (ver views.ceviElevenLabs), no hace falta setAttribute acá. */
-function ceviElevenLabsIniciar() {
-  if (document.getElementById('script-11labs-convai')) return;
-  const s = document.createElement('script');
-  s.id = 'script-11labs-convai';
-  s.src = 'https://unpkg.com/@elevenlabs/convai-widget-embed';
-  s.async = true;
-  document.head.appendChild(s);
+/* Carga el script oficial una vez, pide al portal el token de identidad de
+   CeVi y RECIÉN ENTONCES crea el widget, con agent-id y dynamic-variables ya
+   puestos antes de insertarlo (si se ponen después, el widget arranca sin
+   ellas — fue el bug de "me pidió el teléfono").
+   secret__cevi_token: ElevenLabs lo manda en el header de cada tool y nunca
+   se lo pasa al modelo; cevi-backend sabe por él quién es el cliente, y así
+   las herramientas solo ven SUS casos y SU garantía. */
+async function ceviElevenLabsIniciar() {
+  if (!document.getElementById('script-11labs-convai')) {
+    const s = document.createElement('script');
+    s.id = 'script-11labs-convai';
+    s.src = 'https://unpkg.com/@elevenlabs/convai-widget-embed';
+    s.async = true;
+    document.head.appendChild(s);
+  }
+  const host = $('#ceviWidgetHost');
+  if (!host) return;
+  const vars = ceviElevenLabsVars();
+  const ses = leerSesion();
+  if (ses?.t && VERIF.activo) {
+    try {
+      const r = await apiPost('/api/cevi/token', { token: ses.t });
+      if (r.ok && r.json.cevi_token) vars.secret__cevi_token = r.json.cevi_token;
+    } catch {}
+  }
+  if (!host.isConnected) return;   // se fue a otra sección mientras tanto
+  const el = document.createElement('elevenlabs-convai');
+  el.id = 'ceviWidget11';
+  el.setAttribute('agent-id', CFG.elevenlabsAgentId);
+  el.setAttribute('dynamic-variables', JSON.stringify(vars));
+  host.replaceChildren(el);
 }
 
 function ceviPaginaIniciar() {

@@ -1383,16 +1383,38 @@ body{background:var(--mesa)}
    ════════════════════════════════════════════════════════════════════════ */
 .chat{display:flex;flex-direction:column;min-height:calc(100dvh - 210px);gap:0}
 
-/* Widget nativo de ElevenLabs: ocupa el ancho disponible y una altura cómoda
-   para hablar sin que la página salte. En el celular (la mayoría del público)
-   se pega a los bordes en vez de dejar franjas vacías a los costados. */
-.chat-11labs elevenlabs-convai{
-  display:block; width:100%;
-  --elevenlabs-convai-widget-width:100%;
-  --elevenlabs-convai-widget-height:min(70dvh, 640px);
+/* ════════════════════════════════════════════════════════════════════════
+   CeVi con ElevenLabs — el widget NATIVO, incrustado en la página
+   El widget oficial trae en su shadow DOM `:host{position:fixed;inset:0}`:
+   flota sobre toda la pantalla. Las reglas de la página le ganan a :host, así
+   que aquí se le pone `position:absolute` dentro de .cevi11-marco y el panel
+   vive en la sección, no en una esquina. En pantallas < 768px el propio widget
+   se pone en modo "pantalla completa" — completa DEL MARCO, que es lo que
+   queremos en el celular. Colores y textos: en platform_settings.widget del
+   agente (todo rojo de marca, sin negro en el orbe).
+   ════════════════════════════════════════════════════════════════════════ */
+.cevi11{display:flex;flex-direction:column;gap:var(--s-3);
+  min-height:calc(100dvh - var(--alto-menu, 176px))}
+.cevi11-hola{display:flex;align-items:center;gap:var(--s-3);
+  padding:var(--s-3) var(--s-4);border-radius:var(--r-lg);
+  background:linear-gradient(135deg,var(--rojo) 0%,var(--rojo-tinta) 100%);color:#fff}
+.cevi11-toro{width:76px;height:76px;flex:none;object-fit:contain;
+  filter:drop-shadow(0 4px 10px rgba(0,0,0,.25))}
+.cevi11-hola-txt h1{font-family:var(--slab);font-size:var(--t-xl);line-height:var(--lh-tight);margin:0;color:#fff}
+.cevi11-hola-txt p{margin:var(--s-1) 0 0;font-size:var(--t-sm);line-height:var(--lh-snug);color:#fff;opacity:.95}
+.cevi11-marco{position:relative;flex:1;min-height:520px;border-radius:var(--r-lg);overflow:hidden;
+  background:var(--rojo-suave);border:1px solid #f6cfd0}
+.cevi11-marco elevenlabs-convai{
+  position:absolute; inset:0; display:block; z-index:1;
+  --el-overlay-padding:0px;
 }
-@media (min-width:640px){
-  .chat-11labs elevenlabs-convai{ --elevenlabs-convai-widget-width:480px; margin:0 auto }
+.cevi11-cargando{margin:0;position:absolute;inset:0;display:grid;place-items:center;
+  color:var(--rojo-tinta);font-weight:700}
+.cevi11-pie{margin:0 0 var(--s-2);font-size:var(--t-xs);color:var(--grafito);text-align:center}
+@media (max-width:640px){
+  .cevi11-toro{width:60px;height:60px}
+  .cevi11-hola-txt h1{font-size:var(--t-lg)}
+  .cevi11-marco{min-height:calc(100dvh - var(--alto-menu, 176px) - 150px)}
 }
 
 .chat-hilo{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:var(--s-3);
