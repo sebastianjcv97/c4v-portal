@@ -1,6 +1,6 @@
 /* Calculadora de servicio de corte láser (#/calculadora).
-   La cuenta de «tabla de precios.xlsx»: minutos × precio por minuto + planchas
-   × precio de cada plancha. Una sola pantalla, sin configuración aparte: lo que
+   La cuenta de «tabla de precios.xlsx»: minutos × precio por minuto + cantidad
+   × precio de cada material. Una sola pantalla, sin configuración aparte: lo que
    el cliente escribe (su precio por minuto, el precio de cada material) queda
    guardado en su teléfono y sale la próxima vez. El país y la moneda salen de
    su cuenta; los precios de partida, de config.js.
@@ -149,11 +149,11 @@
       const mat = d.materiales.find(x => x.id === l.m);
       const cant = leer(l.cant, false), precio = mat ? leer(mat.precio, true) : null;
       const r = { i, valor: null, falta: '' };
-      if (Number.isNaN(cant)) { mal.push({ id: 'calcCant' + i, que: 'las planchas' }); return r; }
+      if (Number.isNaN(cant)) { mal.push({ id: 'calcCant' + i, que: 'la cantidad' }); return r; }
       if (mat && Number.isNaN(precio)) { mal.push({ id: 'calcPre' + i, que: `el precio de ${nombreMat(mat)}` }); return r; }
       if (!cant) { r.valor = 0; return r; }
       if (!mat) { r.falta = 'Elige el material en la lista.'; pedir('elegir el material'); return r; }
-      if (precio == null) { r.falta = 'Escribe el precio de cada plancha.'; pedir(`el precio de ${nombreMat(mat)}`); return r; }
+      if (precio == null) { r.falta = 'Escribe el precio.'; pedir(`el precio de ${nombreMat(mat)}`); return r; }
       r.valor = redondear(cant * precio); material += r.valor;
       return r;
     });
@@ -178,11 +178,9 @@
       x.setAttribute('aria-describedby', 'calcDetalle');
       x.closest('.calc-caja')?.classList.add('mal');
     });
-    poner(raiz.querySelector('#calcCorte'), r.corte == null ? '—' : dinero(r.corte));
     r.lineas.forEach(l => {
       const fila = raiz.querySelector(`.calc-linea[data-i="${l.i}"]`);
       if (!fila) return;
-      poner(fila.querySelector('[data-sub]'), l.valor != null ? dinero(l.valor) : '—');
       const aviso = fila.querySelector('[data-falta]');
       poner(aviso, l.falta); aviso.hidden = !l.falta;
     });
@@ -201,35 +199,27 @@
     poner(document.getElementById('calcAnuncio'), total.textContent === '—' ? det.textContent : `Total a cobrar ${total.textContent}`);
   }
 
-  const svg = (d) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
-  const ICO = {
-    reloj: svg('<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2"/><path d="M9.5 2.5h5"/>'),
-    planchas: svg('<path d="M3.5 8 12 4l8.5 4-8.5 4z"/><path d="M3.5 12l8.5 4 8.5-4"/><path d="M3.5 16l8.5 4 8.5-4"/>'),
-    mas: svg('<path d="M12 5v14M5 12h14"/>')
-  };
+  const MAS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>';
 
+  // Solo lo que se escribe en cada trabajo: minutos y material. El total va abajo.
   function cuerpo() {
-    const d = datos(), sym = esc(simbolo()), plancha = conf().plancha || '';
+    const d = datos(), sym = esc(simbolo());
     const varias = d.lineas.length > 1;
     const opciones = (sel) => (d.materiales.some(m => m.id === sel) ? '' : '<option value="" selected>Elige el material</option>')
       + d.materiales.map(m => `<option value="${esc(m.id)}"${m.id === sel ? ' selected' : ''}>${esc(m.nombre)}</option>`).join('');
     return `
-      <p class="bajada">Escribe los minutos y el material. Abajo sale cuánto cobrar.</p>
-
-      <section class="calc-card tiempo" aria-labelledby="calcTitMin">
-        <div class="calc-card-cab"><span class="calc-card-ico">${ICO.reloj}</span><h2 id="calcTitMin">Tiempo de corte</h2></div>
+      <section class="calc-seccion" aria-labelledby="calcTitMin">
+        <h2 class="section-h" id="calcTitMin">Tiempo de corte</h2>
         <div class="calc-campos">
           <label class="calc-campo" for="calcMin"><span>Minutos</span>
-            <span class="calc-caja"><input id="calcMin" inputmode="decimal" autocomplete="off" value="${esc(d.minutos)}" placeholder="0"><span class="calc-mon" aria-hidden="true">min</span></span></label>
+            <span class="calc-caja"><input id="calcMin" inputmode="decimal" autocomplete="off" value="${esc(d.minutos)}" placeholder="0"></span></label>
           <label class="calc-campo" for="calcPm"><span>Precio por minuto</span>
             <span class="calc-caja"><span class="calc-mon" aria-hidden="true">${sym}</span><input id="calcPm" inputmode="decimal" autocomplete="off" value="${esc(d.precioMinuto)}" placeholder="0"></span></label>
         </div>
-        <p class="calc-sub"><span>Corte</span><strong id="calcCorte" class="calc-monto"></strong></p>
       </section>
 
-      <section class="calc-card material" aria-labelledby="calcTitMat">
-        <div class="calc-card-cab"><span class="calc-card-ico">${ICO.planchas}</span><h2 id="calcTitMat">Material</h2></div>
-        <p class="calc-ayuda">Planchas de ${esc(plancha)}.</p>
+      <section class="calc-seccion" aria-labelledby="calcTitMat">
+        <h2 class="section-h" id="calcTitMat">Material</h2>
         ${d.lineas.map((l, i) => {
           const mat = d.materiales.find(x => x.id === l.m);
           return `
@@ -240,16 +230,15 @@
             ${varias ? `<button type="button" class="calc-quitar" data-quitar-linea="${i}" aria-label="Quitar este material">×</button>` : ''}
           </div>
           <div class="calc-campos">
-            <label class="calc-campo" for="calcCant${i}"><span>Planchas</span>
+            <label class="calc-campo" for="calcCant${i}"><span>Cantidad</span>
               <span class="calc-caja"><input id="calcCant${i}" data-linea="${i}" data-campo="cant" inputmode="decimal" autocomplete="off" value="${esc(l.cant)}" placeholder="0"></span></label>
-            <label class="calc-campo" for="calcPre${i}"><span>Precio por plancha</span>
+            <label class="calc-campo" for="calcPre${i}"><span>Precio</span>
               <span class="calc-caja"><span class="calc-mon" aria-hidden="true">${sym}</span><input id="calcPre${i}" data-linea="${i}" data-campo="precio" inputmode="decimal" autocomplete="off" value="${esc(mat ? mat.precio : '')}" placeholder="0"${mat ? '' : ' disabled'}></span></label>
           </div>
-          <p class="calc-sub"><span>Material</span><strong class="calc-monto" data-sub></strong></p>
           <p class="calc-falta" data-falta hidden></p>
         </div>`;
         }).join('')}
-        <button type="button" class="calc-agregar" id="calcAddLinea">${ICO.mas}<span>Agregar material</span></button>
+        <button type="button" class="btn ghost calc-agregar" id="calcAddLinea">${MAS}Agregar material</button>
       </section>
 
       <div class="calc-total">

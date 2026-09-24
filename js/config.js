@@ -55,7 +55,6 @@ window.C4V_CONFIG = {
      y tiendas de acrílico, llevados a 0,54 m²). Fuentes, método y tipo de cambio:
      02_AREAS/operaciones/P1-plataforma-postventa/CALCULADORA_PRECIOS.md          */
   calculadora: {
-    plancha: '90 × 60 cm',
     ejemplo: { minutos: 60, planchas: 1 },   // con lo que arranca la pantalla (pedido de Sebastián, 24-set)
     paises: {
       PE: { moneda: 'PEN', locale: 'es-PE', precioMinuto: 1, materiales: [   // S/ 1 el minuto: pedido de Sebastián (24-set)
