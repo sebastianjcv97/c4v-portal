@@ -47,7 +47,9 @@ window.C4V_CONFIG = {
      Estos son los precios CON LOS QUE ARRANCA cada país; el cliente los cambia
      en su teléfono. Si aquí se cambia un precio, le llega a quien no lo había
      tocado. `null` = sin precio (el cliente pone el suyo).
-     Perú: «tabla de precios.xlsx» de Sebastián (24-set-2026).
+     Perú: «tabla de precios.xlsx» de Sebastián (24-set-2026), salvo el
+     acrílico: el del Excel (S/ 8–15) estaba muy por debajo del mercado y se
+     cambió al de las tiendas de Lima, con su visto bueno (24-set-2026).
      Los demás: precios de mercado verificados el 24-set-2026, con IVA, por
      plancha de 90 × 60 cm (tableros de Sodimac, Easy, Homecenter, Mercado Libre
      y tiendas de acrílico, llevados a 0,54 m²). Fuentes, método y tipo de cambio:
@@ -58,7 +60,7 @@ window.C4V_CONFIG = {
     paises: {
       PE: { moneda: 'PEN', locale: 'es-PE', precioMinuto: 0.8, nota: 'Precios de referencia de C4V para Perú.', materiales: [
         ['MDF 3 mm', 3], ['MDF 5 mm', 5], ['MDF 10 mm', 8], ['MDF 12 mm', 12],
-        ['Acrílico 3 mm', 8], ['Acrílico 5 mm', 10], ['Acrílico 10 mm', 12], ['Acrílico 12 mm', 15]
+        ['Acrílico 3 mm', 41], ['Acrílico 5 mm', 69], ['Acrílico 10 mm', 148], ['Acrílico 12 mm', 215]
       ] },
       EC: { moneda: 'USD', locale: 'es-EC', precioMinuto: 0.32, nota: 'Precios de referencia del mercado de Ecuador, septiembre de 2026.', materiales: [
         ['MDF 3 mm', 3.6], ['MDF 5 mm', 4.1], ['MDF 10 mm', 5.5], ['MDF 12 mm', 5.8],

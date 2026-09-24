@@ -1,4 +1,5 @@
-/* Calculadora de servicio de corte láser (#/calculadora).
+/* Calculadora de servicio de corte láser (#/calculadora y #/calculadora/precios).
+   El país y la moneda salen de la cuenta del cliente.
    La misma cuenta que la hoja «tabla de precios.xlsx»: minutos de corte × precio
    por minuto + planchas × precio de la plancha. Todos los números se pueden
    cambiar y lo que el cliente escribe se guarda en su teléfono, aparte por país
@@ -46,19 +47,23 @@
   const tienePrecios = (code) => confPais(code).precioMinuto != null;
   // Los precios de partida se escriben como se escriben en ese país: 9.300 en Colombia, 3,6 en Ecuador.
   const aTexto = (n, code) => (n == null ? '' : new Intl.NumberFormat(confPais(code).locale, { maximumFractionDigits: 2 }).format(n));
+  // Los precios van siempre con sus decimales (S/ 3.00, $3,60): se ve que se pueden afinar. Chile y Colombia, sin centavos.
+  const decimalesDe = (code) => (['CLP', 'COP'].includes(confPais(code).moneda) ? 0 : 2);
+  const aDinero = (n, code) => (n == null ? '' : new Intl.NumberFormat(confPais(code).locale, { minimumFractionDigits: decimalesDe(code), maximumFractionDigits: decimalesDe(code) }).format(n));
   let seq = 0;
   const nuevoId = () => 'm' + Date.now().toString(36) + (seq++);
   const huella = (code) => { const c = confPais(code); return JSON.stringify([c.precioMinuto, c.materiales]); };
 
   function porDefecto(code) {
     const c = confPais(code), ej = conf().ejemplo || {};
-    const materiales = c.materiales.map(([nombre, precio], i) => ({ id: 'm' + i, nombre, precio: aTexto(precio, code) }));
+    const materiales = c.materiales.map(([nombre, precio], i) => ({ id: 'm' + i, nombre, precio: aDinero(precio, code) }));
     return {
       minutos: aTexto(ej.minutos, code),
-      precioMinuto: aTexto(c.precioMinuto, code),
+      precioMinuto: aDinero(c.precioMinuto, code),
       lineas: materiales.length ? [{ m: materiales[0].id, cant: aTexto(ej.planchas ?? 1, code) }] : [],
       materiales,
-      base: huella(code)
+      base: huella(code),
+      formato: 2
     };
   }
   /* Si C4V cambia un precio de referencia en config.js, le llega al cliente
@@ -66,11 +71,13 @@
   function seguirReferencia(d, code) {
     const viejo = d.base ? JSON.parse(d.base) : [null, []];
     const nuevo = porDefecto(code);
-    if (d.precioMinuto === '' || d.precioMinuto === aTexto(viejo[0], code)) d.precioMinuto = nuevo.precioMinuto;
-    const antes = new Map((viejo[1] || []).map(([n, p]) => [n, aTexto(p, code)]));
+    // Sin tocar = vacío o el mismo número de antes (se compara el número: «3» y «3.00» son lo mismo).
+    const igual = (txt, n) => txt === '' || (n != null && leer(txt, true) === n);
+    if (igual(d.precioMinuto, viejo[0])) d.precioMinuto = nuevo.precioMinuto;
+    const antes = new Map(viejo[1] || []);
     d.materiales.forEach(m => {
       const n = nuevo.materiales.find(x => x.nombre === m.nombre);
-      if (n && (m.precio === '' || m.precio === antes.get(m.nombre))) m.precio = n.precio;
+      if (n && igual(m.precio, antes.get(m.nombre))) m.precio = n.precio;
     });
     d.base = nuevo.base;
   }
@@ -79,6 +86,13 @@
     const d = calc.porPais[code];
     if (!d || !Array.isArray(d.lineas) || !Array.isArray(d.materiales)) return (calc.porPais[code] = porDefecto(code));
     if (d.base !== huella(code)) { seguirReferencia(d, code); guardar(); }
+    if (d.formato !== 2) {
+      // Lo guardado antes, sin decimales («3»), pasa a verse como precio («3.00»).
+      const f = (t) => { const n = leer(t, true); return n == null || Number.isNaN(n) ? t : aDinero(n, code); };
+      d.precioMinuto = f(d.precioMinuto);
+      d.materiales.forEach(m => { m.precio = f(m.precio); });
+      d.formato = 2; guardar();
+    }
     return d;
   }
 
@@ -139,8 +153,8 @@
       if (Number.isNaN(cant)) { mal.push({ id: 'calcCant' + i, que: mat ? `las planchas de ${nombreMat(mat)}` : 'las planchas' }); return r; }
       if (!cant) { r.valor = 0; return r; }
       if (!mat) { r.falta = 'Elige el material.'; pedir('elegir un material'); return r; }
-      if (precio == null) { r.falta = `Pon el precio de ${nombreMat(mat)} en «Tus precios».`; pedir(`el precio de ${nombreMat(mat)}`); return r; }
-      if (Number.isNaN(precio)) { r.falta = `Revisa el precio de ${nombreMat(mat)} en «Tus precios».`; return r; }
+      if (precio == null) { r.falta = `Falta el precio de ${nombreMat(mat)}: ponlo en «Configurar mis precios».`; pedir(`el precio de ${nombreMat(mat)}`); return r; }
+      if (Number.isNaN(precio)) { r.falta = `Revisa el precio de ${nombreMat(mat)} en «Configurar mis precios».`; return r; }
       r.valor = redondear(cant * precio); material += r.valor;
       return r;
     });
@@ -156,26 +170,79 @@
   const juntar = (xs) => xs.length < 2 ? xs.join('') : xs.slice(0, -1).join(', ') + ' y ' + xs[xs.length - 1];
   const poner = (el, t) => { if (el && el.textContent !== t) el.textContent = t; };
 
-  // Solo toca los números: así no se pierde el foco mientras la persona escribe.
+  /* ---------- Pantalla ----------
+     Dos pantallas: la calculadora (minutos, material y total) y «Configurar mis
+     precios» (país, precio por minuto y de cada plancha), que se ponen una vez.
+     Cada número tiene botones grandes − y + además de poder escribirse, y cada
+     cosa tiene su color: el tiempo en azul, el MDF en madera, el acrílico en agua. */
+  let pantalla = 'calc';
+  const PASO_DINERO = { PEN: [0.05, 0.5], USD: [0.01, 0.1], BOB: [0.1, 1], CLP: [10, 100], COP: [50, 500] };
+  const svg = (d) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+  const ICO = {
+    reloj: svg('<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2"/><path d="M9.5 2.5h5"/>'),
+    planchas: svg('<path d="M3.5 8 12 4l8.5 4-8.5 4z"/><path d="M3.5 12l8.5 4 8.5-4"/><path d="M3.5 16l8.5 4 8.5-4"/>'),
+    etiqueta: svg('<path d="M3.5 12.5v-8a1 1 0 0 1 1-1h8l8 8-9 9z"/><circle cx="8" cy="8" r="1.5"/>'),
+    mas: svg('<path d="M12 5v14M5 12h14"/>')
+  };
+  const familia = (m) => /acr[ií]l/i.test(m.nombre) ? 'acrilico' : /mdf|madera|triplay|pino|cart[oó]n|balsa|melamin/i.test(m.nombre) ? 'madera' : 'otro';
+
+  function stepper({ id, valor, unidad, prefijo, etiqueta, menos, mas, attrs = '' }) {
+    return `
+      <div class="calc-stepper">
+        <button type="button" class="calc-btn-paso" data-paso="-1" data-para="${esc(id)}" aria-label="${esc(menos)}">−</button>
+        <label class="calc-valor" for="${esc(id)}">${prefijo ? `<span class="calc-mon" aria-hidden="true">${esc(prefijo)}</span>` : ''}<input id="${esc(id)}" inputmode="decimal" autocomplete="off" aria-label="${esc(etiqueta)}" value="${esc(valor)}" placeholder="0" ${attrs}>${unidad ? `<span class="calc-medida" aria-hidden="true">${esc(unidad)}</span>` : ''}</label>
+        <button type="button" class="calc-btn-paso" data-paso="1" data-para="${esc(id)}" aria-label="${esc(mas)}">+</button>
+      </div>`;
+  }
+
+  // Cuánto sube o baja cada toque: un minuto, media plancha, y en dinero lo que tenga sentido en esa moneda.
+  function pasoDe(input) {
+    const [min, plancha] = PASO_DINERO[confPais(calc.pais).moneda] || [0.1, 1];
+    if (input.id === 'calcMin') return 1;
+    if (input.id === 'calcPm') return min;
+    if (input.dataset.campo === 'precio') return plancha;
+    return 0.5;
+  }
+  function tocarPaso(b) {
+    const input = document.getElementById(b.dataset.para);
+    if (!input) return;
+    const esDinero = input.id === 'calcPm' || input.dataset.campo === 'precio';
+    const actual = leer(input.value, esDinero);
+    const paso = pasoDe(input);
+    const decimales = (String(paso).split('.')[1] || '').length;
+    let n = (Number.isNaN(actual) || actual == null ? 0 : actual) + paso * Number(b.dataset.paso);
+    n = Math.max(0, Number((Math.round(n / paso) * paso).toFixed(decimales)));
+    input.value = esDinero ? aDinero(n, calc.pais) : aTexto(n, calc.pais);
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+
   function actualizar() {
     const raiz = document.getElementById('calc');
     if (!raiz) return;
-    const r = calcular();
+    const r = calcular(), d = datos();
     raiz.querySelectorAll('input[aria-invalid]').forEach(x => { x.removeAttribute('aria-invalid'); x.removeAttribute('aria-describedby'); });
-    raiz.querySelectorAll('.calc-dinero.mal').forEach(w => w.classList.remove('mal'));
+    raiz.querySelectorAll('.calc-valor.mal').forEach(w => w.classList.remove('mal'));
     r.mal.forEach(({ id }) => {
       const x = document.getElementById(id);
       if (!x) return;
       x.setAttribute('aria-invalid', 'true');
-      x.setAttribute('aria-describedby', 'calcDetalle');
-      const caja = x.closest('.calc-dinero');
-      if (caja) caja.classList.add('mal');
+      if (document.getElementById('calcDetalle')) x.setAttribute('aria-describedby', 'calcDetalle');
+      x.closest('.calc-valor')?.classList.add('mal');
     });
+    const pm = leer(d.precioMinuto, true), pmOk = pm != null && !Number.isNaN(pm);
+    const pais = (listaPaises().find(p => p.code === calc.pais) || {}).nombre || calc.pais;
+    poner(raiz.querySelector('#calcAjustesRes'), `${pais}, ${pmOk ? `${dinero(pm)} el minuto` : 'falta el precio por minuto'}`);
+    if (pantalla !== 'calc') return;
+
+    poner(raiz.querySelector('#calcUnitMin'), pmOk ? `${dinero(pm)} por minuto` : '');
     poner(raiz.querySelector('#calcCorte'), r.corte == null ? '—' : dinero(r.corte));
+    const faltaMin = raiz.querySelector('#calcFaltaMin');
+    poner(faltaMin, pmOk ? '' : 'Falta tu precio por minuto: ponlo en «Configurar mis precios».');
+    faltaMin.hidden = pmOk;
     r.lineas.forEach(l => {
-      const fila = raiz.querySelector(`.calc-linea[data-i="${l.i}"]`);
+      const fila = raiz.querySelector(`.calc-card[data-i="${l.i}"]`);
       if (!fila) return;
-      poner(fila.querySelector('[data-unit]'), l.precio != null && !Number.isNaN(l.precio) ? `× ${dinero(l.precio)}` : '');
+      poner(fila.querySelector('[data-unit]'), l.precio != null && !Number.isNaN(l.precio) ? `${dinero(l.precio)} cada plancha` : '');
       poner(fila.querySelector('[data-sub]'), l.valor != null ? dinero(l.valor) : '—');
       const aviso = fila.querySelector('[data-falta]');
       poner(aviso, l.falta); aviso.hidden = !l.falta;
@@ -189,88 +256,91 @@
       poner(det, `Falta ${juntar(r.falta)}.`);
     } else {
       poner(total, dinero(r.total));
-      poner(det, `Corte ${dinero(r.corte ?? 0)} más material ${dinero(r.material)}.` +
-        (r.mal.length ? ` Revisa ${juntar(r.mal.map(x => x.que))} en «Tus precios».` : ''));
+      poner(det, `Corte ${dinero(r.corte ?? 0)} más material ${dinero(r.material)}.`);
     }
     // Un solo aviso para lectores de pantalla, fuera de lo que se vuelve a pintar.
     poner(document.getElementById('calcAnuncio'), total.textContent === '—' ? det.textContent : `Total a cobrar ${total.textContent}`);
   }
 
-  function cuerpo() {
-    const d = datos(), sym = esc(simbolo()), code = calc.pais, c = confPais(code);
-    const pais = listaPaises().find(p => p.code === code);
-    const plancha = conf().plancha || '';
-    const opciones = (sel) => (d.materiales.length ? '' : '<option value="">Primero agrega un material abajo</option>')
-      + (d.materiales.length && !d.materiales.some(m => m.id === sel) ? '<option value="" selected>Elige el material</option>' : '')
-      + d.materiales.map(m => `<option value="${esc(m.id)}"${m.id === sel ? ' selected' : ''}>${esc(nombreMat(m))}</option>`).join('');
-    const moneda = (p) => { try { return new Intl.DisplayNames(['es'], { type: 'currency' }).of(conf().paises[p.code].moneda); } catch { return conf().paises[p.code].moneda; } };
-
+  function pantallaCalculadora() {
+    const d = datos(), code = calc.pais, plancha = conf().plancha || '';
+    const varias = d.lineas.length > 1;
+    const precioTile = (m) => { const n = leer(m.precio, true); return n == null || Number.isNaN(n) ? 'sin precio' : dinero(n); };
     return `
-      <p class="bajada">Cotiza un trabajo en segundos: el tiempo de corte más el material. Cambia cualquier número, se guarda en este teléfono.</p>
+      <p class="bajada">Toca los botones <b>−</b> y <b>+</b> o escribe el número. Abajo te sale cuánto cobrar.</p>
 
-      <div class="field calc-pais">
-        <label for="calcPais">País</label>
-        <select id="calcPais">${listaPaises().map(p => `<option value="${esc(p.code)}"${p.code === code ? ' selected' : ''}>${esc(p.nombre)}, ${esc(moneda(p))}</option>`).join('')}</select>
-      </div>
-      ${tienePrecios(code)
-        ? (c.nota ? `<p class="calc-nota">${esc(c.nota)}</p>` : '')
-        : `<p class="calc-aviso">Todavía no tenemos precios de referencia para ${esc(pais ? pais.nombre : code)}. Pon los tuyos: tu precio por minuto aquí abajo y el de cada plancha en «Tus precios».</p>`}
+      <section class="calc-card tiempo" aria-labelledby="calcTitMin">
+        <div class="calc-card-cab"><span class="calc-card-ico">${ICO.reloj}</span><h2 id="calcTitMin">Minutos de corte</h2></div>
+        <p class="calc-ayuda">Lo que tarda la máquina en cortar todo el trabajo.</p>
+        ${stepper({ id: 'calcMin', valor: d.minutos, unidad: 'min', etiqueta: 'Minutos de corte', menos: 'Un minuto menos', mas: 'Un minuto más' })}
+        <p class="calc-card-pie"><span id="calcUnitMin"></span><strong id="calcCorte" class="calc-monto"></strong></p>
+        <p class="calc-falta" id="calcFaltaMin" hidden></p>
+      </section>
 
-      <h2 class="section-h">Tiempo de corte</h2>
-      <div class="calc-bloque">
-        <div class="calc-fila">
-          <label for="calcMin">Minutos de corte</label>
-          <input id="calcMin" class="calc-num" inputmode="decimal" autocomplete="off" value="${esc(d.minutos)}" placeholder="0">
+      ${d.lineas.map((l, i) => {
+        const mat = d.materiales.find(x => x.id === l.m);
+        return `
+      <section class="calc-card material" data-i="${i}" aria-labelledby="calcTitMat${i}">
+        <div class="calc-card-cab">
+          <span class="calc-card-ico">${ICO.planchas}</span><h2 id="calcTitMat${i}">${varias ? `Material ${i + 1}` : 'Material'}</h2>
+          ${varias ? `<button type="button" class="calc-quitar" data-quitar-linea="${i}" aria-label="Quitar el material ${i + 1}">×</button>` : ''}
         </div>
-        <div class="calc-fila">
-          <label for="calcPm">Precio por minuto</label>
-          <label class="calc-dinero" for="calcPm"><span class="calc-mon" aria-hidden="true">${sym}</span><input id="calcPm" inputmode="decimal" autocomplete="off" value="${esc(d.precioMinuto)}" placeholder="0"></label>
-        </div>
-        <p class="calc-sub"><span>Corte</span><span id="calcCorte" class="calc-monto"></span></p>
-      </div>
+        ${d.materiales.length ? `
+        <div class="calc-tiles" role="group" aria-label="Elige el material">
+          ${d.materiales.map(m => `<button type="button" class="calc-tile ${familia(m)}" data-linea="${i}" data-elige="${esc(m.id)}" aria-pressed="${m.id === l.m}"><span class="calc-tile-nom">${esc(nombreMat(m))}</span><span class="calc-tile-pre">${esc(precioTile(m))}</span></button>`).join('')}
+        </div>` : '<p class="calc-falta">No tienes materiales: agrégalos en «Configurar mis precios».</p>'}
+        <p class="calc-ayuda">¿Cuántas planchas de ${esc(plancha)}? Puede ser media: ${esc(aTexto(0.5, code))}.</p>
+        ${stepper({ id: 'calcCant' + i, valor: l.cant, unidad: 'planchas', etiqueta: `Planchas de ${nombreMat(mat)}`, menos: 'Media plancha menos', mas: 'Media plancha más', attrs: `data-linea="${i}"` })}
+        <p class="calc-card-pie"><span data-unit></span><strong class="calc-monto" data-sub></strong></p>
+        <p class="calc-falta" data-falta hidden></p>
+      </section>`;
+      }).join('')}
 
-      <h2 class="section-h">Material</h2>
-      <div class="calc-bloque">
-        ${d.lineas.map((l, i) => `
-        <div class="calc-linea" data-i="${i}">
-          <div class="calc-linea-top">
-            <label class="sr-only" for="calcMat${i}">Material</label>
-            <select id="calcMat${i}" data-linea="${i}">${opciones(l.m)}</select>
-            <button type="button" class="calc-quitar" data-quitar-linea="${i}" aria-label="Quitar este material de la cotización">×</button>
-          </div>
-          <div class="calc-linea-fila">
-            <span class="calc-cant">
-              <label for="calcCant${i}">Planchas</label>
-              <input id="calcCant${i}" class="calc-num-sm" data-linea="${i}" inputmode="decimal" autocomplete="off" value="${esc(l.cant)}" placeholder="0">
-              <span class="calc-unit" data-unit></span>
-            </span>
-            <span class="calc-monto" data-sub></span>
-          </div>
-          <p class="calc-falta" data-falta hidden></p>
-        </div>`).join('')}
-        <button type="button" class="btn ghost sm calc-agregar" id="calcAddLinea">Agregar otro material</button>
-      </div>
+      <button type="button" class="calc-otro" id="calcAddLinea">${ICO.mas}<span>Agregar otro material</span></button>
+
+      <a class="calc-config" href="#/calculadora/precios">
+        <span class="calc-config-ico">${ICO.etiqueta}</span>
+        <span class="calc-config-txt"><strong>Configurar mis precios</strong><small id="calcAjustesRes"></small></span>
+        <span class="calc-config-flecha" aria-hidden="true">›</span>
+      </a>
 
       <div class="calc-total">
         <p class="calc-total-rot">Total a cobrar</p>
         <span id="calcTotal" class="calc-total-num"></span>
         <p id="calcDetalle" class="calc-total-det"></p>
-      </div>
-
-      <h2 class="section-h">Tus precios por plancha${plancha ? ` <span class="contador">${esc(plancha)}</span>` : ''}</h2>
-      <div class="calc-bloque">
-        ${d.materiales.length ? d.materiales.map(m => `
-        <div class="calc-precio" data-id="${esc(m.id)}">
-          <input class="calc-nombre" data-mat="${esc(m.id)}" data-campo="nombre" aria-label="Nombre del material" autocomplete="off" maxlength="60" value="${esc(m.nombre)}" placeholder="Nombre del material">
-          <label class="calc-dinero" for="calcPrecio-${esc(m.id)}"><span class="calc-mon" aria-hidden="true">${sym}</span><input id="calcPrecio-${esc(m.id)}" data-mat="${esc(m.id)}" data-campo="precio" inputmode="decimal" autocomplete="off" aria-label="${esc(etiquetaPrecio(m))}" value="${esc(m.precio)}" placeholder="0"></label>
-          <button type="button" class="calc-quitar" data-quitar-mat="${esc(m.id)}" aria-label="${esc(etiquetaQuitar(m))}">×</button>
-        </div>`).join('') : '<p class="muted calc-vacio">No tienes materiales. Agrega el primero.</p>'}
-      </div>
-      <div class="calc-acciones">
-        <button type="button" class="btn ghost sm" id="calcAddMat">Agregar material</button>
-        <button type="button" class="calc-reset" id="calcReset">${tienePrecios(code) ? 'Volver a los precios de referencia' : 'Borrar lo que escribí'}</button>
       </div>`;
   }
+
+  function pantallaPrecios() {
+    const d = datos(), code = calc.pais, c = confPais(code), sym = simbolo(), plancha = conf().plancha || '';
+    return `
+      <p class="bajada">Pon tus precios una vez: se guardan en este teléfono y la calculadora los usa siempre.</p>
+
+      <p class="calc-nota">${c.nota ? esc(c.nota) + ' ' : ''}Escribe tu precio o usa los botones − y +.</p>
+
+      <section class="calc-card tiempo" aria-labelledby="calcTitPm">
+        <div class="calc-card-cab"><span class="calc-card-ico">${ICO.reloj}</span><h2 id="calcTitPm">Precio por minuto</h2></div>
+        <p class="calc-ayuda">Lo que cobras por cada minuto que corta la máquina.</p>
+        ${stepper({ id: 'calcPm', valor: d.precioMinuto, prefijo: sym, etiqueta: 'Precio por minuto', menos: 'Bajar el precio por minuto', mas: 'Subir el precio por minuto' })}
+      </section>
+
+      <h2 class="section-h">Precio de cada plancha${plancha ? ` <span class="contador">${esc(plancha)}</span>` : ''}</h2>
+      ${d.materiales.length ? d.materiales.map(m => `
+      <section class="calc-card precio ${familia(m)}" data-id="${esc(m.id)}">
+        <div class="calc-precio-cab">
+          <input class="calc-nombre" data-mat="${esc(m.id)}" data-campo="nombre" aria-label="Nombre del material" autocomplete="off" maxlength="60" value="${esc(m.nombre)}" placeholder="Nombre del material">
+          <button type="button" class="calc-quitar" data-quitar-mat="${esc(m.id)}" aria-label="${esc(etiquetaQuitar(m))}">×</button>
+        </div>
+        ${stepper({ id: 'calcPrecio-' + m.id, valor: m.precio, prefijo: sym, etiqueta: etiquetaPrecio(m), menos: 'Bajar el precio de ' + nombreMat(m), mas: 'Subir el precio de ' + nombreMat(m), attrs: `data-mat="${esc(m.id)}" data-campo="precio"` })}
+      </section>`).join('') : '<p class="muted calc-vacio">No tienes materiales. Agrega el primero.</p>'}
+
+      <button type="button" class="calc-otro" id="calcAddMat">${ICO.mas}<span>Agregar un material</span></button>
+
+      <a class="btn primary calc-listo" href="#/calculadora">Listo</a>
+      <button type="button" class="calc-reset" id="calcReset">${tienePrecios(code) ? 'Volver a los precios de referencia' : 'Borrar lo que escribí'}</button>`;
+  }
+
+  const cuerpo = () => (pantalla === 'precios' ? pantallaPrecios() : pantallaCalculadora());
 
   function pintar(enfocar) {
     const raiz = document.getElementById('calc');
@@ -280,17 +350,22 @@
     if (enfocar) { const x = raiz.querySelector(enfocar); if (x) x.focus(); }
   }
 
-  function vista() {
+  function vista(sub) {
+    pantalla = sub === 'precios' ? 'precios' : 'calc';
     // Se relee cada vez: otra pestaña pudo guardar cambios mientras tanto.
     const guardado = cargar();
     if (!calc || calcCtx !== state.ctx || guardado.pais || Object.keys(guardado.porPais).length) calc = guardado;
     calcCtx = state.ctx;
-    if (!calc.pais || !conf().paises[calc.pais]) {
-      const cli = typeof currentClient === 'function' ? currentClient() : null;
-      calc.pais = cli && conf().paises[cli.pais] ? cli.pais : 'PE';
-    }
-    return `<section class="calc"><div id="calc">${cuerpo()}</div><p id="calcAnuncio" class="sr-only" role="status" aria-live="polite"></p></section>`;
+    // El país (y su moneda) sale de la cuenta del cliente: no se elige aquí.
+    const cli = typeof currentClient === 'function' ? currentClient() : null;
+    calc.pais = cli && conf().paises[cli.pais] ? cli.pais : 'PE';
+    return `<section class="calc calc-${pantalla}"><div id="calc">${cuerpo()}</div><p id="calcAnuncio" class="sr-only" role="status" aria-live="polite"></p></section>`;
   }
+
+  // Mantener apretado − o + repite, como en cualquier control de volumen.
+  let repetir = null;
+  const soltar = () => { clearTimeout(repetir); repetir = null; };
+  ['pointerup', 'pointercancel', 'blur'].forEach(t => window.addEventListener(t, soltar));
 
   function enlazar() {
     const raiz = document.getElementById('calc');
@@ -307,8 +382,9 @@
         if (!m) return;
         m[t.dataset.campo] = t.value;
         if (t.dataset.campo === 'nombre') {
-          // El nombre nuevo se ve ya en los desplegables, sin volver a pintar (no se pierde el foco).
-          raiz.querySelectorAll(`option[value="${CSS.escape(m.id)}"]`).forEach(o => { o.textContent = nombreMat(m); });
+          // Sin volver a pintar: así no se pierde el foco mientras escribe el nombre.
+          const tarjeta = t.closest('.calc-card');
+          if (tarjeta) tarjeta.className = `calc-card precio ${familia(m)}`;
           document.getElementById('calcPrecio-' + m.id)?.setAttribute('aria-label', etiquetaPrecio(m));
           raiz.querySelector(`[data-quitar-mat="${CSS.escape(m.id)}"]`)?.setAttribute('aria-label', etiquetaQuitar(m));
         }
@@ -317,21 +393,37 @@
     });
 
     raiz.addEventListener('change', (e) => {
-      const t = e.target, d = datos();
-      if (t.id === 'calcPais') { calc.pais = t.value; guardar(); pintar('#calcPais'); return; }
-      if (t.tagName === 'SELECT' && t.dataset.linea != null) {
-        const l = d.lineas[+t.dataset.linea];
-        if (l) { l.m = t.value; guardar(); pintar('#' + t.id); }
-      }
+      const t = e.target;
+      if (t.tagName !== 'INPUT' || !(t.id === 'calcPm' || t.dataset.campo === 'precio')) return;
+      const n = leer(t.value, true);
+      if (n == null || Number.isNaN(n)) return;
+      const f = aDinero(n, calc.pais);
+      if (f !== t.value) { t.value = f; t.dispatchEvent(new Event('input', { bubbles: true })); }
+    });
+
+    raiz.addEventListener('pointerdown', (e) => {
+      const b = e.target.closest('[data-paso]');
+      if (!b || e.button > 0) return;
+      e.preventDefault();
+      tocarPaso(b);
+      soltar();
+      repetir = setTimeout(function otra() { tocarPaso(b); repetir = setTimeout(otra, 90); }, 450);
     });
 
     raiz.addEventListener('click', (e) => {
       const b = e.target.closest('button');
       if (!b || !raiz.contains(b)) return;
       const d = datos();
-      if (b.id === 'calcAddLinea') {
-        d.lineas.push({ m: d.materiales[0] ? d.materiales[0].id : '', cant: '1' });
-        guardar(); pintar('#calcMat' + (d.lineas.length - 1));
+      if (b.dataset.paso) {
+        // Con el dedo o el mouse ya se contó en pointerdown; solo cuenta el clic del teclado (detail 0).
+        if (e.detail === 0) tocarPaso(b);
+      } else if (b.dataset.elige) {
+        const l = d.lineas[+b.dataset.linea];
+        if (l) { l.m = b.dataset.elige; guardar(); pintar(`[data-linea="${b.dataset.linea}"][data-elige="${CSS.escape(b.dataset.elige)}"]`); }
+      } else if (b.id === 'calcAddLinea') {
+        d.lineas.push({ m: d.materiales[0] ? d.materiales[0].id : '', cant: aTexto(1, calc.pais) });
+        guardar(); pintar(`.calc-card[data-i="${d.lineas.length - 1}"] .calc-tile[aria-pressed="true"]`);
+        document.getElementById(`calcTitMat${d.lineas.length - 1}`)?.scrollIntoView({ block: 'start', behavior: 'smooth' });
       } else if (b.dataset.quitarLinea != null) {
         d.lineas.splice(+b.dataset.quitarLinea, 1);
         guardar(); pintar('#calcAddLinea');
@@ -347,11 +439,11 @@
       } else if (b.id === 'calcReset') {
         const pais = (listaPaises().find(p => p.code === calc.pais) || {}).nombre || calc.pais;
         const pregunta = tienePrecios(calc.pais)
-          ? `¿Borrar tus cambios de ${pais} y volver a los precios de referencia?`
+          ? `¿Borrar tus precios de ${pais} y volver a los de referencia?`
           : `¿Borrar todo lo que escribiste para ${pais}?`;
         if (!confirm(pregunta)) return;
         calc.porPais[calc.pais] = porDefecto(calc.pais);
-        guardar(); pintar('#calcMin');
+        guardar(); pintar('#calcPm');
       }
     });
   }

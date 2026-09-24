@@ -1001,11 +1001,12 @@ const views = {
 
       <div class="bigs">
         <!-- CeVi no va aquí: vive en el menú, junto a las demás secciones. -->
+        <!-- La calculadora va primero: más abajo quedaba fuera de la pantalla del teléfono. -->
+        ${bigBtn('#/calculadora', 'calculadora', 'Calculadora de corte láser', 'Cuánto cobrar por un trabajo')}
         ${bigBtn('#/soporte', 'soporte', 'Necesito ayuda', 'Escríbenos por WhatsApp')}
         ${bigBtn('#/descargables', 'descarga', 'Descargables', 'Guías y tu Certificado en PDF')}
         <!-- El Banco de Diseños ya vive en su propio dominio: aquí es solo la puerta. -->
         ${bigBtn('https://bancodisenos.c4vlaser.com/', 'disenos', 'Diseños para cortar', 'Incluidos con tu máquina', true)}
-        ${bigBtn('#/calculadora', 'calculadora', 'Calculadora de corte láser', 'Cuánto cobrar por un trabajo')}
         ${bigBtn('#/cuenta/certificado', 'sello', 'Mi certificado', 'Tu certificado y tus datos')}
       </div>`;
   },
@@ -1260,8 +1261,8 @@ const views = {
 
   // Calculadora de servicio de corte láser: vive en js/calculadora.js, que se
   // carga antes que este archivo.
-  calculadora() {
-    return window.C4V_CALC ? C4V_CALC.vista() : '<p class="bajada">La calculadora no cargó. Recarga la página.</p>';
+  calculadora(sub) {
+    return window.C4V_CALC ? C4V_CALC.vista(sub) : '<p class="bajada">La calculadora no cargó. Recarga la página.</p>';
   },
 
   // Mantenimiento de la máquina: portada con el calendario, y un paso por
@@ -1877,6 +1878,7 @@ function render(route) {
   }
   if (route === 'academia' && state.sub === 'prep') titulo = 'Prepara tu espacio';
   if (route === 'cuenta' && state.sub === 'certificado') titulo = TITLES.certificado;
+  if (route === 'calculadora' && state.sub === 'precios') titulo = 'Configurar mis precios';
   // Dentro de una lección la cabecera sobra: la pantalla ya dice dónde estás.
   const enLeccion = (route === 'academia' && /^curso\/[^/]+\/p\//.test(state.sub))
     || (route === 'mantenimiento' && /^(tarea|guia)\//.test(state.sub));
