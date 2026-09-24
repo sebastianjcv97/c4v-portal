@@ -56,26 +56,26 @@ window.C4V_CONFIG = {
      02_AREAS/operaciones/P1-plataforma-postventa/CALCULADORA_PRECIOS.md          */
   calculadora: {
     plancha: '90 × 60 cm',
-    ejemplo: { minutos: 100, planchas: 3 },
+    ejemplo: { minutos: 60, planchas: 1 },   // con lo que arranca la pantalla (pedido de Sebastián, 24-set)
     paises: {
-      PE: { moneda: 'PEN', locale: 'es-PE', precioMinuto: 0.8, nota: 'Precios de referencia de C4V para Perú.', materiales: [
+      PE: { moneda: 'PEN', locale: 'es-PE', precioMinuto: 1, materiales: [   // S/ 1 el minuto: pedido de Sebastián (24-set)
         ['MDF 3 mm', 3], ['MDF 5 mm', 5], ['MDF 10 mm', 8], ['MDF 12 mm', 12],
         ['Acrílico 3 mm', 41], ['Acrílico 5 mm', 69], ['Acrílico 10 mm', 148], ['Acrílico 12 mm', 215]
       ] },
-      EC: { moneda: 'USD', locale: 'es-EC', precioMinuto: 0.32, nota: 'Precios de referencia del mercado de Ecuador, septiembre de 2026.', materiales: [
+      EC: { moneda: 'USD', locale: 'es-EC', precioMinuto: 0.32, materiales: [
         ['MDF 3 mm', 3.6], ['MDF 5 mm', 4.1], ['MDF 10 mm', 5.5], ['MDF 12 mm', 5.8],
         ['Acrílico 3 mm', 9.4], ['Acrílico 5 mm', 17.6], ['Acrílico 10 mm', 33.5], ['Acrílico 12 mm', 39.9]
       ] },
       // Bolivia: sin precios publicados de acrílico ni de corte; salen de Perú al cambio oficial del BCB (3,6158 Bs por sol).
-      BO: { moneda: 'BOB', locale: 'es-BO', precioMinuto: 3.3, nota: 'Precios de referencia de Bolivia, septiembre de 2026. El acrílico y el minuto de corte son estimados: no encontramos precios publicados.', materiales: [
+      BO: { moneda: 'BOB', locale: 'es-BO', precioMinuto: 3.3, materiales: [
         ['MDF 3 mm', 16], ['MDF 5 mm', 24], ['MDF 10 mm', 31], ['MDF 12 mm', 38],
         ['Acrílico 3 mm', 149], ['Acrílico 5 mm', 249], ['Acrílico 10 mm', 536], ['Acrílico 12 mm', 779]
       ] },
-      CL: { moneda: 'CLP', locale: 'es-CL', precioMinuto: 450, nota: 'Precios de referencia del mercado de Chile, septiembre de 2026.', materiales: [
+      CL: { moneda: 'CLP', locale: 'es-CL', precioMinuto: 450, materiales: [
         ['MDF 3 mm', 1400], ['MDF 5 mm', 2600], ['MDF 10 mm', 3100], ['MDF 12 mm', 3500],
         ['Acrílico 3 mm', 9200], ['Acrílico 5 mm', 17400], ['Acrílico 10 mm', 34000], ['Acrílico 12 mm', 76800]
       ] },
-      CO: { moneda: 'COP', locale: 'es-CO', precioMinuto: 700, nota: 'Precios de referencia del mercado de Colombia, septiembre de 2026.', materiales: [
+      CO: { moneda: 'COP', locale: 'es-CO', precioMinuto: 700, materiales: [
         ['MDF 3 mm', 6300], ['MDF 5 mm', 9300], ['MDF 10 mm', 9800], ['MDF 12 mm', 13900],
         ['Acrílico 3 mm', 51400], ['Acrílico 5 mm', 91700], ['Acrílico 10 mm', 183300], ['Acrílico 12 mm', 266300]
       ] }

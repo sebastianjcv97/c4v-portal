@@ -1261,8 +1261,8 @@ const views = {
 
   // Calculadora de servicio de corte láser: vive en js/calculadora.js, que se
   // carga antes que este archivo.
-  calculadora(sub) {
-    return window.C4V_CALC ? C4V_CALC.vista(sub) : '<p class="bajada">La calculadora no cargó. Recarga la página.</p>';
+  calculadora() {
+    return window.C4V_CALC ? C4V_CALC.vista() : '<p class="bajada">La calculadora no cargó. Recarga la página.</p>';
   },
 
   // Mantenimiento de la máquina: portada con el calendario, y un paso por
@@ -1878,7 +1878,6 @@ function render(route) {
   }
   if (route === 'academia' && state.sub === 'prep') titulo = 'Prepara tu espacio';
   if (route === 'cuenta' && state.sub === 'certificado') titulo = TITLES.certificado;
-  if (route === 'calculadora' && state.sub === 'precios') titulo = 'Configurar mis precios';
   // Dentro de una lección la cabecera sobra: la pantalla ya dice dónde estás.
   const enLeccion = (route === 'academia' && /^curso\/[^/]+\/p\//.test(state.sub))
     || (route === 'mantenimiento' && /^(tarea|guia)\//.test(state.sub));
