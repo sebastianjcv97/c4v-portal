@@ -148,6 +148,7 @@ const ICONS = {
   soporte: '<path d="M20 12.5a7.5 7.5 0 0 1-11 6.6L4 20.5l1.5-4.5A7.5 7.5 0 1 1 20 12.5z"/><path d="M8.5 12.5h.01M12 12.5h.01M15.5 12.5h.01"/>',
   // Tres figuras: un cuadrado, un círculo y un triángulo. Eso es un diseño.
   disenos: '<rect x="3.5" y="3.5" width="8" height="8" rx="1.5"/><circle cx="17" cy="7.5" r="4"/><path d="M7.5 13.5l4.5 7h-9z"/>',
+  calculadora: '<rect x="5" y="2.5" width="14" height="19" rx="2"/><rect x="8" y="5.5" width="8" height="4" rx="1"/><path d="M8.5 13.5h.01M12 13.5h.01M15.5 13.5h.01M8.5 17.5h.01M12 17.5h.01M15.5 17.5h.01"/>',
   // Libro abierto: aprender.
   academia: '<path d="M12 7c0-1.7-2.2-3-5-3s-4 .7-4 .7v13s1.2-.7 4-.7 5 1.3 5 1.3"/><path d="M12 7c0-1.7 2.2-3 5-3s4 .7 4 .7v13s-1.2-.7-4-.7-5 1.3-5 1.3"/>',
   // Casilla marcada: los primeros pasos.
@@ -1004,6 +1005,7 @@ const views = {
         ${bigBtn('#/descargables', 'descarga', 'Descargables', 'Guías y tu Certificado en PDF')}
         <!-- El Banco de Diseños ya vive en su propio dominio: aquí es solo la puerta. -->
         ${bigBtn('https://bancodisenos.c4vlaser.com/', 'disenos', 'Diseños para cortar', 'Incluidos con tu máquina', true)}
+        ${bigBtn('#/calculadora', 'calculadora', 'Calculadora de corte láser', 'Cuánto cobrar por un trabajo')}
         ${bigBtn('#/cuenta/certificado', 'sello', 'Mi certificado', 'Tu certificado y tus datos')}
       </div>`;
   },
@@ -1256,6 +1258,12 @@ const views = {
       </section>`;
   },
 
+  // Calculadora de servicio de corte láser: vive en js/calculadora.js, que se
+  // carga antes que este archivo.
+  calculadora() {
+    return window.C4V_CALC ? C4V_CALC.vista() : '<p class="bajada">La calculadora no cargó. Recarga la página.</p>';
+  },
+
   // Mantenimiento de la máquina: portada con el calendario, y un paso por
   // pantalla en #/mantenimiento/tarea/<id>/<n> y #/mantenimiento/guia/<id>/<n>.
   mantenimiento(sub) {
@@ -1460,6 +1468,7 @@ function bind(route) {
   }
   if (route === 'descargables') bindGuias();
   if (route === 'mantenimiento') bindMantenimiento();
+  if (route === 'calculadora' && window.C4V_CALC) C4V_CALC.enlazar();
   const salir = $('#salirCuenta');
   if (salir) salir.onclick = () => { const b = $('#logoutBtn'); if (b) b.click(); };
   /* "Prepara tu espacio" vive en dos sitios con el mismo HTML y el mismo
@@ -1841,7 +1850,7 @@ function bindQuizzes() {
 // ---------- router ----------
 /* Títulos cortos: los largos ("Aprender a usar mi máquina") no cabían en el
    menú ni en la cabecera del móvil. */
-const TITLES = { inicio: 'Inicio', cuenta: 'Mi cuenta', cevi: 'Asistente', academia: 'Academia', preparacion: 'Primeros pasos', soporte: 'Necesito ayuda', descargables: 'Descargables', certificado: 'Tu Certificado de Calidad', mantenimiento: 'Mantenimiento de tu máquina' };
+const TITLES = { inicio: 'Inicio', cuenta: 'Mi cuenta', cevi: 'Asistente', academia: 'Academia', preparacion: 'Primeros pasos', soporte: 'Necesito ayuda', descargables: 'Descargables', certificado: 'Tu Certificado de Calidad', mantenimiento: 'Mantenimiento de tu máquina', calculadora: 'Calculadora de servicio de corte láser' };
 function render(route) {
   /* Las secciones pueden tener subpáginas: `#/academia/cursos`. Así cada una es
      una pantalla propia, con su título y su botón de atrás, y el botón «volver»

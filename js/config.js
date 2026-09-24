@@ -42,6 +42,44 @@ window.C4V_CONFIG = {
     { code: 'CO', nombre: 'Colombia', prefijo: '57',  bandera: '🇨🇴', persona: { doc: 'Cédula (CC)',  ej: '1023456789' },   empresa: { doc: 'NIT', ej: '901234567' } }
   ],
 
+  /* ---------- Calculadora de servicio de corte láser ----------
+     Precio = minutos × precio por minuto + planchas × precio de la plancha.
+     Estos son los precios CON LOS QUE ARRANCA cada país; el cliente los cambia
+     en su teléfono. Si aquí se cambia un precio, le llega a quien no lo había
+     tocado. `null` = sin precio (el cliente pone el suyo).
+     Perú: «tabla de precios.xlsx» de Sebastián (24-set-2026).
+     Los demás: precios de mercado verificados el 24-set-2026, con IVA, por
+     plancha de 90 × 60 cm (tableros de Sodimac, Easy, Homecenter, Mercado Libre
+     y tiendas de acrílico, llevados a 0,54 m²). Fuentes, método y tipo de cambio:
+     02_AREAS/operaciones/P1-plataforma-postventa/CALCULADORA_PRECIOS.md          */
+  calculadora: {
+    plancha: '90 × 60 cm',
+    ejemplo: { minutos: 100, planchas: 3 },
+    paises: {
+      PE: { moneda: 'PEN', locale: 'es-PE', precioMinuto: 0.8, nota: 'Precios de referencia de C4V para Perú.', materiales: [
+        ['MDF 3 mm', 3], ['MDF 5 mm', 5], ['MDF 10 mm', 8], ['MDF 12 mm', 12],
+        ['Acrílico 3 mm', 8], ['Acrílico 5 mm', 10], ['Acrílico 10 mm', 12], ['Acrílico 12 mm', 15]
+      ] },
+      EC: { moneda: 'USD', locale: 'es-EC', precioMinuto: 0.32, nota: 'Precios de referencia del mercado de Ecuador, septiembre de 2026.', materiales: [
+        ['MDF 3 mm', 3.6], ['MDF 5 mm', 4.1], ['MDF 10 mm', 5.5], ['MDF 12 mm', 5.8],
+        ['Acrílico 3 mm', 9.4], ['Acrílico 5 mm', 17.6], ['Acrílico 10 mm', 33.5], ['Acrílico 12 mm', 39.9]
+      ] },
+      // Bolivia: sin precios publicados de acrílico ni de corte; salen de Perú al cambio oficial del BCB (3,6158 Bs por sol).
+      BO: { moneda: 'BOB', locale: 'es-BO', precioMinuto: 3.3, nota: 'Precios de referencia de Bolivia, septiembre de 2026. El acrílico y el minuto de corte son estimados: no encontramos precios publicados.', materiales: [
+        ['MDF 3 mm', 16], ['MDF 5 mm', 24], ['MDF 10 mm', 31], ['MDF 12 mm', 38],
+        ['Acrílico 3 mm', 149], ['Acrílico 5 mm', 249], ['Acrílico 10 mm', 536], ['Acrílico 12 mm', 779]
+      ] },
+      CL: { moneda: 'CLP', locale: 'es-CL', precioMinuto: 450, nota: 'Precios de referencia del mercado de Chile, septiembre de 2026.', materiales: [
+        ['MDF 3 mm', 1400], ['MDF 5 mm', 2600], ['MDF 10 mm', 3100], ['MDF 12 mm', 3500],
+        ['Acrílico 3 mm', 9200], ['Acrílico 5 mm', 17400], ['Acrílico 10 mm', 34000], ['Acrílico 12 mm', 76800]
+      ] },
+      CO: { moneda: 'COP', locale: 'es-CO', precioMinuto: 700, nota: 'Precios de referencia del mercado de Colombia, septiembre de 2026.', materiales: [
+        ['MDF 3 mm', 6300], ['MDF 5 mm', 9300], ['MDF 10 mm', 9800], ['MDF 12 mm', 13900],
+        ['Acrílico 3 mm', 51400], ['Acrílico 5 mm', 91700], ['Acrílico 10 mm', 183300], ['Acrílico 12 mm', 266300]
+      ] }
+    }
+  },
+
   /* ---------- Verificación de cliente (M1) ----------
      El login se valida contra NUESTRA base de datos (Postgres `c4v`, tabla
      c4v.portal_contacts), NO contra Odoo en vivo. Un job (portal/sync-contactos.js)

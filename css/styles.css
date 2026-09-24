@@ -1862,3 +1862,56 @@ textarea.gate-input{min-height:96px;resize:vertical}
   .gate-paises button{padding:10px 2px}
 }
 @media(max-width:355px){.gate-paises{grid-template-columns:repeat(3,1fr);gap:6px}}
+
+/* ---------- Calculadora de servicio de corte láser (#/calculadora) ----------
+   Como la hoja de cálculo: renglones con regla, el número a la derecha y el
+   total en grande entre dos reglas. El rojo queda para la acción, no aquí. */
+.calc-pais{margin:0 0 var(--s-4);max-width:22rem}
+.calc-nota{margin:0 0 var(--s-4);font-size:var(--t-sm);color:var(--grafito);max-width:var(--medida)}
+.calc-aviso{margin:0 0 var(--s-4);padding:12px 14px;border-radius:var(--r);background:var(--alt);font-size:var(--t-sm);line-height:var(--lh-base);color:var(--tinta);max-width:var(--medida)}
+.calc-bloque{border-top:2px solid var(--tinta)}
+.calc input,.calc-linea select{font-family:var(--sans);font-size:16px;color:var(--tinta);background:var(--papel);
+  border:1px solid #767676;border-radius:var(--r);min-height:var(--tap);padding:8px 10px}
+.calc input{font-variant-numeric:tabular-nums}
+.calc input:focus-visible,.calc-linea select:focus-visible{outline:2px solid var(--tinta);outline-offset:1px}
+/* Mal escrito: borde más grueso además del color (no solo color) y el texto del total dice cuál. */
+.calc input[aria-invalid="true"]{border:2px solid var(--err);background:var(--err-50)}
+.calc .calc-dinero input[aria-invalid="true"]{border:none;background:transparent}
+.calc-dinero.mal{border:2px solid var(--err);background:var(--err-50)}
+.calc-fila{display:flex;align-items:center;justify-content:space-between;gap:var(--s-3);
+  padding:var(--s-3) 0;border-bottom:1px solid var(--regla)}
+.calc-fila>label:first-child{font-weight:600}
+.calc-num{width:7rem;text-align:right}
+.calc-dinero{display:inline-flex;align-items:center;flex-shrink:0;border:1px solid #767676;border-radius:var(--r);background:var(--papel);cursor:text}
+.calc-dinero:focus-within{outline:2px solid var(--tinta);outline-offset:1px}
+.calc .calc-dinero input{border:none;width:6rem;text-align:right;min-height:calc(var(--tap) - 2px);background:transparent}
+.calc .calc-dinero input:focus-visible{outline:none}
+.calc-mon{padding-left:10px;color:var(--grafito);font-weight:600;white-space:nowrap}
+.calc-sub{display:flex;justify-content:space-between;align-items:baseline;margin:0;padding:var(--s-3) 0;font-weight:700}
+.calc .calc-monto{font-variant-numeric:tabular-nums;font-weight:700;white-space:nowrap}
+.calc-linea{display:grid;grid-template-columns:minmax(0,1fr);gap:var(--s-2);padding:var(--s-3) 0;border-bottom:1px solid var(--regla)}
+.calc-linea-top{display:flex;gap:var(--s-2);align-items:center}
+.calc-linea select{flex:1;min-width:0}
+.calc-linea-fila{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:var(--s-2) var(--s-3)}
+.calc-linea-fila .calc-monto{margin-left:auto}
+.calc-cant{display:flex;align-items:center;gap:var(--s-2);min-width:0}
+.calc-cant label{font-size:var(--t-sm);color:var(--grafito)}
+.calc-num-sm{width:4.5rem;text-align:right}
+.calc-unit{font-size:var(--t-sm);color:var(--grafito);white-space:nowrap}
+.calc-falta{margin:0;font-size:var(--t-sm);color:var(--warn);font-weight:600}
+.calc-quitar{flex-shrink:0;min-width:var(--tap);min-height:var(--tap);border:none;background:none;border-radius:var(--r);
+  color:var(--grafito);font-size:24px;line-height:1;cursor:pointer}
+.calc-quitar:hover{background:var(--alt);color:var(--tinta)}
+.calc-quitar:focus-visible{outline:2px solid var(--tinta);outline-offset:1px}
+.calc-agregar{margin-top:var(--s-3)}
+.calc-total{margin:var(--s-6) 0 0;padding:var(--s-4) 0;border-top:2px solid var(--tinta);border-bottom:2px solid var(--tinta)}
+.calc-total-rot{margin:0;font-weight:700}
+.calc .calc-total-num{display:block;margin:4px 0;font-family:var(--slab);font-size:var(--t-2xl);font-weight:800;line-height:var(--lh-tight)}
+.calc-total-det{margin:0;font-size:var(--t-sm);color:var(--grafito);line-height:var(--lh-base)}
+.calc-precio{display:flex;align-items:center;gap:var(--s-2);padding:var(--s-2) 0;border-bottom:1px solid var(--regla)}
+.calc .calc-nombre{flex:1;min-width:0}
+.calc-vacio{margin:var(--s-3) 0}
+.calc-acciones{display:flex;flex-wrap:wrap;align-items:center;gap:var(--s-3);margin:var(--s-3) 0 var(--s-6)}
+.calc-reset{min-height:var(--tap);padding:0 4px;border:none;background:none;font-family:var(--sans);font-size:var(--t-sm);
+  color:var(--grafito);text-decoration:underline;cursor:pointer}
+.calc-reset:hover{color:var(--tinta)}
