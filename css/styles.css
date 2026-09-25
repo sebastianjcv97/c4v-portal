@@ -1918,3 +1918,5 @@ textarea.gate-input{min-height:96px;resize:vertical}
 body:has(.paso-nav) .wa-flota,body:has(.calc-total) .wa-flota,body:has(.chat-abajo) .wa-flota{display:none}
 /* Espacio al final de la página para que el botón no tape «Cerrar sesión» ni el pie. */
 body:has(> .wa-flota:not([hidden])):not(:has(.paso-nav, .calc-total, .chat-abajo)) #app{padding-bottom:calc(84px + env(safe-area-inset-bottom))}
+/* En el teléfono, «Cerrar sesión» queda a la altura del botón: se corre a la izquierda. */
+@media (max-width:900px){body:has(> .wa-flota:not([hidden])) .pie-sesion{padding-right:72px}}
