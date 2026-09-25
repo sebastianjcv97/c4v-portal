@@ -92,6 +92,9 @@
       d.formato = 2; cambio = true;
     }
     if (!d.materiales.some(m => m.id === 'otro')) { d.materiales.push({ ...OTRO }); cambio = true; }
+    // «Otro material» lleva su precio en cada fila; lo guardado antes (uno para todas) pasa a cada una.
+    const otro = d.materiales.find(m => m.id === 'otro');
+    d.lineas.forEach(l => { if (l.m === 'otro' && l.precio === undefined) { l.precio = otro.precio || ''; cambio = true; } });
     if (!d.lineas.length) { d.lineas.push({ m: '', cant: aTexto(1, code) }); cambio = true; }
     if (cambio) guardar();
     return d;
@@ -128,6 +131,8 @@
     catch { return c.moneda; }
   }
   const nombreMat = (m) => (m && m.nombre.trim()) || 'el material';
+  // El precio de la fila: el del material, salvo «Otro material», que tiene el suyo en cada fila.
+  const precioDe = (l, mat) => (!mat ? '' : mat.id === 'otro' ? (l.precio ?? '') : mat.precio);
 
   /* La cuenta. Vacío en minutos o planchas cuenta como cero; lo que falta es un
      precio para algo que sí se va a cobrar. `mal` son los números mal escritos. */
@@ -147,7 +152,7 @@
     let material = 0;
     const lineas = d.lineas.map((l, i) => {
       const mat = d.materiales.find(x => x.id === l.m);
-      const cant = leer(l.cant, false), precio = mat ? leer(mat.precio, true) : null;
+      const cant = leer(l.cant, false), precio = mat ? leer(precioDe(l, mat), true) : null;
       const r = { i, valor: null, falta: '' };
       if (Number.isNaN(cant)) { mal.push({ id: 'calcCant' + i, que: 'la cantidad' }); return r; }
       if (mat && Number.isNaN(precio)) { mal.push({ id: 'calcPre' + i, que: `el precio de ${nombreMat(mat)}` }); return r; }
@@ -233,7 +238,7 @@
             <label class="calc-campo" for="calcCant${i}"><span>Cantidad</span>
               <span class="calc-caja"><input id="calcCant${i}" data-linea="${i}" data-campo="cant" inputmode="decimal" autocomplete="off" value="${esc(l.cant)}" placeholder="0"></span></label>
             <label class="calc-campo" for="calcPre${i}"><span>Precio</span>
-              <span class="calc-caja"><span class="calc-mon" aria-hidden="true">${sym}</span><input id="calcPre${i}" data-linea="${i}" data-campo="precio" inputmode="decimal" autocomplete="off" value="${esc(mat ? mat.precio : '')}" placeholder="0"${mat ? '' : ' disabled'}></span></label>
+              <span class="calc-caja"><span class="calc-mon" aria-hidden="true">${sym}</span><input id="calcPre${i}" data-linea="${i}" data-campo="precio" inputmode="decimal" autocomplete="off" value="${esc(precioDe(l, mat))}" placeholder="0"${mat ? '' : ' disabled'}></span></label>
           </div>
           <p class="calc-falta" data-falta hidden></p>
         </div>`;
@@ -281,6 +286,7 @@
         // El precio es del material: queda guardado y sale igual en las otras filas de ese material.
         const l = d.lineas[+t.dataset.linea], m = l && d.materiales.find(x => x.id === l.m);
         if (!m) return;
+        if (m.id === 'otro') { l.precio = t.value; guardar(); actualizar(); return; }
         m.precio = t.value;
         d.lineas.forEach((o, j) => { const x = document.getElementById('calcPre' + j); if (o.m === m.id && x && x !== t) x.value = t.value; });
       } else return;
@@ -291,7 +297,12 @@
       const t = e.target, d = datos();
       if (t.tagName === 'SELECT' && t.dataset.linea != null) {
         const l = d.lineas[+t.dataset.linea];
-        if (l) { l.m = t.value; guardar(); pintar('#' + t.id); }
+        if (l) {
+          l.m = t.value;
+          // Una fila nueva de «Otro material» empieza sin precio.
+          if (l.m === 'otro') l.precio = ''; else delete l.precio;
+          guardar(); pintar('#' + t.id);
+        }
         return;
       }
       // Al terminar de escribir un precio, se ve con sus decimales: «4» pasa a «4.00».

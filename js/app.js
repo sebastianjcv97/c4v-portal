@@ -57,8 +57,7 @@ async function enlaceMedio(tipo, archivo) {
   const ses = leerSesion();
   if (!ses?.t) return { motivo: 'sesion' };
   try {
-    const tope = new Promise((_, no) => setTimeout(() => no(new Error('tiempo')), 20000));
-    const r = await Promise.race([apiPost('/api/media', { token: ses.t, archivos: [{ tipo, archivo }] }), tope]);
+    const r = await apiPost('/api/media', { token: ses.t, archivos: [{ tipo, archivo }] }, 20000);
     if (r.status === 401) return { motivo: 'sesion' };
     // apiPost() envuelve la respuesta real en `.json`.
     const ruta = r?.json?.urls?.[`${tipo}/${archivo}`];
@@ -251,10 +250,10 @@ function vistaLeccion(a, c, idx) {
      curso de 30-40 pantallas, una barra de todo el curso son puntitos
      ilegibles. Por módulo son 3-8 tramos, se lee de un vistazo — así se
      siente una lección de Duolingo, no un índice completo. El conteo se
-     conserva como aria-label para lector de pantalla. */
+     conserva como texto para lector de pantalla. */
   const enModulo = seq.filter(x => x.mi === p.mi);
   const idxModulo = enModulo.indexOf(p);
-  const cabecera = (label) => `<div aria-label="${esc(label)}">${segbar(enModulo.length, idxModulo)}</div>`;
+  const cabecera = (label) => `<p class="sr-only">${esc(label)}</p><div aria-hidden="true">${segbar(enModulo.length, idxModulo + 1)}</div>`;
   const pie = (siguiente) => `
     <div class="paso-pie paso-nav">
       ${siguiente}
@@ -273,7 +272,7 @@ function vistaLeccion(a, c, idx) {
     return `<section class="paso paso-quiz">
       <p class="lec-modulo">${esc(p.examen ? 'Evaluación final' : `${p.mi + 1}. ${p.m.titulo}`)}</p>
       <div class="quiz-hecho" data-siguiente="${base}/p/${idx + 1}"${yaAprobado ? '' : ' hidden'}>
-        <p class="quiz-hecho-nota">Ya aprobaste esta evaluación${mejor ? `: ${mejor.b} de ${mejor.n}` : ''}.</p>
+        <p class="quiz-hecho-nota">Ya aprobaste esta evaluación${mejor ? `: ${Number(mejor.b) || 0} de ${Number(mejor.n) || 0}` : ''}.</p>
         <a class="btn primary" href="${base}/p/${idx + 1}">Siguiente</a>
         <button type="button" class="paso-link quiz-reintentar">Volver a intentarla</button>
       </div>
@@ -398,9 +397,10 @@ function vistaCurso(a, id) {
   const pr = a.parametros;
   const bloqueParams = (c.id === 'c1' && pr) ? `
     <h2 class="section-h">Potencia y velocidad por material</h2>
+    ${pr.intro ? `<p class="bajada">${esc(pr.intro)}</p>` : ''}
     <div class="tabla-scroll">
       <table class="tabla-params"><thead><tr>
-        <th>Material</th><th>Grosor</th><th>Corte</th><th>Marcado</th><th>Grabado</th>
+        <th>Material</th><th>Grosor</th><th>Corte<br><span>potencia % / velocidad mm/s</span></th><th>Marcado<br><span>% / mm/s</span></th><th>Grabado<br><span>% / mm/s</span></th>
       </tr></thead>
       <tbody>${pr.filas.map(f => `<tr><td><strong>${esc(f.m)}</strong></td><td>${esc(f.g)}</td><td>${esc(f.corte)}</td><td>${esc(f.marcado)}</td><td>${esc(f.grabado)}</td></tr>`).join('')}</tbody></table>
     </div>
@@ -440,6 +440,8 @@ function maqRef(m) {
   if (pedido) return `${pedido}:${modelo}${unidad}`.slice(0, 80);
   return (String(m.serie || '').trim() || modelo).slice(0, 80);
 }
+// La referencia como id de HTML (aria-controls no admite espacios).
+const mantIdRef = (ref) => String(ref || '').replace(/[^\w-]/g, '_');
 // El plan es de las CO2 (tubo, espejos, enfriador): igual que el servidor (tienePlan).
 const mantTienePlan = (m) => !['diodo', 'fibra', 'soldadora'].includes(String(m?.tipo || '').trim().toLowerCase());
 
@@ -465,12 +467,20 @@ function mantHoy() {
   } catch {}
   const d = new Date(); return Math.round(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 864e5);
 }
-const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+// «setiembre», como las páginas legales y las fechas es-PE del Libro de Reclamaciones.
+const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'setiembre', 'octubre', 'noviembre', 'diciembre'];
 function mantFecha(ymd) {
   const n = mantDia(ymd); if (n == null) return '';
   const f = new Date(n * 864e5);
   const anio = f.getUTCFullYear() !== new Date().getFullYear() ? ` de ${f.getUTCFullYear()}` : '';
   return `${f.getUTCDate()} de ${MESES[f.getUTCMonth()]}${anio}`;
+}
+// Para documentos (certificado): siempre con el año.
+function fechaLarga(ymd) {
+  const n = mantDia(String(ymd || '').slice(0, 10));
+  if (n == null) return String(ymd || '');
+  const f = new Date(n * 864e5);
+  return `${f.getUTCDate()} de ${MESES[f.getUTCMonth()]} de ${f.getUTCFullYear()}`;
 }
 
 /* El cálculo es el MISMO que el del servidor (src/mantenimiento.js →
@@ -592,13 +602,14 @@ function mantPendientes() {
 /* El aviso al entrar: una franja arriba del contenido, en todas las pantallas
    (también en «Prepara tu espacio», donde entrar() deja a quien no terminó la
    guía). No es un toast: hay uno solo y entrar() ya usa el suyo. Se calla en
-   la propia sección y en el Asistente. */
+   la propia sección, en el Asistente, en la Calculadora y en las lecciones. */
 function pintarAvisoMant() {
   const pend = mantPendientes();
   const el = document.getElementById('avisoMant');
   if (!el) return;
   const ruta = currentRoute().split('/')[0];
-  const mostrar = pend.length > 0 && state.ctx && ruta !== 'mantenimiento' && ruta !== 'cevi';
+  const enLeccion = /^academia\/curso\/[^/]+\/p\//.test(currentRoute());
+  const mostrar = pend.length > 0 && state.ctx && !['mantenimiento', 'cevi', 'calculadora'].includes(ruta) && !enLeccion;
   el.hidden = !mostrar;
   mantRefrescarSiHaceFalta();
   if (!mostrar) { el.innerHTML = ''; el.dataset.k = ''; return; }
@@ -668,15 +679,16 @@ function mantBloqueMaquina(m, varias) {
   }
   const fuente = { cliente: 'el día que nos dijiste que te llegó', despacho: 'el día que salió de nuestro almacén', pedido: 'la fecha de tu pedido', certificado: 'la fecha de tu certificado' }[m.entrega_fuente] || '';
   const hoy = mantYmd(mantHoy());
+  const idForm = 'mantEntForm-' + mantIdRef(m.ref);
   return `
     <div class="mant-maquina">
       ${varias ? `<h2 class="section-h">Tu ${esc(m.modelo || 'máquina')}</h2>` : ''}
       <p class="mant-resumen ${pend.length ? 'toca' : 'ok'}">${esc(resumen)}</p>
       <p class="mant-desde">
         ${m.entrega ? `Contamos desde el ${esc(mantFecha(m.entrega))}, ${esc(fuente)}.` : ''}
-        <button type="button" class="paso-link" data-mant-cambiar="${esc(m.ref)}">${m.entrega ? '¿Te llegó otro día?' : m.entrega_fuente === 'en_camino' ? 'Ya me llegó: poner la fecha' : 'Poner la fecha en que me llegó'}</button>
+        <button type="button" class="paso-link" data-mant-cambiar="${esc(m.ref)}" aria-expanded="false" aria-controls="${idForm}">${m.entrega ? '¿Te llegó otro día?' : m.entrega_fuente === 'en_camino' ? 'Ya me llegó: poner la fecha' : 'Poner la fecha en que me llegó'}</button>
       </p>
-      <form class="mant-fecha" data-mant-entrega="${esc(m.ref)}" hidden>
+      <form class="mant-fecha" id="${idForm}" data-mant-entrega="${esc(m.ref)}" hidden>
         <label for="mantEnt-${esc(m.ref)}">¿Qué día te llegó la máquina?</label>
         <div class="mant-fecha-fila">
           <input type="date" id="mantEnt-${esc(m.ref)}" name="fecha" min="2020-01-01" max="${hoy}" value="${esc(m.entrega || '')}" required>
@@ -747,7 +759,7 @@ function mantSecciones() {
         <p class="mant-caso-cuando">${esc(x.cuando)}</p>
         <h3>${esc(x.titulo)}</h3>
         ${x.t ? `<p>${esc(x.t)}</p>` : ''}
-        ${x.img && !x.pasos ? `<figure class="mant-caso-foto"><img src="assets/${esc(x.img)}" alt="" loading="lazy" onerror="this.closest('figure').remove()"></figure>` : ''}
+        ${x.img && !x.pasos ? `<figure class="mant-caso-foto"><img src="assets/${esc(x.img)}" alt="${esc(x.alt || '')}" loading="lazy" onerror="this.closest('figure').remove()"></figure>` : ''}
         ${x.pasos ? `<a class="btn ghost sm" href="#/mantenimiento/guia/${esc(x.id)}">Cómo se hace</a>` : ''}
       </article>`).join('')}</div>
 
@@ -781,7 +793,7 @@ function vistaMantPortada() {
   } else if (!est) {
     bloques = '<p class="mant-resumen">Cargando tu calendario…</p>';
   } else if (est.error) {
-    bloques = `<p class="mant-resumen">No pudimos cargar tu calendario ahora. Revisa tu conexión y vuelve a abrir esta pestaña.</p>${mantCalendarioGenerico()}`;
+    bloques = `<p class="mant-resumen">No pudimos cargar tu calendario ahora. Revisa tu conexión y vuelve a abrir esta sección.</p>${mantCalendarioGenerico()}`;
   } else if (!(est.maquinas || []).length) {
     bloques = `<p class="mant-resumen">Todavía no vemos tu máquina en tu cuenta. En cuanto la registremos, aquí aparece tu calendario con fechas. Mientras, esto es lo que toca cuidar:</p>${mantCalendarioGenerico()}`;
   } else {
@@ -824,10 +836,10 @@ function vistaMantPasos(sec, id, nStr) {
     const p = d.pasos[n - 1];
     return `
       <section class="paso mant-paso">
-        <div aria-label="Paso ${n} de ${total}">${segbar(total, n)}</div>
+        <p class="sr-only">Paso ${n} de ${total}</p><div aria-hidden="true">${segbar(total, n)}</div>
         <p class="lec-modulo">${esc(d.titulo)}</p>
         <h2 class="paso-titulo lec-instruccion">${esc(p.t)}</h2>
-        ${p.img ? `<figure class="lec-foto"><img src="assets/${esc(p.img)}" alt="" onerror="this.closest('.lec-foto').remove()"></figure>` : ''}
+        ${p.img ? `<figure class="lec-foto"><img src="assets/${esc(p.img)}" alt="${esc(p.alt || '')}" onerror="this.closest('.lec-foto').remove()"></figure>` : ''}
         ${pie(`<a class="btn primary" href="${base}/${n + 1}">${n === total ? 'Terminé' : 'Siguiente'}</a>`, `<a class="paso-link" href="${base}/${n - 1}">Atrás</a>`)}
       </section>`;
   }
@@ -844,11 +856,12 @@ function vistaMantPasos(sec, id, nStr) {
       if (t.estado === 'al_dia') return `<p class="mant-anotado">${icon('visto')} Ya está anotado${nombre}: lo hiciste el ${esc(mantFecha(t.ultima))}. La próxima, el ${esc(mantFecha(t.proxima))}.</p>`;
       if (t.estado !== 'toca' && t.estado !== 'pronto') return `<p class="mant-anotado">${nombre ? `En tu ${esc(m.modelo)}: ` : ''}la primera vez que toca es el ${esc(mantFecha(t.proxima))}. Ese día anótalo aquí.</p>`;
       const min = t.desde && t.desde > (m.entrega || '') ? t.desde : m.entrega;
+      const idForm = 'mantOtroForm-' + mantIdRef(m.ref);
       return `
         <div class="mant-anotar">
           <button type="button" class="btn primary" data-mant-hecho data-tarea="${esc(d.id)}" data-ref="${esc(m.ref)}" data-volver="1">Ya lo hice${nombre}</button>
-          <button type="button" class="paso-link" data-mant-otrodia="${esc(m.ref)}">¿Lo hiciste otro día?</button>
-          <form class="mant-fecha" data-mant-otro="${esc(m.ref)}" data-tarea="${esc(d.id)}" hidden>
+          <button type="button" class="paso-link" data-mant-otrodia="${esc(m.ref)}" aria-expanded="false" aria-controls="${idForm}">¿Lo hiciste otro día?</button>
+          <form class="mant-fecha" id="${idForm}" data-mant-otro="${esc(m.ref)}" data-tarea="${esc(d.id)}" hidden>
             <label for="mantOtro-${esc(m.ref)}">¿Qué día lo hiciste?</label>
             <div class="mant-fecha-fila">
               <input type="date" id="mantOtro-${esc(m.ref)}" name="fecha" min="${esc(min || '')}" max="${hoy}" value="${hoy}" required>
@@ -907,11 +920,11 @@ function bindMantenimiento() {
   });
   view.querySelectorAll('[data-mant-cambiar]').forEach(b => b.onclick = () => {
     const f = view.querySelector(`form[data-mant-entrega="${CSS.escape(b.dataset.mantCambiar)}"]`);
-    if (f) { f.hidden = !f.hidden; if (!f.hidden) f.querySelector('input')?.focus(); }
+    if (f) { f.hidden = !f.hidden; b.setAttribute('aria-expanded', String(!f.hidden)); if (!f.hidden) f.querySelector('input')?.focus(); }
   });
   view.querySelectorAll('[data-mant-otrodia]').forEach(b => b.onclick = () => {
     const f = view.querySelector(`form[data-mant-otro="${CSS.escape(b.dataset.mantOtrodia)}"]`);
-    if (f) { f.hidden = !f.hidden; if (!f.hidden) f.querySelector('input')?.focus(); }
+    if (f) { f.hidden = !f.hidden; b.setAttribute('aria-expanded', String(!f.hidden)); if (!f.hidden) f.querySelector('input')?.focus(); }
   });
   view.querySelectorAll('form[data-mant-entrega]').forEach(f => f.onsubmit = async (e) => {
     e.preventDefault();
@@ -941,7 +954,7 @@ const views = {
     // mecanismo que ya usa Academia para sus cursos).
     if (sub === 'certificado') return views.certificado();
     const d = state.db, cli = currentClient();
-    if (!cli) return '<p class="muted">Entra con tu documento para ver tus datos.</p>';
+    if (!cli) return '<p class="muted">Entra con tu celular para ver tus datos.</p>';
     const maqs = d.maquinas.filter(m => m.cliente_id === cli.id);
     const info = docInfo(cli.pais, cli.tipo);
     return `
@@ -969,6 +982,8 @@ const views = {
   inicio() {
     const cli = currentClient();
     const prep = prepEstado();
+    // El PDF del certificado solo se ofrece si alguna máquina está certificada.
+    const tieneCert = cli ? state.db.maquinas.some(m => m.cliente_id === cli.id && m.certificado?.estado === 'certificada') : false;
 
     /* El inicio ya no repite lo que está en el menú de arriba. Solo tres cosas:
        tu máquina, lo único que toca hacer ahora, y dónde pedir ayuda. Antes eran
@@ -999,7 +1014,7 @@ const views = {
         <!-- La calculadora pasó al menú de arriba y Mantenimiento bajó aquí.
              «Necesito ayuda» es el botón flotante de WhatsApp (pintarAyudaFlotante). -->
         ${bigBtn('#/mantenimiento', 'llave', 'Mantenimiento', 'Cuándo limpiar y cómo se hace')}
-        ${bigBtn('#/descargables', 'descarga', 'Descargables', 'Guías y tu Certificado en PDF')}
+        ${bigBtn('#/descargables', 'descarga', 'Descargables', tieneCert ? 'Guías y tu Certificado en PDF' : 'Guías de tus cursos en PDF')}
         <!-- El Banco de Diseños ya vive en su propio dominio: aquí es solo la puerta. -->
         ${bigBtn('https://bancodisenos.c4vlaser.com/', 'disenos', 'Diseños para cortar', 'Incluidos con tu máquina', true)}
         ${bigBtn('#/cuenta/certificado', 'sello', 'Mi certificado', 'Tu certificado y tus datos')}
@@ -1046,7 +1061,7 @@ const views = {
       <a class="destino destino-curso destino-prep" href="#/academia/prep">
         ${cursoIcono('prep')}
         <span class="destino-txt"><strong>Prepara tu espacio</strong>
-          <small>${pe.total} pasos antes de que llegue tu máquina</small>
+          <small>${pe.total} pasos para dejar tu espacio listo</small>
           <small class="destino-avance${pe.completo ? ' completo' : ''}">${pe.n} de ${pe.total} hechos</small></span>
         <span class="destino-flecha" aria-hidden="true">›</span>
       </a>`;
@@ -1094,7 +1109,7 @@ const views = {
         <div class="paso-fin">
           <img class="fin-toro" src="assets/cevi/gracias.png" width="200" height="186" loading="lazy" alt="" aria-hidden="true" decoding="async">
           <h2>Tu espacio está listo</h2>
-          <p>Ya puedes recibir tu máquina con confianza. El resto de la Academia ya está destrabado.</p>
+          <p>Todo listo para trabajar con tu máquina. El resto de la Academia ya está abierto.</p>
           <a class="btn primary" href="#/academia">Ver los cursos de la Academia</a>
           <button type="button" class="paso-link" id="verGuia">Volver a ver la guía</button>
           ${modoDemo() ? '<button type="button" class="paso-link" id="reiniciarPasos">Empezar la guía de cero (demostración)</button>' : ''}
@@ -1195,7 +1210,7 @@ const views = {
             <button type="submit" class="chat-enviar" aria-label="Enviar">${CEVI_ICONOS.enviar}</button>
           </form>
 
-          <p class="chat-pie">CeVi responde con inteligencia artificial. Si el tema es serio, te pasamos con una persona.</p>
+          <p class="chat-pie">CeVi responde con inteligencia artificial. Si el tema es serio, te pasamos con una persona.<br>${enlacesLegalesCevi()}</p>
         </div>
 
         <!-- Modo voz: solo el toro, como los asistentes de voz que la gente ya
@@ -1250,7 +1265,7 @@ const views = {
           </div>
           <p class="cevi11-cargando">Preparando a CeVi…</p>
         </div>
-        <p class="cevi11-pie">CeVi responde con inteligencia artificial. Lo comercial te lo resuelve un asesor.</p>
+        <p class="cevi11-pie">CeVi responde con inteligencia artificial. Lo comercial te lo resuelve un asesor.<br>${enlacesLegalesCevi()}</p>
       </section>`;
   },
 
@@ -1345,7 +1360,7 @@ const views = {
 
     return `
       <div class="page-head">
-        <p>Todo lo que puedes descargar: tu Certificado de Calidad y las guías de tus cursos.</p>
+        <p>${filaCert ? 'Todo lo que puedes descargar: tu Certificado de Calidad y las guías de tus cursos.' : 'Todo lo que puedes descargar: las guías de tus cursos. Tu Certificado de Calidad aparecerá aquí cuando confirmemos tu máquina.'}</p>
       </div>
 
       ${filaCert ? `<h2 class="section-h">Tu Certificado</h2><div class="destinos">${filaCert}</div>` : ''}
@@ -1378,11 +1393,13 @@ const views = {
         : enRevision ? '<span class="badge warn">En revisión y calibración</span>'
         : '<span class="badge grey">Estado por confirmar</span>';
       const meta = ok
-        ? (cert.fecha ? `<p class="cert-maq-meta">Certificada el ${esc(cert.fecha)}${cert.tecnico ? ` por ${esc(nombrePropio(cert.tecnico))}` : ''}</p>` : '')
+        ? (cert.fecha ? `<p class="cert-maq-meta">Certificada el ${esc(fechaLarga(cert.fecha))}${cert.tecnico ? ` por ${esc(nombrePropio(cert.tecnico))}` : ''}</p>` : '')
         : enRevision ? '<p class="cert-maq-meta">La estamos probando y calibrando antes de entregártela.</p>'
         : `<p class="cert-maq-meta">Todavía no tenemos el estado de esta máquina. <a href="${waLink(`Hola, quiero saber el estado del Certificado de Calidad de mi máquina${m.modelo ? ' ' + m.modelo : ''}${m.pedido ? ' (pedido ' + m.pedido + ')' : ''}.`)}" target="_blank" rel="noopener">Pregúntanos por WhatsApp</a> y te lo confirmamos.</p>`;
-      const publico = cert.url
-        ? `<a class="cert-verif-link" href="${esc(cert.url)}" target="_blank" rel="noopener">Ver el certificado público</a>` : '';
+      // Solo https: esc() no frena un «javascript:».
+      const urlCert = (() => { try { const x = new URL(String(cert.url || '')); return x.protocol === 'https:' ? x.href : ''; } catch { return ''; } })();
+      const publico = urlCert
+        ? `<a class="cert-verif-link" href="${esc(urlCert)}" target="_blank" rel="noopener">Ver el certificado público</a>` : '';
       // La serie es la llave del certificado. Hoy Odoo no la guarda para la
       // mayoría: en vez de una caja vacía con un botón que no copia nada, se
       // muestra la referencia que SÍ existe (el número de pedido).
@@ -1439,7 +1456,15 @@ const views = {
 };
 
 // ---------- interacciones ----------
-function bindAccordions(sel) { view.querySelectorAll(sel).forEach(it => { const q = it.querySelector('.faq-q, .course-head'); if (q) q.onclick = () => { const open = it.classList.toggle('open'); q.setAttribute('aria-expanded', open); }; }); }
+function bindAccordions(sel) {
+  view.querySelectorAll(sel).forEach((it, i) => {
+    const q = it.querySelector('.faq-q, .course-head');
+    if (!q) return;
+    const a = it.querySelector('.faq-a');
+    if (a) { if (!a.id) a.id = 'faqA-' + i; q.setAttribute('aria-controls', a.id); }
+    q.onclick = () => { const open = it.classList.toggle('open'); q.setAttribute('aria-expanded', open); };
+  });
+}
 function bind(route) {
   view.querySelectorAll('[data-cevi]').forEach(b => b.onclick = () => { location.hash = '#/cevi'; });
   /* En el asistente la conversación se queda con la pantalla entera: sin pie
@@ -1541,6 +1566,9 @@ function cargarJsPDF() {
   jsPDFCargando = new Promise((resolve, reject) => {
     const s = document.createElement('script');
     s.src = 'https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js';
+    // SRI: si el CDN sirve otro archivo, no se ejecuta. Al subir la versión, recalcular el hash.
+    s.integrity = 'sha384-en/ztfPSRkGfME4KIm05joYXynqzUgbsG5nMrj/xEFAHXkeZfO3yMK8QQ+mP7p1/';
+    s.crossOrigin = 'anonymous';
     // Si falla, se olvida la promesa: si no, el siguiente clic fallaba sin volver a intentar.
     const fallo = () => { jsPDFCargando = null; s.remove(); reject(new Error('No se pudo cargar el generador de PDF')); };
     s.onload = () => (window.jspdf?.jsPDF ? resolve(window.jspdf.jsPDF) : fallo());
@@ -1589,7 +1617,7 @@ async function descargarCertificadoPDF(cli, m, ci) {
   fila('Máquina', `Láser ${m.modelo || 'C4V'}`);
   if (m.serie) fila('Nº de serie', m.serie);
   else if (m.pedido) fila('Pedido', m.pedido);
-  if (m.certificado?.fecha) fila('Certificada el', m.certificado.fecha);
+  if (m.certificado?.fecha) fila('Certificada el', fechaLarga(m.certificado.fecha));
   if (m.certificado?.tecnico) fila('Técnico', nombrePropio(m.certificado.tecnico));
 
   y += 6;
@@ -1604,9 +1632,10 @@ async function descargarCertificadoPDF(cli, m, ci) {
   });
 
   doc.setFontSize(8); doc.setTextColor('#999999');
-  doc.text(`Emitido desde tu Central de Postventa C4V — ${new Date().toLocaleDateString('es-PE')}`, cx, 282, { align: 'center' });
+  doc.text(`Emitido desde tu Central de Postventa C4V — ${fechaLarga(mantYmd(mantHoy()))}`, cx, 282, { align: 'center' });
 
-  doc.save(`Certificado-C4V-${m.serie || m.pedido || cli.documento}.pdf`);
+  // Sin «C4V-» antes de la serie: con una serie «C4V-…» el nombre salía «C4V-C4V-…».
+  doc.save(`Certificado-${m.serie || 'C4V-' + (m.pedido || cli.documento)}.pdf`);
 }
 
 // ---------- lecciones en video (Academia) ----------
@@ -1742,13 +1771,10 @@ function segbar(total, hechos) {
   for (let i = 0; i < total; i++) out += `<i${i < hechos ? ' class="hecho"' : ''}></i>`;
   return out + '</div>';
 }
-// Sube el scroll al tope del contenido del paso, no de toda la ventana: en el
-// quiz cada pregunta reemplaza el DOM en el mismo lugar (no hay cambio de ruta
-// que dispare el reset normal de render()), así que si no se hace a mano la
-// pantalla se queda donde estaba con la pregunta nueva fuera de vista.
+// En el quiz cada pregunta reemplaza el DOM sin cambiar de ruta: se sube a mano,
+// al tope de la ventana (al del paso, «← Academia» quedaba bajo el menú fijo).
 function subirAlPaso() {
-  const s = view.querySelector('.paso') || view;
-  s.scrollIntoView({ block: 'start' });
+  window.scrollTo(0, 0);
 }
 function bindQuizzes() {
   view.querySelectorAll('.quiz-box').forEach(box => {
@@ -1765,7 +1791,7 @@ function bindQuizzes() {
     const preguntar = () => {
       const p = preguntas[idx];
       area.innerHTML = `
-        ${segbar(total, idx)}
+        <p class="sr-only">Pregunta ${idx + 1} de ${total}</p><div aria-hidden="true">${segbar(total, idx + 1)}</div>
         <div class="qz-q">${esc(p.q)}</div>
         <div class="qz-opts">${barajar(p.opciones.map((_, i) => i)).map(i => `<button type="button" class="qz-opt" data-i="${i}">${esc(p.opciones[i])}</button>`).join('')}</div>
         <div class="qz-ex" hidden></div>`;
@@ -1812,7 +1838,7 @@ function bindQuizzes() {
       area.innerHTML = `
         <div class="qz-fin ${paso ? 'ok' : ''}">
           <div class="qz-nota">${puntos} de ${total}</div>
-          <p>${paso ? 'Dominas este módulo.' : 'Repasa las lecciones de arriba y vuelve a probar.'}</p>
+          <p>${paso ? 'Dominas este módulo.' : 'Repasa lo que fallaste abajo y vuelve a probar.'}</p>
         </div>
         ${repaso}
         <div class="paso-nav qz-nav">
@@ -1848,7 +1874,8 @@ function render(route) {
      una pantalla propia, con su título y su botón de atrás, y el botón «volver»
      del navegador funciona como la gente espera. */
   const [base, ...resto] = String(route).split('/');
-  route = views[base] ? base : 'inicio';
+  // hasOwnProperty: #/constructor o #/__proto__ no son pantallas (Object.hasOwn falla en iPhone viejos).
+  route = Object.prototype.hasOwnProperty.call(views, base) ? base : 'inicio';
   state.sub = route === base ? resto.join('/') : '';
   /* Candado de Academia: mientras «Prepara tu espacio» no esté al 100%, los
      demás cursos no se abren aunque se llegue por un enlace directo o el
@@ -1869,6 +1896,7 @@ function render(route) {
   }
   if (route === 'academia' && state.sub === 'prep') titulo = 'Prepara tu espacio';
   if (route === 'cuenta' && state.sub === 'certificado') titulo = TITLES.certificado;
+  document.title = (route === 'inicio' || !titulo ? 'Central de Postventa' : titulo) + ' · C4V Láser';
   // Dentro de una lección la cabecera sobra: la pantalla ya dice dónde estás.
   const enLeccion = (route === 'academia' && /^curso\/[^/]+\/p\//.test(state.sub))
     || (route === 'mantenimiento' && /^(tarea|guia)\//.test(state.sub));
@@ -1886,7 +1914,16 @@ function render(route) {
   bind(route); pintarAvisoMant(); pintarAyudaFlotante(route); window.scrollTo(0, 0);
 }
 const currentRoute = () => (location.hash.replace('#/', '') || 'inicio');
-window.addEventListener('hashchange', () => render(currentRoute()));
+// Al navegar (no en cada render(), que también refresca datos) el foco va a la pantalla nueva.
+window.addEventListener('hashchange', () => {
+  render(currentRoute());
+  const h = view.querySelector('.pag-title');
+  const destino = h && h.offsetParent ? h : view;
+  if (!destino.hasAttribute('tabindex')) destino.setAttribute('tabindex', '-1');
+  destino.focus({ preventScroll: true });
+});
+// «Saltar al contenido» no puede cambiar el hash: #view no es una ruta y el router caía al Inicio.
+document.querySelector('.skip')?.addEventListener('click', (e) => { e.preventDefault(); view.focus(); });
 window.toast = toast;
 
 // ---------- identidad: tu documento es tu llave ----------
@@ -2049,6 +2086,9 @@ const DOC_DEMO = '00000000';
 
 const PREFIJOS_PAIS = { PE: '51', EC: '593', BO: '591', CL: '56', CO: '57' };
 const LARGOS_PAIS = { PE: [9], EC: [9, 8], BO: [8], CL: [9], CO: [10] };
+// Cómo se agrupa un celular en cada país, y un ejemplo con el largo correcto.
+const GRUPOS_TEL = { PE: [3, 3, 3], EC: [2, 3, 4], BO: [4, 4], CL: [1, 4, 4], CO: [3, 3, 4] };
+const EJEMPLO_TEL = { PE: '987654321', EC: '991234567', BO: '71234567', CL: '912345678', CO: '3101234567' };
 
 const digitosDe = (s) => String(s || '').replace(/\D/g, '');
 
@@ -2061,17 +2101,29 @@ function telLegible(pais, tel) {
   if (d.startsWith('00')) d = d.slice(2);
   if (p && d.startsWith(p) && (LARGOS_PAIS[pais] || []).includes(d.length - p.length)) d = d.slice(p.length);
   if (d.startsWith('0')) d = d.slice(1);
-  return `+${p} ${d.replace(/(\d{3})(?=\d)/g, '$1 ')}`.trim();
+  const g = GRUPOS_TEL[pais];
+  let cuerpo;
+  if (g && d.length === g.reduce((a, b) => a + b, 0)) {
+    let i = 0; cuerpo = g.map(n => d.slice(i, i += n)).join(' ');
+  } else {
+    cuerpo = d.replace(/(\d{3})(?=\d)/g, '$1 ');   // largos inesperados (p. ej. un fijo de Ecuador): de tres en tres
+  }
+  return `+${p} ${cuerpo}`.trim();
 }
 
-async function apiPost(ruta, cuerpo) {
+// Con tope, como apiGet: con la señal colgada los botones quedaban en «Enviando…» minutos.
+async function apiPost(ruta, cuerpo, ms = 20000) {
   const base = VERIF.apiBase || '';
-  const r = await fetch(`${base}${ruta}`, {
-    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(cuerpo)
-  });
-  let j = null;
-  try { j = await r.json(); } catch {}
-  return { ok: r.ok, status: r.status, json: j || {} };
+  const ctl = new AbortController();
+  const t = setTimeout(() => ctl.abort(), ms);
+  try {
+    const r = await fetch(`${base}${ruta}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(cuerpo), signal: ctl.signal
+    });
+    let j = null;
+    try { j = await r.json(); } catch {}
+    return { ok: r.ok, status: r.status, json: j || {} };
+  } finally { clearTimeout(t); }
 }
 // Igual que apiPost, pero sin red no lanza: devuelve motivo 'red' para mostrarlo.
 async function apiAcceso(ruta, cuerpo) {
@@ -2129,6 +2181,7 @@ function initGate() {
     paisesBox.querySelectorAll('button').forEach(b => b.setAttribute('aria-checked', b.dataset.pais === pais));
     const cod2 = $('#gateTelCod');
     if (cod2) cod2.textContent = '+' + (PREFIJOS_PAIS[pais] || '');
+    telInp.placeholder = EJEMPLO_TEL[pais] || '987654321';
   };
   const flechas = (caja, aplicar) => {
     caja.querySelectorAll('button').forEach((b, i, todos) => {
@@ -3394,16 +3447,31 @@ function ceviNoDisponible(host) {
   };
 }
 
-async function ceviElevenLabsIniciar() {
-  if (!document.getElementById('script-11labs-convai')) {
-    const s = document.createElement('script');
+// true cuando <elevenlabs-convai> está definido; false si el script falla o tarda más de 15 s.
+function ceviCargarWidget() {
+  if (customElements.get('elevenlabs-convai')) return Promise.resolve(true);
+  let s = document.getElementById('script-11labs-convai');
+  if (!s) {
+    s = document.createElement('script');
     s.id = 'script-11labs-convai';
     // Versión fija: el widget cambia seguido y cada versión mueve el layout.
-    // Subirla a mano después de probarla con la cuenta de Martín.
-    s.src = 'https://unpkg.com/@elevenlabs/convai-widget-embed@0.18.2';
+    // Subirla a mano después de probarla con la cuenta de Martín, y recalcular
+    // el hash (curl -sL <url> | openssl dgst -sha384 -binary | openssl base64 -A).
+    s.src = 'https://unpkg.com/@elevenlabs/convai-widget-embed@0.18.2/dist/index.js';
+    s.integrity = 'sha384-nuKwCIZnnG7tbq5OxYN1GCUc9CaDxR/DjQOSEHuy+HtZEgux+GRQZMbPJ5Oh0vFo';
+    s.crossOrigin = 'anonymous';
     s.async = true;
+    s.addEventListener('error', () => s.remove(), { once: true });   // así «Reintentar» lo vuelve a pedir
     document.head.appendChild(s);
   }
+  const fallo = new Promise(r => s.addEventListener('error', () => r(false), { once: true }));
+  const tope = new Promise(r => setTimeout(() => r(false), 15e3));
+  return Promise.race([customElements.whenDefined('elevenlabs-convai').then(() => true), fallo, tope]);
+}
+
+async function ceviElevenLabsIniciar() {
+  // Se pide ya, en paralelo con el token y las URLs firmadas.
+  const widgetListo = ceviCargarWidget();
   const host = $('#ceviWidgetHost');
   if (!host) return;
   const vars = ceviElevenLabsVars();
@@ -3422,6 +3490,9 @@ async function ceviElevenLabsIniciar() {
   // Sin URL firmada no hay CeVi: con la autenticación activada, el agent-id
   // solo deja el widget en blanco. Mejor decirlo y ofrecer reintentar.
   if (!urls.length) { ceviNoDisponible(host); return; }
+  // Sin el script del widget, «Iniciar conversación» nunca aparece: mejor el mismo aviso.
+  if (!(await widgetListo)) { if (gen === cevi11.gen && host.isConnected) ceviNoDisponible(host); return; }
+  if (gen !== cevi11.gen || !host.isConnected) return;
   if (urls[1]) cevi11.pool.push({ url: urls[1], en: Date.now() });
   const el = document.createElement('elevenlabs-convai');
   el.id = 'ceviWidget11';
@@ -3521,7 +3592,7 @@ function ceviPitido(tipo) {
    siempre queda a la vista la salida a una persona de carne y hueso. */
 const PISTAS = {
   inicio: ['¿Con qué potencia corto MDF de 3 mm?', '¿Cada cuánto cambio el agua del chiller?', 'Mi láser dejó de cortar bien'],
-  corte:  ['¿Y para acrílico de 3 mm?', '¿Cómo sé si la lente está sucia?', 'Se quema el material'],
+  corte:  ['¿Y para acrílico de 3 mm?', '¿Cómo sé si el lente está sucio?', 'Se quema el material'],
   falla:  ['Sigue igual', '¿Lo puede ver un técnico?', '¿Está en garantía?'],
   limpieza: ['¿Qué necesito para limpiarla?', '¿Cada cuánto reviso los espejos?', '¿Y el pozo a tierra?'],
   general: ['Cuéntame más', '¿Qué más debería revisar?', 'Quiero hablar con una persona']
@@ -3663,6 +3734,18 @@ function empresaDelCliente() {
 }
 window.empresaDelCliente = empresaDelCliente;
 
+// Las páginas legales leen ?empresa=RUC: sin él, la hoja de reclamo salía
+// a nombre de la empresa por defecto, no de la que le vendió al cliente.
+function qEmpresa() {
+  const e = empresaDelCliente();
+  return state.empresaVendedora && e.ruc ? `?empresa=${encodeURIComponent(e.ruc)}` : '';
+}
+// En el Asistente el pie está oculto, pero el Libro de Reclamaciones debe seguir a la vista.
+function enlacesLegalesCevi() {
+  const q = qEmpresa();
+  return `<a href="libro-reclamaciones.html${q}" target="_blank" rel="noopener">Libro de Reclamaciones</a> · <a href="privacidad.html${q}" target="_blank" rel="noopener">Privacidad</a>`;
+}
+
 function pintarPieLegal() {
   const pie = $('#pieLegal');
   if (!pie) return;
@@ -3670,10 +3753,13 @@ function pintarPieLegal() {
   const faltan = ['razon_social', 'ruc', 'domicilio'].filter(k => !e[k]);
   // Se avisa por consola a quien mantiene el portal, nunca en pantalla: el
   // cliente no tiene por qué enterarse de nuestros pendientes internos.
-  if (faltan.length) console.warn('[C4V] Faltan datos del proveedor en config.js:', faltan.join(', '));
+  if (faltan.length) console.warn('[C4V] Faltan datos del proveedor en config.js (se usan en las páginas legales):', faltan.join(', '));
   /* Qué se queda y por qué:
-     - Razón social, RUC y domicilio: el consumidor debe poder saber CON QUIÉN
-       contrata (Ley 29571).
+     - Razón social, RUC y domicilio NO van en el pie (decisión de Sebastián,
+       17-set, commit 3512df6): el pie solo dice «C4V Láser». Esos datos se
+       publican en Términos, Privacidad y el Libro de Reclamaciones, que reciben
+       ?empresa=RUC para mostrar la empresa que le vendió a ESTE cliente
+       (Ley 29571). No volver a ponerlos aquí sin que él lo pida.
      - Libro de Reclamaciones: obligatorio y visible desde cualquier página
        (Ley 29571 y DS 011-2011-PCM). Va primero y con más peso que el resto.
      - Privacidad, Términos y el acceso a los datos personales: Ley 29733.
@@ -3682,10 +3768,9 @@ function pintarPieLegal() {
      dentro de la Política de Privacidad, que es donde la ley lo pide. */
   /* Tres líneas y nada más. Lo que la ley obliga a mostrar sigue todo aquí:
      el Libro de Reclamaciones (Ley 29571), la política de datos (Ley 29733) y
-     quién es el proveedor. Solo se quitó el adorno. */
-  // Las páginas legales leen ?empresa=RUC: sin él, la hoja de reclamo salía
-  // a nombre de la empresa por defecto, no de la que le vendió al cliente.
-  const q = state.empresaVendedora && e.ruc ? `?empresa=${encodeURIComponent(e.ruc)}` : '';
+     el enlace a los datos del proveedor (en las páginas legales). Solo se quitó
+     el adorno. */
+  const q = qEmpresa();
   pie.innerHTML = `
     <nav class="pie-enlaces" aria-label="Información legal">
       <a href="libro-reclamaciones.html${q}" class="pie-lr" target="_blank" rel="noopener">Libro de Reclamaciones</a>

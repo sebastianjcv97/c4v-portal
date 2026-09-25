@@ -103,6 +103,7 @@ button{font-family:var(--sans)}
 .volver{display:inline-flex;align-items:center;gap:8px;min-height:44px;color:var(--red-cta);font-weight:700;font-size:15px;margin-bottom:8px}
 .volver:hover{text-decoration:underline}
 .pag-title{font-family:var(--slab);font-size:24px;font-weight:800;margin:0 0 20px}
+.pag-title:focus,#view:focus{outline:none}
 
 /* Tarjeta de la máquina (lleva al certificado) */
 .maq{display:flex;align-items:center;gap:14px;background:var(--papel);color:var(--tinta);border:1px solid var(--regla);border-radius:var(--r-lg);padding:16px;margin-bottom:24px;transition:border-color .16s}
@@ -1429,6 +1430,7 @@ body{background:var(--mesa)}
 .cevi11-invita .cevi11-invita-t{font-family:var(--slab);font-size:var(--t-lg);color:var(--rojo-tinta)}
 .cevi11-marco:has(.cevi11-cargando) .cevi11-invita{display:none}
 .cevi11-pie{margin:0 0 var(--s-2);font-size:var(--t-xs);color:var(--grafito);text-align:center}
+.cevi11-pie a,.chat-pie a{color:var(--grafito);text-decoration:underline}
 @media (max-width:640px){
   .cevi11-toro{width:60px;height:60px}
   .cevi11-hola-txt h1{font-size:var(--t-lg)}
@@ -1891,18 +1893,20 @@ textarea.gate-input{min-height:96px;resize:vertical}
 .calc-agregar svg{width:18px;height:18px}
 
 /* Total: barra negra de la marca, pegada abajo mientras se escribe */
-.calc-total{position:sticky;bottom:0;z-index:5;display:grid;grid-template-columns:1fr auto;align-items:baseline;column-gap:var(--s-3);
+.calc-total{position:sticky;bottom:0;z-index:5;display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;column-gap:var(--s-3);
   margin:0 calc(-1 * var(--s-2)) var(--s-6);padding:var(--s-3) var(--s-4) calc(var(--s-3) + env(safe-area-inset-bottom));
   background:var(--tinta);color:var(--papel);border-top:4px solid var(--rojo);border-radius:var(--r-lg);box-shadow:0 -6px 18px rgba(20,20,20,.25)}
-.calc-total-rot{margin:0;font-weight:700;font-size:var(--t-md)}
-.calc .calc-total-num{font-family:var(--slab);font-size:var(--t-2xl);font-weight:800;line-height:var(--lh-tight);font-variant-numeric:tabular-nums;text-align:right}
-.calc-total-det{grid-column:1/-1;margin:2px 0 0;font-size:var(--t-sm);color:var(--on-black-dim);line-height:var(--lh-snug)}
+.calc-total-rot{margin:0;font-weight:700;font-size:var(--t-md);white-space:nowrap}
+.calc .calc-total-num{font-family:var(--slab);font-size:clamp(1.5rem,8vw,var(--t-2xl));font-weight:800;line-height:var(--lh-tight);font-variant-numeric:tabular-nums;text-align:right;
+  margin-left:auto;min-width:0;max-width:100%;overflow-wrap:anywhere}
+.calc-total-det{flex-basis:100%;margin:2px 0 0;font-size:var(--t-sm);color:var(--on-black-dim);line-height:var(--lh-snug)}
 
 /* «Necesito ayuda» flotante: logo de WhatsApp abajo a la derecha. El globo sale
    de detrás del logo al entrar y a los pocos segundos vuelve a esconderse ahí. */
-.wa-flota{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom));z-index:40;display:flex;align-items:center;text-decoration:none;-webkit-tap-highlight-color:transparent}
+.wa-flota{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom));z-index:40;display:flex;align-items:center;text-decoration:none;-webkit-tap-highlight-color:transparent;
+  pointer-events:none}
 .wa-flota[hidden]{display:none}
-.wa-flota-btn{position:relative;z-index:1;display:grid;place-items:center;width:58px;height:58px;border-radius:50%;background:var(--wa);color:#fff;box-shadow:0 6px 20px rgba(20,20,20,.28);transition:background .16s,transform .1s}
+.wa-flota-btn{pointer-events:auto;position:relative;z-index:1;display:grid;place-items:center;width:58px;height:58px;border-radius:50%;background:var(--wa);color:#fff;box-shadow:0 6px 20px rgba(20,20,20,.28);transition:background .16s,transform .1s}
 .wa-flota-btn .wa-ic{width:32px;height:32px}
 .wa-flota:hover .wa-flota-btn{background:var(--wa-hover)}
 .wa-flota:active .wa-flota-btn{transform:scale(.95)}
@@ -1912,11 +1916,19 @@ textarea.gate-input{min-height:96px;resize:vertical}
   font-weight:700;font-size:15px;line-height:1.2;white-space:nowrap;box-shadow:0 6px 20px rgba(20,20,20,.18);
   transform-origin:right center;transform:translateX(34px) scaleX(.3);opacity:0;transition:transform .4s cubic-bezier(.2,.8,.2,1),opacity .3s ease;pointer-events:none}
 .wa-flota.abierto .wa-flota-globo,.wa-flota:hover .wa-flota-globo,.wa-flota:focus-visible .wa-flota-globo{transform:none;opacity:1}
+/* El globo invisible ocupaba el <a> y tapaba «Cerrar sesión»: solo tocan el círculo y el globo visible. */
+.wa-flota.abierto .wa-flota-globo,.wa-flota:hover .wa-flota-globo{pointer-events:auto}
 @media (prefers-reduced-motion:reduce){.wa-flota-globo{transform:none;transition:opacity .2s}}
 /* Donde hay una barra pegada abajo (paso de lección, total de la calculadora,
    chat) el botón la taparía: ahí no sale. */
 body:has(.paso-nav) .wa-flota,body:has(.calc-total) .wa-flota,body:has(.chat-abajo) .wa-flota{display:none}
 /* Espacio al final de la página para que el botón no tape «Cerrar sesión» ni el pie. */
 body:has(> .wa-flota:not([hidden])):not(:has(.paso-nav, .calc-total, .chat-abajo)) #app{padding-bottom:calc(84px + env(safe-area-inset-bottom))}
-/* En el teléfono, «Cerrar sesión» queda a la altura del botón: se corre a la izquierda. */
-@media (max-width:900px){body:has(> .wa-flota:not([hidden])) .pie-sesion{padding-right:72px}}
+/* «Cerrar sesión» queda a la altura del botón (también en escritorio): se corre a la izquierda. */
+body:has(> .wa-flota:not([hidden])) .pie-sesion{padding-right:72px}
+
+/* Quiz: con la barra de «Siguiente pregunta» pegada abajo, la del «Atrás» de la lección la tapaba. */
+.paso-quiz:has(.qz-nav)>.paso-pie{display:none}
+
+/* Páginas legales: a 320px «comunicaciones» no se cortaba y la tabla se salía. */
+.doc th,.doc td{overflow-wrap:anywhere;hyphens:auto}

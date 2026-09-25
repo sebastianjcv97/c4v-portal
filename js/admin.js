@@ -96,10 +96,11 @@
     codigo_enviado_sms: 'Código enviado por SMS', telefono_no_encontrado: 'Número no registrado', telefono_compartido: 'Número en dos fichas',
     envio_sms_fallo: 'El SMS no salió', incorrecto: 'Código incorrecto', vencido: 'Código vencido', usado: 'Código ya usado',
     bloqueado: 'Bloqueado', espera: 'Pidió otro código muy rápido', sin_acceso: 'Número sin acceso',
+    limite_numero: 'Tope de códigos del número', servicio: 'Twilio no respondió', sin_correo_robot: 'Registrada sin correo (robot)',
     creada: 'Solicitud creada', descartada_robot: 'Descartada (robot)', descartada_tope_numero: 'Descartada (ya tenía 3 pendientes)',
     descartada_tope_diario: 'Descartada (tope del día)'
   };
-  const RESULTADOS_MALOS = { denegado: 1, error: 1, fallido: 1, limite: 1, envio_sms_fallo: 1, bloqueado: 1, incorrecto: 1, sin_acceso: 1 };
+  const RESULTADOS_MALOS = { denegado: 1, error: 1, fallido: 1, limite: 1, limite_numero: 1, servicio: 1, envio_sms_fallo: 1, bloqueado: 1, incorrecto: 1, sin_acceso: 1 };
 
   const MENSAJES_HTTP = {
     400: 'Revisa los datos e intenta de nuevo.',
@@ -1473,7 +1474,9 @@
           ['Documento', r.documento],
           ['Empresa', r.empresa],
           ['Correo', r.email],
-          ['Celular', r.telefono]
+          ['Celular', r.telefono],
+          // Si el consumidor perdió la constancia, el equipo se la puede dictar.
+          ['Clave de consulta', r.clave_consulta ? String(r.clave_consulta).replace(/^(.{4})(.{4})$/, '$1-$2') : null]
         ]),
         r.respuesta ? el('div', { class: 'respuesta' },
           el('p', { class: 'sutil' }, 'Respuesta' + (r.respondido_por || r.respondido_en ? ' de ' + quien(r.respondido_por, r.respondido_en) : '')),
@@ -1519,7 +1522,7 @@
         r.detalle ? el('details', { class: 'detalle' }, el('summary', null, 'Ver lo que escribió'),
           el('div', { class: 'detalle-cuerpo' }, el('p', { class: 'texto-largo' }, r.detalle), r.pedido ? el('p', { class: 'texto-largo' }, el('strong', null, 'Pide: '), r.pedido) : null)) : null),
       radios,
-      el('p', { class: 'ayuda' }, '“En proceso” guarda un avance y la hoja sigue pendiente. “Respondido” la cierra.'),
+      el('p', { class: 'ayuda' }, '“En proceso” guarda un borrador interno: el cliente no lo ve hasta que marques “Respondido”, que cierra la hoja y, si dejó correo, se la envía.'),
       resp.nodo, error,
       botonesDialogo(boton));
     form.addEventListener('submit', async function (e) {
@@ -1645,8 +1648,9 @@
       ['Último ingreso', u.ultimo_ingreso ? hace(u.ultimo_ingreso) : 'Nunca entró'],
       ['Creado', quien(u.creado_por ? 'por ' + u.creado_por : '', u.creado_en)]
     ]);
+    // A un administrador (tú incluido) no se le reinicia desde aquí: cambia la suya con «Cambiar contraseña».
     const acciones = el('div', { class: 'acciones' },
-      el('button', { class: 'btn', type: 'button', on: { click: function () { dialogoReiniciar(u); } } }, 'Nueva contraseña'),
+      u.rol === 'admin' ? null : el('button', { class: 'btn', type: 'button', on: { click: function () { dialogoReiniciar(u); } } }, 'Nueva contraseña'),
       yo ? null : el('button', {
         class: activo ? 'btn btn-peligro' : 'btn', type: 'button',
         on: { click: function () { dialogoActivo(u, !activo); } }
@@ -1737,7 +1741,8 @@
             nombre: u.nombre,
             clave: r.clave_temporal
           });
-          cargarEquipo();
+          // Con la propia, la sesión ya no vale: recargar el equipo cerraría la clave antes de copiarla.
+          if (!esYo(u)) cargarEquipo();
         } catch (err) {
           mostrarError(error, err);
         }

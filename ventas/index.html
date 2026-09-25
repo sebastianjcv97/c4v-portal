@@ -15,7 +15,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@700;800&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="../css/styles.css?v=20260924e" />
+  <link rel="stylesheet" href="../css/styles.css?v=20260925c" />
   <style>
     /* Página pública del CeVi comercial: el toro y la burbuja, nada más.
        Colores y letras del portal (styles.css). */
@@ -118,7 +118,7 @@
     <p>CeVi responde con inteligencia artificial. <a href="../privacidad.html">Privacidad</a> · <a href="../terminos.html">Términos</a> · <a href="../libro-reclamaciones.html">Libro de Reclamaciones</a></p>
   </footer>
 
-  <script src="../js/config.js?v=20260924e"></script>
+  <script src="../js/config.js?v=20260925c"></script>
   <script>
   /* CeVi comercial en la página pública. Sin login: cevi-backend da URLs
      firmadas a quien viene de este origen (con topes por visitante).
@@ -255,12 +255,17 @@
       if (!document.getElementById('script-11labs-convai')) {
         const s = document.createElement('script');
         s.id = 'script-11labs-convai';
-        s.src = 'https://unpkg.com/@elevenlabs/convai-widget-embed@0.18.2';   // versión fija
+        // Versión fija con SRI: al subirla, recalcular el hash (igual que en js/app.js).
+        s.src = 'https://unpkg.com/@elevenlabs/convai-widget-embed@0.18.2/dist/index.js';
+        s.integrity = 'sha384-nuKwCIZnnG7tbq5OxYN1GCUc9CaDxR/DjQOSEHuy+HtZEgux+GRQZMbPJ5Oh0vFo';
+        s.crossOrigin = 'anonymous';
         s.async = true;
+        s.onerror = () => { s.remove(); document.getElementById('ceviVentas')?.remove(); noDisponible(); };
         document.head.appendChild(s);
       }
       const urls = (await Promise.all([pedirUrl(), pedirUrl()])).filter(Boolean);
       if (!urls.length) { noDisponible(); return; }
+      if (!document.getElementById('script-11labs-convai')) return;   // el script falló: onerror ya avisó
       if (urls[1]) estado.pool.push({ url: urls[1], en: Date.now() });
       const el = document.createElement('elevenlabs-convai');
       el.id = 'ceviVentas';

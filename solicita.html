@@ -9,7 +9,7 @@
 <meta property="og:type" content="website" />
 <meta property="og:title" content="¿Necesitas corte o grabado láser? — Red de talleres C4V" />
 <meta property="og:description" content="Cuéntanos qué necesitas y te conectamos gratis con un taller equipado con máquinas C4V cerca de ti. Perú · Ecuador · Bolivia." />
-<meta property="og:url" content="https://sebastianjcv97.github.io/c4v-portal/solicita.html" />
+<meta property="og:url" content="https://app.c4vlaser.com/solicita.html" />
 <meta property="og:locale" content="es_PE" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -120,7 +120,7 @@
     <h2>Cuéntanos qué necesitas</h2>
     <p>Sin costo y sin compromiso. Con estos datos armamos tu solicitud y la enviamos por WhatsApp.</p>
 
-    <form id="solicitud" novalidate>
+    <form id="solicitud" method="post" action="#" novalidate onsubmit="return false">
       <div class="row">
         <div class="field" id="f-nombre">
           <label for="nombre">Nombre <span class="req">*</span></label>
@@ -187,7 +187,7 @@
 
 <div class="owner-note">
   <div class="wrap">
-    <p>¿Tienes una máquina C4V? Los pedidos de esta red se publican en tu <a href="https://sebastianjcv97.github.io/c4v-portal/">Central de Postventa</a>.</p>
+    <p>¿Tienes una máquina C4V? Los pedidos de esta red se publican en tu <a href="https://app.c4vlaser.com/">Central de Postventa</a>.</p>
   </div>
 </div>
 
@@ -237,7 +237,7 @@
       'Plazo: '       + (val('plazo')    || '—');
 
     // TODO: reemplazar composición WhatsApp por webhook n8n cuando exista backend (auto-publicación en portal)
-    window.open('https://wa.me/51924662205?text=' + encodeURIComponent(mensaje), '_blank');
+    window.open('https://wa.me/51924662205?text=' + encodeURIComponent(mensaje), '_blank', 'noopener');
 
     confirmBox.classList.add('show');
     confirmBox.scrollIntoView({ behavior: 'smooth', block: 'center' });

@@ -6,6 +6,8 @@
   const $ = (s) => document.querySelector(s);
   const api = (L.apiBase || '');
   let tipo = 'reclamo';
+  // El plazo es un día de calendario ('YYYY-MM-DD'): se formatea sin que la zona horaria lo corra.
+  const diaYmd = (v, o) => new Date(String(v).slice(0, 10) + 'T12:00:00Z').toLocaleDateString('es-PE', Object.assign({ timeZone: 'UTC' }, o || {}));
 
   // El consumidor debe poder identificar CON QUIÉN contrató: en C4V venden tres
   // empresas distintas y cada una responde por sus propias ventas.
@@ -63,20 +65,29 @@
       monto: $('#lrMonto').value.trim(),
       detalle: $('#lrDetalle').value.trim(),
       pedido: $('#lrPedido').value.trim(),
-      empresa: sel ? sel.value : ''
+      empresa: sel ? sel.value : '',
+      sitio: $('#lrSitio') ? $('#lrSitio').value : ''   // trampa para robots: una persona nunca la ve
     };
     if (sel && !sel.value) return mostrarErrores(['Elige con cuál de nuestras empresas contrataste. Está en tu boleta o factura.']);
     if (!$('#lrAcepta').checked) return mostrarErrores(['Marca la casilla de declaración para poder registrar tu hoja.']);
 
     const btn = $('#lrEnviar');
     btn.disabled = true; btn.textContent = 'Registrando…';
+    const texto = `Quiero presentar un ${tipo}.\n\nNombre: ${datos.nombre}\nDocumento: ${datos.documento}\n\nDetalle: ${datos.detalle}\n\nPedido: ${datos.pedido}`;
     try {
       const r = await fetch(`${api}/api/reclamos`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(datos)
       });
-      const j = await r.json();
+      const j = await r.json().catch(() => ({}));
       if (!r.ok) {
         btn.disabled = false; btn.textContent = 'Registrar mi hoja';
+        if (r.status === 429) {
+          // Siempre queda un camino para presentar la hoja.
+          mostrarErrores([]);
+          $('#lrErrores').innerHTML = `<strong>Ya recibimos varias hojas desde este dispositivo.</strong>
+            <p style="margin:8px 0 0">Para registrar otra ahora, <a href="${L.waLink(texto)}" target="_blank" rel="noopener"><strong>envíanosla por WhatsApp</strong></a> con un toque y la registramos nosotros.</p>`;
+          return;
+        }
         return mostrarErrores(j.errores || [j.error || 'No pudimos registrar tu hoja en este momento.']);
       }
       $('#lrFormBox').hidden = true;
@@ -85,19 +96,22 @@
       // ni escucha su número de hoja: el foco estaba en un botón que desapareció.
       $('#lrOkBox').focus();
       $('#lrCodigo').textContent = j.codigo;
-      $('#lrPlazoOk').textContent = `Te responderemos a más tardar el ${new Date(j.plazo_respuesta).toLocaleDateString('es-PE', { day: 'numeric', month: 'long', year: 'numeric' })}.`;
+      if (j.clave_consulta && $('#lrClave') && $('#lrClaveBox')) {
+        $('#lrClave').textContent = j.clave_consulta;
+        $('#lrClaveBox').hidden = false;
+      }
+      $('#lrPlazoOk').textContent = `Te responderemos a más tardar el ${diaYmd(j.plazo_respuesta, { day: 'numeric', month: 'long', year: 'numeric' })}.`;
       $('#lrConstancia').textContent = j.constancia;
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch {
       btn.disabled = false; btn.textContent = 'Registrar mi hoja';
-      const texto = `Quiero presentar un ${tipo}.\n\nNombre: ${datos.nombre}\nDocumento: ${datos.documento}\n\nDetalle: ${datos.detalle}\n\nPedido: ${datos.pedido}`;
       mostrarErrores([]);
       $('#lrErrores').innerHTML = `<strong>No pudimos conectar con nuestro servidor.</strong>
         <p style="margin:8px 0 0">Tu reclamo no se pierde: <a href="${L.waLink(texto)}" target="_blank" rel="noopener"><strong>envíanoslo por WhatsApp</strong></a> con un toque y lo registramos nosotros.</p>`;
     }
   };
 
-  // Consulta de estado (código + documento)
+  // Consulta de estado (código + documento + clave de consulta)
   $('#lrConsultaForm').onsubmit = async (e) => {
     e.preventDefault();
     const caja = $('#lrcResultado');
@@ -105,18 +119,22 @@
     try {
       const r = await fetch(`${api}/api/reclamos/consulta`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ codigo: $('#lrcCodigo').value.trim(), documento: $('#lrcDoc').value.trim() })
+        body: JSON.stringify({ codigo: $('#lrcCodigo').value.trim(), documento: $('#lrcDoc').value.trim(), clave: $('#lrcClave').value.trim() })
       });
-      const j = await r.json();
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) {
+        caja.innerHTML = `<p>${L.esc(j.error || 'No pudimos consultar en este momento. Inténtalo más tarde.')}</p>`;
+        return;
+      }
       if (!j.existe) {
-        caja.innerHTML = '<p>No encontramos una hoja con ese número y ese documento. Revisa ambos datos.</p>';
+        caja.innerHTML = '<p>No encontramos una hoja con ese número, ese documento y esa clave. Revisa los tres datos: están en tu constancia.</p>';
         return;
       }
       const estados = { recibido: 'Recibida', en_proceso: 'En revisión', respondido: 'Respondida' };
       caja.innerHTML = `<div class="card">
         <h3 style="margin-top:0">${L.esc(j.codigo)} · ${estados[j.estado] || L.esc(j.estado)}</h3>
-        <p>Presentada el ${new Date(j.creado_en).toLocaleDateString('es-PE')}. Plazo de respuesta: ${new Date(j.plazo_respuesta).toLocaleDateString('es-PE')}.</p>
-        ${j.respuesta ? `<p><strong>Nuestra respuesta:</strong><br>${L.esc(j.respuesta)}</p>` : '<p class="muted">Todavía no hemos registrado la respuesta. Te contactaremos dentro del plazo.</p>'}
+        <p>Presentada el ${new Date(j.creado_en).toLocaleDateString('es-PE', { timeZone: 'America/Lima' })}. Plazo de respuesta: ${diaYmd(j.plazo_respuesta)}.</p>
+        ${j.estado === 'respondido' && j.respuesta ? `<p><strong>Nuestra respuesta:</strong><br>${L.esc(j.respuesta)}</p>` : '<p class="muted">Todavía no hemos registrado la respuesta. Te contactaremos dentro del plazo.</p>'}
       </div>`;
     } catch {
       caja.innerHTML = '<p>No pudimos consultar en este momento. Inténtalo más tarde.</p>';

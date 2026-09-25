@@ -148,7 +148,7 @@ window.__SEED__ = {
         modulos: [
           { titulo: "Tu compra y tus accesos", lecciones: [
             "Tu compra incluye capacitación de por vida, soporte por WhatsApp, garantía y una comunidad de +60.000 emprendedores.",
-            "Entras a tu portal con tu documento y tu WhatsApp: te llega un código para confirmar que eres tú.",
+            "Entras a tu portal con tu número de celular: te llega un código por SMS para confirmar que eres tú.",
             "El Nº de serie identifica tu máquina y tu Certificado de Calidad. Guárdalo bien."
           ], quizzes: 2, preguntas: [
             { q: "¿Cuánto cuesta el acceso a la Academia C4V?", opciones: ["Una suscripción mensual", "Es gratis de por vida, incluido con tu máquina", "Solo el primer mes"], ok: 1, ex: "Tu academia está aquí en tu portal: acceso gratuito de por vida, incluido con tu máquina." },
@@ -160,7 +160,7 @@ window.__SEED__ = {
             "«Probada antes de ser tuya»: no te entregamos una caja, sino una máquina lista para producir."
           ], quizzes: 2, preguntas: [
             { q: "¿Qué es el Certificado de Calidad C4V?", opciones: ["La garantía de 12 meses", "La revisión, prueba y calibración de tu máquina antes de entregártela", "Un cupón de descuento"], ok: 1, ex: "Es la revisión: un técnico la prueba, confirma piezas originales y la calibra antes de que llegue a ti." },
-            { q: "¿El certificado es lo mismo que la garantía?", opciones: ["Verdadero", "Falso"], ok: 1, ex: "No: el certificado es la revisión previa a la entrega; la garantía cubre fallas después." }
+            { q: "¿El certificado es lo mismo que la garantía?", opciones: ["Sí", "No"], ok: 1, ex: "No: el certificado es la revisión previa a la entrega; la garantía cubre fallas después." }
           ]},
           { titulo: "Prepara tu espacio", lecciones: [
             "Antes de que llegue, ten listo: 220V dedicado, pozo a tierra, extractor con salida al exterior, agua destilada para el chiller y el kit de consumibles.",
@@ -188,7 +188,7 @@ window.__SEED__ = {
             { q: "¿Se puede mirar el punto del láser directamente?", opciones: ["Sí, si es rápido", "Nunca: usa tus gafas de seguridad", "Solo con la tapa cerrada"], ok: 1, ex: "Nunca mires el láser. Las gafas de seguridad son obligatorias." },
             { q: "¿Con qué se limpian los lentes?", opciones: ["Agua con jabón", "Thinner", "Alcohol isopropílico"], ok: 2, ex: "Alcohol isopropílico con hisopos de alta calidad." },
             { q: "El agua destilada de tu kit sirve para…", opciones: ["El chiller (enfriamiento)", "Limpiar la mesa", "El compresor"], ok: 0, ex: "El agua destilada protege el tubo láser en el chiller." },
-            { q: "El aceite 3-EN-UNO de tu kit sirve para…", opciones: ["El tubo láser", "Lubricar los rieles", "La lente"], ok: 1, ex: "Rieles limpios y lubricados = movimiento suave y preciso." }
+            { q: "El aceite 3-EN-UNO de tu kit sirve para…", opciones: ["El tubo láser", "Lubricar los rieles", "El lente"], ok: 1, ex: "Rieles limpios y lubricados = movimiento suave y preciso." }
           ]},
           { titulo: "Antes de encender: revisión general", lecciones: [
             { img: "01.jpg", t: "Antes de encender, revisa esto." },
@@ -221,12 +221,12 @@ window.__SEED__ = {
           ], quizzes: 3, preguntas: [
             { q: "¿Cuál es la mejor práctica para tu primer corte?", opciones: ["Usar potencia máxima", "Probar con un diseño pequeño", "Cortar una pieza grande"], ok: 1, ex: "Empezar pequeño reduce riesgos y no desperdicia material." },
             { q: "Para MDF de 3mm, ¿qué potencia usas?", opciones: ["20-35", "60-80", "90-100"], ok: 0, ex: "MDF 3mm: potencia 20-35, velocidad 15-25." },
-            { q: "¿Conviene empezar con material grueso?", opciones: ["Verdadero", "Falso"], ok: 1, ex: "Empieza con 3mm para practicar y ajustar parámetros." }
+            { q: "¿Conviene empezar con material grueso?", opciones: ["Sí", "No"], ok: 1, ex: "Empieza con 3mm para practicar y ajustar parámetros." }
           ]},
           { titulo: "Evaluación final del curso", lecciones: [], quizzes: 5, preguntas: [
             { q: "¿Qué voltaje usa tu máquina C4V?", opciones: ["110V", "220V", "440V"], ok: 1, ex: "220V con circuito independiente y pozo a tierra." },
             { q: "Secuencia de encendido correcta:", opciones: ["Estabilizador → Chiller → Máquina", "Máquina → Estabilizador → Chiller", "Chiller → Estabilizador → Máquina"], ok: 0, ex: "El orden correcto protege el tubo y la electrónica." },
-            { q: "¿Se puede usar agua del grifo en el chiller?", opciones: ["Verdadero", "Falso"], ok: 1, ex: "Nunca: los minerales dañan el tubo. Solo agua destilada." },
+            { q: "¿Se puede usar agua del caño en el chiller?", opciones: ["Sí", "No"], ok: 1, ex: "Nunca: los minerales dañan el tubo. Solo agua destilada." },
             { q: "Los espejos se limpian con alcohol…", opciones: ["Etílico 70°", "Isopropílico", "De farmacia con glicerina"], ok: 1, ex: "Alcohol isopropílico + hisopo, en círculos y sin presión." },
             { q: "Antes de cortar, verifica que estén correctos…", opciones: ["Extractor, chiller y conexiones", "Solo el material", "Solo el diseño"], ok: 0, ex: "Extractor + chiller + conexiones = corte seguro." }
           ]}
@@ -237,52 +237,52 @@ window.__SEED__ = {
         descripcion: "Prevén fallas, extiende la vida útil y mantén el rendimiento. Requiere el Curso 1. (~30-40 min)",
         modulos: [
           { titulo: "Tu kit de mantenimiento (5 materiales)", lecciones: ["Agua destilada (Vistony)", "Aceite 3-EN-UNO para rieles", "Alcohol isopropílico", "Hisopos de alta calidad", "Paño de microfibra sin pelusa"], quizzes: 3, preguntas: [
-            { q: "¿Qué agua va en el chiller?", opciones: ["Del grifo, hervida", "Destilada (de batería)", "Mineral"], ok: 1, ex: "Solo agua destilada. La marca de referencia es Vistony." },
+            { q: "¿Qué agua va en el chiller?", opciones: ["Del caño, hervida", "Destilada (de batería)", "Mineral"], ok: 1, ex: "Solo agua destilada. La marca de referencia es Vistony." },
             { q: "¿Con qué se lubrican los rieles?", opciones: ["Aceite de motor", "WD-40", "Aceite 3-EN-UNO"], ok: 2, ex: "Ni motor, ni WD-40, ni cocina: aceite 3-EN-UNO." },
-            { q: "¿Sirven los hisopos genéricos para la lente?", opciones: ["Verdadero", "Falso"], ok: 1, ex: "Los baratos rayan la lente. Solo de alta calidad." }
+            { q: "¿Sirven los hisopos genéricos para el lente?", opciones: ["Sí", "No"], ok: 1, ex: "Los baratos rayan el lente. Solo de alta calidad." }
           ]},
           { titulo: "Limpieza de lente y espejos", lecciones: [
-            { img: "lente-retirar.jpg", t: "Retira la lente con cuidado: suelta el tubo de aire, la perilla dorada y el anillo con la llave." },
+            { img: "lente-retirar.jpg", t: "Retira el lente con cuidado: suelta el tubo de aire, la perilla dorada y el anillo con la llave." },
             { img: "lente-limpiar.jpg", t: "Alcohol isopropílico en el paño o el hisopo, en círculos y sin presionar. Las dos caras." },
             { img: "espejos.jpg", t: "La misma técnica en los tres espejos, con paño de microfibra." },
             { img: "espejos-frecuencia.jpg", t: "Como mínimo cada dos semanas si la usas a diario. Si trabajas jornadas largas, cada semana." }
           ], quizzes: 3, preguntas: [
-            { q: "¿Con qué líquido se limpia la lente?", opciones: ["Agua con jabón", "Alcohol isopropílico", "Thinner"], ok: 1, ex: "Alcohol isopropílico (o alcohol 98% como alternativa)." },
+            { q: "¿Con qué líquido se limpia el lente?", opciones: ["Agua con jabón", "Alcohol isopropílico", "Thinner"], ok: 1, ex: "Alcohol isopropílico al 99%, con hisopos de buena calidad." },
             { q: "¿Cómo debe ser el movimiento al limpiar?", opciones: ["Circular, suave y sin presión", "De arriba a abajo, con fuerza", "En zigzag rápido"], ok: 0, ex: "Circular y suave: la presión daña el recubrimiento." },
-            { q: "¿Una lente sucia hace perder potencia?", opciones: ["Verdadero", "Falso"], ok: 0, ex: "Los residuos absorben la energía del láser." }
+            { q: "¿Un lente sucio hace perder potencia?", opciones: ["Sí", "No"], ok: 0, ex: "Los residuos absorben la energía del láser." }
           ]},
           { titulo: "Agua del enfriador (chiller)", lecciones: [
-            { img: "chiller-agua.jpg", t: "Solo agua destilada. La del grifo deja minerales que arruinan el tubo." },
+            { img: "chiller-agua.jpg", t: "Solo agua destilada. La del caño deja minerales que arruinan el tubo." },
             { img: "chiller-cambio.jpg", t: "Cámbiala cada mes: desconecta la manguera, vacía y vuelve a llenar." },
             { img: "chiller-temperatura.jpg", t: "La pantalla debe marcar entre 15 y 25 grados. Si no vas a usarla en cinco días, sácale el agua." }
           ], quizzes: 4, preguntas: [
             { q: "¿Cada cuánto se cambia el agua del chiller?", opciones: ["Cada 6 meses", "Cada mes", "Nunca"], ok: 1, ex: "Una vez al mes, como pide el manual de mantenimiento." },
-            { q: "¿Por qué NO usar agua del grifo?", opciones: ["Es muy cara", "Sus minerales obstruyen y dañan el tubo", "Se evapora rápido"], ok: 1, ex: "Los residuos minerales dañan el tubo láser." },
+            { q: "¿Por qué NO usar agua del caño?", opciones: ["Es muy cara", "Sus minerales obstruyen y dañan el tubo", "Se evapora rápido"], ok: 1, ex: "Los residuos minerales dañan el tubo láser." },
             { q: "¿Cuál es la temperatura ideal del agua?", opciones: ["5-10 °C", "15-25 °C", "30-40 °C"], ok: 1, ex: "Entre 15 y 25 grados protege el tubo." },
             { q: "El agua del chiller debe ser…", opciones: ["Destilada", "Potable", "Con anticongelante casero"], ok: 0, ex: "Siempre destilada. Es la regla de oro del chiller." }
           ]},
           { titulo: "Lubricación y cuidado de rieles", lecciones: [
             { img: "rieles-limpiar.jpg", t: "Limpia las vías plateadas de los ejes X e Y con paño de microfibra." },
-            { img: "rieles-aceite.jpg", t: "Unas gotas de aceite 3-EN-UNO sobre la vía. La cinta de goma no se lubrica." },
+            { img: "rieles-aceite.jpg", t: "Pon unas gotas de aceite 3-EN-UNO en el paño y pásalo por la vía, de un extremo al otro. La cinta de goma no se lubrica." },
             { img: "rieles-mover.jpg", t: "Mueve el cabezal de lado a lado para repartir el aceite." },
             "Repite esta limpieza y lubricación de rieles cada semana si usas la máquina a diario."
           ], quizzes: 3, preguntas: [
-            { q: "¿Qué aceite se usa en los rieles?", opciones: ["De oliva", "3-EN-UNO", "De motor"], ok: 1, ex: "Aceite 3-EN-UNO en gotas, sobre el riel limpio." },
+            { q: "¿Qué aceite se usa en los rieles?", opciones: ["De oliva", "3-EN-UNO", "De motor"], ok: 1, ex: "Aceite 3-EN-UNO: unas gotas en el paño, pasado por el riel limpio." },
             { q: "Después de aplicar el aceite, ¿qué haces?", opciones: ["Enciendes a cortar de inmediato", "Mueves el cabezal para distribuirlo", "Lo dejas secar 24 h"], ok: 1, ex: "Mover el cabezal distribuye el aceite por todo el riel." },
-            { q: "¿Lubricar cada 6 meses es suficiente?", opciones: ["Verdadero", "Falso"], ok: 1, ex: "Con uso diario, la lubricación es semanal." }
+            { q: "¿Lubricar cada 6 meses es suficiente?", opciones: ["Sí", "No"], ok: 1, ex: "Con uso diario, la lubricación es semanal." }
           ]},
           { titulo: "6 errores que destruyen tu máquina", lecciones: [
             { img: "error-chiller.png", t: "Nunca enciendas el láser sin el chiller funcionando: el tubo se sobrecalienta y se quema. Es la falla más cara y la más fácil de evitar." },
-            { img: "error-agua-grifo.png", t: "Nunca uses agua del grifo en el chiller: sus minerales obstruyen y dañan el tubo. Siempre agua destilada." },
-            { img: "error-lente-sucia.png", t: "Si no limpias la lente, pierde potencia poco a poco: la suciedad absorbe energía y el corte sale débil y disparejo." },
+            { img: "error-agua-grifo.png", t: "Nunca uses agua del caño en el chiller: sus minerales obstruyen y dañan el tubo. Siempre agua destilada." },
+            { img: "error-lente-sucia.png", t: "Si no limpias el lente, pierde potencia poco a poco: la suciedad absorbe energía y el corte sale débil y disparejo." },
             { img: "error-pvc.png", t: "Nunca cortes PVC: libera gas cloro tóxico y corroe la máquina por dentro." },
             { img: "error-supervision.png", t: "Nunca la dejes cortando sola: quédate cerca mientras trabaja." },
             { img: "error-calendario.png", t: "Un calendario simple evita casi todo: superficie a diario, rieles cada semana, lente y espejos cada dos semanas, agua del chiller cada mes." }
           ], quizzes: 4, preguntas: [
             { q: "¿Qué pasa si enciendes el láser sin chiller?", opciones: ["Nada, si es poco tiempo", "El tubo se quema por sobrecalentamiento", "Corta más rápido"], ok: 1, ex: "El tubo láser es la pieza más valiosa: nunca sin chiller." },
             { q: "¿Se puede cortar PVC con tu láser?", opciones: ["Sí, a baja potencia", "Nunca: genera gas cloro tóxico", "Solo con extractor"], ok: 1, ex: "El PVC libera cloro tóxico y daña la máquina. Prohibido." },
-            { q: "¿Qué pasa si no limpias la lente?", opciones: ["Nada", "Pierde potencia gradualmente", "Corta mejor"], ok: 1, ex: "La suciedad absorbe energía: cortes débiles y disparejos." },
-            { q: "La lente y los espejos se limpian cada…", opciones: ["2 semanas (con uso diario)", "6 meses", "Solo cuando falle"], ok: 0, ex: "Calendario: superficie a diario · rieles semanal · lente y espejos cada 2 semanas · agua mensual." }
+            { q: "¿Qué pasa si no limpias el lente?", opciones: ["Nada", "Pierde potencia gradualmente", "Corta mejor"], ok: 1, ex: "La suciedad absorbe energía: cortes débiles y disparejos." },
+            { q: "El lente y los espejos se limpian cada…", opciones: ["2 semanas (con uso diario)", "6 meses", "Solo cuando falle"], ok: 0, ex: "Calendario: superficie a diario · rieles semanal · lente y espejos cada 2 semanas · agua mensual." }
           ]}
         ]
       },
@@ -359,7 +359,7 @@ window.__SEED__ = {
     /* Tabla oficial de parámetros por material (PARAMETROS_C4V Laser.pdf) */
     parametros: {
       intro: "La tabla oficial C4V de potencia y velocidad por material. Regla de oro: SIEMPRE prueba primero en un retazo — cada máquina y material varía un poco.",
-      nota: "El «Seal» (intervalo de escaneo) se usa SOLO para grabado. (*) Tela y cuero varían mucho en grosor y densidad: si no corta o se quema, escríbenos a soporte.",
+      nota: "(*) Tela y cuero varían mucho en grosor y densidad: si no corta o se quema, escríbenos a soporte.",
       filas: [
         { m: "MDF", g: "3 mm",  corte: "20-35 / 15-25", marcado: "10-20 / 40-90", grabado: "15-35 / 100-400", seal: "0.05-0.01" },
         { m: "MDF", g: "5 mm",  corte: "30-45 / 10-20", marcado: "10-20 / 40-90", grabado: "15-35 / 100-400", seal: "0.05-0.01" },
@@ -393,7 +393,7 @@ window.__SEED__ = {
     guiasPdf: [
       { curso: "c1", archivo: "instalacion-9060-6040.pdf", titulo: "Instalación de tu máquina (9060 / 6040)", desc: "Armado de la base, ruedas y montaje, paso a paso con fotos", tam: "0.5 MB" },
       { curso: "c1", archivo: "parametros.pdf", titulo: "Parámetros por material", desc: "La tabla oficial de potencia y velocidad + tutorial RDWorks", tam: "4.4 MB" },
-      { curso: "c2", archivo: "mantenimiento.pdf", titulo: "Mantenimiento completo", desc: "El manual de fábrica. Cada cuánto y qué haces tú es lo de la pestaña Mantenimiento: la fuente y el AC-DC los ve un técnico", tam: "1.4 MB" },
+      { curso: "c2", archivo: "mantenimiento.pdf", titulo: "Mantenimiento completo", desc: "El manual de fábrica. Cada cuánto y qué haces tú lo ves en Mantenimiento, desde el Inicio: la fuente y el AC-DC los ve un técnico", tam: "1.4 MB" },
       { curso: "c2", archivo: "limpieza.pdf", titulo: "Materiales de limpieza", desc: "Los 5 materiales que necesitas para el mantenimiento", tam: "0.2 MB" },
       { curso: "c3", archivo: "instalar-rdworks.pdf", titulo: "Instalar RDWorks", desc: "Cómo instalar el software de corte en tu computadora", tam: "0.4 MB" },
       { curso: "c3", archivo: "cable-red.pdf", titulo: "Conexión por cable de red", desc: "Conecta la máquina a tu computadora por red", tam: "0.6 MB" },
@@ -419,7 +419,7 @@ window.__SEED__ = {
       { item: "Alcohol isopropílico, hisopos y paño de microfibra", img: "alcohol.png", para: "Para limpiar el lente y los espejos",
         spec: "Alcohol al 99%. El de farmacia tiene agua y mancha el lente.",
         donde: "Tiendas de electrónica" },
-      { item: "Aceite 3-EN-1", img: "aceite.png", para: "Para los rieles",
+      { item: "Aceite 3-EN-UNO", img: "aceite.png", para: "Para los rieles",
         spec: "Marca 3-EN-UNO. No sirve el WD-40.",
         donde: "Ferreterías" },
       { item: "Extintor", img: "extintor.png", para: "Por seguridad",
@@ -451,7 +451,7 @@ window.__SEED__ = {
         "Compra un extractor con su manguera de aluminio y dos abrazaderas.",
         "Ponlo con salida a la calle, no a un ducto compartido."
       ] },
-      { id: "p5", t: "Ten lista tu computadora", img: "computadora.png", detalle: [
+      { id: "p5", t: "Ten lista tu computadora", img: "../academia/c3.png", detalle: [
         "Cualquier computadora con Windows sirve. Windows 11 de preferencia.",
         "Déjala cerca de la máquina, con su cable USB a la mano.",
         "El programa de corte lo instalamos contigo el día de la entrega."
@@ -563,7 +563,7 @@ window.__SEED__ = {
           { t: "Cuando vuelvas a usarla: quita la cinta, saca la manguera de la boca del enfriador, enrosca la tapa plateada y conecta cada manguera en su lugar, INLET y OUTLET. Prende el enfriador, completa el agua destilada si bajó, y recién después la máquina." }
         ]
       },
-      { id: "aire", cuando: "Si ya no sale aire por la punta del cabezal", titulo: "Revisa el regulador del aire", t: "Apaga la máquina y el compresor. Revisa la manguera del aire de punta a punta. Si está bien conectada, el regulador (la perilla por donde sale el aire) puede estar tapado con impurezas: límpialo, y si sigue igual, escríbenos.", img: "mantenimiento/regulador-aire.jpg" },
+      { id: "aire", cuando: "Si ya no sale aire por la punta del cabezal", titulo: "Revisa el regulador del aire", alt: "El regulador del aire: una pieza negra en codo, con un aro azul donde entra la manguera y una perilla dorada a un costado.", t: "Apaga la máquina y el compresor. Revisa la manguera del aire de punta a punta. Si está bien conectada, el regulador (la perilla por donde sale el aire) puede estar tapado con impurezas: límpialo, y si sigue igual, escríbenos.", img: "mantenimiento/regulador-aire.jpg" },
       { id: "calor", cuando: "Si el enfriador pasa de 25 grados", titulo: "Deja que se enfríe", t: "Apaga la máquina y espera a que baje. Revisa el nivel del agua y que sea destilada. Si vuelve a pasar, escríbenos." },
       { id: "ducto", cuando: "Si el humo se queda en la mesa", titulo: "Limpia el ducto del extractor", t: "Quítale el polvo de adentro con una sopladora o un cepillo seco. No subas el ducto más de un metro: el humo regresa a la mesa y la máquina deja de cortar." },
       { id: "mover", cuando: "Si cambias la máquina de lugar", titulo: "Vuelve a nivelarla", t: "Antes de cortar, déjala pareja otra vez sobre un piso firme." }
@@ -580,23 +580,23 @@ window.__SEED__ = {
     { categoria: "Instalación", pregunta: "¿En qué orden enciendo todo la primera vez?", respuesta: "Siempre: 1) estabilizador, 2) chiller (con agua destilada) en marcha, 3) recién la máquina. Nunca enciendas el láser sin el chiller activo." },
     { categoria: "Operación", pregunta: "¿Empiezo cortando material grueso o delgado?", respuesta: "Empieza con material delgado (~3 mm) mientras aprendes. Cuando domines los parámetros, escala a grosores mayores." },
     { categoria: "Operación", pregunta: "¿Qué potencia y velocidad uso para MDF de 3 mm?", respuesta: "Potencia 20-35 %, velocidad 15-25 mm/s. Empieza en 20 y 20, y ajusta según el primer corte." },
-    { categoria: "Operación", pregunta: "¿Y para acrílico de 5 mm?", respuesta: "Potencia ~60 %, velocidad ~8 mm/s. Empieza en 50 y ajusta según el resultado." },
+    { categoria: "Operación", pregunta: "¿Y para acrílico de 5 mm?", respuesta: "Según la tabla oficial: potencia 55 %, velocidad 10 mm/s. Empieza un poco abajo (50 %), prueba en un retazo y ajusta según el resultado." },
     { categoria: "Operación", pregunta: "¿Qué hago si el panel muestra una alarma?", respuesta: "Apaga la máquina de inmediato. Revisa conexiones eléctricas, el chiller y las conexiones de agua. Si la alarma persiste tras reiniciar, contacta soporte con el código exacto." },
-    { categoria: "Mantenimiento", pregunta: "¿Cómo limpio la lente y los espejos?", respuesta: "Retira la lente con cuidado y aplica alcohol isopropílico con un hisopo de alta calidad, en movimiento circular suave y sin presión. Misma técnica para los 3 espejos. Cada 2 semanas si usas la máquina a diario." },
-    { categoria: "Mantenimiento", pregunta: "¿Qué agua va en el enfriador (chiller) y cada cuánto se cambia?", respuesta: "Solo agua destilada (nunca del grifo: los minerales obstruyen y dañan el tubo). Se cambia una vez al mes: en la 6040 y la 9060 lleva 8 litros." },
+    { categoria: "Mantenimiento", pregunta: "¿Cómo limpio el lente y los espejos?", respuesta: "Retira el lente con cuidado y aplica alcohol isopropílico con un hisopo de alta calidad, en movimiento circular suave y sin presión. Misma técnica para los 3 espejos. Cada 2 semanas si usas la máquina a diario." },
+    { categoria: "Mantenimiento", pregunta: "¿Qué agua va en el enfriador (chiller) y cada cuánto se cambia?", respuesta: "Solo agua destilada (nunca del caño: los minerales obstruyen y dañan el tubo). Se cambia una vez al mes: en la 6040 y la 9060 lleva 8 litros." },
     { categoria: "Mantenimiento", pregunta: "¿Cuál es la temperatura ideal del enfriador (chiller)?", respuesta: "Entre 15 y 25 °C. Si sube de 25, apaga y deja enfriar antes de seguir cortando." },
-    { categoria: "Mantenimiento", pregunta: "¿Cómo lubrico los rieles y cada cuánto?", respuesta: "Limpia con paño de microfibra, aplica unas gotas de aceite 3-EN-UNO y mueve el cabezal a mano para distribuir. Semanal si usas la máquina a diario." },
+    { categoria: "Mantenimiento", pregunta: "¿Cómo lubrico los rieles y cada cuánto?", respuesta: "Limpia con paño de microfibra, pon unas gotas de aceite 3-EN-UNO en el paño, pásalo por todo el riel y mueve el cabezal a mano para repartirlo. Semanal si usas la máquina a diario." },
     { categoria: "Mantenimiento", pregunta: "¿Cada cuánto hago mantenimiento?", respuesta: "Diario: limpieza de superficie. Semanal: lubricar rieles. Cada 2 semanas: limpiar lente y espejos. Mensual: cambiar agua del chiller." },
     { categoria: "Materiales", pregunta: "¿Qué materiales puedo cortar y grabar?", respuesta: "Madera, MDF, acrílico, cartón, cuero, tela, papel y caucho. No cortes PVC ni metales. Ante un material nuevo con dudas, consulta a soporte." },
     { categoria: "Seguridad", pregunta: "¿Puedo cortar PVC?", respuesta: "No, nunca. Genera gas cloro tóxico que daña la máquina y es peligroso para tu salud." },
-    { categoria: "Seguridad", pregunta: "¿Necesito gafas para mirar el láser?", respuesta: "No mires directamente al haz. La puerta de la máquina tiene protección UV: opera siempre con la tapa cerrada." },
+    { categoria: "Seguridad", pregunta: "¿Necesito gafas para mirar el láser?", respuesta: "Sí: usa siempre tus gafas de seguridad para láser CO2 y no mires nunca el haz. Trabaja con la tapa cerrada y no la abras con la máquina cortando." },
     { categoria: "Seguridad", pregunta: "¿Es obligatorio el extractor de humos?", respuesta: "Sí, obligatorio. Los gases del corte son tóxicos. Nunca operes sin el extractor conectado y funcionando." },
     { categoria: "Operación", pregunta: "¿Puedo dejar la máquina cortando sola?", respuesta: "No, nunca. No dejes la máquina operando sin supervisión: un corte mal calibrado o un material inflamable pueden causar un accidente. Quédate cerca mientras trabaja." },
     { categoria: "Materiales", pregunta: "¿Cómo sé qué potencia y velocidad usar en un material nuevo?", respuesta: "Consulta la tabla oficial de parámetros por material (en «Aprender a usar mi máquina»). Regla de oro: SIEMPRE prueba primero en un retazo del mismo material, porque cada máquina y material varía un poco." },
     { categoria: "Software", pregunta: "¿Con qué programa diseño y corto?", respuesta: "Con C4VTech, el software propio en español, incluido con tu máquina. Tienes el curso completo en video («Domina C4VTech: Diseño y Corte») dentro de tu Academia, de la instalación a tu primer proyecto real." },
     { categoria: "Software", pregunta: "¿Cómo conecto la computadora a la máquina?", respuesta: "Por cable de red (Ethernet) o por USB. Para la conexión por red necesitas la IP de la máquina, que encuentras en el panel Ruida (Controller → Network). El curso de software te muestra cada paso." },
     { categoria: "Garantía", pregunta: "¿Qué garantía tiene mi máquina?", respuesta: "Garantía C4V de 12 meses por la máquina, en Perú, Ecuador y Bolivia. La garantía es independiente del Certificado de Calidad: el certificado es la revisión previa a la entrega; la garantía cubre fallas después." },
-    { categoria: "Garantía", pregunta: "¿La garantía cubre cualquier falla?", respuesta: "Cubre fallas de fábrica y de piezas en condiciones normales de uso. No cubre daños por mal uso, como cortar PVC, encender el láser sin el chiller, usar agua del grifo o no hacer el mantenimiento. Cuida esos puntos y tu máquina dura muchos años." },
+    { categoria: "Garantía", pregunta: "¿La garantía cubre cualquier falla?", respuesta: "Cubre fallas de fábrica y de piezas en condiciones normales de uso. No cubre daños por mal uso, como cortar PVC, encender el láser sin el chiller, usar agua del caño o no hacer el mantenimiento. Cuida esos puntos y tu máquina dura muchos años." },
     { categoria: "Envío e instalación", pregunta: "¿Cómo se instala mi máquina?", respuesta: "Depende del modelo. Las compactas (6040 / 9060) se instalan de forma remota con acompañamiento del ingeniero hasta tu primer corte. Las grandes (13100–18120) llevan instalación presencial incluida. Tu asesor confirma lo específico de tu equipo." },
     { categoria: "Envío e instalación", pregunta: "¿Qué debo tener listo para poder cortar el mismo día que llega?", respuesta: "Tu espacio preparado según la guía de preinstalación: 220V dedicado, pozo a tierra, extractor con salida al exterior, agua destilada para el chiller y el kit de consumibles. Si preparas todo antes, produces desde el día 1. La causa #1 de retrasos es el pozo a tierra." },
     { categoria: "Envío e instalación", pregunta: "¿La máquina va a pasar por la puerta?", respuesta: "Llega embalada en una caja grande. Antes del despacho, mide el ancho y alto de todas las puertas, pasillos y giros del recorrido; el marco de la puerta se puede retirar para ganar centímetros. Si tienes dudas, mándanos fotos y medidas por WhatsApp y lo revisamos contigo." },
@@ -609,10 +609,10 @@ window.__SEED__ = {
   ],
 
   soporte_guia: [
-    { titulo: "El láser perdió fuerza / no corta como antes", sintoma: "No atraviesa el material o el corte salió débil.", causas: "Lente sucia (los residuos absorben energía) o tubo agotado.", accion: "Limpia el lente con alcohol isopropílico y haz un corte de prueba. Si sigue débil, escríbenos por WhatsApp: puede ser el tubo." },
+    { titulo: "El láser perdió fuerza / no corta como antes", sintoma: "No atraviesa el material o el corte salió débil.", causas: "Lente sucio (los residuos absorben energía) o tubo agotado.", accion: "Limpia el lente con alcohol isopropílico y haz un corte de prueba. Si sigue débil, escríbenos por WhatsApp: puede ser el tubo." },
     { titulo: "Encendí la máquina sin el chiller", sintoma: "El láser operó sin enfriamiento.", causas: "El tubo se sobrecalienta y puede quemarse.", accion: "Apaga de inmediato. Si estuvo prendido más de 10 segundos sin enfriamiento, NO la uses y escríbenos por WhatsApp ahora mismo." },
     { titulo: "El panel Ruida muestra una alarma", sintoma: "Alarma, pitido o código en el panel.", causas: "Conexión eléctrica, chiller o conexiones de agua.", accion: "Apaga, revisa las conexiones, el enfriador y el agua, y vuelve a encender. Si sigue igual, escríbenos por WhatsApp con el código que ves en la pantalla." },
-    { titulo: "El chiller se sobrecalienta (>25 °C)", sintoma: "La temperatura sube del rango 15-25 °C.", causas: "Nivel de agua bajo, agua del grifo o uso prolongado.", accion: "Apaga y deja que enfríe. Revisa el nivel y que sea agua destilada, y cámbiala si toca. Si sigue igual, escríbenos por WhatsApp." },
+    { titulo: "El chiller se sobrecalienta (>25 °C)", sintoma: "La temperatura sube del rango 15-25 °C.", causas: "Nivel de agua bajo, agua del caño o uso prolongado.", accion: "Apaga y deja que enfríe. Revisa el nivel y que sea agua destilada, y cámbiala si toca. Si sigue igual, escríbenos por WhatsApp." },
     { titulo: "Se intentó cortar PVC u otro material no permitido", sintoma: "Olor fuerte, humo anormal o residuos.", causas: "El PVC genera gas cloro tóxico que daña la máquina.", accion: "Detén el corte, ventila el ambiente y limpia los residuos. Usa solo materiales permitidos. Si después falla algo, escríbenos por WhatsApp y dinos qué material era." }
   ],
 

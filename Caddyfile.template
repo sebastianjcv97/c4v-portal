@@ -12,12 +12,14 @@
 	}
 }
 
-# Plantilla por defecto de Railpack (staticfile) con dos cambios:
+# Plantilla por defecto de Railpack (staticfile) con estos cambios:
 # 1) CSP: blob: en script-src (los AudioWorklet del widget de voz de ElevenLabs
 #    se cargan desde blob:, sin eso la llamada falla al arrancar) y blob:/data:
 #    en media-src (audio de CeVi). wss: explícito para Safari.
 # 2) Cache-Control: sin él los teléfonos seguían con el index.html viejo
 #    durante horas después de cada despliegue.
+# 3) HSTS, frame-ancestors, Permissions-Policy y una CSP estricta en Report-Only
+#    (sus avisos salen en la consola) para aplicarla cuando no reporte nada.
 :{$PORT:80} {
 	log {
 		format json
@@ -26,12 +28,16 @@
 	respond /health 200
 
 	header {
-		X-XSS-Protection "1; mode=block"
+		X-XSS-Protection "0"
 		X-Content-Type-Options "nosniff"
 		Referrer-Policy "strict-origin-when-cross-origin"
-		Content-Security-Policy "default-src 'self'; img-src 'self' data: blob: https: *; style-src 'self' 'unsafe-inline' https: *; script-src 'self' 'unsafe-inline' https: blob: *; font-src 'self' data: https: *; connect-src 'self' https: wss: *; media-src 'self' https: blob: data: *; object-src 'none'; frame-src 'self' https: *;"
-		-Server
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		Permissions-Policy "microphone=(self), camera=(), geolocation=(), payment=(), usb=()"
+		Content-Security-Policy "default-src 'self'; img-src 'self' data: blob: https: *; style-src 'self' 'unsafe-inline' https: *; script-src 'self' 'unsafe-inline' https: blob: *; font-src 'self' data: https: *; connect-src 'self' https: wss: *; media-src 'self' https: blob: data: *; object-src 'none'; frame-src 'self' https: *; frame-ancestors 'none'; base-uri 'self'; form-action 'self';"
+		Content-Security-Policy-Report-Only "default-src 'self'; script-src 'self' 'unsafe-inline' blob: https://unpkg.com https://cdn.jsdelivr.net; connect-src 'self' https://portal-api-general.up.railway.app https://cevi-backend-general.up.railway.app https://*.elevenlabs.io wss://*.elevenlabs.io; img-src 'self' data: blob: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; media-src 'self' https: blob: data:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
 	}
+	# Aparte: un borrado (-) difiere todo el bloque y las páginas de error salían sin estas cabeceras.
+	header -Server
 
 	# Panel del equipo: nunca dentro de un marco de otra página (clics engañados)
 	# y fuera de los buscadores.
@@ -63,6 +69,7 @@
 	try_files {path} {path}.html {path}/index.html{{if .IndexFallback}} /index.html{{end}}
 
 	handle_errors {
+		header -Server
 		rewrite * /{err.status_code}.html
 		file_server
 	}
