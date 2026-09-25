@@ -595,7 +595,6 @@ function mantPendientes() {
    la propia sección y en el Asistente. */
 function pintarAvisoMant() {
   const pend = mantPendientes();
-  document.querySelector('.menu a[data-nav="mantenimiento"]')?.classList.toggle('con-pendiente', pend.length > 0);
   const el = document.getElementById('avisoMant');
   if (!el) return;
   const ruta = currentRoute().split('/')[0];
@@ -986,12 +985,8 @@ const views = {
         <h1 class="saludo">${cli ? `Hola, ${esc(nombreSaludo(cli))}` : 'Hola'}</h1>
       </div>
 
-      ${prep.completo ? `
-      <a class="prep-cta lista" href="#/academia">
-        <div class="prep-cta-top"><strong>Ya tienes todo listo</strong><span>${prep.total} de ${prep.total}</span></div>
-        <p>Ahora aprende a usar tu máquina.</p>
-        <span class="prep-cta-btn">Ir a la Academia</span>
-      </a>` : `
+      <!-- Terminada la preparación, el bloque desaparece: no queda nada que hacer ahí. -->
+      ${prep.completo ? '' : `
       <a class="prep-cta" href="#/academia/prep">
         <div class="prep-cta-top"><strong>Empieza por aquí</strong><span>${prep.n} de ${prep.total}</span></div>
         <div class="bar"><i style="width:${prep.total ? Math.round(prep.n / prep.total * 100) : 0}%"></i></div>
@@ -1001,9 +996,9 @@ const views = {
 
       <div class="bigs">
         <!-- CeVi no va aquí: vive en el menú, junto a las demás secciones. -->
-        <!-- La calculadora va primero: más abajo quedaba fuera de la pantalla del teléfono. -->
-        ${bigBtn('#/calculadora', 'calculadora', 'Calculadora de corte láser', 'Cuánto cobrar por un trabajo')}
-        ${bigBtn('#/soporte', 'soporte', 'Necesito ayuda', 'Escríbenos por WhatsApp')}
+        <!-- La calculadora pasó al menú de arriba y Mantenimiento bajó aquí.
+             «Necesito ayuda» es el botón flotante de WhatsApp (pintarAyudaFlotante). -->
+        ${bigBtn('#/mantenimiento', 'llave', 'Mantenimiento', 'Cuándo limpiar y cómo se hace')}
         ${bigBtn('#/descargables', 'descarga', 'Descargables', 'Guías y tu Certificado en PDF')}
         <!-- El Banco de Diseños ya vive en su propio dominio: aquí es solo la puerta. -->
         ${bigBtn('https://bancodisenos.c4vlaser.com/', 'disenos', 'Diseños para cortar', 'Incluidos con tu máquina', true)}
@@ -1275,13 +1270,9 @@ const views = {
   },
 
   soporte() {
-    const d = state.db, cli = currentClient(), sop = d.soporte, faqs = d.faqs || [];
-    const maq = cli ? d.maquinas.find(x => x.cliente_id === cli.id) : null;
-    const wa = () => `<svg class="wa-ic" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.5 14.4c-.3-.2-1.7-.9-2-1-.3-.1-.5-.1-.6.2-.2.3-.7.9-.9 1.1-.2.2-.3.2-.6.1-.3-.2-1.2-.5-2.3-1.4-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.5.1-.6l.5-.5c.1-.2.2-.3.3-.5v-.5c-.1-.2-.6-1.6-.9-2.2-.2-.5-.4-.4-.6-.5h-.5c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.4s1.1 2.8 1.2 3c.2.2 2.1 3.2 5.1 4.4 1.9.8 2.6.9 3.5.7.6-.1 1.7-.7 1.9-1.4.2-.7.2-1.2.2-1.4-.1-.1-.3-.2-.6-.3z"/><path d="M12 2C6.5 2 2 6.5 2 12c0 1.8.5 3.4 1.3 4.9L2 22l5.3-1.4c1.4.8 3 1.2 4.7 1.2 5.5 0 10-4.5 10-10S17.5 2 12 2zm0 18.2c-1.6 0-3.1-.4-4.4-1.2l-.3-.2-3.1.8.8-3-.2-.3c-.9-1.4-1.3-3-1.3-4.6C3.5 7.3 7.3 3.5 12 3.5S20.5 7.3 20.5 12 16.7 20.2 12 20.2z"/></svg>`;
-    // Identifica al cliente y su máquina con lo que EXISTE (hoy Odoo no guarda la serie).
-    const refMaq = maq?.serie || (maq?.modelo ? `modelo ${maq.modelo}` : '');
-    const contexto = [cli ? `Soy ${nombrePropio(cli.nombre)}` : null, refMaq ? `máquina ${refMaq}` : null].filter(Boolean).join(', ');
-    const waSoporte = (motivo) => waLink(`Hola equipo C4V${contexto ? `. ${contexto}` : ''}. ${motivo}`);
+    const d = state.db, sop = d.soporte, faqs = d.faqs || [];
+    const wa = () => WA_SVG;
+    const waSoporte = waAyuda;
 
     return `
       <!-- Una sola puerta, bien grande: hablar con una persona por WhatsApp -->
@@ -1892,7 +1883,7 @@ function render(route) {
   view.innerHTML = cabecera + views[route](state.sub);
   const rutaVisto = (route === 'cuenta' && state.sub === 'certificado') ? 'certificado' : route;
   if (rutaVisto === 'certificado' || rutaVisto === 'soporte') { try { localStorage.setItem('c4v_visto_' + rutaVisto + '_' + state.ctx, '1'); } catch {} }
-  bind(route); pintarAvisoMant(); window.scrollTo(0, 0);
+  bind(route); pintarAvisoMant(); pintarAyudaFlotante(route); window.scrollTo(0, 0);
 }
 const currentRoute = () => (location.hash.replace('#/', '') || 'inicio');
 window.addEventListener('hashchange', () => render(currentRoute()));
@@ -1971,6 +1962,38 @@ async function entrarConToken(token) {
 }
 
 const waLink = (texto) => `https://wa.me/${CFG.whatsapp?.numero || ''}?text=${encodeURIComponent(texto || '')}`;
+const WA_SVG = `<svg class="wa-ic" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.5 14.4c-.3-.2-1.7-.9-2-1-.3-.1-.5-.1-.6.2-.2.3-.7.9-.9 1.1-.2.2-.3.2-.6.1-.3-.2-1.2-.5-2.3-1.4-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.5.1-.6l.5-.5c.1-.2.2-.3.3-.5v-.5c-.1-.2-.6-1.6-.9-2.2-.2-.5-.4-.4-.6-.5h-.5c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.4s1.1 2.8 1.2 3c.2.2 2.1 3.2 5.1 4.4 1.9.8 2.6.9 3.5.7.6-.1 1.7-.7 1.9-1.4.2-.7.2-1.2.2-1.4-.1-.1-.3-.2-.6-.3z"/><path d="M12 2C6.5 2 2 6.5 2 12c0 1.8.5 3.4 1.3 4.9L2 22l5.3-1.4c1.4.8 3 1.2 4.7 1.2 5.5 0 10-4.5 10-10S17.5 2 12 2zm0 18.2c-1.6 0-3.1-.4-4.4-1.2l-.3-.2-3.1.8.8-3-.2-.3c-.9-1.4-1.3-3-1.3-4.6C3.5 7.3 7.3 3.5 12 3.5S20.5 7.3 20.5 12 16.7 20.2 12 20.2z"/></svg>`;
+// Mensaje de WhatsApp con quién es y qué máquina tiene (hoy Odoo no guarda la serie).
+function waAyuda(motivo) {
+  const cli = currentClient();
+  const maq = cli ? state.db.maquinas.find(x => x.cliente_id === cli.id) : null;
+  const refMaq = maq?.serie || (maq?.modelo ? `modelo ${maq.modelo}` : '');
+  const contexto = [cli ? `Soy ${nombrePropio(cli.nombre)}` : null, refMaq ? `máquina ${refMaq}` : null].filter(Boolean).join(', ');
+  return waLink(`Hola equipo C4V${contexto ? `. ${contexto}` : ''}. ${motivo}`);
+}
+
+/* «Necesito ayuda» ya no es una tarjeta del inicio: es este botón flotante de
+   WhatsApp. El globo «¿Necesita ayuda?» sale una vez por visita y a los pocos
+   segundos se esconde detrás del logo. No sale en Asistente ni en Necesito
+   ayuda (ya son el canal), ni donde hay una barra pegada abajo (CSS). */
+function pintarAyudaFlotante(route) {
+  let el = document.getElementById('ayudaFlota');
+  if (!state.ctx) { if (el) el.hidden = true; return; }
+  if (!el) {
+    el = document.createElement('a');
+    el.id = 'ayudaFlota';
+    el.className = 'wa-flota';
+    el.target = '_blank';
+    el.rel = 'noopener';
+    el.setAttribute('aria-label', '¿Necesita ayuda? Escríbenos por WhatsApp');
+    el.innerHTML = `<span class="wa-flota-globo" aria-hidden="true">¿Necesita ayuda?</span><span class="wa-flota-btn" aria-hidden="true">${WA_SVG}</span>`;
+    document.body.appendChild(el);
+    setTimeout(() => el.classList.add('abierto'), 1200);
+    setTimeout(() => el.classList.remove('abierto'), 6200);
+  }
+  el.href = waAyuda('Necesito ayuda con mi máquina.');
+  el.hidden = route === 'cevi' || route === 'soporte';
+}
 const docInfo = (paisCode, tipo) => {
   const p = (CFG.paises || []).find(x => x.code === paisCode) || (CFG.paises || [])[0];
   return (p && p[tipo]) || { doc: 'Documento', ej: '' };

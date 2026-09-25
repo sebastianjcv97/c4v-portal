@@ -1679,12 +1679,6 @@ body.cevi-en-voz{overflow:hidden}
 @media(max-width:380px){
   .menu a{font-size:11px;letter-spacing:-.1px}
 }
-/* Punto rojo en la pestaña cuando algo toca. */
-.menu a .menu-ic{position:relative}
-.menu a.con-pendiente .menu-ic::after{content:"";position:absolute;top:-2px;right:-5px;width:9px;height:9px;
-  border-radius:50%;background:var(--rojo);box-shadow:0 0 0 2px var(--black)}
-.menu a.con-pendiente[aria-current="page"] .menu-ic::after{box-shadow:0 0 0 2px #fff;background:var(--rojo-tinta)}
-
 /* La franja «No te olvides»: arriba de la hoja, con su mismo ancho. */
 .aviso-mant{display:flex;align-items:center;gap:var(--s-3);max-width:860px;margin:var(--s-4) auto 0;
   padding:var(--s-3) var(--s-4);background:var(--rojo-suave);border-left:4px solid var(--rojo-tinta);
@@ -1903,3 +1897,24 @@ textarea.gate-input{min-height:96px;resize:vertical}
 .calc-total-rot{margin:0;font-weight:700;font-size:var(--t-md)}
 .calc .calc-total-num{font-family:var(--slab);font-size:var(--t-2xl);font-weight:800;line-height:var(--lh-tight);font-variant-numeric:tabular-nums;text-align:right}
 .calc-total-det{grid-column:1/-1;margin:2px 0 0;font-size:var(--t-sm);color:var(--on-black-dim);line-height:var(--lh-snug)}
+
+/* «Necesito ayuda» flotante: logo de WhatsApp abajo a la derecha. El globo sale
+   de detrás del logo al entrar y a los pocos segundos vuelve a esconderse ahí. */
+.wa-flota{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom));z-index:40;display:flex;align-items:center;text-decoration:none;-webkit-tap-highlight-color:transparent}
+.wa-flota[hidden]{display:none}
+.wa-flota-btn{position:relative;z-index:1;display:grid;place-items:center;width:58px;height:58px;border-radius:50%;background:var(--wa);color:#fff;box-shadow:0 6px 20px rgba(20,20,20,.28);transition:background .16s,transform .1s}
+.wa-flota-btn .wa-ic{width:32px;height:32px}
+.wa-flota:hover .wa-flota-btn{background:var(--wa-hover)}
+.wa-flota:active .wa-flota-btn{transform:scale(.95)}
+.wa-flota:focus-visible{outline:none}
+.wa-flota:focus-visible .wa-flota-btn{outline:3px solid var(--tinta);outline-offset:3px}
+.wa-flota-globo{margin-right:-26px;padding:11px 38px 11px 18px;background:#fff;color:var(--tinta);border:1px solid var(--regla);border-radius:999px;
+  font-weight:700;font-size:15px;line-height:1.2;white-space:nowrap;box-shadow:0 6px 20px rgba(20,20,20,.18);
+  transform-origin:right center;transform:translateX(34px) scaleX(.3);opacity:0;transition:transform .4s cubic-bezier(.2,.8,.2,1),opacity .3s ease;pointer-events:none}
+.wa-flota.abierto .wa-flota-globo,.wa-flota:hover .wa-flota-globo,.wa-flota:focus-visible .wa-flota-globo{transform:none;opacity:1}
+@media (prefers-reduced-motion:reduce){.wa-flota-globo{transform:none;transition:opacity .2s}}
+/* Donde hay una barra pegada abajo (paso de lección, total de la calculadora,
+   chat) el botón la taparía: ahí no sale. */
+body:has(.paso-nav) .wa-flota,body:has(.calc-total) .wa-flota,body:has(.chat-abajo) .wa-flota{display:none}
+/* Espacio al final de la página para que el botón no tape «Cerrar sesión» ni el pie. */
+body:has(> .wa-flota:not([hidden])):not(:has(.paso-nav, .calc-total, .chat-abajo)) #app{padding-bottom:calc(84px + env(safe-area-inset-bottom))}
