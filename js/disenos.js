@@ -32,7 +32,7 @@
   function tarjeta(d) {
     const img = d.preview ? `assets/disenos/${esc(d.preview)}` : 'assets/disenos/_sinpreview.jpg';
     return `<div class="dis-card">
-      <img class="dis-prev" src="${img}" alt="" loading="lazy" width="400" height="400">
+      <img class="dis-prev" src="${img}" alt="" loading="lazy">
       <p class="dis-titulo">${esc(d.titulo)}</p>
       <button type="button" class="btn ghost sm dis-descargar" data-id="${esc(d.id)}">${icon('descarga')} Descargar</button>
     </div>`;
