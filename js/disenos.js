@@ -7,18 +7,28 @@
    leerSesion, toast, icon, VERIF) solo cuando se abre la pantalla. */
 (function () {
   let catalogo = null;   // null = aún no se pidió; [] = se pidió y vino vacío
+  let pedido = null;     // promesa en curso, para no pedirlo dos veces a la vez
 
-  async function obtenerCatalogo() {
-    if (catalogo) return catalogo;
-    try {
-      const r = await apiGet(`${VERIF.apiBase || ''}/api/disenos`);
-      catalogo = (r && r.ok && Array.isArray(r.disenos)) ? r.disenos : [];
-    } catch { catalogo = []; }
-    return catalogo;
+  function obtenerCatalogo() {
+    if (catalogo) return Promise.resolve(catalogo);
+    if (pedido) return pedido;
+    pedido = (async () => {
+      try {
+        const r = await apiGet(`${VERIF.apiBase || ''}/api/disenos`);
+        catalogo = (r && r.ok && Array.isArray(r.disenos)) ? r.disenos : [];
+      } catch { catalogo = []; }
+      pedido = null;
+      return catalogo;
+    })();
+    return pedido;
   }
   // El catálogo se pide junto con el resto del portal: cuando se abre la
-  // pantalla ya está listo casi siempre, sin un «Cargando…» de por medio.
-  function precargar() { obtenerCatalogo(); }
+  // pantalla ya está listo casi siempre, sin un «Cargando…» de por medio. Si
+  // igual se abre antes de que llegue (o la primera vez falló), en cuanto
+  // esté listo se vuelve a pintar — si no, «Cargando…» se quedaba para siempre.
+  function precargar() {
+    obtenerCatalogo().then(() => { if (currentRoute().split('/')[0] === 'disenos') render(currentRoute()); });
+  }
 
   const slug = (t) => String(t || 'otros').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
     .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'otros';
