@@ -1015,8 +1015,8 @@ const views = {
              «Necesito ayuda» es el botón flotante de WhatsApp (pintarAyudaFlotante). -->
         ${bigBtn('#/mantenimiento', 'llave', 'Mantenimiento', 'Cuándo limpiar y cómo se hace')}
         ${bigBtn('#/descargables', 'descarga', 'Descargables', tieneCert ? 'Guías y tu Certificado en PDF' : 'Guías de tus cursos en PDF')}
-        <!-- El Banco de Diseños ya vive en su propio dominio: aquí es solo la puerta. -->
-        ${bigBtn('https://bancodisenos.c4vlaser.com/', 'disenos', 'Diseños para cortar', 'Incluidos con tu máquina', true)}
+        <!-- Ya no abre bancodisenos.c4vlaser.com: el banco vive dentro del portal. -->
+        ${bigBtn('#/disenos', 'disenos', 'Diseños para cortar', 'Incluidos con tu máquina')}
         ${bigBtn('#/cuenta/certificado', 'sello', 'Mi certificado', 'Tu certificado y tus datos')}
       </div>`;
   },
@@ -1275,6 +1275,11 @@ const views = {
     return window.C4V_CALC ? C4V_CALC.vista() : '<p class="bajada">La calculadora no cargó. Recarga la página.</p>';
   },
 
+  // Banco de Diseños: vive en js/disenos.js, que se carga antes que este archivo.
+  disenos(sub) {
+    return window.C4V_DISENOS ? C4V_DISENOS.vista(sub) : '<p class="bajada">Los diseños no cargaron. Recarga la página.</p>';
+  },
+
   // Mantenimiento de la máquina: portada con el calendario, y un paso por
   // pantalla en #/mantenimiento/tarea/<id>/<n> y #/mantenimiento/guia/<id>/<n>.
   mantenimiento(sub) {
@@ -1486,6 +1491,7 @@ function bind(route) {
   if (route === 'descargables') bindGuias();
   if (route === 'mantenimiento') bindMantenimiento();
   if (route === 'calculadora' && window.C4V_CALC) C4V_CALC.enlazar();
+  if (route === 'disenos' && window.C4V_DISENOS) C4V_DISENOS.enlazar();
   const salir = $('#salirCuenta');
   if (salir) salir.onclick = () => { const b = $('#logoutBtn'); if (b) b.click(); };
   /* "Prepara tu espacio" vive en dos sitios con el mismo HTML y el mismo
@@ -1868,7 +1874,7 @@ function bindQuizzes() {
 // ---------- router ----------
 /* Títulos cortos: los largos ("Aprender a usar mi máquina") no cabían en el
    menú ni en la cabecera del móvil. */
-const TITLES = { inicio: 'Inicio', cuenta: 'Mi cuenta', cevi: 'Asistente', academia: 'Academia', preparacion: 'Primeros pasos', soporte: 'Necesito ayuda', descargables: 'Descargables', certificado: 'Tu Certificado de Calidad', mantenimiento: 'Mantenimiento de tu máquina', calculadora: 'Calculadora de servicio de corte láser' };
+const TITLES = { inicio: 'Inicio', cuenta: 'Mi cuenta', cevi: 'Asistente', academia: 'Academia', preparacion: 'Primeros pasos', soporte: 'Necesito ayuda', descargables: 'Descargables', certificado: 'Tu Certificado de Calidad', mantenimiento: 'Mantenimiento de tu máquina', calculadora: 'Calculadora de servicio de corte láser', disenos: 'Diseños para cortar' };
 function render(route) {
   /* Las secciones pueden tener subpáginas: `#/academia/cursos`. Así cada una es
      una pantalla propia, con su título y su botón de atrás, y el botón «volver»
@@ -1896,6 +1902,7 @@ function render(route) {
   }
   if (route === 'academia' && state.sub === 'prep') titulo = 'Prepara tu espacio';
   if (route === 'cuenta' && state.sub === 'certificado') titulo = TITLES.certificado;
+  if (route === 'disenos' && state.sub && window.C4V_DISENOS) titulo = C4V_DISENOS.tituloGrupo(state.sub) || titulo;
   document.title = (route === 'inicio' || !titulo ? 'Central de Postventa' : titulo) + ' · C4V Láser';
   // Dentro de una lección la cabecera sobra: la pantalla ya dice dónde estás.
   const enLeccion = (route === 'academia' && /^curso\/[^/]+\/p\//.test(state.sub))
@@ -3798,6 +3805,7 @@ function docDelToken(t) {
 async function init() {
   pintarIconosMenu();
   state.db = await loadDB();
+  if (window.C4V_DISENOS) C4V_DISENOS.precargar();
   const cargando = document.getElementById('bootCargando');
   if (cargando) cargando.remove();
   $('#logoutBtn').onclick = () => { borrarSesion(); location.reload(); };

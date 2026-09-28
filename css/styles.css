@@ -1932,3 +1932,18 @@ body:has(> .wa-flota:not([hidden])) .pie-sesion{padding-right:72px}
 
 /* Páginas legales: a 320px «comunicaciones» no se cortaba y la tabla se salía. */
 .doc th,.doc td{overflow-wrap:anywhere;hyphens:auto}
+
+/* Banco de Diseños: buscador simple, categorías como .destino, y una grilla de
+   fichas (preview + botón Descargar) al entrar a una categoría o al buscar. */
+.dis-buscar{margin-bottom:var(--s-4)}
+.dis-buscar input{width:100%;box-sizing:border-box;padding:14px 16px;border:2px solid var(--regla);
+  border-radius:var(--r-lg);font-family:var(--sans);font-size:16px;color:var(--tinta);background:var(--papel)}
+.dis-buscar input:focus{outline:none;border-color:var(--tinta)}
+.dis-grupos{display:flex;flex-direction:column;gap:var(--s-3)}
+.dis-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:var(--s-4)}
+@media(min-width:640px){.dis-grid{grid-template-columns:repeat(3,1fr)}}
+.dis-card{display:flex;flex-direction:column;gap:8px}
+.dis-prev{width:100%;aspect-ratio:1;object-fit:contain;background:#fff;border:2px solid var(--regla);
+  border-radius:var(--r-lg);mix-blend-mode:multiply}
+.dis-titulo{margin:0;font-size:var(--t-sm);line-height:var(--lh-snug);flex:1}
+.dis-descargar{width:100%}
