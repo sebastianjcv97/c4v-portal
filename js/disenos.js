@@ -58,13 +58,24 @@
   }
 
   function tarjeta(d) {
-    const img = d.preview ? `assets/disenos/${esc(d.preview)}` : 'assets/disenos/_sinpreview.jpg';
+    const img = d.preview ? `assets/disenos/${esc(d.preview)}` : 'assets/disenos/sin-preview.jpg';
     return `<div class="dis-card">
       <img class="dis-prev" src="${img}" alt="" loading="lazy">
       <p class="dis-titulo">${esc(d.titulo)}</p>
       <button type="button" class="btn ghost sm dis-descargar" data-id="${esc(d.id)}">${icon('descarga')} Descargar</button>
     </div>`;
   }
+
+  // Portada de cada categoría: una foto de la pieza terminada cuando la hay
+  // (elegidas a mano; si falta, la primera con miniatura).
+  const PORTADAS = {
+    'Adhesivo / vinil / otro': 'c1-d00473', 'Antifaz / careta / cotillón': 'c2-d00460',
+    'Base troquelada / molde para tejer o manualidad': 'c2-d00986', 'Bisutería (aretes, collares, anillos, brazaletes)': 'c1-d00640',
+    'Bolso / cartera': 'c1-d00613', 'Caja / joyero / bandeja': 'c1-d00261', 'Cuadro / portarretrato': 'c1-d02515',
+    'Esfera / adorno colgante navideño': 'c1-d02495', 'Invitación / tarjeta calada': 'c2-d03312', 'Llavero': 'c1-d01107',
+    'Lámpara': 'c2-d02041', 'Mueble / estante / repisa': 'c1-d00007', 'Organizador / porta-objetos / exhibidor': 'c1-d00688',
+    'Silueta / letrero / decoración plana': 'c1-d00897', 'Souvenir / adorno con base': 'c1-d00931', 'Topper para tortas': 'c1-d00668',
+  };
 
   function vistaLista(lista) {
     const grupos = [...agrupar(lista)].sort((a, b) => b[1].length - a[1].length);
@@ -74,7 +85,7 @@
       </div>
       <div class="dis-grupos" id="disGrupos">
         ${grupos.map(([t, xs]) => {
-          const muestra = xs.find(d => d.preview);
+          const muestra = xs.find(d => d.id === PORTADAS[t] && d.preview) || xs.find(d => d.preview);
           return `
           <a class="destino destino-curso" href="#/disenos/${slug(t)}">
             <span class="destino-dibujo">${muestra ? `<img src="assets/disenos/${esc(muestra.preview)}" alt="" loading="lazy">` : ''}</span>
