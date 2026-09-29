@@ -8,6 +8,7 @@
 (function () {
   let catalogo = null;   // null = aún no se pidió; [] = se pidió y vino vacío
   let pedido = null;     // promesa en curso, para no pedirlo dos veces a la vez
+  let visibles = [];     // la lista que muestra la grilla ahora (para «Ver más»)
 
   function obtenerCatalogo() {
     if (catalogo) return Promise.resolve(catalogo);
@@ -33,10 +34,27 @@
   const slug = (t) => String(t || 'otros').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
     .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'otros';
 
+  // Para buscar sin tildes ni mayúsculas: «lampara» encuentra «Lámpara».
+  const plano = (t) => String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  // Orden natural: «Lazo 2» antes que «Lazo 10».
+  const porTitulo = (a, b) => String(a.titulo).localeCompare(String(b.titulo), 'es', { numeric: true, sensitivity: 'base' });
+
   function agrupar(lista) {
     const m = new Map();
     lista.forEach(d => { const t = d.tipo || 'Otros'; (m.get(t) || m.set(t, []).get(t)).push(d); });
+    m.forEach(xs => xs.sort(porTitulo));
     return m;
+  }
+
+  // Las grillas se pintan por tandas: 1.800 miniaturas de una vez hacen
+  // lento el teléfono, y casi nadie baja más allá de las primeras.
+  const TANDA = 48;
+  function grilla(items) {
+    const primeras = items.slice(0, TANDA).map(tarjeta).join('');
+    const resto = items.length - TANDA;
+    return `<div class="dis-grid">${primeras}</div>` + (resto > 0
+      ? `<button type="button" class="btn ghost dis-mas" data-desde="${TANDA}">Ver ${Math.min(resto, TANDA)} más (quedan ${resto})</button>`
+      : '');
   }
 
   function tarjeta(d) {
@@ -55,19 +73,24 @@
         <input type="search" id="disBuscar" placeholder="Buscar por nombre, ocasión o tema…" autocomplete="off">
       </div>
       <div class="dis-grupos" id="disGrupos">
-        ${grupos.map(([t, xs]) => `
-          <a class="destino" href="#/disenos/${slug(t)}">
+        ${grupos.map(([t, xs]) => {
+          const muestra = xs.find(d => d.preview);
+          return `
+          <a class="destino destino-curso" href="#/disenos/${slug(t)}">
+            <span class="destino-dibujo">${muestra ? `<img src="assets/disenos/${esc(muestra.preview)}" alt="" loading="lazy">` : ''}</span>
             <span class="destino-txt"><strong>${esc(t)}</strong><small>${xs.length} diseño${xs.length === 1 ? '' : 's'}</small></span>
             <span class="destino-flecha" aria-hidden="true">›</span>
-          </a>`).join('')}
+          </a>`;
+        }).join('')}
       </div>
       <div id="disResultado" hidden></div>`;
   }
 
   function vistaGrupo(tipoSlug, lista) {
-    const items = lista.filter(d => slug(d.tipo) === tipoSlug);
+    const items = lista.filter(d => slug(d.tipo) === tipoSlug).sort(porTitulo);
     if (!items.length) return '<p class="bajada">No encontramos esa categoría. <a href="#/disenos">← Volver a Diseños</a></p>';
-    return `<div class="dis-grid">${items.map(tarjeta).join('')}</div>`;
+    visibles = items;
+    return `<p class="muted dis-cuenta">${items.length} diseño${items.length === 1 ? '' : 's'}, de la A a la Z.</p>` + grilla(items);
   }
 
   function vista(sub) {
@@ -112,13 +135,20 @@
     const buscar = view.querySelector('#disBuscar');
     if (buscar) {
       buscar.oninput = () => {
-        const q = buscar.value.trim().toLowerCase();
+        const q = plano(buscar.value.trim());
         const grupos = view.querySelector('#disGrupos'), res = view.querySelector('#disResultado');
         if (!q) { grupos.hidden = false; res.hidden = true; res.innerHTML = ''; return; }
-        const items = (catalogo || []).filter(d => [d.titulo, d.tipo, ...(d.ocasion || []), ...(d.tema || [])]
-          .some(x => String(x || '').toLowerCase().includes(q)));
+        // Todas las palabras tienen que aparecer, en cualquier orden: «caja corazon» encuentra «Caja con corazón».
+        const palabras = q.split(/\s+/);
+        const items = (catalogo || []).filter(d => {
+          const texto = plano([d.titulo, d.tipo, ...(d.ocasion || []), ...(d.tema || [])].join(' '));
+          return palabras.every(p => texto.includes(p));
+        }).sort(porTitulo);
         grupos.hidden = true; res.hidden = false;
-        res.innerHTML = items.length ? `<div class="dis-grid">${items.map(tarjeta).join('')}</div>` : '<p class="muted">Nada con esas palabras.</p>';
+        visibles = items;
+        res.innerHTML = items.length
+          ? `<p class="muted dis-cuenta">${items.length} diseño${items.length === 1 ? '' : 's'}.</p>` + grilla(items)
+          : '<p class="muted">Nada con esas palabras. Prueba con una sola, por ejemplo «caja» o «navidad».</p>';
         bindDescargas(res);
       };
     }
@@ -126,6 +156,18 @@
   }
   function bindDescargas(raiz) {
     raiz.querySelectorAll('.dis-descargar').forEach(b => { b.onclick = () => descargar(b.dataset.id, b); });
+    raiz.querySelectorAll('.dis-mas').forEach(b => { b.onclick = () => verMas(b); });
+  }
+  function verMas(boton) {
+    const desde = Number(boton.dataset.desde) || 0;
+    const grid = boton.previousElementSibling;
+    const tmp = document.createElement('div');
+    tmp.innerHTML = visibles.slice(desde, desde + TANDA).map(tarjeta).join('');
+    bindDescargas(tmp);
+    grid.append(...tmp.children);
+    const hasta = desde + TANDA, resto = visibles.length - hasta;
+    if (resto > 0) { boton.dataset.desde = hasta; boton.textContent = `Ver ${Math.min(resto, TANDA)} más (quedan ${resto})`; }
+    else boton.remove();
   }
 
   window.C4V_DISENOS = { vista, enlazar, precargar, tituloGrupo };

@@ -1947,3 +1947,6 @@ body:has(> .wa-flota:not([hidden])) .pie-sesion{padding-right:72px}
   border-radius:var(--r-lg);mix-blend-mode:multiply}
 .dis-titulo{margin:0;font-size:var(--t-sm);line-height:var(--lh-snug);flex:1}
 .dis-descargar{width:100%}
+.dis-cuenta{margin:0 0 var(--s-3)}
+.dis-mas{width:100%;margin-top:var(--s-5)}
+.dis-grupos .destino-dibujo img{border-radius:6px}
