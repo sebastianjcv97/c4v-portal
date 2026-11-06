@@ -2165,11 +2165,14 @@ function initGate() {
 
   const telForm = $('#gateForm'), telInp = $('#gateTel'), acepta = $('#gateAcepta');
   const telErr = $('#gateError'), telBtn = $('#gateEnviar'), irSolicitud = $('#gateIrSolicitud');
+  const videoBox = $('#gateVideoBox'), videoAbrir = $('#gateVideoAbrir'), videoWrap = $('#gateVideoWrap'), video = $('#gateVideo');
+  const hayVideo = Boolean(videoBox && videoAbrir && videoWrap && video);   // si falta algo en el HTML, el acceso sigue funcionando sin el video
   const codForm = $('#gateCodForm'), codInp = $('#gateCod'), codErr = $('#gateCodError');
   const codBtn = $('#gateEntrar'), codEstado = $('#gateCodEstado'), reenviar = $('#gateReenviar');
   const solForm = $('#gateSolForm'), solErr = $('#gateSolError'), solBtn = $('#gateSolEnviar');
   const solCampos = {
     nombre: [$('#gateSolNombre'), $('#gateSolNombreError')],
+    comprador: [$('#gateSolComprador'), $('#gateSolCompradorError')],
     referencia: [$('#gateSolRef'), $('#gateSolRefError')],
     comentario: [$('#gateSolCom'), $('#gateSolComError')]
   };
@@ -2294,9 +2297,26 @@ function initGate() {
 
   // ==== Paso 1: el celular ====
   // "No está en la lista" deja de valer en cuanto cambian el número o el país.
+  // Video «cómo pedir acceso»: se ve solo junto a «Pedir acceso» y el archivo se pide recién al abrirlo.
+  function cerrarVideo() {
+    if (!hayVideo) return;
+    video.pause();
+    videoWrap.hidden = true;
+    videoAbrir.setAttribute('aria-expanded', 'false');
+  }
+  if (hayVideo) videoAbrir.onclick = () => {
+    if (!videoWrap.hidden) return cerrarVideo();
+    if (!video.getAttribute('src')) video.src = 'assets/video/pedir-acceso.mp4';
+    videoWrap.hidden = false;
+    videoAbrir.setAttribute('aria-expanded', 'true');
+    video.play().catch(() => {});   // si el navegador no deja empezar solo, queda su botón de play
+    videoWrap.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  };
   function quitarNoEsta() {
     if (irSolicitud.hidden) return;
     irSolicitud.hidden = true;
+    if (hayVideo) videoBox.hidden = true;
+    cerrarVideo();
     limpiarError(telInp, telErr);
   }
   telInp.oninput = () => {
@@ -2355,6 +2375,7 @@ function initGate() {
         'Si compraste o usas la máquina de alguien que compró, pide acceso y lo revisamos.',
         { aviso: true, foco: false });
       irSolicitud.hidden = false;
+      if (hayVideo) videoBox.hidden = false;
       irSolicitud.focus();
       return;
     }
@@ -2456,6 +2477,7 @@ function initGate() {
     limpiarError(null, solErr);
   }
   irSolicitud.onclick = () => {
+    cerrarVideo();
     $('#gateSolTel').textContent = telLegible(acceso.pais, acceso.telefono);
     limpiarSolicitud();
     solPedir.hidden = false; solOk.hidden = true;
@@ -2489,6 +2511,7 @@ function initGate() {
     const datos = {
       pais: acceso.pais, telefono: acceso.telefono,
       nombre: solCampos.nombre[0].value.trim(),
+      comprador: solCampos.comprador[0].value.trim(),
       referencia: solCampos.referencia[0].value.trim(),
       comentario: solCampos.comentario[0].value.trim(),
       sitio: $('#gateSolSitio').value   // trampa para robots: una persona nunca la ve
@@ -2496,6 +2519,7 @@ function initGate() {
     // Aquí solo lo que falta; el resto de reglas las revisa el servidor.
     const faltan = {};
     if (!datos.nombre) faltan.nombre = 'Escribe tu nombre completo.';
+    if (!datos.comprador) faltan.comprador = 'Escribe a nombre de quién se hizo la compra.';
     if (!datos.referencia) faltan.referencia = 'Escribe el número de tu cotización, factura o boleta.';
     if (Object.keys(faltan).length) return pintarErrores(faltan);
 

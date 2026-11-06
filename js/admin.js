@@ -34,7 +34,7 @@
     factura_odoo: 'Factura en Odoo',
     entregada: 'Máquina entregada'
   };
-  const VIA = { pedido: 'Coincide el pedido', comprobante: 'Coincide el comprobante', odoo: 'Encontrado en Odoo' };
+  const VIA = { pedido: 'Coincide el pedido', comprobante: 'Coincide el comprobante', odoo: 'Encontrado en Odoo', comprador: 'Coincide el nombre del comprador' };
   const ESTADO_SOL = { pendiente: 'Pendiente', aprobada: 'Aprobada', rechazada: 'Rechazada' };
   const ORIGEN = { solicitud: 'Por solicitud', manual: 'Dado desde el panel', panel: 'Dado desde el panel', admin: 'Dado desde el panel' };
   const ESTADO_REC = { recibido: 'Recibido', en_proceso: 'En proceso', respondido: 'Respondido' };
@@ -897,6 +897,7 @@
       pares([
         ['Celular', celular(s.telefono, s.telefono_e164)],
         ['País', PAISES[s.pais] || s.pais],
+        ['Compró a nombre de', s.comprador ? el('strong', null, s.comprador) : null],
         ['Referencia que escribió', s.referencia ? el('span', { class: 'mono' }, s.referencia) : null],
         ['Comentario', s.comentario ? el('p', { class: 'cita' }, s.comentario) : null, true]
       ]),

@@ -74,6 +74,18 @@
           <div class="gate-error" id="gateError" role="alert" hidden></div>
           <!-- Solo aparece si el número no está en la lista de clientes. -->
           <button type="button" class="btn gate-sec" id="gateIrSolicitud" hidden>Pedir acceso</button>
+          <!-- Video corto de cómo pedir acceso: aparece junto a «Pedir acceso». El archivo recién se pide al tocar el botón. -->
+          <div class="gate-video" id="gateVideoBox" hidden>
+            <button type="button" class="gate-link gate-video-abrir" id="gateVideoAbrir" aria-expanded="false" aria-controls="gateVideoWrap">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z" fill="currentColor"/></svg>
+              <span>Ver cómo pedir acceso (1 min)</span>
+            </button>
+            <div id="gateVideoWrap" hidden>
+              <video id="gateVideo" controls playsinline preload="none" poster="assets/video/pedir-acceso-poster.jpg" aria-label="Video de 1 minuto: cómo pedir acceso a la Central de Postventa C4V">
+                <track kind="captions" src="assets/video/pedir-acceso.es.vtt" srclang="es" label="Español">
+              </video>
+            </div>
+          </div>
         </form>
       </section>
 
@@ -124,6 +136,13 @@
               <label for="gateSolNombre">Tu nombre completo</label>
               <input class="gate-input" id="gateSolNombre" type="text" autocomplete="name" autocapitalize="words" maxlength="120" required />
               <p class="gate-campo-error" id="gateSolNombreError" hidden></p>
+            </div>
+
+            <div class="gate-campo">
+              <label for="gateSolComprador">¿A nombre de quién se hizo la compra?</label>
+              <p class="gate-ayuda" id="gateSolCompradorAyuda">Puede ser tu nombre, el de tu esposo o esposa, o el de tu empresa. Así encontramos tu compra más rápido.</p>
+              <input class="gate-input" id="gateSolComprador" type="text" autocomplete="off" autocapitalize="words" maxlength="120" required aria-describedby="gateSolCompradorAyuda" />
+              <p class="gate-campo-error" id="gateSolCompradorError" hidden></p>
             </div>
 
             <div class="gate-campo">

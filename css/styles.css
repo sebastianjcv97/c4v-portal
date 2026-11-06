@@ -1801,6 +1801,13 @@ body.cevi-en-voz{overflow:hidden}
 .btn.gate-sec:hover{border-color:#fff}
 .btn.gate-sec:disabled{opacity:.6}
 
+/* Video «cómo pedir acceso» (junto a «Pedir acceso») */
+.gate-video{margin-top:6px;text-align:center}
+.gate-video-abrir{display:inline-flex;align-items:center;gap:8px}
+.gate-video-abrir svg{width:20px;height:20px;flex:none}
+#gateVideoWrap{margin-top:10px}
+#gateVideo{display:block;width:min(100%,300px);aspect-ratio:9/16;max-height:70vh;margin:0 auto;border-radius:var(--r);background:#000;border:1px solid #3a3a3a}
+
 /* El código: grande, centrado, con los seis números bien separados. */
 #gateCod{display:block;width:100%;margin:0 0 16px;padding:14px 12px 14px calc(12px + .4em);
   background:var(--black-2);color:#fff;border:2px solid #767676;border-radius:var(--r);
