@@ -992,6 +992,12 @@
       valor: valor
     };
   }
+  /* El SMS de "tu acceso fue aprobado" lo manda el servidor al aprobar. */
+  function textoSms(sms) {
+    if (sms && sms.enviado) return 'Le enviamos un SMS avisándole.';
+    if (sms && sms.motivo === 'sin_configurar') return 'El SMS de aviso todavía no está activado: avísale por WhatsApp.';
+    return 'No salió el SMS de aviso: avísale por WhatsApp.';
+  }
   function hastaTxt(acceso) {
     return acceso && acceso.vence_en ? ' hasta el ' + fecha(acceso.vence_en) : '';
   }
@@ -1051,7 +1057,7 @@
           }));
           vistaResultado({
             titulo: r.acceso && r.acceso.vence_en ? 'Acceso temporal aprobado' : 'Acceso aprobado',
-            mensaje: conPunto((s.nombre || 'La persona') + ' ya puede entrar al portal con su celular y ver la ficha de ' + ((c && c.nombre) || (r.acceso && r.acceso.cliente_nombre) || 'ese cliente') + hastaTxt(r.acceso)),
+            mensaje: conPunto((s.nombre || 'La persona') + ' ya puede entrar al portal con su celular y ver la ficha de ' + ((c && c.nombre) || (r.acceso && r.acceso.cliente_nombre) || 'ese cliente') + hastaTxt(r.acceso)) + ' ' + textoSms(r.sms),
             aviso: r.aviso
           });
           trasCambio();
@@ -1243,7 +1249,7 @@
           const numeroTxt = (r.acceso && r.acceso.telefono) || '+' + PREFIJOS[pais.value] + ' ' + digitos;
           vistaResultado({
             titulo: 'Acceso creado',
-            mensaje: conPunto(nombre.valor() + ' ya puede entrar al portal con el ' + numeroTxt + ' y ver la ficha de ' + ((c && c.nombre) || (r.acceso && r.acceso.cliente_nombre) || 'ese cliente') + hastaTxt(r.acceso)),
+            mensaje: conPunto(nombre.valor() + ' ya puede entrar al portal con el ' + numeroTxt + ' y ver la ficha de ' + ((c && c.nombre) || (r.acceso && r.acceso.cliente_nombre) || 'ese cliente') + hastaTxt(r.acceso)) + ' ' + textoSms(r.sms),
             aviso: r.aviso
           });
           trasCambio();
