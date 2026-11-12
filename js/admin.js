@@ -965,7 +965,7 @@
      cierra solo al llegar la fecha; sirve mientras se arregla la ficha en Odoo. */
   const DURACIONES = [['', 'Permanente'], ['1', '1 día'], ['7', '7 días'], ['30', '30 días']];
   let nDuracion = 0;
-  function selectorDuracion(inicial) {
+  function selectorDuracion(inicial, alCambiar) {
     const nombre = 'duracion' + (++nDuracion);
     const ayuda = el('p', { class: 'ayuda', id: nombre + 'Ayuda' });
     function pintar() {
@@ -973,6 +973,7 @@
       ayuda.textContent = d
         ? 'Deja de valer el ' + fecha(new Date(Date.now() + d * 864e5)) + '. Se cierra solo; no hay que revocarlo.'
         : 'Vale hasta que alguien lo revoque.';
+      if (alCambiar) alCambiar(d);
     }
     const grupo = el('fieldset', { class: 'segmento', 'aria-labelledby': nombre + 'Et', 'aria-describedby': nombre + 'Ayuda' },
       DURACIONES.map(function (op) {
@@ -1008,12 +1009,23 @@
   function dialogoAprobar(s, opciones) {
     const error = el('p', { class: 'error', role: 'alert', hidden: true });
     const boton = el('button', { class: 'btn btn-primario', type: 'submit', disabled: true }, 'Aprobar acceso');
-    const duracion = selectorDuracion(opciones && opciones.dias);
+    let elegido = null;
+    let duracion = null;
+    const sinCliente = el('p', { class: 'ayuda' });
+    function revisar() {
+      const temporal = duracion && duracion.valor();
+      boton.disabled = !elegido && !temporal;
+      sinCliente.textContent = !elegido && temporal
+        ? 'Sin cliente elegido: entra con la ficha de prueba del equipo (sin datos de clientes). Sirve para ventas y técnicos.'
+        : '';
+    }
+    duracion = selectorDuracion(opciones && opciones.dias, function () { revisar(); });
     const sel = selectorCliente({
       candidatos: arr(s.sugerencia && s.sugerencia.candidatos),
       leyenda: '¿De qué cliente es este celular?',
-      alCambiar: function (c) { boton.disabled = !c; }
+      alCambiar: function (c) { elegido = c; revisar(); }
     });
+    revisar();
     const relacion = campo({ id: 'apRelacion', etiqueta: 'Relación con el cliente', opcional: true, max: 80,
       ayuda: 'Por ejemplo: hijo del dueño, socia, operario del taller.' });
     const notaI = campo({ id: 'apNota', etiqueta: 'Nota interna', opcional: true, area: true, filas: 3, max: 500,
@@ -1021,25 +1033,25 @@
     const form = el('form', { class: 'dlg-form', method: 'post', novalidate: true },
       resumenSolicitud(s),
       alertaYaTiene(s.ya_tiene_acceso),
-      sel.nodo, duracion.nodo, relacion.nodo, notaI.nodo, error,
+      sel.nodo, duracion.nodo, sinCliente, relacion.nodo, notaI.nodo, error,
       botonesDialogo(boton));
     sel.iniciar();
     form.addEventListener('submit', async function (e) {
       e.preventDefault();
       const c = sel.valor();
       ocultar(error);
-      if (!c) { mostrarError(error, 'Elige a qué cliente pertenece este celular.'); return; }
+      if (!c && !duracion.valor()) { mostrarError(error, 'Elige a qué cliente pertenece este celular, o da un acceso temporal.'); return; }
       await ocupado(boton, 'Aprobando…', async function () {
         try {
           const r = await api('POST', '/api/admin/solicitudes/' + enc(s.id) + '/aprobar', limpio({
-            odoo_partner_id: c.odoo_partner_id,
+            odoo_partner_id: c ? c.odoo_partner_id : null,
             relacion: relacion.valor(),
             nota: notaI.valor(),
             dias: duracion.valor()
           }));
           vistaResultado({
             titulo: r.acceso && r.acceso.vence_en ? 'Acceso temporal aprobado' : 'Acceso aprobado',
-            mensaje: conPunto((s.nombre || 'La persona') + ' ya puede entrar al portal con su celular y ver la ficha de ' + (c.nombre || 'ese cliente') + hastaTxt(r.acceso)),
+            mensaje: conPunto((s.nombre || 'La persona') + ' ya puede entrar al portal con su celular y ver la ficha de ' + ((c && c.nombre) || (r.acceso && r.acceso.cliente_nombre) || 'ese cliente') + hastaTxt(r.acceso)),
             aviso: r.aviso
           });
           trasCambio();
@@ -1188,15 +1200,25 @@
       etiquetaSugeridos: 'Cliente elegido',
       textoSinSugeridos: 'Busca al cliente que compró la máquina.',
       leyenda: '¿A qué cliente representa?',
-      alCambiar: function (c) { boton.disabled = !c; }
+      alCambiar: function (c) { elegidoDa = c; revisarDa(); }
     });
-    const duracion = selectorDuracion('');
+    let elegidoDa = clientePre || null;
+    const sinClienteDa = el('p', { class: 'ayuda' });
+    function revisarDa() {
+      const temporal = duracionDa && duracionDa.valor();
+      boton.disabled = !elegidoDa && !temporal;
+      sinClienteDa.textContent = !elegidoDa && temporal
+        ? 'Sin cliente elegido: entra con la ficha de prueba del equipo (sin datos de clientes).' : '';
+    }
+    let duracionDa = null;
+    duracionDa = selectorDuracion('', function () { revisarDa(); });
+    const duracion = duracionDa;
     const form = el('form', { class: 'dlg-form', method: 'post', novalidate: true },
       el('p', { class: 'dlg-texto' }, 'La persona entrará al portal con su celular y verá lo mismo que el cliente, con el documento enmascarado.'),
       el('div', { class: 'fila-campos' },
         el('div', { class: 'campo' }, el('label', { for: 'daPais' }, 'País'), pais),
         tel.nodo),
-      nombre.nodo, relacion.nodo, sel.nodo, duracion.nodo, error,
+      nombre.nodo, relacion.nodo, sel.nodo, duracion.nodo, sinClienteDa, error,
       botonesDialogo(boton));
     sel.iniciar();
     form.addEventListener('submit', async function (e) {
@@ -1207,13 +1229,13 @@
       const digitos = tel.valor().replace(/\D/g, '');
       if (digitos.length < 7) { tel.input.setAttribute('aria-invalid', 'true'); mostrarError(error, 'Escribe el número de celular completo.'); tel.input.focus(); return; }
       if (nombre.valor().length < 3) { nombre.input.setAttribute('aria-invalid', 'true'); mostrarError(error, 'Escribe el nombre de la persona.'); nombre.input.focus(); return; }
-      if (!c) { mostrarError(error, 'Elige a qué cliente representa.'); return; }
+      if (!c && !duracion.valor()) { mostrarError(error, 'Elige a qué cliente representa, o da un acceso temporal.'); return; }
       await ocupado(boton, 'Guardando…', async function () {
         try {
           const r = await api('POST', '/api/admin/accesos', limpio({
             pais: pais.value,
             telefono: digitos,
-            odoo_partner_id: c.odoo_partner_id,
+            odoo_partner_id: c ? c.odoo_partner_id : null,
             nombre: nombre.valor(),
             relacion: relacion.valor(),
             dias: duracion.valor()
@@ -1221,7 +1243,7 @@
           const numeroTxt = (r.acceso && r.acceso.telefono) || '+' + PREFIJOS[pais.value] + ' ' + digitos;
           vistaResultado({
             titulo: 'Acceso creado',
-            mensaje: conPunto(nombre.valor() + ' ya puede entrar al portal con el ' + numeroTxt + ' y ver la ficha de ' + (c.nombre || 'ese cliente') + hastaTxt(r.acceso)),
+            mensaje: conPunto(nombre.valor() + ' ya puede entrar al portal con el ' + numeroTxt + ' y ver la ficha de ' + ((c && c.nombre) || (r.acceso && r.acceso.cliente_nombre) || 'ese cliente') + hastaTxt(r.acceso)),
             aviso: r.aviso
           });
           trasCambio();
