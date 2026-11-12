@@ -909,6 +909,7 @@
     if (pendiente) {
       acciones = el('div', { class: 'acciones acciones-col' },
         el('button', { class: 'btn btn-oscuro', type: 'button', on: { click: function () { dialogoAprobar(s); } } }, 'Aprobar'),
+        el('button', { class: 'btn', type: 'button', on: { click: function () { dialogoAprobar(s, { dias: 7 }); } } }, 'Acceso por 7 días'),
         el('button', { class: 'btn', type: 'button', on: { click: function () { dialogoRechazar(s); } } }, 'Rechazar'),
         el('button', { class: 'btn btn-texto', type: 'button', 'data-accion': 'buscar', on: { click: function (e) { buscarDeNuevo(s, e.currentTarget); } } }, 'Buscar de nuevo'));
     }
@@ -960,6 +961,40 @@
     });
   }
 
+  /* Duración del acceso (12-nov-2026): permanente o temporal. El temporal se
+     cierra solo al llegar la fecha; sirve mientras se arregla la ficha en Odoo. */
+  const DURACIONES = [['', 'Permanente'], ['1', '1 día'], ['7', '7 días'], ['30', '30 días']];
+  let nDuracion = 0;
+  function selectorDuracion(inicial) {
+    const nombre = 'duracion' + (++nDuracion);
+    const ayuda = el('p', { class: 'ayuda', id: nombre + 'Ayuda' });
+    function pintar() {
+      const d = valor();
+      ayuda.textContent = d
+        ? 'Deja de valer el ' + fecha(new Date(Date.now() + d * 864e5)) + '. Se cierra solo; no hay que revocarlo.'
+        : 'Vale hasta que alguien lo revoque.';
+    }
+    const grupo = el('fieldset', { class: 'segmento', 'aria-labelledby': nombre + 'Et', 'aria-describedby': nombre + 'Ayuda' },
+      DURACIONES.map(function (op) {
+        const input = el('input', { type: 'radio', name: nombre, value: op[0] });
+        if (String(inicial || '') === op[0]) input.checked = true;
+        input.addEventListener('change', pintar);
+        return el('label', null, input, el('span', null, op[1]));
+      }));
+    function valor() {
+      const x = grupo.querySelector('input:checked');
+      return x && x.value ? Number(x.value) : null;
+    }
+    pintar();
+    return {
+      nodo: el('div', { class: 'campo' }, el('span', { class: 'campo-et', id: nombre + 'Et' }, 'Duración del acceso'), grupo, ayuda),
+      valor: valor
+    };
+  }
+  function hastaTxt(acceso) {
+    return acceso && acceso.vence_en ? ' hasta el ' + fecha(acceso.vence_en) : '';
+  }
+
   function resumenSolicitud(s) {
     return el('div', { class: 'dlg-resumen' },
       el('p', null, el('strong', null, s.nombre || 'Sin nombre')),
@@ -970,9 +1005,10 @@
       ]));
   }
 
-  function dialogoAprobar(s) {
+  function dialogoAprobar(s, opciones) {
     const error = el('p', { class: 'error', role: 'alert', hidden: true });
     const boton = el('button', { class: 'btn btn-primario', type: 'submit', disabled: true }, 'Aprobar acceso');
+    const duracion = selectorDuracion(opciones && opciones.dias);
     const sel = selectorCliente({
       candidatos: arr(s.sugerencia && s.sugerencia.candidatos),
       leyenda: '¿De qué cliente es este celular?',
@@ -985,7 +1021,7 @@
     const form = el('form', { class: 'dlg-form', method: 'post', novalidate: true },
       resumenSolicitud(s),
       alertaYaTiene(s.ya_tiene_acceso),
-      sel.nodo, relacion.nodo, notaI.nodo, error,
+      sel.nodo, duracion.nodo, relacion.nodo, notaI.nodo, error,
       botonesDialogo(boton));
     sel.iniciar();
     form.addEventListener('submit', async function (e) {
@@ -998,11 +1034,12 @@
           const r = await api('POST', '/api/admin/solicitudes/' + enc(s.id) + '/aprobar', limpio({
             odoo_partner_id: c.odoo_partner_id,
             relacion: relacion.valor(),
-            nota: notaI.valor()
+            nota: notaI.valor(),
+            dias: duracion.valor()
           }));
           vistaResultado({
-            titulo: 'Acceso aprobado',
-            mensaje: conPunto((s.nombre || 'La persona') + ' ya puede entrar al portal con su celular y ver la ficha de ' + (c.nombre || 'ese cliente')),
+            titulo: r.acceso && r.acceso.vence_en ? 'Acceso temporal aprobado' : 'Acceso aprobado',
+            mensaje: conPunto((s.nombre || 'La persona') + ' ya puede entrar al portal con su celular y ver la ficha de ' + (c.nombre || 'ese cliente') + hastaTxt(r.acceso)),
             aviso: r.aviso
           });
           trasCambio();
@@ -1011,7 +1048,7 @@
         }
       });
     });
-    abrirDialogo('Aprobar acceso', form);
+    abrirDialogo(opciones && opciones.dias ? 'Acceso por ' + opciones.dias + ' días' : 'Aprobar acceso', form);
   }
 
   function dialogoRechazar(s) {
@@ -1082,14 +1119,17 @@
     li.appendChild(el('div', { class: 'fila-cab' },
       el('h3', { class: 'fila-titulo' }, a.nombre || 'Sin nombre'),
       a.origen ? chip(ORIGEN[a.origen] || a.origen) : null,
-      activo ? null : chip('Revocado'),
+      a.vence_en && activo ? chip('Temporal · hasta el ' + fecha(a.vence_en)) : null,
+      activo ? null : chip(a.revocado_por === 'vencimiento' ? 'Venció' : 'Revocado'),
       a.aprobado_en ? el('span', { class: 'fila-fecha', title: fechaHora(a.aprobado_en) }, 'Desde el ' + fecha(a.aprobado_en)) : null));
     const izq = pares([
       ['Celular', celular(a.telefono, a.telefono_e164)],
       ['Relación', a.relacion],
       ['Cliente', a.cliente_nombre],
       ['Aprobado por', quien(a.aprobado_por, a.aprobado_en)],
-      activo ? null : ['Revocado por', quien(a.revocado_por, a.revocado_en)],
+      activo ? null : (a.revocado_por === 'vencimiento'
+        ? ['Venció', fechaHora(a.revocado_en)]
+        : ['Revocado por', quien(a.revocado_por, a.revocado_en)]),
       ['Nota', a.nota, true]
     ]);
     const acciones = activo
@@ -1150,12 +1190,13 @@
       leyenda: '¿A qué cliente representa?',
       alCambiar: function (c) { boton.disabled = !c; }
     });
+    const duracion = selectorDuracion('');
     const form = el('form', { class: 'dlg-form', method: 'post', novalidate: true },
       el('p', { class: 'dlg-texto' }, 'La persona entrará al portal con su celular y verá lo mismo que el cliente, con el documento enmascarado.'),
       el('div', { class: 'fila-campos' },
         el('div', { class: 'campo' }, el('label', { for: 'daPais' }, 'País'), pais),
         tel.nodo),
-      nombre.nodo, relacion.nodo, sel.nodo, error,
+      nombre.nodo, relacion.nodo, sel.nodo, duracion.nodo, error,
       botonesDialogo(boton));
     sel.iniciar();
     form.addEventListener('submit', async function (e) {
@@ -1174,12 +1215,13 @@
             telefono: digitos,
             odoo_partner_id: c.odoo_partner_id,
             nombre: nombre.valor(),
-            relacion: relacion.valor()
+            relacion: relacion.valor(),
+            dias: duracion.valor()
           }));
           const numeroTxt = (r.acceso && r.acceso.telefono) || '+' + PREFIJOS[pais.value] + ' ' + digitos;
           vistaResultado({
             titulo: 'Acceso creado',
-            mensaje: conPunto(nombre.valor() + ' ya puede entrar al portal con el ' + numeroTxt + ' y ver la ficha de ' + (c.nombre || 'ese cliente')),
+            mensaje: conPunto(nombre.valor() + ' ya puede entrar al portal con el ' + numeroTxt + ' y ver la ficha de ' + (c.nombre || 'ese cliente') + hastaTxt(r.acceso)),
             aviso: r.aviso
           });
           trasCambio();
